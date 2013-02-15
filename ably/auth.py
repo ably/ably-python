@@ -55,7 +55,7 @@ class Auth(object):
                 # default to using basic auth
                 # TODO logging
                 self.__method = Auth.Method.BASIC
-                basic_credentials = "%s:%s:%s" % (app_id, key_id, key_value)
+                self.__basic_credentials = "%s:%s:%s" % (app_id, key_id, key_value)
                 return
 
         # Using token auth
