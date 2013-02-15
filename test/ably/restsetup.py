@@ -3,6 +3,9 @@ from __future__ import absolute_import
 import json
 import os
 
+import requests
+
+from ably.exceptions import AblyException
 from ably.rest import AblyRest
 
 test_app_spec = {
@@ -63,25 +66,55 @@ else:
     encrypted = not rest_host.equals("localhost")
     rest_port = 8081 if encrypted else 8080
 
+ably = AblyRest(app_id="fakeAppId",
+        rest_host=rest_host,
+        rest_port=rest_port,
+        encrypted=encrypted)
+
 
 class RestSetup:
-    _test_vars = None
-
-    ably = AblyRest(app_id="fakeAppId",
-            rest_host=rest_host,
-            rest_port=rest_port,
-            encrypted=encrypted)
+    __test_vars = None
 
     @staticmethod
     def get_test_vars():
-        if not RestSetup._test_vars:
-            r = RestSetup.ably.post("/apps")
+        if not RestSetup.__test_vars:
+            print "Setting up test app"
+            print ably.base_uri
+            r = requests.post("%s/apps" % ably.authority, 
+                    headers=ably.default_post_headers(),
+                    data=app_spec_text)
+            print r.text
+            AblyException.raise_for_response(r)
 
-        return RestSetup._test_vars
+            app_spec = r.json()
+
+            app_id = app_spec.get("id", "")
+            test_vars = {
+                "rest_host": rest_host,
+                "rest_port": rest_port,
+                "encrypted": encrypted,
+                "app_id": app_id,
+                "keys": [{
+                    "key_id": k.get("id", ""),
+                    "key_value": k.get("value", ""),
+                    "key_str": "%s:%s:%s" % (app_id, k.get("id", ""), k.get("value", "")),
+                    "capability": k.get("capability", ""),
+                } for k in app_spec.get("keys", [])]
+            }
+
+            RestSetup.__test_vars = test_vars
+
+        return RestSetup.__test_vars
 
     @staticmethod
     def clear_test_vars():
-        RestSetup.ably.del("/apps/" + RestSetup._test_vars["app_id"])
+        test_vars = RestSetup.__test_vars
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                rest_host=test_vars["rest_host"],
+                rest_port=test_vars["rest_port"],
+                encrypted=test_vars["encrypted"])
 
-        RestSetup._test_vars = None
+        ably.delete('')
+
+        RestSetup.__test_vars = None
 

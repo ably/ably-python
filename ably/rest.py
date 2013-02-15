@@ -18,17 +18,17 @@ def reauth_if_expired(func):
                     rest.reauth()
                     continue
                 raise
+    return wrapper
 
 
 class AblyRest(object):
     def __init__(self, key=None, app_id=None, key_id=None, key_value=None,
-            client_id=None, rest_host="rest.ably.io", rest_port=443):
+            client_id=None, rest_host="rest.ably.io", rest_port=443,
+            encrypted=True, auth_token=None, auth_callback=None,
+            auth_url=None):
         self.__base_url = 'https://rest.ably.io'
 
-        if not options:
-            raise ValueError("no options provided")
-
-        if key is not None
+        if key is not None:
             try:
                 app_id, key_id, key_value = key.split(':', 3)
             except ValueError:
@@ -43,55 +43,82 @@ class AblyRest(object):
         self.__client_id = client_id
         self.__rest_host = rest_host
         self.__rest_port = rest_port
+        self.__encrypted = encrypted
 
         self.__authority = 'https://%s:%d' % (rest_host, rest_port)
         self.__base_uri = '%s/apps/%s' % (self.__authority, app_id)
 
-        self.__auth = Auth(self, options)
+        self.__auth = Auth(self, app_id=app_id, key_id=key_id,
+                key_value=key_value, auth_token=auth_token,
+                auth_callback=auth_callback, auth_url=auth_url, 
+                client_id=client_id)
+
         self.__channels = Channels(self)
 
     def stats(self, params):
         return self.get('/stats')
 
     def time(self):
-        r = requests.get(self.__base_url + '/time')
+        r = self.get('/time')
         AblyException.raise_for_response(r)
-        return r.json[0]
+        return r.json()[0]
+
+    def default_get_headers(self):
+        return {
+            'Accept': 'application/json',
+        }
+
+    def default_post_headers(self):
+        return {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        }
 
     @reauth_if_expired
     def get(self, path, headers=None, params=None):
-        headers = dict(headers or {})
+        headers = self.default_get_headers()
+        headers.update(headers or {})
         headers.update(self.__auth.get_auth_headers())
 
-        r = requests.get(self.__base_uri + path, headers=headers)
+        r = requests.get("%s%s" % (self.__base_uri, path), headers=headers)
         AblyException.raise_for_response(r)
         return r
 
     @reauth_if_expired
-    def post(self, path, body=None, headers=None, params=None):
-        headers = dict(headers or {})
+    def post(self, path, data=None, headers=None, params=None):
+        headers = self.default_post_headers()
+        headers.update(headers or {})
         headers.update(self.__auth.get_auth_headers())
 
-        r = requests.post(self.__base_uri + path, headers=headers, data=body)
+        r = requests.post("%s%s" % (self.__base_uri, path), 
+                headers=headers, data=data)
         AblyException.raise_for_response(r)
         return r
 
     @reauth_if_expired
     def delete(self, path, headers=None, params=None):
-        header = dict(headers or {})
+        headers = dict(headers or {})
         headers.update(self.__auth.get_auth_headers())
 
-        r.requests.delete(self.__base_uri + path, headers=headers, data=body)
+        r = requests.delete("%s%s" % (self.__base_uri, path), headers=headers)
         AblyException.raise_for_response(r)
         return r
 
     @property
+    def authority(self):
+        return self.__authority
+
+    @property
+    def base_uri(self):
+        return self.__base_uri
+
+    @property
     def app_id(self):
-        return self.__app_id || ""
+        return self.__app_id or ""
 
     @property
     def client_id(self):
-        return self.__client_id || ""
+        return self.__client_id or ""
 
     @property
     def rest_host(self):
@@ -108,4 +135,8 @@ class AblyRest(object):
     @property
     def auth(self):
         return self.__auth
+
+    @property
+    def encrypted(self):
+        return self.__encrypted
 

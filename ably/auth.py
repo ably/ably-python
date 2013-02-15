@@ -1,6 +1,11 @@
 import base64
+import hashlib
 import hmac
 import json
+
+import requests
+
+from ably.exceptions import AblyException
 
 __all__ = ["Auth",]
 
@@ -54,16 +59,20 @@ class Auth(object):
                 # We have the key, no need to authenticate the client
                 # default to using basic auth
                 # TODO logging
-                self.__method = Auth.Method.BASIC
-                self.__basic_credentials = "%s:%s:%s" % (app_id, key_id, key_value)
+                self.__auth_method = Auth.Method.BASIC
+                basic_key = "%s:%s:%s" % (app_id, key_id, key_value)
+                basic_key = base64.b64encode(basic_key)
+                self.__basic_credentials = basic_key
                 return
 
         # Using token auth
-        self.__method = Auth.Method.TOKEN
+        self.__auth_method = Auth.Method.TOKEN
 
         if auth_token:
             self.__token_details = TokenDetails()
             self.__token_details.id = auth_token
+        else:
+            self.__token_details = None
 
         if auth_callback:
             #TODO log
@@ -76,12 +85,14 @@ class Auth(object):
             pass
         elif auth_token:
             #TODO log
+            pass
         else:
             #TODO log
             # Not a hard error, but any operation requiring authentication
             # will fail
+            pass
 
-    def authorise(self, options, token_params, force):
+    def authorise(self, force=False, **kwargs):
         if self.__token_details:
             if self.__token_details.expires > timestamp():
                 if not force:
@@ -90,7 +101,7 @@ class Auth(object):
                 # token has expired
                 self.__token_details = None
 
-        self.__token_details = self.request_token(options, token_params)
+        self.__token_details = self.request_token(**kwargs)
         return self.__token_details
 
 
@@ -99,14 +110,14 @@ class Auth(object):
             token_params=None):
         key_id = key_id or self.__key_id
         key_value = key_value or self.__key_value
-        query_time = query_time or self.__query_time
+        query_time = bool(query_time)
         auth_token = auth_token or self.__auth_token
         auth_callback = auth_callback or self.__auth_callback
         auth_url = auth_url or self.__auth_url
 
-        token_params = token_params || {}
+        token_params = token_params or {}
 
-        token_params.setdefault("client_id", self.ably.client_id)
+        token_params.setdefault("client_id", self.__rest.client_id)
 
         if "capability" in token_params:
             # TODO find out what this bit of the java code does
@@ -117,13 +128,13 @@ class Auth(object):
             signed_token_request = auth_callback(token_params)
         elif auth_url:
             # TODO log
-            response = self.ably.post(auth_url, 
+            response = requests.post(auth_url, 
                     headers=auth_headers, params=auth_params, 
-                    body=json.dumps(token_params))
+                    data=json.dumps(token_params))
 
             AblyException.raise_for_response(response)
 
-            signed_token_request = response.body
+            signed_token_request = response.text
         elif key_value:
             # TODO log
             signed_token_request = self.create_token_request(key_id=key_id,
@@ -135,16 +146,17 @@ class Auth(object):
                     400, 
                     40000)
 
-        response = self.ably.post(token_path, headers=auth_headers, 
-                params=auth_params, body=signed_token_request, )
+        token_path = "%s/authorise" % ably.base_uri
+        response = requests.post(token_path, headers=auth_headers, 
+                params=auth_params, data=signed_token_request)
 
         AblyException.raise_for_response(response)
 
-        return response.json["access_token"]
+        return response.json()["access_token"]
 
     def create_token_request(self, key_id=None, key_value=None,
             query_time=False, token_params=None):
-        token_params = token_params || {}
+        token_params = token_params or {}
 
         if token_params.setdefault("id", key_id) != key_id:
             raise AblyException("Incompatible key specified", 401, 40102)
@@ -154,14 +166,14 @@ class Auth(object):
 
         if not token_params.get("timestamp"):
             if query_time:
-                token_params.set("timestamp", self.ably.time())
+                token_params.set("timestamp", self.__rest.time())
             else:
                 token_params.set("timestamp", self.timestamp())
 
         req = {
             "id": key_id,
             "capability": token_params.get("capability", ""),
-            "client_id": token_params.get("client_id", self.ably.client_id),
+            "client_id": token_params.get("client_id", self.__rest.client_id),
             "timestamp": token_params["timestamp"],
             "nonce": token_params.get("nonce") or self.random(),
         }
@@ -184,8 +196,8 @@ class Auth(object):
                 "", # to get the trailing new line
             ])
 
-            mac = hmac.new(key_value, sign_text).digest()
-            mac = base64.b64_encode(mac)
+            mac = hmac.new(key_value, sign_text, hashlib.sha256).digest()
+            mac = base64.b64encode(mac)
             token_params["mac"] = mac
 
         req["mac"] = token_params.get("mac")
@@ -205,4 +217,14 @@ class Auth(object):
     @property
     def token_credentials(self):
         return self.__token_credentials
+
+    def get_auth_headers(self):
+        if self.__auth_method == Auth.Method.BASIC:
+            return {
+                'authorization': 'Basic %s' % self.__basic_credentials,
+            }
+        else:
+            return {
+                'authorization': 'Bearer %s' % self.authorise()["id"],
+            }
 
