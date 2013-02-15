@@ -81,9 +81,7 @@ class RestSetup:
 
     @staticmethod
     def clear_test_vars():
+        RestSetup.ably.del("/apps/" + RestSetup._test_vars["app_id"])
+
         RestSetup._test_vars = None
-        RestSetup.ably = AblyRest(app_id="fakeAppId",
-            rest_host=rest_host,
-            rest_port=rest_port,
-            encrypted=encrypted)
 
