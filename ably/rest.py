@@ -24,7 +24,7 @@ def reauth_if_expired(func):
 class AblyRest(object):
     """Ably Rest Client"""
     def __init__(self, key=None, app_id=None, key_id=None, key_value=None,
-            client_id=None, rest_host="rest.ably.io", rest_port=443,
+            client_id=None, rest_host="rest.ably.io", rest_port=None,
             encrypted=True, auth_token=None, auth_callback=None,
             auth_url=None, keep_alive=True):
         """Create an AblyRest instance.
@@ -51,14 +51,18 @@ class AblyRest(object):
         """
         self.__base_url = 'https://rest.ably.io'
 
+        rest_port = rest_port or (443 if encrypted else 80)
+        scheme = 'https' if encrypted else 'http'
+
         if key is not None:
             try:
                 app_id, key_id, key_value = key.split(':', 3)
             except ValueError:
-                raise ValueError("invalid key parameter: %s" % key)
+                raise AblyException("invalid key parameter: %s" % key,
+                        401, 40101)
 
         if not app_id:
-            raise ValueError("no app_id provided")
+            raise AblyException("no app_id provided", 400, 40000)
 
         self.__app_id = app_id
         self.__key_id = key_id
@@ -74,7 +78,7 @@ class AblyRest(object):
         else:
             self.__session = None
 
-        self.__scheme = 'https'
+        self.__scheme = scheme
         self.__authority = '%s://%s:%d' % (self.__scheme, rest_host, rest_port)
         self.__base_uri = '%s/apps/%s' % (self.__authority, app_id)
 
