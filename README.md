@@ -3,6 +3,11 @@ ably-python
 
 Ably.io python client library
 
+## Dependencies
+
+The ably-python client has one dependency, 
+[requests>=1.0.0](https://github.com/kennethreitz/requests)
+
 ## Installation
 
 ### From PyPi
@@ -36,5 +41,10 @@ Ably.io python client library
 
     # Get presence for channel 'foo'
     ably.channels.foo.presence()
+
+## Features
+
+- Connection Pooling
+- HTTP Keep Alive
 
 

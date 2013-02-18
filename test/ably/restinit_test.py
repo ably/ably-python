@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import unittest
 
+from ably.exceptions import AblyException
 from ably.rest import AblyRest
 
 from test.ably.restsetup import RestSetup
@@ -11,19 +12,19 @@ test_vars = RestSetup.get_test_vars()
 
 class TestRestInit(unittest.TestCase):
     def test_key_only(self):
-        AblyRest(test_vars["keys"][0]["keyStr"])
+        AblyRest(test_vars["keys"][0]["key_str"])
 
     def test_key_in_options(self):
-        AblyRest(key=test_vars["keys"][0]["keyStr"])
+        AblyRest(key=test_vars["keys"][0]["key_str"])
 
     def test_app_id(self):
-        AblyRest(app_id=test_vars["appId"])
+        AblyRest(app_id=test_vars["app_id"])
 
     def test_no_credentials(self):
-        AblyRest()
+        self.assertRaises(AblyException, AblyRest)
 
     def test_specified_host(self):
-        ably = AblyRest(app_id=test_vars["appId"], rest_host="some.other.host")
+        ably = AblyRest(app_id=test_vars["app_id"], rest_host="some.other.host")
         self.assertEqual("some.other.host", ably.host_name, 
                 msg="Unexpected host mismatch")
 

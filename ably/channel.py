@@ -6,18 +6,26 @@ class Channel(object):
         self.__name = name
 
     def presence(self, params=None):
+        """Returns the presence for this channel"""
         params = params or {}
         headers = self.__rest.default_get_headers()
         path = '/channels/%s/presence' % self.__name
         return self.__rest.get(path, headers=headers, params=params).json()
 
     def history(self, params=None):
+        """Returns the history for this channel"""
         params = params or {}
         headers = self.__rest.default_get_headers()
         path = '/channels/%s/history' % self.__name
         return self.__rest.get(path, headers=headers, params=params).json()
 
     def publish(self, name, data):
+        """Publishes a message on this channel.
+
+        :Parameters:
+        - `name`: the name for this message
+        - `data`: the data for this message
+        """
         request_body = {
             'name': name,
             'data': data,

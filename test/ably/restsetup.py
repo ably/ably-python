@@ -114,6 +114,11 @@ class RestSetup:
                 rest_port=test_vars["rest_port"],
                 encrypted=test_vars["encrypted"])
 
+        print ably.auth.get_auth_headers()
+        print ably.rest_host
+        print ably.rest_port
+        print ably.encrypted
+
         ably.delete('')
 
         RestSetup.__test_vars = None

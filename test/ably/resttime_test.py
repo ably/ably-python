@@ -38,10 +38,6 @@ class TestRestTime(unittest.TestCase):
                 rest_host="this.host.does.not.exist",
                 rest_port=test_vars["rest_port"])
 
-        self.assertRaisesRegexp(AblyException, r'', ably.time,
-                msg="Unexpected success getting time")
+        self.assertRaises(AblyException, ably.time)
 
-
-if __name__ == "__main__":
-    unittest.main()
 

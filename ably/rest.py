@@ -22,10 +22,33 @@ def reauth_if_expired(func):
 
 
 class AblyRest(object):
+    """Ably Rest Client"""
     def __init__(self, key=None, app_id=None, key_id=None, key_value=None,
             client_id=None, rest_host="rest.ably.io", rest_port=443,
             encrypted=True, auth_token=None, auth_callback=None,
-            auth_url=None):
+            auth_url=None, keep_alive=True):
+        """Create an AblyRest instance.
+
+        :Parameters:
+          **Credentials**
+          - `key`: a valid key string
+
+          **Or**
+          - `app_id`: Your Ably application id
+          - `key_id`: Your Ably key id
+          - `key_value`: Your Ably key value
+
+          **Optional Parameters**
+          - `client_id`: Undocumented
+          - `rest_host`: The host to connect to. Defaults to rest.ably.io
+          - `rest_port`: The port to connect to. Defaults to 443
+          - `encrypted`: Specifies whether the client should use TLS. Defaults
+            to True
+          - `auth_token`: Undocumented
+          - `auth_callback`: Undocumented
+          - `auth_url`: Undocumented
+          - `keep_alive`: use persistent connections. Defaults to True
+        """
         self.__base_url = 'https://rest.ably.io'
 
         if key is not None:
@@ -44,8 +67,15 @@ class AblyRest(object):
         self.__rest_host = rest_host
         self.__rest_port = rest_port
         self.__encrypted = encrypted
+        self.__keep_alive = bool(keep_alive)
 
-        self.__authority = 'https://%s:%d' % (rest_host, rest_port)
+        if self.__keep_alive:
+            self.__session = requests.Session()
+        else:
+            self.__session = None
+
+        self.__scheme = 'https'
+        self.__authority = '%s://%s:%d' % (self.__scheme, rest_host, rest_port)
         self.__base_uri = '%s/apps/%s' % (self.__authority, app_id)
 
         self.__auth = Auth(self, app_id=app_id, key_id=key_id,
@@ -56,9 +86,11 @@ class AblyRest(object):
         self.__channels = Channels(self)
 
     def stats(self, params):
+        """Returns the stats for this application"""
         return self.get('/stats', params=params).json()
 
     def time(self):
+        """Returns the current server time in ms since the unix epoch"""
         r = self.get('/time', absolute_path=True)
         AblyException.raise_for_response(r)
         return r.json()[0]
@@ -82,7 +114,7 @@ class AblyRest(object):
 
         prefix = self.__authority if absolute_path else self.__base_uri
 
-        r = requests.get("%s%s" % (prefix, path), headers=headers)
+        r = self._requests.get("%s%s" % (prefix, path), headers=headers)
         AblyException.raise_for_response(r)
         return r
 
@@ -95,7 +127,7 @@ class AblyRest(object):
 
         prefix = self.__authority if absolute_path else self.__base_uri
 
-        r = requests.post("%s%s" % (prefix, path), 
+        r = self._requests.post("%s%s" % (prefix, path), 
                 headers=headers, data=data)
         AblyException.raise_for_response(r)
         return r
@@ -107,7 +139,7 @@ class AblyRest(object):
 
         prefix = self.__authority if absolute_path else self.__base_uri
 
-        r = requests.delete("%s%s" % (prefix, path), headers=headers)
+        r = self._requests.delete("%s%s" % (prefix, path), headers=headers)
         AblyException.raise_for_response(r)
         return r
 
@@ -137,6 +169,7 @@ class AblyRest(object):
 
     @property
     def channels(self):
+        """Returns the channels container object"""
         return self.__channels
 
     @property
@@ -146,4 +179,16 @@ class AblyRest(object):
     @property
     def encrypted(self):
         return self.__encrypted
+
+    @property
+    def scheme(self):
+        return self.__scheme
+
+    @property
+    def keep_alive(self):
+        return self.__keep_alive
+
+    @property
+    def _requests(self):
+        return self.__session if self.__keep_alive else requests
 

@@ -45,7 +45,7 @@ class TestRestAppStats(unittest.TestCase):
         # publish some messages
         channel = self.ably.channels.get(channel_name)
         for i in range(50):
-            channel.publish("stats" + i, i)
+            channel.publish("stats%d" % i, i)
 
         interval_end = time.time() * 1000.0
 
@@ -66,8 +66,4 @@ class TestRestAppStats(unittest.TestCase):
 
     def test_publish_events_and_check_stats_backwards(self):
         self._check_stats("backwards", "stats1")
-
-
-if __name__ == "__main__":
-    unittest.main()
 

@@ -21,21 +21,41 @@ class TokenDetails(object):
     def id(self):
         return self.__id
 
+    @id.setter
+    def id(self, v):
+        self.__id = v
+
     @property
     def expires(self):
         return self.__expires
+
+    @expires.setter
+    def expires(self, v):
+        self.__expires = v
 
     @property
     def issued_at(self):
         return self.__issued_at
 
+    @issued_at.setter
+    def issued_at(self, v):
+        self.__issued_at = v
+
     @property
     def capability(self):
         return self.__capability
 
+    @capability.setter
+    def capability(self, v):
+        self.__capability = v
+
     @property
     def client_id(self):
         return self.__client_id
+
+    @client_id.setter
+    def client_id(self, v):
+        self.__client_id = v
 
 
 class Auth(object):
