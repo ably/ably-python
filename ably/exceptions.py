@@ -1,3 +1,5 @@
+import functools
+
 class AblyException(BaseException):
     def __init__(self, reason, status_code, code):
         super(AblyException, self).__init__()
@@ -34,4 +36,15 @@ class AblyException(BaseException):
         if isinstance(e, AblyException):
             return e
         return AblyException("Unexpected exception: %s" % e, 500, 50000)
+
+
+def catch_all(func): 
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            raise AblyException.from_exception(e)
+
+    return wrapper
 

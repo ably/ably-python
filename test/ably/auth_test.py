@@ -31,7 +31,7 @@ class TestAuth(unittest.TestCase):
         callback_called = []
 
         def token_callback(params):
-            callback_called.push(True)
+            callback_called.append(True)
             return "this_is_not_really_a_token_request"
 
         test_vars = RestSetup.get_test_vars()

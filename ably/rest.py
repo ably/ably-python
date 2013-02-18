@@ -4,12 +4,15 @@ import requests
 
 from ably.auth import Auth
 from ably.channel import Channels
-from ably.exceptions import AblyException
+from ably.exceptions import AblyException, catch_all
 
 
 def reauth_if_expired(func):
     @functools.wraps(func)
     def wrapper(rest, *args, **kwargs):
+        if kwargs.get("skip_auth"):
+            return func(rest, *args, **kwargs)
+
         while True:
             try:
                 return func(rest, *args, **kwargs)
@@ -89,13 +92,15 @@ class AblyRest(object):
 
         self.__channels = Channels(self)
 
+    @catch_all
     def stats(self, params):
         """Returns the stats for this application"""
         return self.get('/stats', params=params).json()
 
+    @catch_all
     def time(self):
         """Returns the current server time in ms since the unix epoch"""
-        r = self.get('/time', absolute_path=True)
+        r = self.get('/time', absolute_path=True, skip_auth=True)
         AblyException.raise_for_response(r)
         return r.json()[0]
 
@@ -111,10 +116,13 @@ class AblyRest(object):
         }
 
     @reauth_if_expired
-    def get(self, path, headers=None, params=None, absolute_path=False):
+    def get(self, path, headers=None, params=None, absolute_path=False, 
+            skip_auth=False):
         headers = self.default_get_headers()
         headers.update(headers or {})
-        headers.update(self.__auth.get_auth_headers())
+
+        if not skip_auth:
+            headers.update(self.__auth.get_auth_headers())
 
         prefix = self.__authority if absolute_path else self.__base_uri
 

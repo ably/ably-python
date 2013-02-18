@@ -1,10 +1,13 @@
 import json
 
+from ably.exceptions import catch_all
+
 class Channel(object):
     def __init__(self, rest, name):
         self.__rest = rest
         self.__name = name
 
+    @catch_all
     def presence(self, params=None):
         """Returns the presence for this channel"""
         params = params or {}
@@ -12,6 +15,7 @@ class Channel(object):
         path = '/channels/%s/presence' % self.__name
         return self.__rest.get(path, headers=headers, params=params).json()
 
+    @catch_all
     def history(self, params=None):
         """Returns the history for this channel"""
         params = params or {}
@@ -19,6 +23,7 @@ class Channel(object):
         path = '/channels/%s/history' % self.__name
         return self.__rest.get(path, headers=headers, params=params).json()
 
+    @catch_all
     def publish(self, name, data):
         """Publishes a message on this channel.
 
