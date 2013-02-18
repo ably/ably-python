@@ -21,16 +21,56 @@ class TestRestCapability(unittest.TestCase):
                 encrypted=test_vars["encrypted"])
 
     def test_blanket_intersection_with_key(self):
-        pass
+        key = test_vars['keys'][1]
+        token_details = self.ably.auth.request_token(key_id=key['key_id'],
+                key_value=key['key_value'])
+        self.assertNotNone(token_details.id, msg="Expected token id")
+        self.assertEquals(key["capability"], token_details.capability,
+                msg="Unexpected capability")
 
     def test_equal_intersection_with_key(self):
-        pass
+        key = test_vars['keys'][1]
+        
+        token_params = {
+            "capability": key["capability"],
+        }
+
+        token_details = self.ably.auth.request_token(key_id=key['key_id'],
+                key_value=key['key_value'], 
+                token_params=token_params)
+
+        self.assertNotNone(token_details.id, msg="Expected token id")
+        self.assertEquals(key["capability"], token_details.capability,
+                msg="Unexpected capability")
+
 
     def test_empty_ops_intersection(self):
-        pass
+        key = test_vars['keys'][1]
+        
+        token_params = {
+            "capability": json.dumps({
+                "testchannel": ["subscribe"],
+            }),
+        }
+
+        self.assertRaises(AblyException, self.ably.auth.request_token, 
+                key_id=key['key_id'],
+                key_value=key['key_value'], 
+                token_params=token_params)
 
     def test_empty_paths_intersection(self):
-        pass
+        key = test_vars['keys'][1]
+        
+        token_params = {
+            "capability": json.dumps({
+                "testchannelx": ["publish"],
+            }),
+        }
+
+        self.assertRaises(AblyException, self.ably.auth.request_token, 
+                key_id=key['key_id'],
+                key_value=key['key_value'], 
+                token_params=token_params)
 
     def test_non_empty_ops_intersection(self):
         pass

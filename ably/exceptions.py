@@ -1,4 +1,7 @@
 import functools
+import logging
+
+log = logging.getLogger(__name__)
 
 class AblyException(BaseException):
     def __init__(self, reason, status_code, code):
@@ -44,6 +47,7 @@ def catch_all(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
+            log.exception(e)
             raise AblyException.from_exception(e)
 
     return wrapper

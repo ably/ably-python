@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import logging
+import time
 
 import requests
 
@@ -186,9 +187,9 @@ class Auth(object):
 
         if not token_params.get("timestamp"):
             if query_time:
-                token_params.set("timestamp", self.__rest.time())
+                token_params["timestamp"] = self.__rest.time()
             else:
-                token_params.set("timestamp", self._timestamp())
+                token_params["timestamp"] = self._timestamp()
 
         req = {
             "id": key_id,
