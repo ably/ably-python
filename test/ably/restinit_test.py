@@ -25,7 +25,7 @@ class TestRestInit(unittest.TestCase):
 
     def test_specified_host(self):
         ably = AblyRest(app_id=test_vars["app_id"], rest_host="some.other.host")
-        self.assertEqual("some.other.host", ably.host_name, 
+        self.assertEqual("some.other.host", ably.rest_host, 
                 msg="Unexpected host mismatch")
 
     def test_specified_port(self):
