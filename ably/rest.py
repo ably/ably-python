@@ -56,10 +56,10 @@ class AblyRest(object):
         self.__channels = Channels(self)
 
     def stats(self, params):
-        return self.get('/stats')
+        return self.get('/stats', params=params).json()
 
     def time(self):
-        r = self.get('/time')
+        r = self.get('/time', absolute_path=True)
         AblyException.raise_for_response(r)
         return r.json()[0]
 
@@ -75,32 +75,39 @@ class AblyRest(object):
         }
 
     @reauth_if_expired
-    def get(self, path, headers=None, params=None):
+    def get(self, path, headers=None, params=None, absolute_path=False):
         headers = self.default_get_headers()
         headers.update(headers or {})
         headers.update(self.__auth.get_auth_headers())
 
-        r = requests.get("%s%s" % (self.__base_uri, path), headers=headers)
+        prefix = self.__authority if absolute_path else self.__base_uri
+
+        r = requests.get("%s%s" % (prefix, path), headers=headers)
         AblyException.raise_for_response(r)
         return r
 
     @reauth_if_expired
-    def post(self, path, data=None, headers=None, params=None):
+    def post(self, path, data=None, headers=None, params=None, 
+            absolute_path=False):
         headers = self.default_post_headers()
         headers.update(headers or {})
         headers.update(self.__auth.get_auth_headers())
 
-        r = requests.post("%s%s" % (self.__base_uri, path), 
+        prefix = self.__authority if absolute_path else self.__base_uri
+
+        r = requests.post("%s%s" % (prefix, path), 
                 headers=headers, data=data)
         AblyException.raise_for_response(r)
         return r
 
     @reauth_if_expired
-    def delete(self, path, headers=None, params=None):
+    def delete(self, path, headers=None, params=None, absolute_path=False):
         headers = dict(headers or {})
         headers.update(self.__auth.get_auth_headers())
 
-        r = requests.delete("%s%s" % (self.__base_uri, path), headers=headers)
+        prefix = self.__authority if absolute_path else self.__base_uri
+
+        r = requests.delete("%s%s" % (prefix, path), headers=headers)
         AblyException.raise_for_response(r)
         return r
 

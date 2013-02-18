@@ -14,14 +14,18 @@ class AblyException(BaseException):
             # Valid response
             return
 
-        json_response = response.json()
-        if json_response:
-            try:
-                raise AblyException(json_response['reason'], 
-                    json_response['statusCode'], 
-                    json_response['code'])
-            except KeyError as e:
-                raise AblyException("Unexpected exception decoding server response: %s" % e, 500, 50000)
+        try:
+            json_response = response.json()
+            if json_response:
+                try:
+                    raise AblyException(json_response['reason'], 
+                        json_response['statusCode'], 
+                        json_response['code'])
+                except KeyError as e:
+                    raise AblyException("Unexpected exception decoding server response: %s" % response.text, 500, 50000)
+        except:
+            raise AblyException(response.text, 
+                    response.status_code, response.status_code * 100)
 
         raise AblyException("", response.status_code, response.status_code*100)
 
