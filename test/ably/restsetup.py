@@ -81,7 +81,7 @@ class RestSetup:
             print "Setting up test app"
             print ably.base_uri
             r = requests.post("%s/apps" % ably.authority, 
-                    headers=ably.default_post_headers(),
+                    headers=ably._default_post_headers(),
                     data=app_spec_text)
             print r.text
             AblyException.raise_for_response(r)
@@ -114,12 +114,12 @@ class RestSetup:
                 rest_port=test_vars["rest_port"],
                 encrypted=test_vars["encrypted"])
 
-        print ably.auth.get_auth_headers()
+        print ably.auth._get_auth_headers()
         print ably.rest_host
         print ably.rest_port
         print ably.encrypted
 
-        ably.delete('')
+        ably._delete('')
 
         RestSetup.__test_vars = None
 

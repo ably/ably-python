@@ -2,12 +2,15 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 
 import requests
 
 from ably.exceptions import AblyException
 
 __all__ = ["Auth",]
+
+log = logging.getLogger(__name__)
 
 class TokenDetails(object):
     def __init__(self):
@@ -78,7 +81,7 @@ class Auth(object):
             if not client_id:
                 # We have the key, no need to authenticate the client
                 # default to using basic auth
-                # TODO logging
+                log.info("anonymous, using basic auth")
                 self.__auth_method = Auth.Method.BASIC
                 basic_key = "%s:%s:%s" % (app_id, key_id, key_value)
                 basic_key = base64.b64encode(basic_key)
@@ -95,27 +98,24 @@ class Auth(object):
             self.__token_details = None
 
         if auth_callback:
-            #TODO log
-            pass
+            log.info("using token auth with auth_callback")
         elif auth_url:
-            #TODO log
-            pass
+            log.info("using token auth with auth_url")
         elif key_value:
-            #TODO log
-            pass
+            log.info("using token auth with client-side signing")
         elif auth_token:
-            #TODO log
-            pass
+            log.info("using token auth with supplied token only")
         else:
-            #TODO log
             # Not a hard error, but any operation requiring authentication
             # will fail
-            pass
+            log.info("no authentication parameters supplied")
 
     def authorise(self, force=False, **kwargs):
         if self.__token_details:
-            if self.__token_details.expires > timestamp():
+            if self.__token_details.expires > self._timestamp():
                 if not force:
+                    log.info("using cached token; expires = %d" % \
+                            self.__token_details.expires)
                     return self.__token_details
             else:
                 # token has expired
@@ -188,7 +188,7 @@ class Auth(object):
             if query_time:
                 token_params.set("timestamp", self.__rest.time())
             else:
-                token_params.set("timestamp", self.timestamp())
+                token_params.set("timestamp", self._timestamp())
 
         req = {
             "id": key_id,
@@ -238,7 +238,7 @@ class Auth(object):
     def token_credentials(self):
         return self.__token_credentials
 
-    def get_auth_headers(self):
+    def _get_auth_headers(self):
         if self.__auth_method == Auth.Method.BASIC:
             return {
                 'authorization': 'Basic %s' % self.__basic_credentials,
@@ -248,3 +248,6 @@ class Auth(object):
                 'authorization': 'Bearer %s' % self.authorise()["id"],
             }
 
+    def _timestamp(self):
+        """Returns the local time in ms since the unix epoch"""
+        return time.time() * 1000.0

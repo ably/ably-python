@@ -1,11 +1,14 @@
 import functools
+import logging
 import types
+
 import requests
 
 from ably.auth import Auth
 from ably.channel import Channels
 from ably.exceptions import AblyException, catch_all
 
+log = logging.getLogger(__name__)
 
 def reauth_if_expired(func):
     @functools.wraps(func)
@@ -93,65 +96,71 @@ class AblyRest(object):
         self.__channels = Channels(self)
 
     @catch_all
-    def stats(self, params):
+    def stats(self, params, timeout=None):
         """Returns the stats for this application"""
-        return self.get('/stats', params=params).json()
+        return self._get('/stats', params=params, timeout=timeout).json()
 
     @catch_all
-    def time(self):
+    def time(self, timeout=None):
         """Returns the current server time in ms since the unix epoch"""
-        r = self.get('/time', absolute_path=True, skip_auth=True)
+        r = self._get('/time', absolute_path=True, skip_auth=True, 
+                timeout=timeout)
         AblyException.raise_for_response(r)
         return r.json()[0]
 
-    def default_get_headers(self):
+    def _default_get_headers(self):
         return {
             'Accept': 'application/json',
         }
 
-    def default_post_headers(self):
+    def _default_post_headers(self):
         return {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         }
 
     @reauth_if_expired
-    def get(self, path, headers=None, params=None, absolute_path=False, 
-            skip_auth=False):
-        headers = self.default_get_headers()
-        headers.update(headers or {})
+    def _get(self, path, headers=None, params=None, absolute_path=False, 
+            skip_auth=False, timeout=None):
+        hdrs = headers or {}
+        headers = self._default_get_headers()
+        headers.update(hdrs)
 
         if not skip_auth:
-            headers.update(self.__auth.get_auth_headers())
+            headers.update(self.__auth._get_auth_headers())
 
         prefix = self.__authority if absolute_path else self.__base_uri
 
-        r = self._requests.get("%s%s" % (prefix, path), headers=headers)
+        r = self._requests.get("%s%s" % (prefix, path), headers=headers,
+                timeout=timeout)
         AblyException.raise_for_response(r)
         return r
 
     @reauth_if_expired
-    def post(self, path, data=None, headers=None, params=None, 
-            absolute_path=False):
-        headers = self.default_post_headers()
-        headers.update(headers or {})
-        headers.update(self.__auth.get_auth_headers())
+    def _post(self, path, data=None, headers=None, params=None, 
+            absolute_path=False, timeout=None):
+        hdrs = headers or {}
+        headers = self._default_post_headers()
+        headers.update(hdrs)
+        headers.update(self.__auth._get_auth_headers())
 
         prefix = self.__authority if absolute_path else self.__base_uri
 
         r = self._requests.post("%s%s" % (prefix, path), 
-                headers=headers, data=data)
+                headers=headers, data=data, timeout=timeout)
         AblyException.raise_for_response(r)
         return r
 
     @reauth_if_expired
-    def delete(self, path, headers=None, params=None, absolute_path=False):
+    def _delete(self, path, headers=None, params=None, absolute_path=False,
+            timeout=None):
         headers = dict(headers or {})
-        headers.update(self.__auth.get_auth_headers())
+        headers.update(self.__auth._get_auth_headers())
 
         prefix = self.__authority if absolute_path else self.__base_uri
 
-        r = self._requests.delete("%s%s" % (prefix, path), headers=headers)
+        r = self._requests.delete("%s%s" % (prefix, path), headers=headers,
+                timeout=timeout)
         AblyException.raise_for_response(r)
         return r
 

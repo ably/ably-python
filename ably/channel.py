@@ -1,4 +1,6 @@
+import base64
 import json
+import time
 
 from ably.exceptions import catch_all
 
@@ -8,23 +10,21 @@ class Channel(object):
         self.__name = name
 
     @catch_all
-    def presence(self, params=None):
+    def presence(self, params=None, timeout=None):
         """Returns the presence for this channel"""
         params = params or {}
-        headers = self.__rest.default_get_headers()
         path = '/channels/%s/presence' % self.__name
-        return self.__rest.get(path, headers=headers, params=params).json()
+        return self.__rest._get(path, params=params, timeout=timeout).json()
 
     @catch_all
-    def history(self, params=None):
+    def history(self, params=None, timeout=None):
         """Returns the history for this channel"""
         params = params or {}
-        headers = self.__rest.default_get_headers()
         path = '/channels/%s/history' % self.__name
-        return self.__rest.get(path, headers=headers, params=params).json()
+        return self.__rest._get(path, params=params, timeout=timeout).json()
 
     @catch_all
-    def publish(self, name, data):
+    def publish(self, name, data, timeout=None, encoding=None):
         """Publishes a message on this channel.
 
         :Parameters:
@@ -34,12 +34,15 @@ class Channel(object):
         request_body = {
             'name': name,
             'data': data,
+            'timestamp': time.time() * 1000.0,
         }
+        if encoding:
+            request_body['encoding'] = encoding
         request_body = json.dumps(request_body)
-        headers = self.__rest.default_post_headers()
 
         path = '/channels/%s/publish' % self.__name
-        return self.__rest.post(path, data=request_body, headers=headers).json()
+        return self.__rest._post(path, data=request_body,
+                timeout=timeout).json()
 
 
 class Channels(object):
