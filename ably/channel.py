@@ -43,3 +43,9 @@ class Channels(object):
     def __getitem__(self, key):
         return self.get(key)
 
+    def __getattr__(self, name):
+        try:
+            return getattr(super(Channels, self), name)
+        except AttributeError:
+            return self.get(name)
+
