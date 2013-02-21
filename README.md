@@ -55,7 +55,7 @@ The ably-python client has one dependency,
 
 ## Options
 
-#### Authentication
+### Credentials
 
 You can provide either a `key` string or `app_id` + `key_id` + `key_value`
 combination.

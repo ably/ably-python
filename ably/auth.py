@@ -3,9 +3,14 @@ import hashlib
 import hmac
 import json
 import logging
+import random
 import time
 
 import requests
+
+# initialise and seed our own instance of random
+rnd = random.Random()
+rnd.seed()
 
 from ably.exceptions import AblyException
 
@@ -196,7 +201,7 @@ class Auth(object):
             "capability": token_params.get("capability", ""),
             "client_id": token_params.get("client_id", self.__rest.client_id),
             "timestamp": token_params["timestamp"],
-            "nonce": token_params.get("nonce") or self.random(),
+            "nonce": token_params.get("nonce") or self._random(),
         }
 
         if token_params.get("ttl"):
@@ -252,3 +257,7 @@ class Auth(object):
     def _timestamp(self):
         """Returns the local time in ms since the unix epoch"""
         return time.time() * 1000.0
+
+    def _random(self):
+        return "%016d" % rnd.randint(0, 1e16)
+
