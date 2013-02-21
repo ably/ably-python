@@ -4,6 +4,7 @@ import time
 
 from ably.exceptions import catch_all
 
+
 class Channel(object):
     def __init__(self, rest, name):
         self.__rest = rest
@@ -42,7 +43,7 @@ class Channel(object):
 
         path = '/channels/%s/publish' % self.__name
         return self.__rest._post(path, data=request_body,
-                timeout=timeout).json()
+                                 timeout=timeout).json()
 
 
 class Channels(object):
@@ -64,4 +65,3 @@ class Channels(object):
             return getattr(super(Channels, self), name)
         except AttributeError:
             return self.get(name)
-

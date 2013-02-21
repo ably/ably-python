@@ -14,9 +14,10 @@ rnd.seed()
 
 from ably.exceptions import AblyException
 
-__all__ = ["Auth",]
+__all__ = ["Auth"]
 
 log = logging.getLogger(__name__)
+
 
 class TokenDetails(object):
     def __init__(self):
@@ -73,8 +74,8 @@ class Auth(object):
         TOKEN = "TOKEN"
 
     def __init__(self, rest, app_id=None, key_id=None, key_value=None,
-            auth_token=None, auth_callback=None, auth_url=None,
-            client_id=None):
+                 auth_token=None, auth_callback=None, auth_url=None,
+                 client_id=None):
         self.__rest = rest
         self.__app_id = app_id
         self.__key_id = key_id
@@ -120,8 +121,8 @@ class Auth(object):
         if self.__token_details:
             if self.__token_details.expires > self._timestamp():
                 if not force:
-                    log.info("using cached token; expires = %d" % \
-                            self.__token_details.expires)
+                    log.info("using cached token; expires = %d" %
+                             self.__token_details.expires)
                     return self.__token_details
             else:
                 # token has expired
@@ -130,10 +131,9 @@ class Auth(object):
         self.__token_details = self.request_token(**kwargs)
         return self.__token_details
 
-
-    def request_token(self, key_id=None, key_value=None, query_time=None, 
-            auth_token=None, auth_callback=None, auth_url=None, 
-            token_params=None):
+    def request_token(self, key_id=None, key_value=None, query_time=None,
+                      auth_token=None, auth_callback=None, auth_url=None,
+                      token_params=None):
         key_id = key_id or self.__key_id
         key_value = key_value or self.__key_value
         query_time = bool(query_time)
@@ -154,34 +154,40 @@ class Auth(object):
             signed_token_request = auth_callback(token_params)
         elif auth_url:
             # TODO log
-            response = requests.post(auth_url, 
-                    headers=auth_headers, params=auth_params, 
-                    data=json.dumps(token_params))
+            response = requests.post(auth_url,
+                                     headers=auth_headers,
+                                     params=auth_params,
+                                     data=json.dumps(token_params))
 
             AblyException.raise_for_response(response)
 
             signed_token_request = response.text
         elif key_value:
             # TODO log
-            signed_token_request = self.create_token_request(key_id=key_id,
-                    key_value=key_value, query_time=query_time,
-                    token_params=token_params)
+            signed_token_request = self.create_token_request(
+                key_id=key_id,
+                key_value=key_value,
+                query_time=query_time,
+                token_params=token_params)
         else:
             raise AblyException(
-                    "Auth.request_token() must include valid auth parameters", 
-                    400, 
-                    40000)
+                "Auth.request_token() must include valid auth parameters",
+                400,
+                40000)
 
         token_path = "%s/authorise" % ably.base_uri
-        response = requests.post(token_path, headers=auth_headers, 
-                params=auth_params, data=signed_token_request)
+        response = requests.post(
+            token_path,
+            headers=auth_headers,
+            params=auth_params,
+            data=signed_token_request)
 
         AblyException.raise_for_response(response)
 
         return response.json()["access_token"]
 
     def create_token_request(self, key_id=None, key_value=None,
-            query_time=False, token_params=None):
+                             query_time=False, token_params=None):
         token_params = token_params or {}
 
         if token_params.setdefault("id", key_id) != key_id:
@@ -212,15 +218,15 @@ class Auth(object):
             # specifies the mac; this is done by the library
             # However, this can be overridden by the client
             # simply for testing purposes.
-            sign_text = "\n".join([
+            sign_text = "\n".join([str(x) for x in [
                 token_params["id"],
                 token_params.get("ttl", ""),
                 token_params.get("capability", ""),
                 token_params.get("client_id", ""),
                 token_params.get("timestamp", ""),
                 token_params.get("nonce", ""),
-                "", # to get the trailing new line
-            ])
+                "",  # to get the trailing new line
+            ]])
 
             mac = hmac.new(key_value, sign_text, hashlib.sha256).digest()
             mac = base64.b64encode(mac)
@@ -260,4 +266,3 @@ class Auth(object):
 
     def _random(self):
         return "%016d" % rnd.randint(0, 1e16)
-

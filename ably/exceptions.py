@@ -3,6 +3,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class AblyException(BaseException):
     def __init__(self, reason, status_code, code):
         super(AblyException, self).__init__()
@@ -23,14 +24,18 @@ class AblyException(BaseException):
             json_response = response.json()
             if json_response:
                 try:
-                    raise AblyException(json_response['reason'], 
-                        json_response['statusCode'], 
-                        json_response['code'])
+                    raise AblyException(json_response['reason'],
+                                        json_response['statusCode'],
+                                        json_response['code'])
                 except KeyError as e:
-                    raise AblyException("Unexpected exception decoding server response: %s" % response.text, 500, 50000)
+                    msg = "Unexpected exception decoding server response: %s"
+                    msg = msg % response.text
+                    raise AblyException(msg, 500, 50000)
         except:
-            raise AblyException(response.text, 
-                    response.status_code, response.status_code * 100)
+            raise AblyException(
+                response.text,
+                response.status_code,
+                response.status_code * 100)
 
         raise AblyException("", response.status_code, response.status_code*100)
 
@@ -41,7 +46,7 @@ class AblyException(BaseException):
         return AblyException("Unexpected exception: %s" % e, 500, 50000)
 
 
-def catch_all(func): 
+def catch_all(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -51,4 +56,3 @@ def catch_all(func):
             raise AblyException.from_exception(e)
 
     return wrapper
-
