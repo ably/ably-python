@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import math
 from datetime import datetime
 from datetime import timedelta
+import time
 import unittest
 
 from ably.exceptions import AblyException

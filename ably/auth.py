@@ -34,7 +34,7 @@ def c14n(capability):
     c14n_capability = {}
 
     for key in capability.keys():
-        c14n_capability[key] = sorted(capability[keys])
+        c14n_capability[key] = sorted(capability[key])
 
     return json.dumps(c14n_capability)
 
@@ -95,7 +95,7 @@ class Auth(object):
 
     def __init__(self, rest, app_id=None, key_id=None, key_value=None,
                  auth_token=None, auth_callback=None, auth_url=None,
-                 client_id=None):
+                 auth_headers=None, auth_params=None, client_id=None):
         self.__rest = rest
         self.__app_id = app_id
         self.__key_id = key_id
@@ -103,6 +103,8 @@ class Auth(object):
         self.__auth_token = auth_token
         self.__auth_callback = auth_callback
         self.__auth_url = auth_url
+        self.__auth_headers = auth_headers
+        self.__auth_params = auth_params
 
         if key_value is not None:
             if not client_id:
@@ -153,13 +155,15 @@ class Auth(object):
 
     def request_token(self, key_id=None, key_value=None, query_time=None,
                       auth_token=None, auth_callback=None, auth_url=None,
-                      token_params=None):
+                      auth_headers=None, auth_params=None, token_params=None):
         key_id = key_id or self.__key_id
         key_value = key_value or self.__key_value
         query_time = bool(query_time)
         auth_token = auth_token or self.__auth_token
         auth_callback = auth_callback or self.__auth_callback
         auth_url = auth_url or self.__auth_url
+        auth_headers = auth_headers or self.__auth_headers
+        auth_params = auth_params or self.__auth_params
 
         token_params = token_params or {}
 
@@ -194,7 +198,7 @@ class Auth(object):
                 400,
                 40000)
 
-        token_path = "%s/authorise" % ably.base_uri
+        token_path = "%s/authorise" % self.__rest.base_uri
         response = requests.post(
             token_path,
             headers=auth_headers,
@@ -242,12 +246,14 @@ class Auth(object):
                 token_params.get("ttl", ""),
                 token_params.get("capability", ""),
                 token_params.get("client_id", ""),
-                token_params.get("timestamp", ""),
+                "%d" % token_params.get("timestamp", ""),
                 token_params.get("nonce", ""),
                 "",  # to get the trailing new line
             ]])
 
-            mac = hmac.new(key_value, sign_text, hashlib.sha256).digest()
+            log.info("Key: %s" % key_value)
+            log.info("Plaintext: %s" % sign_text)
+            mac = hmac.new(str(key_value), sign_text, hashlib.sha256).digest()
             mac = base64.b64encode(mac)
             token_params["mac"] = mac
 
@@ -284,4 +290,5 @@ class Auth(object):
         return time.time() * 1000.0
 
     def _random(self):
-        return "%016d" % rnd.randint(0, 1e16)
+        return "%016d" % rnd.randint(0, 9999999999999999)
+
