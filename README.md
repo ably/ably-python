@@ -1,12 +1,20 @@
 ably-python
 -----------
 
-Ably.io python client library
+Ably.io python client library - REST interface
 
 ## Dependencies
 
 The ably-python client has one dependency, 
 [requests>=1.0.0](https://github.com/kennethreitz/requests)
+
+## Features
+
+- Connection Pooling
+- HTTP Keep-Alive
+- Python 2.6-3.3
+- Compatible with gevent
+- Thread-safe
 
 ## Installation
 
@@ -24,7 +32,11 @@ The ably-python client has one dependency,
     cd ably-python
     python setup.py install
 
-## Usage
+#### To run the tests
+
+    python setup.py test
+
+## Basic Usage
 
     from ably.rest import AblyRest
 
@@ -42,9 +54,16 @@ The ably-python client has one dependency,
     # Get presence for channel 'foo'
     ably.channels.foo.presence()
 
-## Features
+## Options
 
-- Connection Pooling
-- HTTP Keep Alive
+#### Authentication
 
+You can provide either a `key` string or `app_id` + `key_id` + `key_value`
+combination.
+
+    ably = AblyRest("key-string")
+
+or
+
+    ably = AblyRest(app_id="app-id", key_id="key-id", key_value="key-value")
 
