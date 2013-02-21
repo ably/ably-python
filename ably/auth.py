@@ -5,6 +5,7 @@ import json
 import logging
 import random
 import time
+import types
 
 import requests
 
@@ -17,6 +18,25 @@ from ably.exceptions import AblyException
 __all__ = ["Auth"]
 
 log = logging.getLogger(__name__)
+
+
+def c14n(capability):
+    '''Canonicalizes the capability'''
+    if not capability:
+        return ''
+
+    if isinstance(capability, types.StringTypes):
+        capability = json.loads(capability)
+
+    if not capability:
+        return ''
+
+    c14n_capability = {}
+
+    for key in capability.keys():
+        c14n_capability[key] = sorted(capability[keys])
+
+    return json.dumps(c14n_capability)
 
 
 class TokenDetails(object):
@@ -146,14 +166,13 @@ class Auth(object):
         token_params.setdefault("client_id", self.__rest.client_id)
 
         if "capability" in token_params:
-            # TODO find out what this bit of the java code does
-            token_params["capability"] = token_params["capability"]
+            token_params["capability"] = c14n(token_params["capability"])
 
         if auth_callback:
-            # TODO log
+            log.info("using token auth with authCallback")
             signed_token_request = auth_callback(token_params)
         elif auth_url:
-            # TODO log
+            log.info("using token auth with authUrl")
             response = requests.post(auth_url,
                                      headers=auth_headers,
                                      params=auth_params,
@@ -163,7 +182,7 @@ class Auth(object):
 
             signed_token_request = response.text
         elif key_value:
-            # TODO log
+            log.info("using token auth with client-side signing")
             signed_token_request = self.create_token_request(
                 key_id=key_id,
                 key_value=key_value,
@@ -234,7 +253,7 @@ class Auth(object):
 
         req["mac"] = token_params.get("mac")
 
-        #TODO log
+        log.info("generated signed request")
 
         return json.dumps(req)
 
