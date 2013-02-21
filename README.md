@@ -14,7 +14,6 @@ The ably-python client has one dependency,
 - HTTP Keep-Alive
 - Python 2.6-3.3
 - Compatible with gevent
-- Thread-safe
 
 ## Installation
 
