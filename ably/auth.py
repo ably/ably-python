@@ -291,4 +291,3 @@ class Auth(object):
 
     def _random(self):
         return "%016d" % rnd.randint(0, 9999999999999999)
-

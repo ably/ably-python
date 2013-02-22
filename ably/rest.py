@@ -97,8 +97,18 @@ class AblyRest(object):
         self.__channels = Channels(self)
 
     @catch_all
-    def stats(self, params, timeout=None):
+    def stats(self, direction=None, start=None, end=None, params=None,
+              timeout=None):
         """Returns the stats for this application"""
+        params = params or {}
+
+        if direction:
+            params["direction"] = direction
+        if start:
+            params["start"] = start
+        if end:
+            params["end"] = end
+
         return self._get('/stats', params=params, timeout=timeout).json()
 
     @catch_all

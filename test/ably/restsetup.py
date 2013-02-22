@@ -78,12 +78,9 @@ class RestSetup:
     @staticmethod
     def get_test_vars():
         if not RestSetup.__test_vars:
-            print "Setting up test app"
-            print ably.base_uri
             r = requests.post("%s/apps" % ably.authority, 
                     headers=ably._default_post_headers(),
                     data=app_spec_text)
-            print r.text
             AblyException.raise_for_response(r)
 
             app_spec = r.json()
@@ -113,11 +110,6 @@ class RestSetup:
                 rest_host=test_vars["rest_host"],
                 rest_port=test_vars["rest_port"],
                 encrypted=test_vars["encrypted"])
-
-        print ably.auth._get_auth_headers()
-        print ably.rest_host
-        print ably.rest_port
-        print ably.encrypted
 
         ably._delete('')
 
