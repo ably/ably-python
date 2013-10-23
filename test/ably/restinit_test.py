@@ -17,28 +17,25 @@ class TestRestInit(unittest.TestCase):
     def test_key_in_options(self):
         AblyRest(key=test_vars["keys"][0]["key_str"])
 
-    def test_app_id(self):
-        AblyRest(app_id=test_vars["app_id"])
-
     def test_no_credentials(self):
         self.assertRaises(AblyException, AblyRest)
 
     def test_specified_host(self):
-        ably = AblyRest(app_id=test_vars["app_id"], rest_host="some.other.host")
+        ably = AblyRest(rest_host="some.other.host")
         self.assertEqual("some.other.host", ably.rest_host, 
                 msg="Unexpected host mismatch")
 
     def test_specified_port(self):
-        ably = AblyRest(app_id=test_vars["app_id"], rest_port=9999)
+        ably = AblyRest(rest_port=9999)
         self.assertEqual(9999, ably.rest_port, msg="Unexpected port mismatch")
 
     def test_encrypted_defaults_to_true(self):
-        ably = AblyRest(app_id=test_vars["app_id"])
+        ably = AblyRest()
         self.assertEqual("https", ably.scheme, 
                 msg="Unexpected scheme mismatch")
 
     def test_encryption_can_be_disabled(self):
-        ably = AblyRest(app_id=test_vars["app_id"], encrypted=False)
+        ably = AblyRest(encrypted=False)
         self.assertEqual("http", ably.scheme,
                 msg="Unexpected scheme mismatch")
 

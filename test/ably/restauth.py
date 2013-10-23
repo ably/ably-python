@@ -18,7 +18,6 @@ class TestAuth(unittest.TestCase):
     def test_auth_init_token_only(self):
         test_vars = RestSetup.get_test_vars()
         options = {
-            "app_id": test_vars["app_id"],
             "auth_token": "this_is_not_really_a_token",
         }
 
@@ -36,7 +35,6 @@ class TestAuth(unittest.TestCase):
 
         test_vars = RestSetup.get_test_vars()
         options = {
-            "app_id": test_vars["app_id"],
             "rest_host": test_vars["rest_host"],
             "rest_port": test_vars["rest_port"],
             "encrypted": test_vars["encrypted"],

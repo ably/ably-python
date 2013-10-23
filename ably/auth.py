@@ -93,11 +93,10 @@ class Auth(object):
         BASIC = "BASIC"
         TOKEN = "TOKEN"
 
-    def __init__(self, rest, app_id=None, key_id=None, key_value=None,
+    def __init__(self, rest, key_id=None, key_value=None,
                  auth_token=None, auth_callback=None, auth_url=None,
                  auth_headers=None, auth_params=None, client_id=None):
         self.__rest = rest
-        self.__app_id = app_id
         self.__key_id = key_id
         self.__key_value = key_value
         self.__auth_token = auth_token
@@ -112,7 +111,7 @@ class Auth(object):
                 # default to using basic auth
                 log.info("anonymous, using basic auth")
                 self.__auth_method = Auth.Method.BASIC
-                basic_key = "%s:%s:%s" % (app_id, key_id, key_value)
+                basic_key = "%s:%s" % (key_id, key_value)
                 basic_key = base64.b64encode(basic_key)
                 self.__basic_credentials = basic_key
                 return

@@ -25,16 +25,14 @@ class TestRestTime(unittest.TestCase):
                 msg="Time is not within 2 seconds")
 
     def test_time_without_key_or_token(self):
-        ably = AblyRest(app_id=test_vars["app_id"],
-                rest_host=test_vars["rest_host"],
+        ably = AblyRest(rest_host=test_vars["rest_host"],
                 rest_port=test_vars["rest_port"],
                 encrypted=test_vars["encrypted"])
 
         ably.time()
     
     def test_time_fails_without_valid_host(self):
-        ably = AblyRest(app_id=test_vars["app_id"],
-                rest_host="this.host.does.not.exist",
+        ably = AblyRest(rest_host="this.host.does.not.exist",
                 rest_port=test_vars["rest_port"])
 
         self.assertRaises(AblyException, ably.time)

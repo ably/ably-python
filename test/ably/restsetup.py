@@ -66,8 +66,7 @@ else:
     encrypted = not rest_host.equals("localhost")
     rest_port = 8081 if encrypted else 8080
 
-ably = AblyRest(app_id="fakeAppId",
-        rest_host=rest_host,
+ably = AblyRest(rest_host=rest_host,
         rest_port=rest_port,
         encrypted=encrypted)
 
@@ -85,16 +84,14 @@ class RestSetup:
 
             app_spec = r.json()
 
-            app_id = app_spec.get("id", "")
             test_vars = {
                 "rest_host": rest_host,
                 "rest_port": rest_port,
                 "encrypted": encrypted,
-                "app_id": app_id,
                 "keys": [{
                     "key_id": k.get("id", ""),
                     "key_value": k.get("value", ""),
-                    "key_str": "%s:%s:%s" % (app_id, k.get("id", ""), k.get("value", "")),
+                    "key_str": "%s:%s" % (k.get("id", ""), k.get("value", "")),
                     "capability": k.get("capability", ""),
                 } for k in app_spec.get("keys", [])]
             }

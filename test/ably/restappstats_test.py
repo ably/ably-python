@@ -54,8 +54,8 @@ class TestRestAppStats(unittest.TestCase):
         self.sleep_for(timedelta(minutes=2))
 
         stats = self.ably.stats(direction=direction, 
-                start=interval_start,
-                end=interval_end)
+                                start=interval_start,
+                                end=interval_end)
         
         self.assertIsNotNone(stats, msg="Expected not-none stats")
         self.assertEquals(1, len(stats), msg="Expected 1 record")
