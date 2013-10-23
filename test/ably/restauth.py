@@ -35,9 +35,10 @@ class TestAuth(unittest.TestCase):
 
         test_vars = RestSetup.get_test_vars()
         options = {
-            "rest_host": test_vars["rest_host"],
-            "rest_port": test_vars["rest_port"],
-            "encrypted": test_vars["encrypted"],
+            "host": test_vars["host"],
+            "port": test_vars["port"],
+            "tls_port": test_vars["tls_port"],
+            "tls": test_vars["encrypted"],
             "auth_callback": token_callback,
         }
 

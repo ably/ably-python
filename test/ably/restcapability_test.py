@@ -17,9 +17,10 @@ test_vars = RestSetup.get_test_vars()
 class TestRestCapability(unittest.TestCase):
     def setUp(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                rest_host=test_vars["rest_host"],
-                rest_port=test_vars["rest_port"],
-                encrypted=test_vars["encrypted"])
+                host=test_vars["host"],
+                port=test_vars["port"],
+                tls_port=test_vars["tls_port"],
+                tls=test_vars["encrypted"])
 
     def test_blanket_intersection_with_key(self):
         key = test_vars['keys'][1]

@@ -17,9 +17,10 @@ class TestRestChannelHistory(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                rest_host=test_vars["rest_host"],
-                rest_port=test_vars["rest_port"],
-                encrypted=test_vars["encrypted"])
+                host=test_vars["host"],
+                port=test_vars["port"],
+                tls_port=test_vars["tls_port"],
+                tls=test_vars["encrypted"])
 
     @property
     def ably(self):

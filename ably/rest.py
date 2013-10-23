@@ -31,8 +31,8 @@ def reauth_if_expired(func):
 class AblyRest(object):
     """Ably Rest Client"""
     def __init__(self, key=None, key_id=None, key_value=None,
-                 client_id=None, rest_host="rest.ably.io", rest_port=None,
-                 encrypted=True, auth_token=None, auth_callback=None,
+                 client_id=None, host="rest.ably.io", port=80, tls_port=443,
+                 tls=True, auth_token=None, auth_callback=None,
                  auth_url=None, keep_alive=True):
         """Create an AblyRest instance.
 
@@ -46,9 +46,10 @@ class AblyRest(object):
 
           **Optional Parameters**
           - `client_id`: Undocumented
-          - `rest_host`: The host to connect to. Defaults to rest.ably.io
-          - `rest_port`: The port to connect to. Defaults to 443
-          - `encrypted`: Specifies whether the client should use TLS. Defaults
+          - `host`: The host to connect to. Defaults to rest.ably.io
+          - `port`: The port to connect to. Defaults to 80
+          - `tls_port`: The tls_port to connect to. Defaults to 443
+          - `tls`: Specifies whether the client should use TLS. Defaults
             to True
           - `auth_token`: Undocumented
           - `auth_callback`: Undocumented
@@ -57,8 +58,7 @@ class AblyRest(object):
         """
         self.__base_url = 'https://rest.ably.io'
 
-        rest_port = rest_port or (443 if encrypted else 80)
-        scheme = 'https' if encrypted else 'http'
+        scheme = 'https' if tls else 'http'
 
         if key is not None:
             try:
@@ -70,9 +70,10 @@ class AblyRest(object):
         self.__key_id = key_id
         self.__key_value = key_value
         self.__client_id = client_id
-        self.__rest_host = rest_host
-        self.__rest_port = rest_port
-        self.__encrypted = encrypted
+        self.__host = host
+        self.__port = port
+        self.__tls_port = tls_port
+        self.__tls = tls
         self.__keep_alive = bool(keep_alive)
 
         if self.__keep_alive:
@@ -81,7 +82,7 @@ class AblyRest(object):
             self.__session = None
 
         self.__scheme = scheme
-        self.__authority = '%s://%s:%d' % (self.__scheme, rest_host, rest_port)
+        self.__authority = '%s://%s:%d' % (self.__scheme, host, port)
         self.__base_uri = '%s' % (self.__authority)
 
         self.__auth = Auth(self, key_id=key_id,
@@ -183,12 +184,16 @@ class AblyRest(object):
         return self.__client_id or ""
 
     @property
-    def rest_host(self):
-        return self.__rest_host
+    def host(self):
+        return self.__host
 
     @property
-    def rest_port(self):
-        return self.__rest_port
+    def port(self):
+        return self.__port
+
+    @property
+    def tls_port(self):
+        return self.__tls_port
 
     @property
     def channels(self):
@@ -200,8 +205,8 @@ class AblyRest(object):
         return self.__auth
 
     @property
-    def encrypted(self):
-        return self.__encrypted
+    def tls(self):
+        return self.__tls
 
     @property
     def scheme(self):

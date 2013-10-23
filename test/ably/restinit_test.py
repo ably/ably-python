@@ -21,13 +21,14 @@ class TestRestInit(unittest.TestCase):
         self.assertRaises(AblyException, AblyRest)
 
     def test_specified_host(self):
-        ably = AblyRest(rest_host="some.other.host")
-        self.assertEqual("some.other.host", ably.rest_host, 
+        ably = AblyRest(host="some.other.host")
+        self.assertEqual("some.other.host", ably.host, 
                 msg="Unexpected host mismatch")
 
     def test_specified_port(self):
-        ably = AblyRest(rest_port=9999)
-        self.assertEqual(9999, ably.rest_port, msg="Unexpected port mismatch")
+        ably = AblyRest(port=9998, tls_port=9999)
+        self.assertEqual(9998, ably.__port, msg="Unexpected port mismatch")
+        self.assertEqual(9999, ably.__tls_port, msg="Unexpected port mismatch")
 
     def test_encrypted_defaults_to_true(self):
         ably = AblyRest()
@@ -35,7 +36,7 @@ class TestRestInit(unittest.TestCase):
                 msg="Unexpected scheme mismatch")
 
     def test_encryption_can_be_disabled(self):
-        ably = AblyRest(encrypted=False)
+        ably = AblyRest(tls=False)
         self.assertEqual("http", ably.scheme,
                 msg="Unexpected scheme mismatch")
 
