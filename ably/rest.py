@@ -58,8 +58,6 @@ class AblyRest(object):
         """
         self.__base_url = 'https://rest.ably.io'
 
-        scheme = 'https' if tls else 'http'
-
         if key is not None:
             try:
                 key_id, key_value = key.split(':', 2)
@@ -81,9 +79,10 @@ class AblyRest(object):
         else:
             self.__session = None
 
-        self.__scheme = scheme
-        self.__authority = '%s://%s:%d' % (self.__scheme, host, port)
-        self.__base_uri = '%s' % (self.__authority)
+        self.__scheme = 'https' if tls else 'http'
+        self.__port = tls_port if tls else port
+        self.__authority = '%s://%s:%d' % (self.__scheme, host, self.__port)
+        self.__base_uri = self.__authority
 
         self.__auth = Auth(self, key_id=key_id,
                            key_value=key_value, auth_token=auth_token,

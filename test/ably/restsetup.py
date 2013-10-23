@@ -56,7 +56,7 @@ test_app_spec = {
 
 app_spec_text = json.dumps(test_app_spec)
 
-tls = (os.environ.get('ABLY_TLS') || "true").lower() == "true"
+tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST')
 
 if host is None:
@@ -75,7 +75,7 @@ else:
 ably = AblyRest(host=host,
         port=port,
         tls_port=tls_port,
-        encrypted=encrypted)
+        tls=encrypted)
 
 
 class RestSetup:
