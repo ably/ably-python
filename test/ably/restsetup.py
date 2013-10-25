@@ -8,53 +8,12 @@ import requests
 from ably.exceptions import AblyException
 from ably.rest import AblyRest
 
-test_app_spec = {
-    "keys": [
-        {}, # key 0, blanket
-        {   # key 1, specific channel and ops
-            "capability": json.dumps({
-                "testchannel": ["publish"],
-            }),
-        },
-        {   # key 2, wildcard channel spec
-            "capability": json.dumps({
-                "*": ["subscribe"],
-                "canpublish:*": ["publish"],
-                "canpublish:andpresence":["presence", "publish"],
-            }),
-        },
-        {   # key 3, wildcard ops spec
-            "capability": json.dumps({
-                "candoall": ["*"],
-            }),
-        },
-        {   # key 4, multiple resources
-            "capability": json.dumps({
-                "channel0": ["publish"],
-                "channel1": ["publish"],
-                "channel2": ["publish", "subscribe"],
-                "channel3": ["subscribe"],
-                "channel4": ["presence", "publish", "subscribe"],
-                "channel5": ["presence"],
-                "channel6": ["*"],
-            }),
-        },
-        {   # key 5, has wildcard clientId
-            "privileged": True,
-            "capability": json.dumps({
-                "channel0": ["publish"],
-                "channel1": ["publish"],
-                "channel2": ["publish", "subscribe"],
-                "channel3": ["subscribe"],
-                "channel4": ["presence", "publish", "subscribe"],
-                "channel5": ["presence"],
-                "channel6": ["*"],
-            }),
-        },
-    ],
-}
+app_spec_text = ""
 
-app_spec_text = json.dumps(test_app_spec)
+with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
+    app_spec_text = f.read()
+
+print app_spec_text
 
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST')
@@ -90,6 +49,7 @@ class RestSetup:
             AblyException.raise_for_response(r)
 
             app_spec = r.json()
+            app_id = app_spec.get("id", "")
 
             test_vars = {
                 "host": host,
@@ -97,9 +57,9 @@ class RestSetup:
                 "tls_port": tls_port,
                 "encrypted": encrypted,
                 "keys": [{
-                    "key_id": k.get("id", ""),
+                    "key_id": "%s.%s" % (app_id, k.get("id", "")),
                     "key_value": k.get("value", ""),
-                    "key_str": "%s:%s" % (k.get("id", ""), k.get("value", "")),
+                    "key_str": "%s.%s:%s" % (app_id, k.get("id", ""), k.get("value", "")),
                     "capability": k.get("capability", ""),
                 } for k in app_spec.get("keys", [])]
             }
@@ -121,3 +81,4 @@ class RestSetup:
 
         RestSetup.__test_vars = None
 
+print RestSetup.get_test_vars()

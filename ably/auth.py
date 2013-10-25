@@ -277,11 +277,11 @@ class Auth(object):
     def _get_auth_headers(self):
         if self.__auth_method == Auth.Method.BASIC:
             return {
-                'authorization': 'Basic %s' % self.__basic_credentials,
+                'Authorization': 'Basic %s' % self.__basic_credentials,
             }
         else:
             return {
-                'authorization': 'Bearer %s' % self.authorise()["id"],
+                'Authorization': 'Bearer %s' % self.authorise()["id"],
             }
 
     def _timestamp(self):

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import math
 from datetime import datetime
 from datetime import timedelta
+import logging
 import time
 import unittest
 
@@ -12,6 +13,7 @@ from ably.rest import AblyRest
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
+log = logging.getLogger(__name__)
 
 
 class TestRestAppStats(unittest.TestCase):
@@ -64,8 +66,10 @@ class TestRestAppStats(unittest.TestCase):
                 msg="Expected 50 messages")
 
     def test_publish_events_and_check_stats_forwards(self):
+        log.info("TEST VARS: " + str(test_vars))
         self._check_stats("forwards", "stats0")
 
     def test_publish_events_and_check_stats_backwards(self):
+        log.info("TEST VARS: " + str(test_vars))
         self._check_stats("backwards", "stats1")
 
