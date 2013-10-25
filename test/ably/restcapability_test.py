@@ -13,7 +13,6 @@ from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
 
-
 class TestRestCapability(unittest.TestCase):
     def setUp(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
@@ -75,6 +74,17 @@ class TestRestCapability(unittest.TestCase):
                 token_params=token_params)
 
     def test_non_empty_ops_intersection(self):
+        key = test_vars['keys'][4]
+        
+        token_params = {
+            "key_id": key["key_id"],
+            "key_value": key["key_value"],
+            "capability": json.dumps({
+                "channel2": ["presence", "subscribe"],
+            })
+        }
+
+        # TODO pick up here
         pass
 
     def test_non_empty_paths_intersection(self):

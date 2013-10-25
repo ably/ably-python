@@ -34,11 +34,13 @@ class TestRestInit(unittest.TestCase):
         ably = AblyRest()
         self.assertEqual("https", ably.scheme, 
                 msg="Unexpected scheme mismatch")
+        self.assertTrue(ably.tls, msg="Expected encryption to default to true")
 
     def test_encryption_can_be_disabled(self):
         ably = AblyRest(tls=False)
         self.assertEqual("http", ably.scheme,
                 msg="Unexpected scheme mismatch")
+        self.assertFalse(ably.tls, msg="Expected encryption to be False")
 
 
 if __name__ == "__main__":
