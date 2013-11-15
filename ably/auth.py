@@ -171,6 +171,7 @@ class Auth(object):
         if "capability" in token_params:
             token_params["capability"] = c14n(token_params["capability"])
 
+        signed_token_request = ""
         if auth_callback:
             log.info("using token auth with authCallback")
             signed_token_request = auth_callback(token_params)
@@ -197,7 +198,11 @@ class Auth(object):
                 400,
                 40000)
 
-        token_path = "%s/authorise" % self.__rest.base_uri
+        token_path = "%s/keys/%s/requestToken" % (self.__rest.base_uri, key_id)
+        log.info("TokenPath: %s" % token_path)
+        log.info("Headers: %s" % str(auth_headers))
+        log.info("Params: %s" % str(auth_params))
+        log.info("Body: %s" % signed_token_request)
         response = requests.post(
             token_path,
             headers=auth_headers,
