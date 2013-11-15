@@ -31,7 +31,7 @@ def capability_c14n(capability):
     if not capability:
         return ''
 
-    return json.dumps(capability, sorted_keys=True)
+    return json.dumps(capability, sort_keys=True)
 
 
 class TokenDetails(object):
@@ -152,6 +152,10 @@ class Auth(object):
                       auth_headers=None, auth_params=None, token_params=None):
         key_id = key_id or self.__key_id
         key_value = key_value or self.__key_value
+
+        log.debug('key_id: %s', key_id)
+        log.debug('key_value: %s', key_value)
+
         query_time = bool(query_time)
         auth_token = auth_token or self.__auth_token
         auth_callback = auth_callback or self.__auth_callback
@@ -188,6 +192,7 @@ class Auth(object):
                 query_time=query_time,
                 token_params=token_params)
         else:
+            log.debug('No auth_callback, auth_url or key_value specified')
             raise AblyException(
                 "Auth.request_token() must include valid auth parameters",
                 400,
@@ -217,6 +222,7 @@ class Auth(object):
             raise AblyException("Incompatible key specified", 401, 40102)
 
         if not key_id or not key_value:
+            log.debug('key_id or key_value blank')
             raise AblyException("No key specified", 401, 40101)
 
         if not token_params.get("timestamp"):

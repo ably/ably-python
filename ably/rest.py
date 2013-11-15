@@ -32,6 +32,7 @@ def fallback(func):
                 last_exception = e
 
         raise last_exception
+    return wrapper
 
 def reauth_if_expired(func):
     @functools.wraps(func)
@@ -85,6 +86,9 @@ class AblyRest(object):
             except ValueError:
                 msg = "invalid key parameter: %s" % key
                 raise AblyException(msg, 401, 40101)
+
+        log.debug("key_id: %s", key_id)
+        log.debug("key_value: %s", key_value)
 
         self.__key_id = key_id
         self.__key_value = key_value
