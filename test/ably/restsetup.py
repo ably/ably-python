@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import json
 import os
+import logging
 
 import requests
 
@@ -9,6 +10,7 @@ from ably.exceptions import AblyException
 from ably.rest import AblyRest
 
 app_spec_text = ""
+log = logging.getLogger(__name__)
 
 with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
     app_spec_text = f.read()
@@ -43,8 +45,7 @@ class RestSetup:
     @staticmethod
     def get_test_vars():
         if not RestSetup.__test_vars:
-            r = requests.post("%s/apps" % ably.authority, 
-                    headers=ably._default_post_headers(),
+            r = requests.post("%s/apps" % ably.authority, headers=ably._default_post_headers(),
                     data=app_spec_text)
             AblyException.raise_for_response(r)
 
@@ -52,6 +53,7 @@ class RestSetup:
             app_id = app_spec.get("id", "")
 
             test_vars = {
+                "app_id": app_id,
                 "host": host,
                 "port": port,
                 "tls_port": tls_port,
@@ -77,8 +79,10 @@ class RestSetup:
                 tls_port=test_vars["tls_port"],
                 tls=test_vars["encrypted"])
 
-        ably._delete('')
+        log.info(str(test_vars))
+        headers = ably._default_get_headers()
+        ably._delete('/apps/' + test_vars['app_id'], headers)
 
         RestSetup.__test_vars = None
 
-print RestSetup.get_test_vars()
+log.info(str(RestSetup.get_test_vars()))

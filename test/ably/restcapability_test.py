@@ -84,8 +84,15 @@ class TestRestCapability(unittest.TestCase):
             })
         }
 
-        # TODO pick up here
-        pass
+        expected_capability = json.dumps({
+            "channel2": ["subscribe"]
+        })
+
+        token_details = self.ably.auth.request_token(**token_params)
+
+        self.assertIsNotNone(token_details.id, msg="Expected token id")
+        self.assertEquals(expected_capability, token_details.capability,
+                msg="Unexpected capability")
 
     def test_non_empty_paths_intersection(self):
         pass

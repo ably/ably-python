@@ -72,4 +72,3 @@ class TestRestAppStats(unittest.TestCase):
     def test_publish_events_and_check_stats_backwards(self):
         log.info("TEST VARS: " + str(test_vars))
         self._check_stats("backwards", "stats1")
-
