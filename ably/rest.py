@@ -10,6 +10,28 @@ from ably.exceptions import AblyException, catch_all
 
 log = logging.getLogger(__name__)
 
+# Decorator to attempt fallback hosts in case of a host-error
+def fallback(func):
+    @functools.wraps(func)
+    def wrapper(rest, *args, **kwargs):
+        try:
+            return func(rest, *args, **kwargs)
+        except requests.exceptions.ConnectionError as e:
+            # if we cannot attempt a fallback, re-raise
+            # TODO: See if we can determine why this failed
+            if kwargs.get("host") or not rest._fallback_hosts:
+                raise
+
+        last_exception = None
+        for host in rest._fallback_hosts:
+            try:
+                kwargs["host"] = host
+                return func(rest, *args, **kwargs)
+            except requests.exceptions.ConnectionError as e:
+                # TODO: as above
+                last_exception = e
+
+        raise last_exception
 
 def reauth_if_expired(func):
     @functools.wraps(func)
@@ -33,7 +55,7 @@ class AblyRest(object):
     def __init__(self, key=None, key_id=None, key_value=None,
                  client_id=None, host="rest.ably.io", port=80, tls_port=443,
                  tls=True, auth_token=None, auth_callback=None,
-                 auth_url=None, keep_alive=True):
+                 auth_url=None, keep_alive=True, fallback_hosts=None):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -56,7 +78,6 @@ class AblyRest(object):
           - `auth_url`: Undocumented
           - `keep_alive`: use persistent connections. Defaults to True
         """
-        self.__base_url = 'https://rest.ably.io'
 
         if key is not None:
             try:
@@ -73,6 +94,7 @@ class AblyRest(object):
         self.__tls_port = tls_port
         self.__tls = tls
         self.__keep_alive = bool(keep_alive)
+        self.__fallback_hosts = fallback_hosts
 
         if self.__keep_alive:
             self.__session = requests.Session()
@@ -82,7 +104,6 @@ class AblyRest(object):
         self.__scheme = 'https' if tls else 'http'
         self.__port = tls_port if tls else port
         self.__authority = '%s://%s:%d' % (self.__scheme, host, self.__port)
-        self.__base_uri = self.__authority
 
         self.__auth = Auth(self, key_id=key_id,
                            key_value=key_value, auth_token=auth_token,
@@ -109,7 +130,7 @@ class AblyRest(object):
     @catch_all
     def time(self, timeout=None):
         """Returns the current server time in ms since the unix epoch"""
-        r = self._get('/time', absolute_path=True, skip_auth=True,
+        r = self._get('/time', skip_auth=True,
                       timeout=timeout)
         AblyException.raise_for_response(r)
         return r.json()[0]
@@ -125,9 +146,17 @@ class AblyRest(object):
             'Content-Type': 'application/json',
         }
 
+    def _get_prefix(self, scheme=None, host=None, port=None):
+        scheme = scheme or self.__scheme
+        host = host or self.__host
+        port = port or self.__port
+
+        return '%s://%s:%d' % (scheme, host, port)
+
+    @fallback
     @reauth_if_expired
-    def _get(self, path, headers=None, params=None, absolute_path=False,
-             skip_auth=False, timeout=None):
+    def _get(self, path, headers=None, params=None, skip_auth=False,
+            timeout=None, scheme=None, host=None, port=None):
         hdrs = headers or {}
         headers = self._default_get_headers()
         headers.update(hdrs)
@@ -135,48 +164,42 @@ class AblyRest(object):
         if not skip_auth:
             headers.update(self.__auth._get_auth_headers())
 
-        prefix = self.__authority if absolute_path else self.__base_uri
+        prefix = self._get_prefix(scheme=scheme, host=host, port=port)
 
         r = self._requests.get("%s%s" % (prefix, path), headers=headers,
                                timeout=timeout)
         AblyException.raise_for_response(r)
         return r
 
+    @fallback
     @reauth_if_expired
     def _post(self, path, data=None, headers=None, params=None,
-              absolute_path=False, timeout=None):
+              timeout=None, scheme=None, host=None, port=None):
         hdrs = headers or {}
         headers = self._default_post_headers()
         headers.update(hdrs)
         headers.update(self.__auth._get_auth_headers())
 
-        prefix = self.__authority if absolute_path else self.__base_uri
+        prefix = self._get_prefix(scheme=scheme, host=host, port=port)
 
         r = self._requests.post("%s%s" % (prefix, path), headers=headers,
                                 data=data, timeout=timeout)
         AblyException.raise_for_response(r)
         return r
 
+    @fallback
     @reauth_if_expired
-    def _delete(self, path, headers=None, params=None, absolute_path=False,
-                timeout=None):
+    def _delete(self, path, headers=None, params=None, timeout=None,
+            scheme=None, host=None, port=None):
         headers = dict(headers or {})
         headers.update(self.__auth._get_auth_headers())
 
-        prefix = self.__authority if absolute_path else self.__base_uri
+        prefix = self._get_prefix(scheme=scheme, host=host, port=port)
 
         r = self._requests.delete("%s%s" % (prefix, path), headers=headers,
                                   timeout=timeout)
         AblyException.raise_for_response(r)
         return r
-
-    @property
-    def authority(self):
-        return self.__authority
-
-    @property
-    def base_uri(self):
-        return self.__base_uri
 
     @property
     def client_id(self):
@@ -218,3 +241,7 @@ class AblyRest(object):
     @property
     def _requests(self):
         return self.__session if self.__keep_alive else requests
+
+    @property
+    def _fallback_hosts(self):
+        return self.__fallback_hosts

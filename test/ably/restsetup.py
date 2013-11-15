@@ -45,7 +45,7 @@ class RestSetup:
     @staticmethod
     def get_test_vars():
         if not RestSetup.__test_vars:
-            r = requests.post("%s/apps" % ably.authority, headers=ably._default_post_headers(),
+            r = requests.post("%s/apps" % ably._get_prefix(), headers=ably._default_post_headers(),
                     data=app_spec_text)
             AblyException.raise_for_response(r)
 

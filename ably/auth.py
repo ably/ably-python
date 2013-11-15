@@ -193,7 +193,8 @@ class Auth(object):
                 400,
                 40000)
 
-        token_path = "%s/keys/%s/requestToken" % (self.__rest.base_uri, key_id)
+        token_path = "%s/keys/%s/requestToken" % (
+                self.__rest._get_prefix(), key_id)
         log.info("TokenPath: %s" % token_path)
         log.info("Headers: %s" % str(auth_headers))
         log.info("Params: %s" % str(auth_params))
