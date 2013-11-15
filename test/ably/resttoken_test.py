@@ -4,6 +4,7 @@ import time
 import json
 import unittest
 
+from ably.auth import capability_c14n
 from ably.exceptions import AblyException
 from ably.rest import AblyRest
 
@@ -16,7 +17,7 @@ class TestRestToken(unittest.TestCase):
     def setUp(self):
         # TODO instantiate a capability correctly
         capability = {"*":["*"]}
-        TestRestToken.permit_all = json.dumps(capability)
+        TestRestToken.permit_all = capability_c14n(capability)
         TestRestToken.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                 host=test_vars["host"],
                 port=test_vars["port"],

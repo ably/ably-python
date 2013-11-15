@@ -49,7 +49,7 @@ class TestRestCapability(unittest.TestCase):
         key = test_vars['keys'][1]
         
         token_params = {
-            "capability": json.dumps({
+            "capability": capability_c14n({
                 "testchannel": ["subscribe"],
             }),
         }
@@ -63,7 +63,7 @@ class TestRestCapability(unittest.TestCase):
         key = test_vars['keys'][1]
         
         token_params = {
-            "capability": json.dumps({
+            "capability": capability_c14n({
                 "testchannelx": ["publish"],
             }),
         }
@@ -79,12 +79,12 @@ class TestRestCapability(unittest.TestCase):
         token_params = {
             "key_id": key["key_id"],
             "key_value": key["key_value"],
-            "capability": json.dumps({
+            "capability": capability_c14n({
                 "channel2": ["presence", "subscribe"],
             })
         }
 
-        expected_capability = json.dumps({
+        expected_capability = capability_c14n({
             "channel2": ["subscribe"]
         })
 

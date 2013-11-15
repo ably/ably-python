@@ -20,7 +20,7 @@ __all__ = ["Auth"]
 log = logging.getLogger(__name__)
 
 
-def c14n(capability):
+def capability_c14n(capability):
     '''Canonicalizes the capability'''
     if not capability:
         return ''
@@ -31,12 +31,7 @@ def c14n(capability):
     if not capability:
         return ''
 
-    c14n_capability = {}
-
-    for key in capability.keys():
-        c14n_capability[key] = sorted(capability[key])
-
-    return json.dumps(c14n_capability)
+    return json.dumps(capability, sorted_keys=True)
 
 
 class TokenDetails(object):
@@ -169,7 +164,7 @@ class Auth(object):
         token_params.setdefault("client_id", self.__rest.client_id)
 
         if "capability" in token_params:
-            token_params["capability"] = c14n(token_params["capability"])
+            token_params["capability"] = capability_c14n(token_params["capability"])
 
         signed_token_request = ""
         if auth_callback:
