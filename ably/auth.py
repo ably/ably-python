@@ -22,9 +22,6 @@ log = logging.getLogger(__name__)
 
 def capability_c14n(capability):
     '''Canonicalizes the capability'''
-    if not capability:
-        return ''
-
     if isinstance(capability, types.StringTypes):
         capability = json.loads(capability)
 
@@ -97,7 +94,9 @@ class Auth(object):
         self.__auth_token = auth_token
         self.__auth_callback = auth_callback
         self.__auth_url = auth_url
-        self.__auth_headers = auth_headers
+        self.__auth_headers = auth_headers or {
+            'Content-Type': 'application/json'
+        }
         self.__auth_params = auth_params
 
         if key_value is not None:
@@ -212,7 +211,9 @@ class Auth(object):
 
         AblyException.raise_for_response(response)
 
-        return response.json()["access_token"]
+        access_token = response.json()["access_token"]
+        log.debug("Token: %s" % str(access_token))
+        return access_token
 
     def create_token_request(self, key_id=None, key_value=None,
                              query_time=False, token_params=None):
@@ -227,16 +228,25 @@ class Auth(object):
 
         if not token_params.get("timestamp"):
             if query_time:
-                token_params["timestamp"] = self.__rest.time()
+                token_params["timestamp"] = self.__rest.time() / 1000.0
             else:
                 token_params["timestamp"] = self._timestamp()
+
+        token_params["timestamp"] = int(token_params["timestamp"])
+
+        if not token_params.get("nonce"):
+            # Note: There is no expectation that the client
+            # specifies the nonce; this is done by the library
+            # However, this can be overridden by the client
+            # simply for testing purposes
+            token_params["nonce"] = self._random()
 
         req = {
             "id": key_id,
             "capability": token_params.get("capability", ""),
             "client_id": token_params.get("client_id", self.__rest.client_id),
             "timestamp": token_params["timestamp"],
-            "nonce": token_params.get("nonce") or self._random(),
+            "nonce": token_params["nonce"]
         }
 
         if token_params.get("ttl"):
@@ -252,22 +262,24 @@ class Auth(object):
                 token_params.get("ttl", ""),
                 token_params.get("capability", ""),
                 token_params.get("client_id", ""),
-                "%d" % token_params.get("timestamp", ""),
+                "%d" % token_params["timestamp"],
                 token_params.get("nonce", ""),
                 "",  # to get the trailing new line
             ]])
 
-            log.info("Key: %s" % key_value)
-            log.info("Plaintext: %s" % sign_text)
             mac = hmac.new(str(key_value), sign_text, hashlib.sha256).digest()
             mac = base64.b64encode(mac)
+            log.info("Key: %s" % key_value)
+            log.info("Plaintext: %s" % sign_text)
             token_params["mac"] = mac
+            log.info("Token Params: %s" % str(token_params))
 
         req["mac"] = token_params.get("mac")
 
-        log.info("generated signed request")
+        signed_request = json.dumps(req)
+        log.info("generated signed request: %s", signed_request)
 
-        return json.dumps(req)
+        return signed_request
 
     @property
     def auth_method(self):
@@ -292,8 +304,8 @@ class Auth(object):
             }
 
     def _timestamp(self):
-        """Returns the local time in ms since the unix epoch"""
-        return time.time() * 1000.0
+        """Returns the local time in seconds since the unix epoch"""
+        return int(time.time())
 
     def _random(self):
         return "%016d" % rnd.randint(0, 9999999999999999)
