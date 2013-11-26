@@ -73,7 +73,7 @@ class TestRestChannelPublish(unittest.TestCase):
                 msg="Expect publish6 to be expected JSONObject")
 
     def test_publish_various_datatypes_binary(self):
-        publish0 = TestRestChannelPublish.ably_binary.channels.publish1
+        publish1 = TestRestChannelPublish.ably_binary.channels.publish1
 
         publish1.publish("publish0", True)
         publish1.publish("publish1", 24)

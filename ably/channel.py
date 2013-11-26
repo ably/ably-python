@@ -32,11 +32,17 @@ class Channel(object):
         - `name`: the name for this message
         - `data`: the data for this message
         """
+        if isinstance(data, (bytes, bytearray)):
+            assert encoding is None or encoding == 'base64'
+            data = base64.b64encode(data)
+            encoding = 'base64'
+
         request_body = {
             'name': name,
             'data': data,
             'timestamp': time.time() * 1000.0,
         }
+
         if encoding:
             request_body['encoding'] = encoding
         request_body = json.dumps(request_body)

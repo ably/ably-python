@@ -56,7 +56,8 @@ class AblyRest(object):
     def __init__(self, key=None, key_id=None, key_value=None,
                  client_id=None, host="rest.ably.io", port=80, tls_port=443,
                  tls=True, auth_token=None, auth_callback=None,
-                 auth_url=None, keep_alive=True, fallback_hosts=None):
+                 auth_url=None, keep_alive=True, fallback_hosts=None,
+                 use_text_protocol=True):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -115,6 +116,7 @@ class AblyRest(object):
                            client_id=client_id)
 
         self.__channels = Channels(self)
+        self.__use_text_protocol = use_text_protocol
 
     def _format_time_param(self, t):
         try:
@@ -250,6 +252,10 @@ class AblyRest(object):
     @property
     def keep_alive(self):
         return self.__keep_alive
+
+    @property
+    def use_text_protocol(self):
+        return self.__use_text_protocol
 
     @property
     def _requests(self):
