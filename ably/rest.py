@@ -116,18 +116,27 @@ class AblyRest(object):
 
         self.__channels = Channels(self)
 
+    def _format_time_param(self, t):
+        try:
+            return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
+        except:
+            return '%s' % t
+
+
     @catch_all
     def stats(self, direction=None, start=None, end=None, params=None,
-              timeout=None):
+              limit=None, paginated=None, timeout=None):
         """Returns the stats for this application"""
         params = params or {}
 
         if direction:
             params["direction"] = direction
         if start:
-            params["start"] = start
+            params["start"] = self._format_time_param(start)
         if end:
-            params["end"] = end
+            params["end"] = self._format_time_param(end)
+        if limit:
+            params["limit"] = "%d" % limit
 
         return self._get('/stats', params=params, timeout=timeout).json()
 
