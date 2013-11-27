@@ -32,8 +32,9 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(key_id=key['key_id'],
                 key_value=key['key_value'])
         self.assertIsNotNone(token_details["id"], msg="Expected token id")
-        self.assertEquals(key["capability"], token_details["capability"],
-                msg="Unexpected capability")
+        self.assertEquals(key["capability"],
+                capability_c14n(token_details["capability"]),
+                msg="Unexpected capability.")
 
     def test_equal_intersection_with_key(self):
         key = test_vars['keys'][1]
@@ -47,7 +48,8 @@ class TestRestCapability(unittest.TestCase):
                 token_params=token_params)
 
         self.assertIsNotNone(token_details["id"], msg="Expected token id")
-        self.assertEquals(key["capability"], token_details["capability"],
+        self.assertEquals(key["capability"],
+                capability_c14n(token_details["capability"]),
                 msg="Unexpected capability")
 
 
@@ -99,7 +101,8 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details["id"], msg="Expected token id")
-        self.assertEquals(expected_capability, token_details["capability"],
+        self.assertEquals(expected_capability,
+                capabiliy_c14n(token_details["capability"]),
                 msg="Unexpected capability")
 
     def test_non_empty_paths_intersection(self):

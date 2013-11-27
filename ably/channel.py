@@ -3,6 +3,7 @@ import json
 import time
 
 from ably.exceptions import catch_all
+from ably.message import Message
 
 
 class Channel(object):
@@ -22,7 +23,8 @@ class Channel(object):
         """Returns the history for this channel"""
         params = params or {}
         path = '/channels/%s/history' % self.__name
-        return self.__rest._get(path, params=params, timeout=timeout).json()
+        messages = self.__rest._get(path, params=params, timeout=timeout).json()
+        return [Message(m) for m in messages]
 
     @catch_all
     def publish(self, name, data, timeout=None, encoding=None):

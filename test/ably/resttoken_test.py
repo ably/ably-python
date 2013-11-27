@@ -40,7 +40,8 @@ class TestRestToken(unittest.TestCase):
         self.assertLessEqual(token_details.get("issued_at"),
                 post_time,
                 msg="Unexpected issued at time")
-        self.assertEquals(self.permit_all, token_details.get("capability"),
+        self.assertEquals(self.permit_all,
+                capability_c14n(token_details.get("capability")),
                 msg="Unexpected capability")
 
     def test_request_token_explicit_timestamp(self):
@@ -56,7 +57,8 @@ class TestRestToken(unittest.TestCase):
         self.assertLessEqual(token_details.get("issued_at"),
                 post_time,
                 msg="Unexpected issued at time")
-        self.assertEquals(self.permit_all, token_details.get("capability"),
+        self.assertEquals(self.permit_all,
+                capability_c14n(token_details.get("capability")),
                 msg="Unexpected Capability")
 
     def test_request_token_explicit_invalid_timestamp(self):
@@ -77,7 +79,8 @@ class TestRestToken(unittest.TestCase):
         self.assertLessEqual(token_details.get("issued_at"),
                 post_time,
                 msg="Unexpected issued at time")
-        self.assertEquals(self.permit_all, token_details.get("capability"),
+        self.assertEquals(self.permit_all,
+                capability_c14n(token_details.get("capability")),
                 msg="Unexpected Capability")
 
     def test_request_token_with_duplicate_nonce(self):

@@ -6,6 +6,7 @@ import logging
 
 import requests
 
+from ably.auth import capability_c14n
 from ably.exceptions import AblyException
 from ably.rest import AblyRest
 
@@ -62,7 +63,7 @@ class RestSetup:
                     "key_id": "%s.%s" % (app_id, k.get("id", "")),
                     "key_value": k.get("value", ""),
                     "key_str": "%s.%s:%s" % (app_id, k.get("id", ""), k.get("value", "")),
-                    "capability": k.get("capability", ""),
+                    "capability": capability_c14n(k.get("capability", "")),
                 } for k in app_spec.get("keys", [])]
             }
 

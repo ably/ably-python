@@ -23,7 +23,10 @@ log = logging.getLogger(__name__)
 def capability_c14n(capability):
     '''Canonicalizes the capability'''
     if isinstance(capability, types.StringTypes):
-        capability = json.loads(capability)
+        try:
+            capability = json.loads(capability)
+        except:
+            capability = None
 
     if not capability:
         return ''
