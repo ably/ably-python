@@ -45,7 +45,9 @@ class TypedBuffer(object):
         type = DataType.NONE
         buffer = None
 
-        if isinstance(obj, six.binary_type):
+        if isinstance(obj, TypedBuffer):
+            return obj
+        elif isinstance(obj, six.binary_type):
             type = DataType.BUFFER
             buffer = obj
         elif isinstance(obj, six.string_types):
