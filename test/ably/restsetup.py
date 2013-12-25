@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import json
 import os
@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
     app_spec_text = f.read()
 
-print app_spec_text
+print(app_spec_text)
 
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST')

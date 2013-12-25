@@ -13,11 +13,11 @@ class CbcChannelCipher(object):
     def __pad(self, data):
         padding_size = self.__block_size - (len(data) % self.__block_size)
 
-        padding_char = bytes([padding_size]) if six.PY3 else chr(padding_size)
+        padding_char = six.int2byte(padding_size)
         return data + padding_char * padding_size
 
     def __unpad(self, data):
-        padding_size = data[-1] if six.PY3 else ord(data[-1])
+        padding_size = six.indexbytes(data, -1)
         return data[:-padding_size]
 
     def __random(self, length):
