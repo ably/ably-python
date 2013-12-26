@@ -1,3 +1,5 @@
+from __future__ import absolute_imports
+
 import base64
 import hashlib
 import hmac
@@ -9,6 +11,8 @@ import types
 
 import requests
 
+from ably.types.capability import Capability
+
 # initialise and seed our own instance of random
 rnd = random.Random()
 rnd.seed()
@@ -18,20 +22,6 @@ from ably.exceptions import AblyException
 __all__ = ["Auth"]
 
 log = logging.getLogger(__name__)
-
-
-def capability_c14n(capability):
-    '''Canonicalizes the capability'''
-    if isinstance(capability, types.StringTypes):
-        try:
-            capability = json.loads(capability)
-        except:
-            capability = None
-
-    if not capability:
-        return ''
-
-    return json.dumps(capability, sort_keys=True)
 
 
 class TokenDetails(object):
@@ -170,7 +160,7 @@ class Auth(object):
         token_params.setdefault("client_id", self.__rest.client_id)
 
         if "capability" in token_params:
-            token_params["capability"] = capability_c14n(token_params["capability"])
+            token_params["capability"] = unicode(Capability(token_params["capability"]) or '')
 
         signed_token_request = ""
         if auth_callback:

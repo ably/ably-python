@@ -53,13 +53,13 @@ class Capability(MutableMapping):
     def add_operation_to_resource(self, operation, resource):
         self.setdefault(resource, []).append(operation)
 
-    @staticmethod
-    def c14n(capability):
-        sorted_ops = {k:sorted(v) for k, v in six.iteritems(capability)}
-        return json.dumps(sorted_ops, sort_keys=True)
-
     def __unicode__(self):
         return Capability.c14n(self)
 
     def __str__(self):
         return unicode(self).encode('utf-8')
+
+    @staticmethod
+    def c14n(capability):
+        sorted_ops = {k:sorted(v) for k, v in six.iteritems(capability)}
+        return json.dumps(sorted_ops, sort_keys=True)
