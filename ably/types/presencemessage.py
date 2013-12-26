@@ -1,0 +1,59 @@
+import base64
+import json
+
+class PresenceAction(object):
+    ENTER = 0
+    LEAVE = 1
+    UPDATE = 2
+
+
+class PresenceMessage(object):
+    def __init__(self, action, client_id=None, client_data=None):
+        self.action = action
+        self.client_id = client_id
+        self.member_id = None
+        self.client_data = client_data
+
+    @staticmethod
+    def from_dict(obj):
+        pm = PresenceMessage()
+        pm.action = obj.get('action', 0)
+        pm.client_id = obj.get('clientId', '')
+        pm.member_id = obj.get('memberId', '')
+        encoding = obj.get('encoding', '')
+        client_data = obj.get('clientData', '')
+
+        if 'base64' == encoding:
+            pm.client_data = base64.b64decode(client_data)
+        else:
+            pm.client_data = client_data
+
+        return pm
+
+    @staticmethod
+    def from_json(jsonstr):
+        obj = json.loads(jsonstr)
+
+        if isinstance(obj, dict):
+            return PresenceMessage.from_obj(obj)
+        elif isinstance(obj, list):
+            return [PresenceMessage.from_obj(i) for i in obj]
+        else:
+            raise ValueError('Invalid presence message str')
+
+    def to_dict(self):
+        d = {
+            "action": self.action,
+        }
+        if None != self.client_id:
+            d["clientId"] = self.client_id
+        if None != self.client_data:
+            if isinstance(self.client_data, six.byte_type):
+                d['clientData'] = base64.b64encode(self.client_data)
+                d['encoding'] = 'base64'
+            else:
+                d['clientData'] = self.client_data
+        return d
+
+    def to_json(self):
+        return json.dumps(self.to_dict())

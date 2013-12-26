@@ -1,6 +1,10 @@
+from __future__ import absolute_import
+
 import six
 from Crypto.Cipher import AES
 from Crypto import Random
+
+from ably.types.typedbuffer import TypedBuffer
 
 class CbcChannelCipher(object):
     def __init__(self, secret_key=None, iv=None, algorithm='AES'):
@@ -43,3 +47,7 @@ class CbcChannelCipher(object):
     @property
     def iv(self):
         return self.__iv
+
+
+class CipherData(TypedBuffer):
+    pass
