@@ -1,4 +1,4 @@
-from __future__ import absolute_imports
+from __future__ import absolute_import
 
 import base64
 import hashlib
@@ -17,7 +17,7 @@ from ably.types.capability import Capability
 rnd = random.Random()
 rnd.seed()
 
-from ably.exceptions import AblyException
+from ably.util.exceptions import AblyException
 
 __all__ = ["Auth"]
 

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 class ResourceCount(object):
     def __init__(self, opened=0.0, peak=0.0, mean=0.0, min=0.0, refused=0.0):
         self.opened = opened

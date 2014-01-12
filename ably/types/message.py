@@ -22,7 +22,7 @@ class Message(object):
         return self.__data
 
     def encrypt(self, channel_cipher):
-        if isinstance(self.data, CipherData)
+        if isinstance(self.data, CipherData):
             return
 
         typed_data = TypedBuffer.from_obj(self.data)

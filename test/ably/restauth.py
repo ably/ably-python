@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import unittest
 
-from ably.auth import Auth
-from ably.rest import AblyRest
+from ably.rest.auth import Auth
+from ably.rest.rest import AblyRest
 
 from test.ably.restsetup import RestSetup
 

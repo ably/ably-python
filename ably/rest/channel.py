@@ -1,9 +1,11 @@
+from __future__ import absolute_import
+
 import base64
 import json
 import time
 
-from ably.exceptions import catch_all
-from ably.message import Message
+from ably.util.exceptions import catch_all
+from ably.types.message import Message
 
 
 class Channel(object):

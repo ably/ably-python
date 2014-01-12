@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from collections import MutableMapping
 import json
 
@@ -57,7 +59,7 @@ class Capability(MutableMapping):
         return Capability.c14n(self)
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return str(unicode(self).encode('utf-8'))
 
     @staticmethod
     def c14n(capability):

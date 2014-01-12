@@ -1,12 +1,14 @@
+from __future__ import absolute_import
+
 import functools
 import logging
 import types
 
 import requests
 
-from ably.auth import Auth
-from ably.channel import Channels
-from ably.exceptions import AblyException, catch_all
+from ably.rest.auth import Auth
+from ably.rest.channel import Channels
+from ably.util.exceptions import AblyException, catch_all
 
 log = logging.getLogger(__name__)
 
