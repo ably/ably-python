@@ -8,11 +8,27 @@ class PresenceAction(object):
 
 
 class PresenceMessage(object):
-    def __init__(self, action, client_id=None, client_data=None):
-        self.action = action
-        self.client_id = client_id
-        self.member_id = None
-        self.client_data = client_data
+    def __init__(self, action, client_id=None, client_data=None, member_id=None):
+        self.__action = action
+        self.__client_id = client_id
+        self.__client_data = client_data
+        self.__member_id = None
+
+    @property
+    def action(self):
+        return self.__action
+
+    @property
+    def client_id(self):
+        return self.__client_id
+
+    @property
+    def client_data(self):
+        return self.__client_data
+
+    @property
+    def member_id(self):
+        return self.__member_id
 
     @staticmethod
     def from_dict(obj):

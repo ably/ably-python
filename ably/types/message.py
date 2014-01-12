@@ -5,9 +5,21 @@ from ably.util.crypto import CipherData
 
 class Message(object):
     def __init__(self, name=None, data=None, client_id=None):
-        self.name = name
-        self.client_id = client_id
-        self.data = data
+        self.__name = name
+        self.__client_id = client_id
+        self.__data = data
+
+    @property
+    def name(self):
+        return self.__name
+
+    @property
+    def client_id(self):
+        return self.__client_id
+
+    @property
+    def data(self):
+        return self.__data
 
     def encrypt(self, channel_cipher):
         if isinstance(self.data, CipherData)
