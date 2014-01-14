@@ -4,6 +4,8 @@ import base64
 import json
 import time
 
+import six
+
 from ably.util.exceptions import catch_all
 from ably.types.message import Message
 
@@ -61,7 +63,8 @@ class Channels(object):
         self.__attached = {}
 
     def get(self, name):
-        name = unicode(name)
+        if isinstance(name, six.binary_type):
+            name = name.decode('ascii')
         if name not in self.__attached:
             self.__attached[name] = Channel(self.__ably, name)
         return self.__attached[name]
