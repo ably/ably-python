@@ -36,24 +36,19 @@ class Channel(object):
         - `name`: the name for this message
         - `data`: the data for this message
         """
-        if isinstance(data, (bytes, bytearray)):
-            assert encoding is None or encoding == 'base64'
-            data = base64.b64encode(data)
-            encoding = 'base64'
 
-        request_body = {
-            'name': name,
-            'data': data,
-            'timestamp': time.time() * 1000.0,
-        }
+        message = Message(name, data)
 
-        if encoding:
-            request_body['encoding'] = encoding
-        request_body = json.dumps(request_body)
+        if self.ably.encrypted:
+            message.encrypt(self.cipher)
+
+        if self.ably.use_text_protocol:
+            request_body = message.as_json()
+        else:
+            request_body = message.as_thrift()
 
         path = '/channels/%s/publish' % self.__name
-        return self.__rest._post(path, data=request_body,
-                                 timeout=timeout).json()
+        return self.__rest._post(path, data=request_body, timeout=timeout).json()
 
 
 class Channels(object):

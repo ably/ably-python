@@ -100,7 +100,7 @@ class Auth(object):
                 self.__auth_method = Auth.Method.BASIC
                 basic_key = "%s:%s" % (key_id, key_value)
                 basic_key = base64.b64encode(basic_key.encode('utf-8'))
-                self.__basic_credentials = basic_key.decode('utf-8')
+                self.__basic_credentials = basic_key.decode('ascii')
                 return
 
         # Using token auth

@@ -266,3 +266,8 @@ class AblyRest(object):
     @property
     def _fallback_hosts(self):
         return self.__fallback_hosts
+
+    @property
+    def encrypted(self):
+        #TODO
+        return False
