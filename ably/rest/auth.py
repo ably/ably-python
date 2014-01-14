@@ -99,8 +99,8 @@ class Auth(object):
                 log.info("anonymous, using basic auth")
                 self.__auth_method = Auth.Method.BASIC
                 basic_key = "%s:%s" % (key_id, key_value)
-                basic_key = base64.b64encode(basic_key)
-                self.__basic_credentials = basic_key
+                basic_key = base64.b64encode(basic_key.encode('utf-8'))
+                self.__basic_credentials = basic_key.decode('utf-8')
                 return
 
         # Using token auth
