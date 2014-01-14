@@ -9,8 +9,8 @@ from ably.types.message import Message
 
 
 class Channel(object):
-    def __init__(self, rest, name):
-        self.__rest = rest
+    def __init__(self, ably, name):
+        self.__ably = ably
         self.__name = name
 
     @catch_all
@@ -18,14 +18,14 @@ class Channel(object):
         """Returns the presence for this channel"""
         params = params or {}
         path = '/channels/%s/presence' % self.__name
-        return self.__rest._get(path, params=params, timeout=timeout).json()
+        return self.__ably._get(path, params=params, timeout=timeout).json()
 
     @catch_all
     def history(self, params=None, timeout=None):
         """Returns the history for this channel"""
         params = params or {}
         path = '/channels/%s/history' % self.__name
-        messages = self.__rest._get(path, params=params, timeout=timeout).json()
+        messages = self.__ably._get(path, params=params, timeout=timeout).json()
         return [Message(m) for m in messages]
 
     @catch_all
@@ -48,18 +48,22 @@ class Channel(object):
             request_body = message.as_thrift()
 
         path = '/channels/%s/publish' % self.__name
-        return self.__rest._post(path, data=request_body, timeout=timeout).json()
+        return self.__ably._post(path, data=request_body, timeout=timeout).json()
+
+    @property
+    def ably(self):
+        return self.__ably
 
 
 class Channels(object):
     def __init__(self, rest):
-        self.__rest = rest
+        self.__ably = rest
         self.__attached = {}
 
     def get(self, name):
         name = unicode(name)
         if name not in self.__attached:
-            self.__attached[name] = Channel(self.__rest, name)
+            self.__attached[name] = Channel(self.__ably, name)
         return self.__attached[name]
 
     def __getitem__(self, key):

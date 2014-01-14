@@ -1,9 +1,16 @@
 from __future__ import absolute_import
 
+import base64
+import json
+import logging
+import time
+
 import six
 
 from ably.types.typedbuffer import TypedBuffer
 from ably.util.crypto import CipherData
+
+log = logging.getLogger(__name__)
 
 class Message(object):
     def __init__(self, name=None, data=None, client_id=None):
@@ -45,9 +52,15 @@ class Message(object):
         data = self.data
         encoding = None
 
+        log.debug(data)
+        log.debug(data.__class__)
+
         if isinstance(data, six.binary_type):
             data = base64.b64encode(data).decode('ascii')
             encoding = 'base64'
+
+        log.debug(data)
+        log.debug(data.__class__)
 
         request_body = {
             'name': self.name,
@@ -58,4 +71,5 @@ class Message(object):
         if encoding:
             request_body['encoding'] = encoding
         request_body = json.dumps(request_body)
+        return request_body
 
