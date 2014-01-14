@@ -26,7 +26,7 @@ class Channel(object):
         params = params or {}
         path = '/channels/%s/history' % self.__name
         messages = self.__ably._get(path, params=params, timeout=timeout).json()
-        return [Message(m) for m in messages]
+        return [Message.from_json(m) for m in messages]
 
     @catch_all
     def publish(self, name, data, timeout=None, encoding=None):

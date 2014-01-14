@@ -64,9 +64,9 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertEquals(six.u("This is a string message payload"),
                 message_contents["publish3"],
                 msg="Expect publish3 to be expected String)")
-        self.assertEquals("This is a byte[] message payload",
+        self.assertEquals(b"This is a byte[] message payload",
                 message_contents["publish4"],
-                msg="Expect publish4 to be expected byte[]")
+                msg="Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4']))
         self.assertEquals({"test": "This is a JSONObject message payload"},
                 json.loads(message_contents["publish5"]),
                 msg="Expect publish5 to be expected JSONObject")
