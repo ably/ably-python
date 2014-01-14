@@ -4,6 +4,7 @@ import math
 from datetime import datetime
 from datetime import timedelta
 import json
+import logging
 import time
 import unittest
 
@@ -15,7 +16,7 @@ from ably.util.exceptions import AblyException
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
-
+log = logging.getLogger(__name__)
 
 class TestRestChannelPublish(unittest.TestCase):
     @classmethod
@@ -54,6 +55,7 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertEquals(7, len(messages), msg="Expected 7 messages")
         
         message_contents = dict((m.name, m.data) for m in messages)
+        log.debug("message_contents: %s" % str(message_contents))
 
         self.assertEquals(True, message_contents["publish0"],
                 msg="Expect publish0 to be Boolean(true)")
@@ -68,10 +70,10 @@ class TestRestChannelPublish(unittest.TestCase):
                 message_contents["publish4"],
                 msg="Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4']))
         self.assertEquals({"test": "This is a JSONObject message payload"},
-                json.loads(message_contents["publish5"]),
+                message_contents["publish5"],
                 msg="Expect publish5 to be expected JSONObject")
         self.assertEquals(["This is a JSONArray message payload"],
-                json.loads(message_contents["publish6"]),
+                message_contents["publish6"],
                 msg="Expect publish6 to be expected JSONObject")
 
 #    def test_publish_various_datatypes_binary(self):
