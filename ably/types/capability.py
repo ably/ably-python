@@ -2,8 +2,11 @@ from __future__ import absolute_import
 
 from collections import MutableMapping
 import json
+import logging
 
 import six
+
+log = logging.getLogger(__name__)
 
 class Capability(MutableMapping):
     def __init__(self, obj={}):
