@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from ably.http.request import Request
+from ably.http.http import Request
 
 class PaginatedResult(object):
     def __init__(self, http, current, content_type, rel_first, rel_current, rel_next, response_processor):

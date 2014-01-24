@@ -1,4 +1,9 @@
+from __future__ import absolute_import
+
 import urlparse
+
+import requests
+
 
 class Request(object):
     def __init__(self, method='GET', url='/', headers=None, body=None, skip_auth=False):
@@ -30,3 +35,27 @@ class Request(object):
     @property
     def skip_auth(self):
         return self.__skip_auth
+
+
+class Response(object):
+    def __init__(self, response):
+        self.__response = response
+
+
+class Http(object):
+    def __init__(self, ably, options=None):
+        options = options or {}
+        self._ably = ably
+        self._options = options
+
+        self._scheme = 'https' if options.tls else 'http'
+        self._port = Defaults.get_port(options)
+        
+        self._session = requests.Session()
+
+    def make_request(self, method, url, headers=None, body=None):
+
+    def make_request(self, request):
+        url = urlparse.urljoin(self.base_url, request.url)
+        response = requests.Request(request.method, url, data=request.body, headers=request.headers)
+        return Response(response)
