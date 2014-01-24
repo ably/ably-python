@@ -3,9 +3,11 @@ from __future__ import absolute_import
 import base64
 import json
 import time
+import urllib
 
 import six
 
+from ably.http.paginatedresult import PaginatedResult
 from ably.util.exceptions import catch_all
 from ably.types.message import Message
 
@@ -27,8 +29,11 @@ class Channel(object):
         """Returns the history for this channel"""
         params = params or {}
         path = '/channels/%s/history' % self.__name
-        messages = self.__ably._get(path, params=params, timeout=timeout).json()
-        return [Message.from_json(m) for m in messages]
+
+        if params:
+            path = path + '?' + urllib.urlencode(params)
+
+        return PaginatedResult.paginated_query(self.ably.http, path, None, messages_processor)
 
     @catch_all
     def publish(self, name, data, timeout=None, encoding=None):

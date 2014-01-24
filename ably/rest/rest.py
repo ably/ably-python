@@ -142,7 +142,11 @@ class AblyRest(object):
         if limit:
             params["limit"] = "%d" % limit
 
-        return self._get('/stats', params=params, timeout=timeout).json()
+        url = '/stats'
+        if params:
+            url += '?' + urllib.urlencode(params)
+
+        return PaginatedResult.paginated_query(self.http, url, None, stats_processor)
 
     @catch_all
     def time(self, timeout=None):
