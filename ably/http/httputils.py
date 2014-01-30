@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+
+from ably.util.exceptions import AblyException
+
 class HttpUtils(object):
     default_format = "json"
 
@@ -11,7 +15,9 @@ class HttpUtils(object):
     @staticmethod
     def default_get_headers(binary=False):
         if binary:
-            raise AblyException()
+            raise AblyException(reason="Binary protocol is not implemented",
+                    status_code=400,
+                    code=40000)
         else:
             return {
                 "Accept": "application/json",
@@ -20,7 +26,9 @@ class HttpUtils(object):
     @staticmethod
     def default_post_headers(binary=False):
         if binary:
-            raise AblyException()
+            raise AblyException(reason="Binary protocol is not implemented",
+                    status_code=400,
+                    code=40000)
         else:
             return {
                 "Accept": "application/json",

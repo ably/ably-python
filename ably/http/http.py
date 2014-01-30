@@ -5,7 +5,9 @@ import urlparse
 
 import requests
 
+from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
+from ably.util.exceptions import AblyException
 
 # Decorator to attempt fallback hosts in case of a host-error
 def fallback(func):
@@ -116,7 +118,7 @@ class Http(object):
         url = urlparse.urljoin(self.preferred_host, url)
 
         hdrs = headers or {}
-        headers = self._default_get_headers()
+        headers = HttpUtils.default_get_headers(not self.options.use_text_protocol)
         headers.update(hdrs)
 
         if not skip_auth:
@@ -127,7 +129,7 @@ class Http(object):
 
         return Response(response)
 
-    def make_request(self, request):
+    def request(self, request):
         return self.make_request(request.method, request.url, headers=request.headers, body=request.body)
 
     def get(self, url, headers=None, skip_auth=False, timeout=None):

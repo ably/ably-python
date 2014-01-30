@@ -4,8 +4,6 @@ import json
 import os
 import logging
 
-import requests
-
 from ably.http.httputils import HttpUtils
 from ably.rest.rest import AblyRest
 from ably.types.capability import Capability
@@ -48,8 +46,8 @@ class RestSetup:
     @staticmethod
     def get_test_vars():
         if not RestSetup.__test_vars:
-            r = requests.post("/apps", headers=HttpUtils.default_post_headers(),
-                    data=app_spec_text)
+            r = ably.http.post("/apps", headers=HttpUtils.default_post_headers(),
+                    body=app_spec_text)
             AblyException.raise_for_response(r)
 
             app_spec = r.json()
@@ -87,7 +85,7 @@ class RestSetup:
 
         log.info(str(test_vars))
         headers = HttpUtils.default_get_headers()
-        ably._delete('/apps/' + test_vars['app_id'], headers)
+        ably.http.delete('/apps/' + test_vars['app_id'], headers)
 
         RestSetup.__test_vars = None
 
