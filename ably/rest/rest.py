@@ -55,6 +55,7 @@ class AblyRest(object):
         self.__http.auth = self.__auth
 
         self.__channels = Channels(self)
+        self.__options = options
 
     @classmethod
     def with_key(cls, key):
@@ -111,3 +112,7 @@ class AblyRest(object):
     @property
     def http(self):
         return self.__http
+
+    @property
+    def options(self):
+        return self.__options

@@ -4,7 +4,7 @@ from ably.types.authoptions import AuthOptions
 
 class Options(AuthOptions):
     def __init__(self, client_id=None, log_level=0, tls=True, host=None, ws_host=None,
-            port=0, tls_port=0, use_text_protocol=False, queue_messages=False,
+            port=0, tls_port=0, use_text_protocol=True, queue_messages=False,
             recover=False, **kwargs):
         super(Options, self).__init__(self, **kwargs)
 

@@ -122,7 +122,7 @@ class Http(object):
         headers.update(hdrs)
 
         if not skip_auth:
-            headers.update(self.http.auth._get_auth_headers())
+            headers.update(self.auth._get_auth_headers())
 
         response = requests.Request(method, url, data=body, headers=headers)
         AblyException.raise_for_response(response)
