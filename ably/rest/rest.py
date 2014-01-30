@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import functools
 import logging
 import types
 
@@ -12,46 +11,6 @@ from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
 
 log = logging.getLogger(__name__)
-
-# Decorator to attempt fallback hosts in case of a host-error
-def fallback(func):
-    @functools.wraps(func)
-    def wrapper(rest, *args, **kwargs):
-        try:
-            return func(rest, *args, **kwargs)
-        except requests.exceptions.ConnectionError as e:
-            # if we cannot attempt a fallback, re-raise
-            # TODO: See if we can determine why this failed
-            if kwargs.get("host") or not rest._fallback_hosts:
-                raise
-
-        last_exception = None
-        for host in rest._fallback_hosts:
-            try:
-                kwargs["host"] = host
-                return func(rest, *args, **kwargs)
-            except requests.exceptions.ConnectionError as e:
-                # TODO: as above
-                last_exception = e
-
-        raise last_exception
-    return wrapper
-
-def reauth_if_expired(func):
-    @functools.wraps(func)
-    def wrapper(rest, *args, **kwargs):
-        if kwargs.get("skip_auth"):
-            return func(rest, *args, **kwargs)
-
-        while True:
-            try:
-                return func(rest, *args, **kwargs)
-            except AblyException as e:
-                if e.code == 40140:
-                    rest.reauth()
-                    continue
-                raise
-    return wrapper
 
 
 class AblyRest(object):
@@ -84,19 +43,16 @@ class AblyRest(object):
             msg = "no options provided"
             raise AblyException(msg, 400, 40000)
 
-        log.debug("key_id: %s", key_id)
-        log.debug("key_value: %s", key_value)
-
         self.__client_id = options.client_id
 
-        if self.__keep_alive:
-            self.__session = requests.Session()
-        else:
-            self.__session = None
+        #if self.__keep_alive:
+        #    self.__session = requests.Session()
+        #else:
+        #    self.__session = None
 
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
-        self.__http.set_auth(self.__auth)
+        self.__http.auth = self.__auth
 
         self.__channels = Channels(self)
 
@@ -138,24 +94,6 @@ class AblyRest(object):
         r = self.http.get('/time', skip_auth=True, timeout=timeout)
         AblyException.raise_for_response(r)
         return r.json()[0]
-
-    def _default_get_headers(self):
-        return {
-            'Accept': 'application/json',
-        }
-
-    def _default_post_headers(self):
-        return {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        }
-
-    def _get_prefix(self, scheme=None, host=None, port=None):
-        scheme = scheme or self.__scheme
-        host = host or self.__host
-        port = port or self.__port
-
-        return '%s://%s:%d' % (scheme, host, port)
 
     @property
     def client_id(self):

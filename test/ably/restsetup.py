@@ -6,8 +6,10 @@ import logging
 
 import requests
 
+from ably.http.httputils import HttpUtils
 from ably.rest.rest import AblyRest
 from ably.types.capability import Capability
+from ably.types.options import Options
 from ably.util.exceptions import AblyException
 
 app_spec_text = ""
@@ -26,18 +28,18 @@ if host is None:
 
 if host.endswith("rest.ably.io"):
     host = "staging-rest.ably.io"
-    encrypted = tls
     port = 80
     tls_port = 443
 else:
-    encrypted = tls and not host.equals("localhost")
+    tls = tls and not host.equals("localhost")
     port = 8080
     tls_port = 8081
 
-ably = AblyRest(host=host,
+
+ably = AblyRest(Options(host=host,
         port=port,
         tls_port=tls_port,
-        tls=encrypted)
+        tls=tls))
 
 
 class RestSetup:
@@ -46,7 +48,7 @@ class RestSetup:
     @staticmethod
     def get_test_vars():
         if not RestSetup.__test_vars:
-            r = requests.post("%s/apps" % ably._get_prefix(), headers=ably._default_post_headers(),
+            r = requests.post("/apps", headers=HttpUtils.default_post_headers(),
                     data=app_spec_text)
             AblyException.raise_for_response(r)
 
@@ -60,7 +62,7 @@ class RestSetup:
                 "host": host,
                 "port": port,
                 "tls_port": tls_port,
-                "encrypted": encrypted,
+                "tls": tls,
                 "keys": [{
                     "key_id": "%s.%s" % (app_id, k.get("id", "")),
                     "key_value": k.get("value", ""),
@@ -76,14 +78,15 @@ class RestSetup:
     @staticmethod
     def clear_test_vars():
         test_vars = RestSetup.__test_vars
-        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["encrypted"])
+        options = Options.with_key(test_vars["keys"][0]["key_str"])
+        options.host = test_vars["host"]
+        options.port = test_vars["port"]
+        options.tls_port = test_vars["tls_port"]
+        ptions.tls = test_vars["tls"]
+        ably = AblyRest(options)
 
         log.info(str(test_vars))
-        headers = ably._default_get_headers()
+        headers = HttpUtils.default_get_headers()
         ably._delete('/apps/' + test_vars['app_id'], headers)
 
         RestSetup.__test_vars = None

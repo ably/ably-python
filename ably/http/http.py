@@ -1,8 +1,52 @@
 from __future__ import absolute_import
 
+import functools
 import urlparse
 
 import requests
+
+from ably.transport.defaults import Defaults
+
+# Decorator to attempt fallback hosts in case of a host-error
+def fallback(func):
+    @functools.wraps(func)
+    def wrapper(http, *args, **kwargs):
+        try:
+            return func(http, *args, **kwargs)
+        except requests.exceptions.ConnectionError as e:
+            # if we cannot attempt a fallback, re-raise
+            # TODO: See if we can determine why this failed
+            fallback_hosts = Defaults.get_fallback_hosts(http.options)
+            if kwargs.get("host") or not fallback_hosts:
+                raise
+
+        last_exception = None
+        for host in fallback_hosts:
+            try:
+                kwargs["host"] = host
+                return func(rest, *args, **kwargs)
+            except requests.exceptions.ConnectionError as e:
+                # TODO: as above
+                last_exception = e
+
+        raise last_exception
+    return wrapper
+
+def reauth_if_expired(func):
+    @functools.wraps(func)
+    def wrapper(rest, *args, **kwargs):
+        if kwargs.get("skip_auth"):
+            return func(rest, *args, **kwargs)
+
+        while True:
+            try:
+                return func(rest, *args, **kwargs)
+            except AblyException as e:
+                if e.code == 40140:
+                    rest.reauth()
+                    continue
+                raise
+    return wrapper
 
 
 class Request(object):
@@ -58,20 +102,18 @@ class Response(object):
 
 
 class Http(object):
-    def __init__(self, ably, **options):
+    def __init__(self, ably, options):
         options = options or {}
-        self._ably = ably
-        self._options = options
+        self.__ably = ably
+        self.__options = options
 
-        self._scheme = 'https' if options.get('tls') else 'http'
-        self._port = Defaults.get_port(options)
-        
-        self._session = requests.Session()
+        self.__session = requests.Session()
+        self.__auth = None
 
     @fallback
     @reauth_if_expired
     def make_request(self, method, url, headers=None, body=None, skip_auth=False, timeout=None):
-        url = urlparse.urljoin(self.base_url, url)
+        url = urlparse.urljoin(self.preferred_host, url)
 
         hdrs = headers or {}
         headers = self._default_get_headers()
@@ -79,8 +121,6 @@ class Http(object):
 
         if not skip_auth:
             headers.update(self.http.auth._get_auth_headers())
-
-        prefix = self._get_prefix(scheme=scheme, host=host, port=port)
 
         response = requests.Request(method, url, data=body, headers=headers)
         AblyException.raise_for_response(response)
@@ -96,5 +136,21 @@ class Http(object):
     def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         return self.make_request('POST', url, headers=headers, body=body, skip_auth=skip_auth, timeout=timeout)
 
-    def delete(self, url, headers=None, skip_auth=False timeout=None):
+    def delete(self, url, headers=None, skip_auth=False, timeout=None):
         return self.make_request('DELETE', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
+
+    @property
+    def auth(self):
+        return self.__auth
+
+    @auth.setter
+    def auth(self, value):
+        self.__auth = value
+
+    @property
+    def options(self):
+        return self.__options
+
+    @property
+    def preferred_host(self):
+        return Defaults.get_host(self.options)

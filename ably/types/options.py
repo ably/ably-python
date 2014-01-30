@@ -3,20 +3,22 @@ from __future__ import absolute_import
 from ably.types.authoptions import AuthOptions
 
 class Options(AuthOptions):
-    def __init__(self, **kwargs):
-        super(AuthOptions, self).__init__(self, **kwargs)
+    def __init__(self, client_id=None, log_level=0, tls=True, host=None, ws_host=None,
+            port=0, tls_port=0, use_text_protocol=False, queue_messages=False,
+            recover=False, **kwargs):
+        super(Options, self).__init__(self, **kwargs)
 
         # TODO check these defaults
-        self.__client_id = None
-        self.__log_level = 0
-        self.__tls = True
-        self.__host = None
-        self.__ws_host = None
-        self.__port = 0
-        self.__tls_port = 0
-        self.__use_text_protocol = False
-        self.__queue_messages = False
-        self.__recover = None
+        self.__client_id = client_id
+        self.__log_level = log_level
+        self.__tls = tls
+        self.__host = host
+        self.__ws_host = ws_host
+        self.__port = port
+        self.__tls_port = tls_port
+        self.__use_text_protocol = use_text_protocol
+        self.__queue_messages = queue_messages
+        self.__recover = recover
 
     @classmethod
     def with_key(cls, key):
