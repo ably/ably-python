@@ -18,6 +18,10 @@ class Options(AuthOptions):
         self.__queue_messages = False
         self.__recover = None
 
+    @classmethod
+    def with_key(cls, key):
+        return cls(key=key)
+
     @property
     def client_id(self):
         return self.__client_id

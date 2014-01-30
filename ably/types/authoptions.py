@@ -1,28 +1,31 @@
+from __future__ import absolute_import
+
+from ably.util.exceptions import AblyException
+
 class AuthOptions(object):
-    def __init__(self, key=None, auth_callback=None, auth_url=None, key_id=None, key_value=None, auth_token=None, auth_headers=None, auth_params=None, query_time=False):
-        if key is not None:
-            key_components = key.split(':')
-            assert len(key_components) == 2
-            self.__key_id = key_components[0]
-            self.__key_value = key_components[1]
-
-            assert auth_callback is None
-            assert auth_url is None
-            assert auth_token is None
-            assert auth_headers is None
-            assert auth_params is None
-            assert key_id is None
-            assert key_value is None
-        else:
-            self.__key_id = key_id
-            self.__key_value = key_value
-
+    def __init__(self, auth_callback=None, auth_url=None, auth_token=None, auth_headers=None, auth_params=None, key_id=None, key_value=None, query_time=False):
         self.__auth_callback = auth_callback
         self.__auth_url = auth_url
         self.__auth_token = auth_token
         self.__auth_headers = auth_headers
         self.__auth_params = auth_params
+        self.__key_id = key_id
+        self.__key_value = key_value
         self.__query_time = query_time
+
+    @classmethod
+    def with_key(cls, key):
+        key_components = key.split(':')
+
+        if len(key_components) == 2:
+            raise AblyException("invalid key parameter", 401, 40101)
+
+        key_id = key_components[0]
+        key_value = key_components[1]
+
+        return cls(key_id=key_id, key_value=key_value)
+
+
 
     def merge(self, other):
         if self.__auth_callback is None:

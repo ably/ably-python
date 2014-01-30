@@ -41,21 +41,60 @@ class Response(object):
     def __init__(self, response):
         self.__response = response
 
+    def json(self):
+        return self.response.json()
+
+    @property
+    def response(self):
+        return self.__response
+
+    @property
+    def text(self):
+        return self.response.text
+
+    @property
+    def status_code(self):
+        return self.response.status_code
+
 
 class Http(object):
-    def __init__(self, ably, options=None):
+    def __init__(self, ably, **options):
         options = options or {}
         self._ably = ably
         self._options = options
 
-        self._scheme = 'https' if options.tls else 'http'
+        self._scheme = 'https' if options.get('tls') else 'http'
         self._port = Defaults.get_port(options)
         
         self._session = requests.Session()
 
-    def make_request(self, method, url, headers=None, body=None):
+    @fallback
+    @reauth_if_expired
+    def make_request(self, method, url, headers=None, body=None, skip_auth=False, timeout=None):
+        url = urlparse.urljoin(self.base_url, url)
+
+        hdrs = headers or {}
+        headers = self._default_get_headers()
+        headers.update(hdrs)
+
+        if not skip_auth:
+            headers.update(self.http.auth._get_auth_headers())
+
+        prefix = self._get_prefix(scheme=scheme, host=host, port=port)
+
+        response = requests.Request(method, url, data=body, headers=headers)
+        AblyException.raise_for_response(response)
+
+        return Response(response)
 
     def make_request(self, request):
-        url = urlparse.urljoin(self.base_url, request.url)
-        response = requests.Request(request.method, url, data=request.body, headers=request.headers)
-        return Response(response)
+        return self.make_request(request.method, request.url, headers=request.headers, body=request.body)
+
+    def get(self, url, headers=None, skip_auth=False, timeout=None):
+        return self.make_request('GET', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
+
+    def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        return self.make_request('POST', url, headers=headers, body=body, skip_auth=skip_auth, timeout=timeout)
+
+    def delete(self, url, headers=None, skip_auth=False timeout=None):
+        return self.make_request('DELETE', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
