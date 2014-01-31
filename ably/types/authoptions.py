@@ -14,16 +14,18 @@ class AuthOptions(object):
         self.__query_time = query_time
 
     @classmethod
-    def with_key(cls, key):
+    def with_key(cls, key, **kwargs):
+        kwargs = kwargs or {}
+
         key_components = key.split(':')
 
         if len(key_components) != 2:
             raise AblyException("invalid key parameter", 401, 40101)
 
-        key_id = key_components[0]
-        key_value = key_components[1]
+        kwargs['key_id'] = key_components[0]
+        kwargs['key_value'] = key_components[1]
 
-        return cls(key_id=key_id, key_value=key_value)
+        return cls(**kwargs)
 
 
 

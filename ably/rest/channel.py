@@ -7,15 +7,44 @@ import urllib
 
 import six
 
+from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
-from ably.util.exceptions import catch_all
 from ably.types.message import Message
+from ably.types.presence import PresenceMessage, presence_response_handler
+from ably.util.exceptions import catch_all
+
+
+class Presence(object):
+    def __init__(self, channel):
+        self.__base_path = channel.base_path
+        self.__binary = not channel.ably.options.use_text_protocol
+        self.__http = channel.ably.http
+
+    def get(self):
+        path = '%s/presence' % self.__base_path
+        headers = HttpUtils.default_get_headers(self.__binary)
+        response = self.__http.get(path, headers=headers)
+        return presence_response_handler(response)
+
+    def history(self):
+        path = '%s/presence/history' % self.__base_path
+        headers = HttpUtils.default_get_headers(self.__binary)
+        response = self.__http.get(path, headers=headers)
+        return PaginatedResult.paginated_query(self.__http, path, headers, presence_response_handler)
 
 
 class Channel(object):
-    def __init__(self, ably, name):
+    def __init__(self, ably, name, options):
         self.__ably = ably
         self.__name = name
+        self.__options = options
+        self.__base_path = '/channels/%s/' % urllib.quote(name)
+        self.__presence = Presence()
+
+        if options and options.encrypted:
+            self.__cipher = Crypto.get_cipher(options)
+        else:
+            self.__cipher = None
 
     @catch_all
     def presence(self, params=None, timeout=None):
@@ -46,8 +75,8 @@ class Channel(object):
 
         message = Message(name, data)
 
-        if self.ably.encrypted:
-            message.encrypt(self.cipher)
+        if self.encrypted:
+            message.encrypt(self.__cipher)
 
         if self.ably.use_text_protocol:
             request_body = message.as_json()
@@ -60,6 +89,22 @@ class Channel(object):
     @property
     def ably(self):
         return self.__ably
+
+    @property
+    def base_path(self):
+        return self.__base_path
+
+    @property
+    def cipher(self):
+        return self.__cipher
+
+    @property
+    def encrypted(self):
+        return self.options and self.options.encrypted
+
+    @property
+    def options(self):
+        return self.__options
 
 
 class Channels(object):

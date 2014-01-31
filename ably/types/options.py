@@ -21,8 +21,18 @@ class Options(AuthOptions):
         self.__recover = recover
 
     @classmethod
-    def with_key(cls, key):
-        return super(Options, cls).with_key(key)
+    def with_key(cls, key, **kwargs):
+        kwargs = kwargs or {}
+
+        key_components = key.split(':')
+
+        if len(key_components) != 2:
+            raise AblyException("invalid key parameter", 401, 40101)
+
+        kwargs['key_id'] = key_components[0]
+        kwargs['key_value'] = key_components[1]
+
+        return cls(**kwargs)
 
     @property
     def client_id(self):
