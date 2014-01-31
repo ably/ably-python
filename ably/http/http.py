@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import functools
+import logging
 import urlparse
 
 import requests
@@ -8,6 +9,8 @@ import requests
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyException
+
+log = logging.getLogger(__name__)
 
 # Decorator to attempt fallback hosts in case of a host-error
 def fallback(func):
@@ -102,6 +105,17 @@ class Response(object):
     def status_code(self):
         return self.response.status_code
 
+    @property
+    def headers(self):
+        return self.headers
+
+    @property
+    def content_type(self):
+        return self.response.headers['Content-Type']
+
+    @property
+    def links(self):
+        return self.response.links
 
 class Http(object):
     def __init__(self, ably, options):
@@ -114,8 +128,12 @@ class Http(object):
 
     @fallback
     @reauth_if_expired
-    def make_request(self, method, url, headers=None, body=None, skip_auth=False, timeout=None):
-        url = urlparse.urljoin(self.preferred_host, url)
+    def make_request(self, method, url, headers=None, body=None, skip_auth=False, timeout=None, scheme=None, host=None, port=0):
+        scheme = scheme or self.preferred_scheme
+        host = host or self.preferred_host
+        port = port or self.preferred_port
+        base_url = "%s://%s:%d" % (scheme, host, port)
+        url = urlparse.urljoin(base_url, url)
 
         hdrs = headers or {}
         headers = HttpUtils.default_get_headers(not self.options.use_text_protocol)
@@ -124,7 +142,12 @@ class Http(object):
         if not skip_auth:
             headers.update(self.auth._get_auth_headers())
 
-        response = requests.Request(method, url, data=body, headers=headers)
+        request = requests.Request(method, url, data=body, headers=headers)
+        prepped = self.__session.prepare_request(request)
+
+        # TODO add timeouts from options here
+        response = self.__session.send(prepped)
+
         AblyException.raise_for_response(response)
 
         return Response(response)
@@ -156,3 +179,11 @@ class Http(object):
     @property
     def preferred_host(self):
         return Defaults.get_host(self.options)
+
+    @property
+    def preferred_port(self):
+        return Defaults.get_port(self.options)
+
+    @property
+    def preferred_scheme(self):
+        return Defaults.get_scheme(self.options)

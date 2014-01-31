@@ -47,7 +47,7 @@ class RestSetup:
     def get_test_vars():
         if not RestSetup.__test_vars:
             r = ably.http.post("/apps", headers=HttpUtils.default_post_headers(),
-                    body=app_spec_text)
+                    body=app_spec_text, skip_auth=True)
             AblyException.raise_for_response(r)
 
             app_spec = r.json()
@@ -80,7 +80,7 @@ class RestSetup:
         options.host = test_vars["host"]
         options.port = test_vars["port"]
         options.tls_port = test_vars["tls_port"]
-        ptions.tls = test_vars["tls"]
+        options.tls = test_vars["tls"]
         ably = AblyRest(options)
 
         log.info(str(test_vars))

@@ -6,11 +6,15 @@ import types
 import requests
 
 from ably.http.http import Http
+from ably.http.paginatedresult import PaginatedResult
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
 
 log = logging.getLogger(__name__)
+
+def stats_processor(response):
+    return {"implemented":"not-yet"}
 
 
 class AblyRest(object):

@@ -49,3 +49,10 @@ class Defaults(object):
             return []
         else:
             return Defaults.fallback_hosts
+
+    @staticmethod
+    def get_scheme(options):
+        if options.tls:
+            return "https"
+        else:
+            return "http"

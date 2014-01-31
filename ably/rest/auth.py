@@ -78,41 +78,35 @@ class Auth(object):
         BASIC = "BASIC"
         TOKEN = "TOKEN"
 
-    def __init__(self, rest, key_id=None, key_value=None,
-                 auth_token=None, auth_callback=None, auth_url=None,
-                 auth_headers=None, auth_params=None, client_id=None):
-        self.__rest = rest
-        self.__key_id = key_id
-        self.__key_value = key_value
-        self.__auth_token = auth_token
-        self.__auth_callback = auth_callback
-        self.__auth_url = auth_url
-        self.__auth_headers = auth_headers or {
-            'Content-Type': 'application/json'
-        }
-        self.__auth_params = auth_params
+    def __init__(self, ably, options):
+        self.__ably = ably
+        self.__auth_options = options
 
-        if key_value is not None:
-            if not client_id:
-                # We have the key, no need to authenticate the client
-                # default to using basic auth
-                log.info("anonymous, using basic auth")
-                self.__auth_method = Auth.Method.BASIC
-                basic_key = "%s:%s" % (key_id, key_value)
-                basic_key = base64.b64encode(basic_key.encode('utf-8'))
-                self.__basic_credentials = basic_key.decode('ascii')
-                return
+        self.__basic_credentials = None
+        self.__token_credentials = None
+        self.__auth_params = None
+        self.__token_details = None
+
+        if options.key_value is not None and options.client_id is None:
+            # We have the key, no need to authenticate the client
+            # default to using basic auth
+            log.info("anonymous, using basic auth")
+            self.__auth_method = Auth.Method.BASIC
+            basic_key = "%s:%s" % (options.key_id, options.key_value)
+            basic_key = base64.b64encode(basic_key.encode('utf-8'))
+            self.__basic_credentials = basic_key.decode('ascii')
+            return
 
         # Using token auth
         self.__auth_method = Auth.Method.TOKEN
 
-        if auth_token:
+        if options.auth_token:
             self.__token_details = TokenDetails()
-            self.__token_details.id = auth_token
+            self.__token_details.id = options.auth_token
         else:
             self.__token_details = None
 
-        if auth_callback:
+        if options.auth_callback:
             log.info("using token auth with auth_callback")
         elif auth_url:
             log.info("using token auth with auth_url")
@@ -142,22 +136,25 @@ class Auth(object):
     def request_token(self, key_id=None, key_value=None, query_time=None,
                       auth_token=None, auth_callback=None, auth_url=None,
                       auth_headers=None, auth_params=None, token_params=None):
-        key_id = key_id or self.__key_id
-        key_value = key_value or self.__key_value
+        key_id = key_id or self.auth_options.key_id
+        key_value = key_value or self.auth_options.key_value
 
-        log.debug('key_id: %s', key_id)
-        log.debug('key_value: %s', key_value)
+        log.debug('key_id: %s' % key_id)
+        log.debug('key_value: %s' % key_value)
 
         query_time = bool(query_time)
-        auth_token = auth_token or self.__auth_token
-        auth_callback = auth_callback or self.__auth_callback
-        auth_url = auth_url or self.__auth_url
-        auth_headers = auth_headers or self.__auth_headers
-        auth_params = auth_params or self.__auth_params
+        auth_token = auth_token or self.auth_options.auth_token
+        auth_callback = auth_callback or self.auth_options.auth_callback
+        auth_url = auth_url or self.auth_options.auth_url
+        auth_headers = auth_headers or {
+            "Content-Encoding": "utf-8",
+            "Content-Type": "application/json",
+        }
+        auth_params = auth_params or self.auth_params
 
         token_params = token_params or {}
 
-        token_params.setdefault("client_id", self.__rest.client_id)
+        token_params.setdefault("client_id", self.ably.client_id)
 
         if "capability" in token_params:
             token_params["capability"] = unicode(Capability(token_params["capability"]) or '')
@@ -276,6 +273,14 @@ class Auth(object):
     @property
     def auth_method(self):
         return self.__auth_method
+
+    @property
+    def auth_options(self):
+        return self.__auth_options
+
+    @property
+    def auth_params(self):
+        return self.__auth_params
 
     @property
     def basic_credentials(self):

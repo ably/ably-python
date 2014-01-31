@@ -17,7 +17,7 @@ class AuthOptions(object):
     def with_key(cls, key):
         key_components = key.split(':')
 
-        if len(key_components) == 2:
+        if len(key_components) != 2:
             raise AblyException("invalid key parameter", 401, 40101)
 
         key_id = key_components[0]

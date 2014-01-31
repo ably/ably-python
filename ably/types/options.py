@@ -22,7 +22,7 @@ class Options(AuthOptions):
 
     @classmethod
     def with_key(cls, key):
-        return cls(key=key)
+        return super(Options, cls).with_key(key)
 
     @property
     def client_id(self):

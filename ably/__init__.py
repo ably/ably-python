@@ -15,3 +15,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 logger.addHandler(NullHandler())
+
+from ably.rest.rest import AblyRest
+from ably.rest.auth import Auth
+from ably.types.options import Options

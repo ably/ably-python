@@ -43,19 +43,18 @@ class PaginatedResult(object):
     @staticmethod
     def paginated_query(http, url, headers, response_processor):
         req = Request(method='GET', url=url, headers=headers, body=None, skip_auth=True)
-        return PaginatedResult.paginated_query_with_request(http, request, response_processor)
+        return PaginatedResult.paginated_query_with_request(http, req, response_processor)
 
     @staticmethod
     def paginated_query_with_request(http, request, response_processor):
-        response = http.make_request(request)
-        response.raise_for_error()
+        response = http.request(request)
 
         current_val = response_processor(response)
 
-        content_type = response['contentType']
-        links = response['links']
-        first_rel_request = request.with_relative_url(links['first'])
-        current_rel_request = request.with_relative_url(links['current'])
-        next_rel_request = request.with_relative_url(links['next'])
+        content_type = response.content_type
+        links = response.links
+        first_rel_request = request.with_relative_url(links['first']['url'])
+        current_rel_request = request.with_relative_url(links['current']['url'])
+        next_rel_request = request.with_relative_url(links['next']['url'])
 
         return PaginatedResult(http, current_val, content_type, first_rel, current_rel, next_rel, response_processor)
