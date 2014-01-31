@@ -43,11 +43,12 @@ def reauth_if_expired(func):
         if kwargs.get("skip_auth"):
             return func(rest, *args, **kwargs)
 
-        while True:
+        num_tries = 5
+        for i in xrange(num_tries):
             try:
                 return func(rest, *args, **kwargs)
             except AblyException as e:
-                if e.code == 40140:
+                if e.code == 40140 and i < (num_tries - 1):
                     rest.reauth()
                     continue
                 raise
