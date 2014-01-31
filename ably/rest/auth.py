@@ -271,6 +271,10 @@ class Auth(object):
         return signed_request
 
     @property
+    def ably(self):
+        return self.__ably
+
+    @property
     def auth_method(self):
         return self.__auth_method
 

@@ -37,7 +37,8 @@ class TestAuth(unittest.TestCase):
             callback_called.append(True)
             return "this_is_not_really_a_token_request"
 
-        options = Options.with_key(test_vars["keys"][0]["key_str"])
+        options = Options()
+        options.key_id = test_vars["keys"][0]["key_id"]
         options.host = test_vars["host"]
         options.port = test_vars["port"]
         options.tls_port = test_vars["tls_port"]
