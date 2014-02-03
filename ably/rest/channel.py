@@ -4,9 +4,9 @@ import base64
 import json
 import logging
 import time
-import urllib
 
 import six
+from six.moves.urllib.parse import urlencode, quote
 
 from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
@@ -42,7 +42,7 @@ class Channel(object):
         self.__ably = ably
         self.__name = name
         self.__options = options
-        self.__base_path = '/channels/%s/' % urllib.quote(name)
+        self.__base_path = '/channels/%s/' % quote(name)
         self.__presence = Presence(self)
 
         if options and options.encrypted:
@@ -64,7 +64,7 @@ class Channel(object):
         path = '/channels/%s/history' % self.__name
 
         if params:
-            path = path + '?' + urllib.urlencode(params)
+            path = path + '?' + urlencode(params)
 
         return PaginatedResult.paginated_query(self.ably.http, path, None, message_response_handler)
 

@@ -2,7 +2,9 @@ from __future__ import absolute_import
 
 import functools
 import logging
-import urlparse
+
+from six.moves import range
+from six.moves.urllib.parse import urljoin
 
 import requests
 
@@ -44,7 +46,7 @@ def reauth_if_expired(func):
             return func(rest, *args, **kwargs)
 
         num_tries = 5
-        for i in xrange(num_tries):
+        for i in range(num_tries):
             try:
                 return func(rest, *args, **kwargs)
             except AblyException as e:
@@ -64,7 +66,7 @@ class Request(object):
         self.__url = url
 
     def with_relative_url(self, relative_url):
-        return Request(self.method, urlparse.urljoin(self.url, relative_url), self.headers, self.body, self.skip_auth)
+        return Request(self.method, urljoin(self.url, relative_url), self.headers, self.body, self.skip_auth)
 
     @property
     def method(self):
@@ -134,7 +136,7 @@ class Http(object):
         host = host or self.preferred_host
         port = port or self.preferred_port
         base_url = "%s://%s:%d" % (scheme, host, port)
-        url = urlparse.urljoin(base_url, url)
+        url = urljoin(base_url, url)
 
         hdrs = headers or {}
         headers = HttpUtils.default_get_headers(not self.options.use_text_protocol)

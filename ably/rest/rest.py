@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import logging
 import types
 
+from six.moves.urllib.parse import urlencode
+
 import requests
 
 from ably.http.http import Http
@@ -89,7 +91,7 @@ class AblyRest(object):
 
         url = '/stats'
         if params:
-            url += '?' + urllib.urlencode(params)
+            url += '?' + urlencode(params)
 
         return PaginatedResult.paginated_query(self.http, url, None, stats_processor)
 
