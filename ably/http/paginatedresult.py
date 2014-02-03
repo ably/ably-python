@@ -53,8 +53,19 @@ class PaginatedResult(object):
 
         content_type = response.content_type
         links = response.links
-        first_rel_request = request.with_relative_url(links['first']['url'])
-        current_rel_request = request.with_relative_url(links['current']['url'])
-        next_rel_request = request.with_relative_url(links['next']['url'])
+        if 'first' in links:
+            first_rel_request = request.with_relative_url(links['first']['url'])
+        else:
+            first_rel_request = None
 
-        return PaginatedResult(http, current_val, content_type, first_rel, current_rel, next_rel, response_processor)
+        if 'current' in links:
+            current_rel_request = request.with_relative_url(links['current']['url'])
+        else:
+            current_rel_request = None
+
+        if 'next' in links:
+            next_rel_request = request.with_relative_url(links['next']['url'])
+        else:
+            next_rel_request = None
+
+        return PaginatedResult(http, current_val, content_type, first_rel_request, current_rel_request, next_rel_request, response_processor)

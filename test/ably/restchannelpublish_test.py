@@ -51,7 +51,8 @@ class TestRestChannelPublish(unittest.TestCase):
         time.sleep(16)
 
         # Get the history for this channel
-        messages = publish0.history()
+        history = publish0.history()
+        messages = history.current
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEquals(7, len(messages), msg="Expected 7 messages")
         

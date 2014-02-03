@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import base64
 import json
+import logging
 import time
 import urllib
 
@@ -9,9 +10,12 @@ import six
 
 from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
-from ably.types.message import Message
+from ably.types.message import Message, message_response_handler
 from ably.types.presence import PresenceMessage, presence_response_handler
 from ably.util.exceptions import catch_all
+
+
+log = logging.getLogger(__name__)
 
 
 class Presence(object):
@@ -39,7 +43,7 @@ class Channel(object):
         self.__name = name
         self.__options = options
         self.__base_path = '/channels/%s/' % urllib.quote(name)
-        self.__presence = Presence()
+        self.__presence = Presence(self)
 
         if options and options.encrypted:
             self.__cipher = Crypto.get_cipher(options)
@@ -62,7 +66,7 @@ class Channel(object):
         if params:
             path = path + '?' + urllib.urlencode(params)
 
-        return PaginatedResult.paginated_query(self.ably.http, path, None, messages_processor)
+        return PaginatedResult.paginated_query(self.ably.http, path, None, message_response_handler)
 
     @catch_all
     def publish(self, name, data, timeout=None, encoding=None):
@@ -78,13 +82,16 @@ class Channel(object):
         if self.encrypted:
             message.encrypt(self.__cipher)
 
-        if self.ably.use_text_protocol:
+        if self.ably.options.use_text_protocol:
             request_body = message.as_json()
         else:
             request_body = message.as_thrift()
 
+        log.debug("Request body: %s" % request_body)
+
         path = '/channels/%s/publish' % self.__name
-        return self.__ably._post(path, data=request_body, timeout=timeout).json()
+        headers = HttpUtils.default_post_headers(not self.ably.options.use_text_protocol)
+        return self.ably.http.post(path, headers=headers, body=request_body, timeout=timeout).json()
 
     @property
     def ably(self):
@@ -112,11 +119,11 @@ class Channels(object):
         self.__ably = rest
         self.__attached = {}
 
-    def get(self, name):
+    def get(self, name, options=None):
         if isinstance(name, six.binary_type):
             name = name.decode('ascii')
         if name not in self.__attached:
-            self.__attached[name] = Channel(self.__ably, name)
+            self.__attached[name] = Channel(self.__ably, name, options)
         return self.__attached[name]
 
     def __getitem__(self, key):

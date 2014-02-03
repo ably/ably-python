@@ -78,7 +78,7 @@ class Message(object):
         request_body = {
             'name': self.name,
             'data': data,
-            'timestamp': time.time() * 1000.0,
+            'timestamp': self.timestamp or int(time.time() * 1000.0),
         }
 
         if encoding:
@@ -104,3 +104,6 @@ class Message(object):
             data = ciphertext
 
         return Message(name=name, data=data,timestamp=timestamp)
+
+def message_response_handler(response):
+    return [Message.from_json(j) for j in response.json()]
