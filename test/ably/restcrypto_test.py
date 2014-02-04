@@ -29,7 +29,7 @@ class TestRestCrypto(unittest.TestCase):
 
     def test_crypto_publish_text(self):
         channel_options = ChannelOptions(encrypted=True)
-        publish0 = TestRestCrypto.ably.channels.get("crypto_publish_text", channel_options)
+        publish0 = TestRestCrypto.ably.channels.get("persisted:crypto_publish_text", channel_options)
 
         publish0.publish("publish0", True)
         publish0.publish("publish1", 24)

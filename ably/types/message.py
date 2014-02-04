@@ -90,7 +90,7 @@ class Message(object):
             request_body['encoding'] = encoding
 
         if data_type:
-            request_body['data_type'] = data_type
+            request_body['type'] = data_type
 
         request_body = json.dumps(request_body)
         return request_body
@@ -106,12 +106,19 @@ class Message(object):
 
         if encoding and encoding == six.u('base64'):
             data = base64.b64decode(data)
-        elif encoding and encoding == six.u('base64+cipher'):
+        elif encoding and encoding == six.u('cipher+base64'):
             ciphertext = base64.b64decode(data)
-            #TODO
-            data = ciphertext
+            data = CipherData(ciphertext, obj.get('type'))
 
         return Message(name=name, data=data,timestamp=timestamp)
 
 def message_response_handler(response):
     return [Message.from_json(j) for j in response.json()]
+
+def make_encrypted_message_response_handler(cipher):
+    def encrypted_message_response_handler(response):
+        messages = [Message.from_json(j) for j in response.json()]
+        for message in messages:
+            message.decrypt(cipher)
+        return messages
+    return encrypted_message_response_handler

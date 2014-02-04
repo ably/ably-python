@@ -10,7 +10,7 @@ from six.moves.urllib.parse import urlencode, quote
 
 from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
-from ably.types.message import Message, message_response_handler
+from ably.types.message import Message, message_response_handler, make_encrypted_message_response_handler
 from ably.types.presence import PresenceMessage, presence_response_handler
 from ably.util.crypto import get_cipher
 from ably.util.exceptions import catch_all
@@ -67,7 +67,11 @@ class Channel(object):
         if params:
             path = path + '?' + urlencode(params)
 
-        return PaginatedResult.paginated_query(self.ably.http, path, None, message_response_handler)
+        if self.__cipher:
+            message_handler = make_encrypted_message_response_handler(self.__cipher)
+        else:
+            message_handler = message_response_handler
+        return PaginatedResult.paginated_query(self.ably.http, path, None, message_handler)
 
     @catch_all
     def publish(self, name, data, timeout=None, encoding=None):

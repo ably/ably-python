@@ -1,10 +1,15 @@
 from __future__ import absolute_import
 
+import logging
+
 import six
 from Crypto.Cipher import AES
 from Crypto import Random
 
 from ably.types.typedbuffer import TypedBuffer
+
+log = logging.getLogger(__name__)
+
 
 class CipherParams(object):
     def __init__(self, algorithm='AES', secret_key=None, iv=None):
@@ -57,7 +62,8 @@ class CbcChannelCipher(object):
         iv = ciphertext[:self.__block_size]
         ciphertext = ciphertext[self.__block_size:]
         decryptor = AES.new(self.__secret_key, AES.MODE_CBC, iv)
-        return self.__unpad(decryptor.decrypt(ciphertext))
+        decrypted = decryptor.decrypt(ciphertext)
+        return self.__unpad(decrypted)
 
     @property
     def secret_key(self):
