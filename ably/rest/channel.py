@@ -12,6 +12,7 @@ from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.message import Message, message_response_handler
 from ably.types.presence import PresenceMessage, presence_response_handler
+from ably.util.crypto import get_cipher
 from ably.util.exceptions import catch_all
 
 
@@ -46,7 +47,7 @@ class Channel(object):
         self.__presence = Presence(self)
 
         if options and options.encrypted:
-            self.__cipher = Crypto.get_cipher(options)
+            self.__cipher = get_cipher(options)
         else:
             self.__cipher = None
 

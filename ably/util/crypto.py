@@ -6,12 +6,31 @@ from Crypto import Random
 
 from ably.types.typedbuffer import TypedBuffer
 
-class CbcChannelCipher(object):
-    def __init__(self, secret_key=None, iv=None, algorithm='AES'):
-        self.__secret_key = secret_key or self.__random(32)
-        self.__iv = iv or self.__random(16)
-        self.__block_size = len(self.__iv)
+class CipherParams(object):
+    def __init__(self, algorithm='AES', secret_key=None, iv=None):
         self.__algorithm = algorithm
+        self.__secret_key = secret_key
+        self.__iv = iv
+
+    @property
+    def algorithm(self):
+        return self.__algorithm
+
+    @property
+    def secret_key(self):
+        return self.__secret_key
+
+    @property
+    def iv(self):
+        return self.__iv
+
+
+class CbcChannelCipher(object):
+    def __init__(self, cipher_params):
+        self.__secret_key = cipher_params.secret_key or self.__random(32)
+        self.__iv = cipher_params.iv or self.__random(16)
+        self.__block_size = len(self.__iv)
+        self.__algorithm = cipher_params.algorithm
         self.__encryptor = AES.new(self.__secret_key, AES.MODE_CBC, self.__iv)
 
     def __pad(self, data):
@@ -51,3 +70,22 @@ class CbcChannelCipher(object):
 
 class CipherData(TypedBuffer):
     pass
+
+
+DEFAULT_KEYLENGTH = 16
+DEFAULT_BLOCKLENGTH = 16
+
+def get_default_params(key=None):
+    rndfile = Random.new()
+    key = key or rndfile.read(DEFAULT_KEYLENGTH)
+    iv = rndfile.read(DEFAULT_BLOCKLENGTH)
+    return CipherParams(algorithm='AES', secret_key=key, iv=iv)
+
+def get_cipher(channel_options):
+    if channel_options.cipher_params is None:
+        params = get_default_params()
+    elif isinstance(channel_options.cipher_params, CipherParams):
+        params = channel_options.cipher_params
+    else:
+        raise AblyException("ChannelOptions not supported", 400, 40000)
+    return CbcChannelCipher(params)

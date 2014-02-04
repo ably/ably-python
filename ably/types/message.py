@@ -51,7 +51,7 @@ class Message(object):
         typed_data = TypedBuffer.from_obj(self.data)
         encrypted_data = channel_cipher.encrypt(typed_data.buffer)
 
-        self.data = CipherData(encrypted_data, typed_data.type)
+        self.__data = CipherData(encrypted_data, typed_data.type)
 
     def decrypt(self, channel_cipher):
         if not isinstance(self.data, CipherData):
@@ -65,9 +65,14 @@ class Message(object):
     def as_json(self):
         data = self.data
         encoding = None
+        data_type = None
 
         log.debug(data.__class__)
 
+        if isinstance(data, CipherData):
+            data_type = data.type
+            data = base64.b64encode(data.buffer).decode('ascii')
+            encoding = 'cipher+base64'
         if isinstance(data, six.binary_type):
             data = base64.b64encode(data).decode('ascii')
             encoding = 'base64'
@@ -83,6 +88,9 @@ class Message(object):
 
         if encoding:
             request_body['encoding'] = encoding
+
+        if data_type:
+            request_body['data_type'] = data_type
 
         request_body = json.dumps(request_body)
         return request_body
