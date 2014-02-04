@@ -12,11 +12,9 @@ from ably.http.paginatedresult import PaginatedResult
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
+from ably.types.stats import stats_response_processor
 
 log = logging.getLogger(__name__)
-
-def stats_processor(response):
-    return {"implemented":"not-yet"}
 
 
 class AblyRest(object):
@@ -93,7 +91,7 @@ class AblyRest(object):
         if params:
             url += '?' + urlencode(params)
 
-        return PaginatedResult.paginated_query(self.http, url, None, stats_processor)
+        return PaginatedResult.paginated_query(self.http, url, None, stats_response_processor)
 
     @catch_all
     def time(self, timeout=None):
