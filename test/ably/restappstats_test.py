@@ -7,8 +7,9 @@ import logging
 import time
 import unittest
 
-from ably.exceptions import AblyException
-from ably.rest import AblyRest
+from ably import AblyException
+from ably import AblyRest
+from ably import Options
 
 from test.ably.restsetup import RestSetup
 
@@ -19,11 +20,11 @@ log = logging.getLogger(__name__)
 class TestRestAppStats(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+        cls.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
                 host=test_vars["host"],
                 port=test_vars["port"],
                 tls_port=test_vars["tls_port"],
-                tls=test_vars["encrypted"])
+                tls=test_vars["tls"]))
         time_from_service = cls.ably.time()
         cls.time_offset = time_from_service / 1000.0 - time.time()
         cls._test_infos = {}

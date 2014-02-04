@@ -29,27 +29,27 @@ class TestRestCrypto(unittest.TestCase):
         cls.ably = AblyRest(options)
 
     def test_cbc_channel_cipher(self):
-        key = bytes([
-            0x93, 0xe3, 0x5c, 0xc9, 0x77, 0x53, 0xfd, 0x1a,
-            0x79, 0xb4, 0xd8, 0x84, 0xe7, 0xdc, 0xfd, 0xdf,
-        ])
-        iv = bytes([
-            0x28, 0x4c, 0xe4, 0x8d, 0x4b, 0xdc, 0x9d, 0x42,
-            0x8a, 0x77, 0x6b, 0x53, 0x2d, 0xc7, 0xb5, 0xc0,
-        ])
+        key = six.b(
+                '\x93\xe3\x5c\xc9\x77\x53\xfd\x1a'
+                '\x79\xb4\xd8\x84\xe7\xdc\xfd\xdf'
+        )
+        iv = six.b(
+                '\x28\x4c\xe4\x8d\x4b\xdc\x9d\x42'
+                '\x8a\x77\x6b\x53\x2d\xc7\xb5\xc0'
+        )
         log.debug("KEYLEN: %d" % len(key))
         log.debug("IVLEN: %d" % len(iv))
         cipher = get_cipher(CipherParams(secret_key=key, iv=iv))
 
         plaintext = six.b("The quick brown fox")
-        expected_ciphertext = bytes([
-            0x28, 0x4c, 0xe4, 0x8d, 0x4b, 0xdc, 0x9d, 0x42,
-            0x8a, 0x77, 0x6b, 0x53, 0x2d, 0xc7, 0xb5, 0xc0,
-            0x83, 0x5c, 0xcf, 0xce, 0x0c, 0xfd, 0xbe, 0x37,
-            0xb7, 0x92, 0x12, 0x04, 0x1d, 0x45, 0x68, 0xa4,
-            0xdf, 0x7f, 0x6e, 0x38, 0x17, 0x4a, 0xff, 0x50,
-            0x73, 0x23, 0xbb, 0xca, 0x16, 0xb0, 0xe2, 0x84,
-        ])
+        expected_ciphertext = six.b(
+                '\x28\x4c\xe4\x8d\x4b\xdc\x9d\x42'
+                '\x8a\x77\x6b\x53\x2d\xc7\xb5\xc0'
+                '\x83\x5c\xcf\xce\x0c\xfd\xbe\x37'
+                '\xb7\x92\x12\x04\x1d\x45\x68\xa4'
+                '\xdf\x7f\x6e\x38\x17\x4a\xff\x50'
+                '\x73\x23\xbb\xca\x16\xb0\xe2\x84'
+        )
         
         actual_ciphertext = cipher.encrypt(plaintext)
 
