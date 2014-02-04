@@ -47,7 +47,7 @@ class Channel(object):
         self.__presence = Presence(self)
 
         if options and options.encrypted:
-            self.__cipher = get_cipher(options)
+            self.__cipher = get_cipher(options.cipher_params)
         else:
             self.__cipher = None
 

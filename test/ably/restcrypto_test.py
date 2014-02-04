@@ -10,6 +10,7 @@ from ably import AblyException
 from ably import AblyRest
 from ably import ChannelOptions
 from ably import Options
+from ably.util.crypto import CipherParams, get_cipher
 
 from test.ably.restsetup import RestSetup
 
@@ -26,6 +27,33 @@ class TestRestCrypto(unittest.TestCase):
                 tls=test_vars["tls"],
                 use_text_protocol=True)
         cls.ably = AblyRest(options)
+
+    def test_cbc_channel_cipher(self):
+        key = bytes([
+            0x93, 0xe3, 0x5c, 0xc9, 0x77, 0x53, 0xfd, 0x1a,
+            0x79, 0xb4, 0xd8, 0x84, 0xe7, 0xdc, 0xfd, 0xdf,
+        ])
+        iv = bytes([
+            0x28, 0x4c, 0xe4, 0x8d, 0x4b, 0xdc, 0x9d, 0x42,
+            0x8a, 0x77, 0x6b, 0x53, 0x2d, 0xc7, 0xb5, 0xc0,
+        ])
+        log.debug("KEYLEN: %d" % len(key))
+        log.debug("IVLEN: %d" % len(iv))
+        cipher = get_cipher(CipherParams(secret_key=key, iv=iv))
+
+        plaintext = six.b("The quick brown fox")
+        expected_ciphertext = bytes([
+            0x28, 0x4c, 0xe4, 0x8d, 0x4b, 0xdc, 0x9d, 0x42,
+            0x8a, 0x77, 0x6b, 0x53, 0x2d, 0xc7, 0xb5, 0xc0,
+            0x83, 0x5c, 0xcf, 0xce, 0x0c, 0xfd, 0xbe, 0x37,
+            0xb7, 0x92, 0x12, 0x04, 0x1d, 0x45, 0x68, 0xa4,
+            0xdf, 0x7f, 0x6e, 0x38, 0x17, 0x4a, 0xff, 0x50,
+            0x73, 0x23, 0xbb, 0xca, 0x16, 0xb0, 0xe2, 0x84,
+        ])
+        
+        actual_ciphertext = cipher.encrypt(plaintext)
+
+        self.assertEquals(expected_ciphertext, actual_ciphertext)
 
     def test_crypto_publish_text(self):
         channel_options = ChannelOptions(encrypted=True)

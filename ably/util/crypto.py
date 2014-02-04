@@ -87,11 +87,11 @@ def get_default_params(key=None):
     iv = rndfile.read(DEFAULT_BLOCKLENGTH)
     return CipherParams(algorithm='AES', secret_key=key, iv=iv)
 
-def get_cipher(channel_options):
-    if channel_options.cipher_params is None:
+def get_cipher(cipher_params):
+    if cipher_params is None:
         params = get_default_params()
-    elif isinstance(channel_options.cipher_params, CipherParams):
-        params = channel_options.cipher_params
+    elif isinstance(cipher_params, CipherParams):
+        params = cipher_params
     else:
         raise AblyException("ChannelOptions not supported", 400, 40000)
     return CbcChannelCipher(params)
