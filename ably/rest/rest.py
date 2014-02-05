@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import calendar
 import logging
 import types
 
@@ -69,6 +70,7 @@ class AblyRest(object):
         try:
             return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
         except:
+            log.debug("datetime formatting failed")
             return '%s' % t
 
 
@@ -78,6 +80,7 @@ class AblyRest(object):
         """Returns the stats for this application"""
         params = params or {}
 
+        log.debug("Original start: %s" % start)
         if direction:
             params["direction"] = direction
         if start:
@@ -86,6 +89,8 @@ class AblyRest(object):
             params["end"] = self._format_time_param(end)
         if limit:
             params["limit"] = "%d" % limit
+
+        log.debug("Formatted start: %s" % params["start"])
 
         url = '/stats'
         if params:

@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 
+import logging
+
+log = logging.getLogger(__name__)
+
 class ResourceCount(object):
     def __init__(self, opened=0.0, peak=0.0, mean=0.0, min=0.0, refused=0.0):
         self.opened = opened
@@ -20,7 +24,7 @@ class ResourceCount(object):
         }
 
 class ConnectionTypes(object):
-    def __init__(self):
+    def __init__(self, all=None, plain=None, tls=None):
         self.all = ResourceCount()
         self.plain = ResourceCount()
         self.tls = ResourceCount()
@@ -29,9 +33,9 @@ class ConnectionTypes(object):
     def from_dict(ct_dict):
         ct_dict = ct_dict or {}
         kwargs = {
-            "all": ct_dict.get("all"),
-            "plain": ct_dict.get("plain"),
-            "tls": ct_dict.get("tls"),
+            "all": ResourceCount.from_dict(ct_dict.get("all")),
+            "plain": ResourceCount.from_dict(ct_dict.get("plain")),
+            "tls": ResourceCount.from_dict(ct_dict.get("tls")),
         }
         return ConnectionTypes(**kwargs)
 
@@ -61,9 +65,9 @@ class MessageTypes(object):
     def from_dict(mt_dict):
         mt_dict = mt_dict or {}
         kwargs = {
-            "all": mt_dict.get("all"),
-            "messages": mt_dict.get("messages"),
-            "presence": mt_dict.get("presence"),
+            "all": MessageCount.from_dict(mt_dict.get("all")),
+            "messages": MessageCount.from_dict(mt_dict.get("messages")),
+            "presence": MessageCount.from_dict(mt_dict.get("presence")),
         }
         return MessageTypes(**kwargs)
 
@@ -80,11 +84,11 @@ class MessageTraffic(object):
     def from_dict(mt_dict):
         mt_dict = mt_dict or {}
         kwargs = {
-            "all": mt_dict.get("all"),
-            "realtime": mt_dict.get("realtime"),
-            "rest": mt_dict.get("rest"),
-            "push": mt_dict.get("push"),
-            "http_stream": mt_dict.get("httpStream"),
+            "all": MessageTypes.from_dict(mt_dict.get("all")),
+            "realtime": MessageTypes.from_dict(mt_dict.get("realtime")),
+            "rest": MessageTypes.from_dict(mt_dict.get("rest")),
+            "push": MessageTypes.from_dict(mt_dict.get("push")),
+            "http_stream": MessageTypes.from_dict(mt_dict.get("httpStream")),
         }
         return MessageTraffic(**kwargs)
 
