@@ -12,6 +12,7 @@ import types
 import requests
 
 from ably.types.capability import Capability
+from ably.types.tokendetails import TokenDetails
 
 # initialise and seed our own instance of random
 rnd = random.Random()
@@ -154,10 +155,8 @@ class Auth(object):
 
         token_params = token_params or TokenParams()
 
-        token_params.setdefault("client_id", self.ably.client_id)
-
-        if "capability" in token_params:
-            token_params["capability"] = unicode(Capability(token_params["capability"]) or '')
+        if token_params.client_id is None:
+            token_params.client_id = self.ably.client_id
 
         signed_token_request = ""
         if auth_callback:
@@ -168,7 +167,7 @@ class Auth(object):
             response = requests.post(auth_url,
                                      headers=auth_headers,
                                      params=auth_params,
-                                     data=json.dumps(token_params))
+                                     data=token_params.as_json())
 
             AblyException.raise_for_response(response)
 
@@ -202,7 +201,7 @@ class Auth(object):
 
         access_token = response.json()["access_token"]
         log.debug("Token: %s" % str(access_token))
-        return access_token
+        return TokenDetails.from_json(access_token)
 
     def create_token_request(self, key_id=None, key_value=None,
                              query_time=False, token_params=None):
