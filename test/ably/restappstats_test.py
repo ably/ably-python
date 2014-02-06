@@ -192,3 +192,136 @@ class TestRestAppStats(unittest.TestCase):
             self.assertEquals(110, stats_page[0].inbound.all.all.count, "Expected 110 messages")
         else:
             self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+
+    def test_app_stats_09_limit_backwards(self):
+        TestRestAppStats._publish(70, 'appstats_2')
+        params = {
+            'direction': 'backwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'limit': 1,
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
+
+    def test_app_stats_10_limit_forwards(self):
+        params = {
+            'direction': 'forwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'limit': 1,
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+
+    def test_app_stats_11_pagination_backwards(self):
+        params = {
+            'direction': 'backwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'limit': 1,
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
+
+        stats_pages = stats_pages.get_next()
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+
+        stats_pages = stats_pages.get_next()
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+
+        stats_pages = stats_pages.get_next()
+        self.assertIsNone(stats_pages.current, "Expected None")
+
+    def test_app_stats_12_pagination_forwards(self):
+        params = {
+            'direction': 'forwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'limit': 1,
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+
+        stats_pages = stats_pages.get_next()
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+
+        stats_pages = stats_pages.get_next()
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
+
+        stats_pages = stats_pages.get_next()
+        self.assertIsNone(stats_pages.current, "Expected None")
+
+    def test_app_stats_13_pagination_backwards_get_first(self):
+        params = {
+            'direction': 'backwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'limit': 1,
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
+
+        stats_pages = stats_pages.get_next()
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+
+        stats_pages = stats_pages.get_first()
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
+
+    def test_app_stats_14_pagination_forwards_get_first(self):
+        params = {
+            'direction': 'forwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'limit': 1,
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+
+        stats_pages = stats_pages.get_next()
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+
+        stats_pages = stats_pages.get_first()
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
