@@ -76,21 +76,21 @@ class AblyRest(object):
 
     @catch_all
     def stats(self, direction=None, start=None, end=None, params=None,
-              limit=None, paginated=None, timeout=None):
+              limit=None, paginated=None, by=None, timeout=None):
         """Returns the stats for this application"""
         params = params or {}
 
         log.debug("Original start: %s" % start)
         if direction:
-            params["direction"] = direction
+            params["direction"] = "%s" % direction
         if start:
             params["start"] = self._format_time_param(start)
         if end:
             params["end"] = self._format_time_param(end)
         if limit:
             params["limit"] = "%d" % limit
-
-        log.debug("Formatted start: %s" % params["start"])
+        if by:
+            params["by"] = "%s" % by
 
         url = '/stats'
         if params:

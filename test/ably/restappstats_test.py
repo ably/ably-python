@@ -88,7 +88,107 @@ class TestRestAppStats(unittest.TestCase):
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
         stats_page = stats_pages.current
-        log.debug(stats_page[0])
 
         self.assertEquals(1, len(stats_page), "Expected 1 record")
         self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+
+    def test_app_stats_02_hour_level_forwards(self):
+        params = {
+            'direction': 'forwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'by': 'hour',
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+
+    def test_app_stats_03_day_level_forwards(self):
+        params = {
+            'direction': 'forwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'by': 'day',
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+
+    def test_app_stats_04_month_level_forwards(self):
+        params = {
+            'direction': 'forwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'by': 'month',
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+
+    def test_app_stats_05_minute_level_backwards(self):
+        TestRestAppStats._publish(60, 'appstats_1')
+        params = {
+            'direction': 'backwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+
+    def test_app_stats_06_hour_level_backwards(self):
+        params = {
+            'direction': 'backwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'by': 'hour',
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
+        if (1 == len(stats_page)):
+            self.assertEquals(110, stats_page[0].inbound.all.all.count, "Expected 110 messages")
+        else:
+            self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+        
+
+    def test_app_stats_07_day_level_backwards(self):
+        params = {
+            'direction': 'backwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'by': 'day',
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
+        if (1 == len(stats_page)):
+            self.assertEquals(110, stats_page[0].inbound.all.all.count, "Expected 110 messages")
+        else:
+            self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+
+    def test_app_stats_08_month_level_backwards(self):
+        params = {
+            'direction': 'backwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+            'by': 'month',
+        }
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+
+        self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
+        if (1 == len(stats_page)):
+            self.assertEquals(110, stats_page[0].inbound.all.all.count, "Expected 110 messages")
+        else:
+            self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
