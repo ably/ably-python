@@ -249,7 +249,7 @@ class TestRestAppStats(unittest.TestCase):
 
         self.assertFalse(stats_pages.has_next)
         stats_pages = stats_pages.get_next()
-        self.assertIsNone(stats_pages.current, "Expected None")
+        self.assertIsNone(stats_pages, "Expected None")
 
     def test_app_stats_12_pagination_forwards(self):
         params = {
@@ -280,7 +280,7 @@ class TestRestAppStats(unittest.TestCase):
 
         self.assertFalse(stats_pages.has_next)
         stats_pages = stats_pages.get_next()
-        self.assertIsNone(stats_pages.current, "Expected None")
+        self.assertIsNone(stats_pages, "Expected None")
 
     def test_app_stats_13_pagination_backwards_get_first(self):
         params = {
