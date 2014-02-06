@@ -5,9 +5,9 @@ import json
 import logging
 import unittest
 
-from ably.auth import capability_c14n
-from ably.exceptions import AblyException
-from ably.rest import AblyRest
+from ably import AblyException
+from ably import AblyRest
+from ably import Capability
 
 from test.ably.restsetup import RestSetup
 
@@ -20,28 +20,27 @@ class TestRestToken(unittest.TestCase):
         return int(self.ably.time() / 1000.0)
 
     def setUp(self):
-        # TODO instantiate a capability correctly
         capability = {"*":["*"]}
-        self.permit_all = capability_c14n(capability)
+        self.permit_all = unicode(Capability(capability))
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                 host=test_vars["host"],
                 port=test_vars["port"],
                 tls_port=test_vars["tls_port"],
-                tls=test_vars["encrypted"])
+                tls=test_vars["tls"])
 
     def test_request_token_null_params(self):
         pre_time = self.server_time()
         token_details = self.ably.auth.request_token()
         post_time = self.server_time()
         self.assertIsNotNone(token_details.get("id"), msg="Expected token id")
-        self.assertGreaterEqual(token_details.get("issued_at"),
+        self.assertGreaterEqual(token_details.issued_at,
                 pre_time,
                 msg="Unexpected issued at time")
-        self.assertLessEqual(token_details.get("issued_at"),
+        self.assertLessEqual(token_details.issued_at,
                 post_time,
                 msg="Unexpected issued at time")
         self.assertEquals(self.permit_all,
-                capability_c14n(token_details.get("capability")),
+                unicode(token_details.capability),
                 msg="Unexpected capability")
 
     def test_request_token_explicit_timestamp(self):

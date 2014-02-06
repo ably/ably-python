@@ -152,7 +152,7 @@ class Auth(object):
         }
         auth_params = auth_params or self.auth_params
 
-        token_params = token_params or {}
+        token_params = token_params or TokenParams()
 
         token_params.setdefault("client_id", self.ably.client_id)
 
