@@ -10,7 +10,7 @@ from ably import AblyException
 from ably import AblyRest
 from ably import ChannelOptions
 from ably import Options
-from ably.util.crypto import CipherParams, get_cipher
+from ably.util.crypto import CipherParams, get_cipher, get_default_params
 
 from test.ably.restsetup import RestSetup
 
@@ -95,3 +95,69 @@ class TestRestCrypto(unittest.TestCase):
         self.assertEquals(["This is a JSONArray message payload"],
                 message_contents["publish6"],
                 msg="Expect publish6 to be expected JSONObject")
+
+    def test_crypto_publish_text_256(self):
+        rndfile = Random.new()
+        key = rndfile.read(32)
+        cipher_params = get_default_params(key=key)
+        channel_options = ChannelOptions(encrypted=True, cipher_params=cipher_params)
+
+        publish0 = TestRestCrypto.ably.channels.get("persisted:crypto_publish_text_256", channel_options)
+
+        publish0.publish("publish0", True)
+        publish0.publish("publish1", 24)
+        publish0.publish("publish2", 24.234)
+        publish0.publish("publish3", six.u("This is a string message payload"))
+        publish0.publish("publish4", six.b("This is a byte[] message payload"))
+        publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
+        publish0.publish("publish6", ["This is a JSONArray message payload"])
+
+        time.sleep(16)
+
+        history = publish0.history()
+        messages = history.current
+        self.assertIsNotNone(messages, msg="Expected non-None messages")
+        self.assertEquals(7, len(messages), msg="Expected 7 messages")
+
+        message_contents = dict((m.name, m.data) for m in messages)
+        log.debug("message_contents: %s" % str(message_contents))
+
+        self.assertEquals(True, message_contents["publish0"],
+                msg="Expect publish0 to be Boolean(true)")
+        self.assertEquals(24, int(message_contents["publish1"]),
+                msg="Expect publish1 to be Int(24)")
+        self.assertEquals(24.234, float(message_contents["publish2"]),
+                msg="Expect publish2 to be Double(24.234)")
+        self.assertEquals(six.u("This is a string message payload"),
+                message_contents["publish3"],
+                msg="Expect publish3 to be expected String)")
+        self.assertEquals(b"This is a byte[] message payload",
+                message_contents["publish4"],
+                msg="Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4']))
+        self.assertEquals({"test": "This is a JSONObject message payload"},
+                message_contents["publish5"],
+                msg="Expect publish5 to be expected JSONObject")
+        self.assertEquals(["This is a JSONArray message payload"],
+                message_contents["publish6"],
+                msg="Expect publish6 to be expected JSONObject")
+
+    def test_crypto_publish_key_mismatch(self):
+        channel_options = ChannelOptions(encrypted=True)
+        publish0 = TestRestCrypto.ably.channels.get("persisted:crypto_publish_key_mismatch", channel_options)
+
+        publish0.publish("publish0", True)
+        publish0.publish("publish1", 24)
+        publish0.publish("publish2", 24.234)
+        publish0.publish("publish3", six.u("This is a string message payload"))
+        publish0.publish("publish4", six.b("This is a byte[] message payload"))
+        publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
+        publish0.publish("publish6", ["This is a JSONArray message payload"])
+
+        time.sleep(16)
+        rx_channel = TestRestCrypto.ably.channels.get("persisted:crypto_publish_key_mismatch", channel_options)
+
+        with self.assertRaises(AblyException) as cm:
+            history = rx_channel.history()
+
+        the_exception = cm.exception
+        # TODO check the exception is the expected one

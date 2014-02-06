@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 
+import logging
+
 from ably.http.http import Request
+
+log = logging.getLogger(__name__)
 
 class PaginatedResult(object):
     def __init__(self, http, current, content_type, rel_first, rel_current, rel_next, response_processor):
@@ -38,6 +42,8 @@ class PaginatedResult(object):
         return self.__get_rel(self.__rel_next)
 
     def __get_rel(self, rel_req):
+        if rel_req is None:
+            return None
         return PaginatedResult.paginated_query_with_request(self.__http, rel_req, self.__response_processor)
 
     @staticmethod
@@ -53,6 +59,8 @@ class PaginatedResult(object):
 
         content_type = response.content_type
         links = response.links
+        log.debug("Links: %s" % links)
+        log.debug("Response: %s" % response)
         if 'first' in links:
             first_rel_request = request.with_relative_url(links['first']['url'])
         else:
@@ -64,7 +72,9 @@ class PaginatedResult(object):
             current_rel_request = None
 
         if 'next' in links:
+            log.debug("Next: %s" % links['next']['url'])
             next_rel_request = request.with_relative_url(links['next']['url'])
+            log.debug("Next rel request: %s" % next_rel_request)
         else:
             next_rel_request = None
 
