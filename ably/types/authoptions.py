@@ -116,3 +116,6 @@ class AuthOptions(object):
     @query_time.setter
     def query_time(self, value):
         self.__query_time = value
+
+    def __unicode__(self):
+        return unicode(self.__dict__)

@@ -25,55 +25,6 @@ __all__ = ["Auth"]
 log = logging.getLogger(__name__)
 
 
-class TokenDetails(object):
-    def __init__(self):
-        self.__id = None
-        self.__expires = 0
-        self.__issued_at = 0
-        self.__capability = None
-        self.__client_id = None
-
-    @property
-    def id(self):
-        return self.__id
-
-    @id.setter
-    def id(self, v):
-        self.__id = v
-
-    @property
-    def expires(self):
-        return self.__expires
-
-    @expires.setter
-    def expires(self, v):
-        self.__expires = v
-
-    @property
-    def issued_at(self):
-        return self.__issued_at
-
-    @issued_at.setter
-    def issued_at(self, v):
-        self.__issued_at = v
-
-    @property
-    def capability(self):
-        return self.__capability
-
-    @capability.setter
-    def capability(self, v):
-        self.__capability = v
-
-    @property
-    def client_id(self):
-        return self.__client_id
-
-    @client_id.setter
-    def client_id(self, v):
-        self.__client_id = v
-
-
 class Auth(object):
     class Method:
         BASIC = "BASIC"
@@ -102,18 +53,17 @@ class Auth(object):
         self.__auth_method = Auth.Method.TOKEN
 
         if options.auth_token:
-            self.__token_details = TokenDetails()
-            self.__token_details.id = options.auth_token
+            self.__token_details = TokenDetails(id=options.auth_token)
         else:
             self.__token_details = None
 
         if options.auth_callback:
             log.info("using token auth with auth_callback")
-        elif auth_url:
+        elif options.auth_url:
             log.info("using token auth with auth_url")
-        elif key_value:
+        elif options.key_value:
             log.info("using token auth with client-side signing")
-        elif auth_token:
+        elif options.auth_token:
             log.info("using token auth with supplied token only")
         else:
             # Not a hard error, but any operation requiring authentication
@@ -140,9 +90,8 @@ class Auth(object):
         key_id = key_id or self.auth_options.key_id
         key_value = key_value or self.auth_options.key_value
 
-        log.debug('key_id: %s' % key_id)
-        log.debug('key_value: %s' % key_value)
-
+        log.debug("Auth callback: %s" % auth_callback)
+        log.debug("Auth options: %s" % unicode(self.auth_options))
         query_time = bool(query_time)
         auth_token = auth_token or self.auth_options.auth_token
         auth_callback = auth_callback or self.auth_options.auth_callback
@@ -153,21 +102,22 @@ class Auth(object):
         }
         auth_params = auth_params or self.auth_params
 
-        token_params = token_params or TokenParams()
+        token_params = token_params or {}
 
-        if token_params.client_id is None:
-            token_params.client_id = self.ably.client_id
+        token_params.setdefault("client_id", self.ably.client_id)
 
         signed_token_request = ""
+
+        log.debug("Token Params: %s" % token_params)
         if auth_callback:
             log.info("using token auth with authCallback")
-            signed_token_request = auth_callback(token_params)
+            signed_token_request = auth_callback(**token_params)
         elif auth_url:
             log.info("using token auth with authUrl")
-            response = requests.post(auth_url,
-                                     headers=auth_headers,
-                                     params=auth_params,
-                                     data=token_params.as_json())
+            response = self.ably.http.post(auth_url,
+                    headers=auth_headers,
+                    body=json.dumps(token_params),
+                    skip_auth=True)
 
             AblyException.raise_for_response(response)
 
@@ -187,21 +137,16 @@ class Auth(object):
                 40000)
 
         token_path = "/keys/%s/requestToken" % key_id
-        log.info("TokenPath: %s" % token_path)
-        log.info("Headers: %s" % str(auth_headers))
-        log.info("Params: %s" % str(auth_params))
-        log.info("Body: %s" % signed_token_request)
-        response = requests.post(
-            token_path,
-            headers=auth_headers,
-            params=auth_params,
-            data=signed_token_request)
+        response = self.ably.http.post(token_path,
+                headers=auth_headers,
+                body=signed_token_request,
+                skip_auth=True)
 
         AblyException.raise_for_response(response)
 
         access_token = response.json()["access_token"]
         log.debug("Token: %s" % str(access_token))
-        return TokenDetails.from_json(access_token)
+        return TokenDetails.from_dict(access_token)
 
     def create_token_request(self, key_id=None, key_value=None,
                              query_time=False, token_params=None):
@@ -216,11 +161,16 @@ class Auth(object):
 
         if not token_params.get("timestamp"):
             if query_time:
-                token_params["timestamp"] = self.__rest.time() / 1000.0
+                token_params["timestamp"] = self.ably.time() / 1000.0
             else:
                 token_params["timestamp"] = self._timestamp()
 
         token_params["timestamp"] = int(token_params["timestamp"])
+
+        if token_params.get("capability") is None:
+            token_params["capability"] = ""
+        if token_params.get("client_id") is None:
+            token_params["client_id"] = ""
 
         if not token_params.get("nonce"):
             # Note: There is no expectation that the client
@@ -231,8 +181,8 @@ class Auth(object):
 
         req = {
             "id": key_id,
-            "capability": token_params.get("capability", ""),
-            "client_id": token_params.get("client_id", self.__rest.client_id),
+            "capability": token_params["capability"],
+            "client_id": token_params["client_id"],
             "timestamp": token_params["timestamp"],
             "nonce": token_params["nonce"]
         }
@@ -248,19 +198,17 @@ class Auth(object):
             sign_text = "\n".join([str(x) for x in [
                 token_params["id"],
                 token_params.get("ttl", ""),
-                token_params.get("capability", ""),
-                token_params.get("client_id", ""),
+                token_params["capability"],
+                token_params["client_id"],
                 "%d" % token_params["timestamp"],
                 token_params.get("nonce", ""),
                 "",  # to get the trailing new line
             ]])
+            log.debug("SIGN TEXT: %s" % sign_text)
 
             mac = hmac.new(str(key_value), sign_text, hashlib.sha256).digest()
             mac = base64.b64encode(mac)
-            log.info("Key: %s" % key_value)
-            log.info("Plaintext: %s" % sign_text)
             token_params["mac"] = mac
-            log.info("Token Params: %s" % str(token_params))
 
         req["mac"] = token_params.get("mac")
 
@@ -300,7 +248,7 @@ class Auth(object):
             }
         else:
             return {
-                'Authorization': 'Bearer %s' % self.authorise()["id"],
+                'Authorization': 'Bearer %s' % self.authorise().id,
             }
 
     def _timestamp(self):

@@ -30,3 +30,11 @@ class TokenDetails(object):
     @property
     def client_id(self):
         return self.__client_id
+
+    @staticmethod
+    def from_dict(obj):
+        return TokenDetails(id=obj.get("id"),
+                expires=int(obj.get("expires", 0)),
+                issued_at=int(obj.get("issued_at", 0)),
+                capability=obj.get("capability"),
+                client_id=obj.get("clientId"))
