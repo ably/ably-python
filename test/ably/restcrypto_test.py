@@ -12,6 +12,8 @@ from ably import ChannelOptions
 from ably import Options
 from ably.util.crypto import CipherParams, get_cipher, get_default_params
 
+from Crypto import Random
+
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()

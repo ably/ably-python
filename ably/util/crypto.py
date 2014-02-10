@@ -7,6 +7,7 @@ from Crypto.Cipher import AES
 from Crypto import Random
 
 from ably.types.typedbuffer import TypedBuffer
+from ably.util.exceptions import AblyException
 
 log = logging.getLogger(__name__)
 
@@ -45,13 +46,17 @@ class CbcChannelCipher(object):
         return data + padding_char * padding_size
 
     def __unpad(self, data):
-        padding_size = six.byte2int(six.indexbytes(data, -1))
+        padding_size = six.indexbytes(data, -1)
 
         if padding_size > len(data):
             # Too short
             raise AblyException('invalid-padding', 0, 0)
 
-        for b in data[padding_size:]:
+        if padding_size == 0:
+            # Missing padding
+            raise AblyException('invalid-padding', 0, 0)
+
+        for b in data[-padding_size:]:
             # Invalid padding bytes
             if padding_size != six.byte2int(b):
                 raise AblyException('invalid-padding', 0, 0)
