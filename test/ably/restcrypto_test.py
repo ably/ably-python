@@ -29,6 +29,7 @@ class TestRestCrypto(unittest.TestCase):
                 tls=test_vars["tls"],
                 use_text_protocol=True)
         cls.ably = AblyRest(options)
+        cls.ably2 = AblyRest(options)
 
     def test_cbc_channel_cipher(self):
         key = six.b(
@@ -156,7 +157,7 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
         time.sleep(16)
-        rx_channel = TestRestCrypto.ably.channels.get("persisted:crypto_publish_key_mismatch", channel_options)
+        rx_channel = TestRestCrypto.ably2.channels.get("persisted:crypto_publish_key_mismatch", channel_options)
 
         with self.assertRaises(AblyException) as cm:
             history = rx_channel.history()

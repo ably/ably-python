@@ -45,7 +45,9 @@ class CbcChannelCipher(object):
         padding_size = self.__block_size - (len(data) % self.__block_size)
 
         padding_char = six.int2byte(padding_size)
-        return data + padding_char * padding_size
+        padded = data + padding_char * padding_size
+
+        return padded
 
     def __unpad(self, data):
         padding_size = six.indexbytes(data, -1)

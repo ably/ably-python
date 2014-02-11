@@ -99,7 +99,7 @@ class TestRestToken(unittest.TestCase):
                     "nonce":'1234567890123456'
                 })
 
-    def test_request_token_with_capacbility_that_subsets_key_capability(self):
+    def test_request_token_with_capability_that_subsets_key_capability(self):
         capability = Capability({
             "onlythischannel": ["subscribe"]
         })

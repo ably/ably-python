@@ -74,7 +74,7 @@ class Channel(object):
         return PaginatedResult.paginated_query(self.ably.http, path, None, message_handler)
 
     @catch_all
-    def publish(self, name, data, timeout=None, encoding=None):
+    def publish(self, name, data, timeout=None):
         """Publishes a message on this channel.
 
         :Parameters:
