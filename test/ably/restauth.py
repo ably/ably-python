@@ -33,7 +33,7 @@ class TestAuth(unittest.TestCase):
     def test_auth_init_with_token_callback(self):
         callback_called = []
 
-        def token_callback(params):
+        def token_callback(**params):
             callback_called.append(True)
             return "this_is_not_really_a_token_request"
 
