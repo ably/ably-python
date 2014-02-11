@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import base64
+import calendar
 import json
 import logging
 import time
@@ -25,17 +26,38 @@ class Presence(object):
         self.__binary = not channel.ably.options.use_text_protocol
         self.__http = channel.ably.http
 
+    def _format_time_param(self, t):
+        try:
+            return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
+        except:
+            return '%s' % t
+
     def get(self):
         path = '%s/presence' % self.__base_path
         headers = HttpUtils.default_get_headers(self.__binary)
         response = self.__http.get(path, headers=headers)
         return presence_response_handler(response)
 
-    def history(self):
-        path = '%s/presence/history' % self.__base_path
+    def history(self, direction=None, limit=None, start=None, end=None):
+        params = {}
+
+        if direction:
+            params['direction'] = '%s' % direction
+        if limit:
+            params['limit'] = '%d' % limit
+        if start:
+            params['start'] = self._format_time_param(start)
+        if end:
+            params['end'] = self._format_time_param(end)
+
+        url = '/presence/history'
+        if params:
+            url += '?' + urlencode(params)
+
         headers = HttpUtils.default_get_headers(self.__binary)
-        response = self.__http.get(path, headers=headers)
-        return PaginatedResult.paginated_query(self.__http, path, headers, presence_response_handler)
+        response = self.__http.get(url, headers=headers)
+        return PaginatedResult.paginated_query(self.__http, url, headers,
+                presence_response_handler)
 
 
 class Channel(object):

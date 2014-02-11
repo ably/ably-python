@@ -10,9 +10,9 @@ import unittest
 
 import six
 
+from ably import AblyException
 from ably import AblyRest
 from ably import Options
-from ably.util.exceptions import AblyException
 
 from test.ably.restsetup import RestSetup
 

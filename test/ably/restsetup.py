@@ -53,8 +53,6 @@ class RestSetup:
             app_spec = r.json()
             app_id = app_spec.get("id", "")
 
-            log.debug(app_spec)
-
             test_vars = {
                 "app_id": app_id,
                 "host": host,
@@ -83,10 +81,7 @@ class RestSetup:
         options.tls = test_vars["tls"]
         ably = AblyRest(options)
 
-        log.info(str(test_vars))
         headers = HttpUtils.default_get_headers()
         ably.http.delete('/apps/' + test_vars['app_id'], headers)
 
         RestSetup.__test_vars = None
-
-log.info(str(RestSetup.get_test_vars()))
