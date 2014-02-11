@@ -5,6 +5,8 @@ import json
 import logging
 import unittest
 
+import six
+
 from ably import AblyException
 from ably import AblyRest
 from ably import Capability
@@ -22,7 +24,7 @@ class TestRestToken(unittest.TestCase):
 
     def setUp(self):
         capability = {"*":["*"]}
-        self.permit_all = unicode(Capability(capability))
+        self.permit_all = six.text_type(Capability(capability))
         self.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
                 host=test_vars["host"],
                 port=test_vars["port"],
@@ -41,7 +43,7 @@ class TestRestToken(unittest.TestCase):
                 post_time,
                 msg="Unexpected issued at time")
         self.assertEquals(self.permit_all,
-                unicode(token_details.capability),
+                six.text_type(token_details.capability),
                 msg="Unexpected capability")
 
     def test_request_token_explicit_timestamp(self):
@@ -58,7 +60,7 @@ class TestRestToken(unittest.TestCase):
                 post_time,
                 msg="Unexpected issued at time")
         self.assertEquals(self.permit_all,
-                unicode(Capability(token_details.capability)),
+                six.text_type(Capability(token_details.capability)),
                 msg="Unexpected Capability")
 
     def test_request_token_explicit_invalid_timestamp(self):
@@ -80,7 +82,7 @@ class TestRestToken(unittest.TestCase):
                 post_time,
                 msg="Unexpected issued at time")
         self.assertEquals(self.permit_all,
-                unicode(Capability(token_details.capability)),
+                six.text_type(Capability(token_details.capability)),
                 msg="Unexpected Capability")
 
     def test_request_token_with_duplicate_nonce(self):

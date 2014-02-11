@@ -6,9 +6,11 @@ import logging
 
 import six
 
+from ably.util.unicodemixin import UnicodeMixin
+
 log = logging.getLogger(__name__)
 
-class Capability(MutableMapping):
+class Capability(MutableMapping, UnicodeMixin):
     def __init__(self, obj={}):
         self.__dict = dict(obj)
         for k, v in six.iteritems(obj):
@@ -61,10 +63,7 @@ class Capability(MutableMapping):
     def __unicode__(self):
         return Capability.c14n(self)
 
-    def __str__(self):
-        return str(unicode(self).encode('utf-8'))
-
     @staticmethod
     def c14n(capability):
         sorted_ops = {k:sorted(v) for k, v in six.iteritems(capability)}
-        return json.dumps(sorted_ops, sort_keys=True)
+        return six.text_type(json.dumps(sorted_ops, sort_keys=True))

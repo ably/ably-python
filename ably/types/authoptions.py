@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import six
+
 from ably.util.exceptions import AblyException
 
 class AuthOptions(object):
@@ -118,4 +120,4 @@ class AuthOptions(object):
         self.__query_time = value
 
     def __unicode__(self):
-        return unicode(self.__dict__)
+        return six.text_type(self.__dict__)

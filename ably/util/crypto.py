@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import logging
 
 import six
+from six.moves import range
+
 from Crypto.Cipher import AES
 from Crypto import Random
 
@@ -56,9 +58,9 @@ class CbcChannelCipher(object):
             # Missing padding
             raise AblyException('invalid-padding', 0, 0)
 
-        for b in data[-padding_size:]:
+        for i in range(padding_size):
             # Invalid padding bytes
-            if padding_size != six.byte2int(b):
+            if padding_size != six.indexbytes(data, -i - 1):
                 raise AblyException('invalid-padding', 0, 0)
 
         return data[:-padding_size]

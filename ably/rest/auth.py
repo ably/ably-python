@@ -9,6 +9,8 @@ import random
 import time
 import types
 
+import six
+
 import requests
 
 from ably.types.capability import Capability
@@ -91,7 +93,7 @@ class Auth(object):
         key_value = key_value or self.auth_options.key_value
 
         log.debug("Auth callback: %s" % auth_callback)
-        log.debug("Auth options: %s" % unicode(self.auth_options))
+        log.debug("Auth options: %s" % six.text_type(self.auth_options))
         query_time = bool(query_time)
         auth_token = auth_token or self.auth_options.auth_token
         auth_callback = auth_callback or self.auth_options.auth_callback
@@ -169,6 +171,10 @@ class Auth(object):
 
         if token_params.get("capability") is None:
             token_params["capability"] = ""
+        else:
+            token_params['capability'] = six.text_type(
+                    Capability(token_params["capability"]))
+
         if token_params.get("client_id") is None:
             token_params["client_id"] = ""
 
@@ -195,7 +201,7 @@ class Auth(object):
             # specifies the mac; this is done by the library
             # However, this can be overridden by the client
             # simply for testing purposes.
-            sign_text = "\n".join([str(x) for x in [
+            sign_text = six.u("\n").join([six.text_type(x) for x in [
                 token_params["id"],
                 token_params.get("ttl", ""),
                 token_params["capability"],
@@ -204,10 +210,13 @@ class Auth(object):
                 token_params.get("nonce", ""),
                 "",  # to get the trailing new line
             ]])
-            log.debug("SIGN TEXT: %s" % sign_text)
+            key_value = key_value.encode('utf8')
+            sign_text = sign_text.encode('utf8')
+            log.debug("Key value: %s" % key_value)
+            log.debug("Sign text: %s" % sign_text)
 
-            mac = hmac.new(str(key_value), sign_text, hashlib.sha256).digest()
-            mac = base64.b64encode(mac)
+            mac = hmac.new(key_value, sign_text, hashlib.sha256).digest()
+            mac = base64.b64encode(mac).decode('utf8')
             token_params["mac"] = mac
 
         req["mac"] = token_params.get("mac")

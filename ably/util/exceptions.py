@@ -3,18 +3,20 @@ from __future__ import absolute_import
 import functools
 import logging
 
+from ably.util.unicodemixin import UnicodeMixin
+
 log = logging.getLogger(__name__)
 
 
-class AblyException(BaseException):
+class AblyException(BaseException, UnicodeMixin):
     def __init__(self, reason, status_code, code):
         super(AblyException, self).__init__()
         self.reason = reason
         self.code = code
         self.status_code = status_code
 
-    def __str__(self):
-        return "%s %s %s" % (self.code, self.status_code, self.reason)
+    def __unicode__(self):
+        return six.u('%s %s %s') % (self.code, self.status_code, self.reason)
 
     @staticmethod
     def raise_for_response(response):
@@ -34,6 +36,7 @@ class AblyException(BaseException):
                     msg = msg % response.text
                     raise AblyException(msg, 500, 50000)
         except:
+            log.debug("Response: %d %s" % (response.status_code, response.text))
             raise AblyException(
                 response.text,
                 response.status_code,
