@@ -57,7 +57,7 @@ class TypedBuffer(object):
             buffer = obj.encode('utf-8')
         elif isinstance(obj, bool):
             type = DataType.TRUE if obj else DataType.FALSE
-            buffer = six.binary_type()
+            buffer = None
         elif isinstance(obj, six.integer_types):
             if obj >= Limits.INT32_MIN and obj <= Limits.INT32_MAX:
                 type = DataType.INT32

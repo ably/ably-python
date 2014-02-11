@@ -49,6 +49,9 @@ class Message(object):
             return
 
         typed_data = TypedBuffer.from_obj(self.data)
+        if typed_data.buffer is None:
+            return True
+
         encrypted_data = channel_cipher.encrypt(typed_data.buffer)
 
         self.__data = CipherData(encrypted_data, typed_data.type)
