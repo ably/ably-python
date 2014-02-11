@@ -13,6 +13,7 @@ from ably.http.paginatedresult import PaginatedResult
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
+from ably.types.options import Options
 from ably.types.stats import stats_response_processor
 
 log = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ log = logging.getLogger(__name__)
 
 class AblyRest(object):
     """Ably Rest Client"""
-    def __init__(self, options):
+    def __init__(self, options=None):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -44,9 +45,7 @@ class AblyRest(object):
           - `keep_alive`: use persistent connections. Defaults to True
         """
 
-        if options is None:
-            msg = "no options provided"
-            raise AblyException(msg, 400, 40000)
+        options = options or Options()
 
         self.__client_id = options.client_id
 

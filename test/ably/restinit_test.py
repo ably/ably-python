@@ -2,8 +2,10 @@ from __future__ import absolute_import
 
 import unittest
 
-from ably.rest.rest import AblyRest
-from ably.util.exceptions import AblyException
+from ably import AblyRest
+from ably import AblyException
+from ably import Options
+from ably.transport.defaults import Defaults
 
 from test.ably.restsetup import RestSetup
 
@@ -12,32 +14,34 @@ test_vars = RestSetup.get_test_vars()
 
 class TestRestInit(unittest.TestCase):
     def test_key_only(self):
-        AblyRest(test_vars["keys"][0]["key_str"])
+        AblyRest(Options.with_key(test_vars["keys"][0]["key_str"]))
 
     def test_key_in_options(self):
-        AblyRest(key=test_vars["keys"][0]["key_str"])
+        AblyRest(Options.with_key(test_vars["keys"][0]["key_str"]))
 
     def test_specified_host(self):
-        ably = AblyRest(host="some.other.host")
-        self.assertEqual("some.other.host", ably.host, 
+        ably = AblyRest(Options(host="some.other.host"))
+        self.assertEqual("some.other.host", ably.options.host, 
                 msg="Unexpected host mismatch")
 
     def test_specified_port(self):
-        ably = AblyRest(port=9998, tls_port=9999)
-        self.assertEqual(9999, ably.port, msg="Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.port)
-        self.assertEqual(9999, ably.tls_port, msg="Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.tls_port)
+        ably = AblyRest(Options(port=9998, tls_port=9999))
+        self.assertEqual(9999, Defaults.get_port(ably.options),
+                msg="Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port)
 
-    def test_encrypted_defaults_to_true(self):
+    def test_tls_defaults_to_true(self):
         ably = AblyRest()
-        self.assertEqual("https", ably.scheme, 
-                msg="Unexpected scheme mismatch")
-        self.assertTrue(ably.tls, msg="Expected encryption to default to true")
+        self.assertTrue(ably.options.tls,
+                msg="Expected encryption to default to true")
+        self.assertEqual(Defaults.tls_port, Defaults.get_port(ably.options),
+                msg="Unexpected port mismatch")
 
-    def test_encryption_can_be_disabled(self):
-        ably = AblyRest(tls=False)
-        self.assertEqual("http", ably.scheme,
-                msg="Unexpected scheme mismatch")
-        self.assertFalse(ably.tls, msg="Expected encryption to be False")
+    def test_tls_can_be_disabled(self):
+        ably = AblyRest(Options(tls=False))
+        self.assertFalse(ably.options.tls,
+                msg="Expected encryption to be False")
+        self.assertEqual(Defaults.port, Defaults.get_port(ably.options),
+                msg="Unexpected port mismatch")
 
 
 if __name__ == "__main__":
