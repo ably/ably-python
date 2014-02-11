@@ -26,33 +26,14 @@ class Presence(object):
         self.__binary = not channel.ably.options.use_text_protocol
         self.__http = channel.ably.http
 
-    def _format_time_param(self, t):
-        try:
-            return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
-        except:
-            return '%s' % t
-
     def get(self):
         path = '%s/presence' % self.__base_path
         headers = HttpUtils.default_get_headers(self.__binary)
         response = self.__http.get(path, headers=headers)
         return presence_response_handler(response)
 
-    def history(self, direction=None, limit=None, start=None, end=None):
-        params = {}
-
-        if direction:
-            params['direction'] = '%s' % direction
-        if limit:
-            params['limit'] = '%d' % limit
-        if start:
-            params['start'] = self._format_time_param(start)
-        if end:
-            params['end'] = self._format_time_param(end)
-
+    def history(self):
         url = '/presence/history'
-        if params:
-            url += '?' + urlencode(params)
 
         headers = HttpUtils.default_get_headers(self.__binary)
         response = self.__http.get(url, headers=headers)
@@ -73,6 +54,12 @@ class Channel(object):
         else:
             self.__cipher = None
 
+    def _format_time_param(self, t):
+        try:
+            return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
+        except:
+            return '%s' % t
+
     @catch_all
     def presence(self, params=None, timeout=None):
         """Returns the presence for this channel"""
@@ -81,9 +68,19 @@ class Channel(object):
         return self.__ably._get(path, params=params, timeout=timeout).json()
 
     @catch_all
-    def history(self, params=None, timeout=None):
+    def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
         """Returns the history for this channel"""
-        params = params or {}
+        params = {}
+
+        if direction:
+            params['direction'] = '%s' % direction
+        if limit:
+            params['limit'] = '%d' % limit
+        if start:
+            params['start'] = self._format_time_param(start)
+        if end:
+            params['end'] = self._format_time_param(end)
+
         path = '/channels/%s/history' % self.__name
 
         if params:
@@ -113,8 +110,6 @@ class Channel(object):
             request_body = message.as_json()
         else:
             request_body = message.as_thrift()
-
-        log.debug("Request body: %s" % request_body)
 
         path = '/channels/%s/publish' % self.__name
         headers = HttpUtils.default_post_headers(not self.ably.options.use_text_protocol)

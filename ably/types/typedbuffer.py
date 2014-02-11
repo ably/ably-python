@@ -42,6 +42,18 @@ class TypedBuffer(object):
         self.__buffer = buffer
         self.__type = type
 
+    def __eq__(self, other):
+        if isinstance(other, TypedBuffer):
+            return self.buffer == other.buffer and self.type == other.type
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, TypedBuffer):
+            result = self.__eq__(other)
+            if result != NotImplemented:
+                return not result
+        return NotImplemented
+
     @staticmethod
     def from_obj(obj):
         type = DataType.NONE

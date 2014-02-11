@@ -52,25 +52,25 @@ class TestRestChannelHistory(unittest.TestCase):
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEquals(7, len(messages), msg="Expected 7 messages")
         
-        message_contents = {m.name:m.data for m in messages}
+        message_contents = {m.name:m for m in messages}
 
-        self.assertEquals(True, message_contents["history0"],
+        self.assertEquals(True, message_contents["history0"].data,
                 msg="Expect history0 to be Boolean(true)")
-        self.assertEquals(24, int(message_contents["history1"]),
+        self.assertEquals(24, int(message_contents["history1"].data),
                 msg="Expect history1 to be Int(24)")
-        self.assertEquals(24.234, float(message_contents["history2"]),
+        self.assertEquals(24.234, float(message_contents["history2"].data),
                 msg="Expect history2 to be Double(24.234)")
         self.assertEquals(six.u("This is a string message payload"),
-                message_contents["history3"],
+                message_contents["history3"].data,
                 msg="Expect history3 to be expected String)")
         self.assertEquals(b"This is a byte[] message payload",
-                message_contents["history4"],
+                message_contents["history4"].data,
                 msg="Expect history4 to be expected byte[]")
         self.assertEquals({"test": "This is a JSONObject message payload"},
-                message_contents["history5"],
+                message_contents["history5"].data,
                 msg="Expect history5 to be expected JSONObject")
         self.assertEquals(["This is a JSONArray message payload"],
-                message_contents["history6"],
+                message_contents["history6"].data,
                 msg="Expect history6 to be expected JSONObject")
 
         expected_message_history = [
@@ -100,10 +100,9 @@ class TestRestChannelHistory(unittest.TestCase):
         self.assertEquals(50, len(messages),
                 msg="Expected 50 messages")
 
-        expected_messages = ['history%d' % i for i in range(50)]
-        actual_messages = [m.data for m in messages]
-
-        self.assertEquals(expected_messages, actual_messages,
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(50)]
+        self.assertEquals(expected_messages, messages,
                 msg='Expect messages in forward order')
 
     def test_channel_history_multi_50_backwards(self):
@@ -120,10 +119,10 @@ class TestRestChannelHistory(unittest.TestCase):
         self.assertEquals(50, len(messages),
                 msg="Expected 50 messages")
 
-        expected_messages = ['history%d' % i for i in range(49, -1, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(49, -1, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expect messages in reverse order')
 
     def test_channel_history_limit_forwards(self):
@@ -140,10 +139,10 @@ class TestRestChannelHistory(unittest.TestCase):
         self.assertEquals(25, len(messages),
                 msg="Expected 25 messages")
 
-        expected_messages = ['history%d' % i for i in range(25)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(25)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expect messages in forward order')
 
     def test_channel_history_limit_backwards(self):
@@ -160,10 +159,10 @@ class TestRestChannelHistory(unittest.TestCase):
         self.assertEquals(25, len(messages),
                 msg="Expected 25 messages")
 
-        expected_messages = ['history%d' % i for i in range(49, 24, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(49, 24, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expect messages in forward order')
 
     def test_channel_history_time_forwards(self):
@@ -193,10 +192,10 @@ class TestRestChannelHistory(unittest.TestCase):
         messages = history.current
         self.assertEquals(20, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(20, 40)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(20, 40)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expect messages in forward order')
 
     def test_channel_history_time_backwards(self):
@@ -226,10 +225,10 @@ class TestRestChannelHistory(unittest.TestCase):
         messages = history.current
         self.assertEquals(20, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(39, 29, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(39, 29, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expect messages in reverse order')
 
     def test_channel_history_paginate_forwards(self):
@@ -245,10 +244,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(0, 10)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
         history = history.get_next()
@@ -256,10 +255,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(10, 20)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(10, 20)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
         history = history.get_next()
@@ -267,10 +266,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(20, 30)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(20, 30)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_backwards(self):
@@ -286,10 +285,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(49, 39, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
         history = history.get_next()
@@ -297,10 +296,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(39, 29, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(39, 29, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
         history = history.get_next()
@@ -308,10 +307,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(29, 19, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(29, 19, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_forwards(self):
@@ -327,10 +326,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(0, 10)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
         history = history.get_next()
@@ -338,10 +337,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(10, 20)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(10, 20)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
         history = history.get_first()
@@ -349,10 +348,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(0, 10)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_backwards_rel_first(self):
@@ -368,10 +367,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(49, 39, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
         history = history.get_next()
@@ -379,10 +378,10 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(39, 29, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(39, 29, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')
         
         history = history.get_first()
@@ -390,8 +389,8 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEquals(10, len(messages))
 
-        expected_messages = ['history%d' % i for i in range(49, 39, -1)]
-        actual_messages = [m.data for m in messages]
+        message_contents = {m.name:m for m in messages}
+        expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
 
-        self.assertEquals(expected_messages, actual_messages,
+        self.assertEquals(expected_messages, messages,
                 msg='Expected 10 messages')

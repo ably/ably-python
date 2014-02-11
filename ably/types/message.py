@@ -21,12 +21,27 @@ class Message(object):
         elif isinstance(name, six.binary_type):
             self.__name = name.decode('ascii')
         else:
-            log.debug(name)
-            log.debug(name.__class__)
+            #log.debug(name)
+            #log.debug(name.__class__)
             raise ValueError("name must be a string or bytes")
         self.__client_id = client_id
         self.__data = data
         self.__timestamp = timestamp
+
+    def __eq__(self, other):
+        if isinstance(other, Message):
+            return (self.name == other.name
+                and self.data == other.data
+                and self.client_id == other.client_id
+                and self.timestamp == other.timestamp)
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, Message):
+            result = self.__eq(other)
+            if result != NotImplemented:
+                return not result
+        return NotImplemented
 
     @property
     def name(self):
@@ -70,7 +85,7 @@ class Message(object):
         encoding = None
         data_type = None
 
-        log.debug(data.__class__)
+        #log.debug(data.__class__)
 
         if isinstance(data, CipherData):
             data_type = data.type
@@ -80,8 +95,8 @@ class Message(object):
             data = base64.b64encode(data).decode('ascii')
             encoding = 'base64'
 
-        log.debug(data)
-        log.debug(data.__class__)
+        #log.debug(data)
+        #log.debug(data.__class__)
 
         request_body = {
             'name': self.name,
@@ -105,7 +120,7 @@ class Message(object):
         timestamp = obj.get('timestamp')
         encoding = obj.get('encoding')
 
-        log.debug("MESSAGE: %s", str(obj))
+        #log.debug("MESSAGE: %s", str(obj))
 
         if encoding and encoding == six.u('base64'):
             data = base64.b64decode(data)
