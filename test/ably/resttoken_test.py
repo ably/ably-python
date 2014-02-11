@@ -100,8 +100,20 @@ class TestRestToken(unittest.TestCase):
                 })
 
     def test_request_token_with_capacbility_that_subsets_key_capability(self):
-        #TODO: implement this test
-        pass
+        capability = Capability({
+            "onlythischannel": ["subscribe"]
+        })
+
+        token_params = {
+            "capability": capability,
+        }
+
+        token_details = self.ably.auth.request_token(token_params=token_params)
+
+        self.assertIsNotNone(token_details)
+        self.assertIsNotNone(token_details.id)
+        self.assertEquals(capability, token_details.capability,
+                msg="Unexpected capability")
 
     def test_request_token_with_specified_key(self):
         key = RestSetup.get_test_vars()["keys"][1]
