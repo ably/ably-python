@@ -34,10 +34,10 @@ class TestRestCapability(unittest.TestCase):
         key = test_vars['keys'][1]
         token_details = self.ably.auth.request_token(key_id=key['key_id'],
                 key_value=key['key_value'])
-        expected_capability = six.text_type(Capability(key["capability"]))
+        expected_capability = Capability(key["capability"])
         self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEquals(expected_capability,
-                six.text_type(Capability(token_details.capability)),
+                token_details.capability,
                 msg="Unexpected capability.")
 
     def test_equal_intersection_with_key(self):
@@ -51,11 +51,11 @@ class TestRestCapability(unittest.TestCase):
                 key_value=key['key_value'], 
                 token_params=token_params)
 
-        expected_capability = six.text_type(Capability(key["capability"]))
+        expected_capability = Capability(key["capability"])
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEquals(expected_capability,
-                six.text_type(Capability(token_details.capability)),
+                token_details.capability,
                 msg="Unexpected capability")
 
 
@@ -100,15 +100,15 @@ class TestRestCapability(unittest.TestCase):
             },
         }
 
-        expected_capability = six.text_type(Capability({
+        expected_capability = Capability({
             "channel2": ["subscribe"]
-        }))
+        })
 
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEquals(expected_capability,
-                six.text_type(Capability(token_details.capability)),
+                token_details.capability,
                 msg="Unexpected capability")
 
     def test_non_empty_paths_intersection(self):
@@ -125,15 +125,15 @@ class TestRestCapability(unittest.TestCase):
             },
         }
 
-        expected_capability = six.text_type(Capability({
+        expected_capability = Capability({
             "channel2": ["subscribe"]
-        }))
+        })
 
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEquals(expected_capability,
-                six.text_type(Capability(token_details.capability)),
+                token_details.capability,
                 msg="Unexpected capability")
 
     def test_wildcard_ops_intersection(self):
@@ -149,15 +149,15 @@ class TestRestCapability(unittest.TestCase):
             },
         }
 
-        expected_capability = six.text_type(Capability({
+        expected_capability = Capability({
             "channel2": ["subscribe", "publish"]
-        }))
+        })
 
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEquals(expected_capability,
-                six.text_type(Capability({"channel2":["subscribe"]})),
+                token_details.capability,
                 msg="Unexpected capability")
 
 

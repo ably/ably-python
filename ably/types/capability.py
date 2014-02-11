@@ -16,6 +16,16 @@ class Capability(MutableMapping, UnicodeMixin):
         for k, v in six.iteritems(obj):
             self[k] = v
 
+    def __eq__(self, other):
+        if isinstance(other, Capability):
+            return Capability.c14n(self) == Capability.c14n(other)
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, Capability):
+            return Capability.c14n(self) != Capability.c14n(other)
+        return NotImplemented
+
     def __getitem__(self, key):
         return self.__dict[key]
 
