@@ -162,23 +162,152 @@ class TestRestCapability(unittest.TestCase):
 
 
     def test_wildcard_ops_intersection_2(self):
-        pass
+        key = test_vars['keys'][4]
+        
+        kwargs = {
+            "key_id": key["key_id"],
+            "key_value": key["key_value"],
+            "token_params": {
+                "capability": {
+                    "channel6": ["publish", "subscribe"],
+                },
+            },
+        }
+
+        expected_capability = Capability({
+            "channel6": ["subscribe", "publish"]
+        })
+
+        token_details = self.ably.auth.request_token(**kwargs)
+
+        self.assertIsNotNone(token_details.id, msg="Expected token id")
+        self.assertEquals(expected_capability,
+                token_details.capability,
+                msg="Unexpected capability")
 
     def test_wildcard_resources_intersection(self):
-        pass
+        key = test_vars['keys'][2]
+        
+        kwargs = {
+            "key_id": key["key_id"],
+            "key_value": key["key_value"],
+            "token_params": {
+                "capability": {
+                    "cansubscribe": ["subscribe"],
+                },
+            },
+        }
+
+        expected_capability = Capability({
+            "cansubscribe": ["subscribe"]
+        })
+
+        token_details = self.ably.auth.request_token(**kwargs)
+
+        self.assertIsNotNone(token_details.id, msg="Expected token id")
+        self.assertEquals(expected_capability,
+                token_details.capability,
+                msg="Unexpected capability")
 
     def test_wildcard_resources_intersection_2(self):
-        pass
+        key = test_vars['keys'][2]
+        
+        kwargs = {
+            "key_id": key["key_id"],
+            "key_value": key["key_value"],
+            "token_params": {
+                "capability": {
+                    "cansubscribe:check": ["subscribe"],
+                },
+            },
+        }
+
+        expected_capability = Capability({
+            "cansubscribe:check": ["subscribe"]
+        })
+
+        token_details = self.ably.auth.request_token(**kwargs)
+
+        self.assertIsNotNone(token_details.id, msg="Expected token id")
+        self.assertEquals(expected_capability,
+                token_details.capability,
+                msg="Unexpected capability")
 
     def test_wildcard_resources_intersection_3(self):
-        pass
+        key = test_vars['keys'][2]
+        
+        kwargs = {
+            "key_id": key["key_id"],
+            "key_value": key["key_value"],
+            "token_params": {
+                "capability": {
+                    "cansubscribe:*": ["subscribe"],
+                },
+            },
+        }
+
+        expected_capability = Capability({
+            "cansubscribe:*": ["subscribe"]
+        })
+
+        token_details = self.ably.auth.request_token(**kwargs)
+
+        self.assertIsNotNone(token_details.id, msg="Expected token id")
+        self.assertEquals(expected_capability,
+                token_details.capability,
+                msg="Unexpected capability")
 
     def test_invalid_capabilities(self):
-        pass
+        kwargs = {
+            "token_params": {
+                "capability": {
+                    "channel0": ["publish_"],
+                },
+            },
+        }
+
+        with self.assertRaises(AblyException) as cm:
+            token_details = self.ably.auth.request_token(**kwargs)
+
+        the_exception = cm.exception
+        self.assertEquals(400, the_exception.status_code)
+        self.assertEquals(40000, the_exception.code)
 
     def test_invalid_capabilities_2(self):
-        pass
+        kwargs = {
+            "token_params": {
+                "capability": {
+                    "channel0": ["*", "publish"],
+                },
+            },
+        }
+
+        with self.assertRaises(AblyException) as cm:
+            token_details = self.ably.auth.request_token(**kwargs)
+
+        the_exception = cm.exception
+        self.assertEquals(400, the_exception.status_code)
+        self.assertEquals(40000, the_exception.code)
+
 
     def test_invalid_capabilities_3(self):
-        pass
+        capability = Capability({
+            "channel0": []
+        })
+        
+        kwargs = {
+            "token_params": {
+                "capability": {
+                    "channel0": [],
+                },
+            },
+        }
+
+        with self.assertRaises(AblyException) as cm:
+            token_details = self.ably.auth.request_token(**kwargs)
+
+        the_exception = cm.exception
+        self.assertEquals(400, the_exception.status_code)
+        self.assertEquals(40000, the_exception.code)
+
 
