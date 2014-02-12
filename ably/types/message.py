@@ -38,7 +38,7 @@ class Message(object):
 
     def __ne__(self, other):
         if isinstance(other, Message):
-            result = self.__eq(other)
+            result = self.__eq__(other)
             if result != NotImplemented:
                 return not result
         return NotImplemented

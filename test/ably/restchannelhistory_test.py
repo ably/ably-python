@@ -83,7 +83,7 @@ class TestRestChannelHistory(unittest.TestCase):
             message_contents['history0'],
         ]
 
-        self.assertEquals(expected_message_history, [m.data for m in messages],
+        self.assertEquals(expected_message_history, messages,
                 msg="Expect messages in reverse order")
 
     def test_channel_history_multi_50_forwards(self):
@@ -172,13 +172,13 @@ class TestRestChannelHistory(unittest.TestCase):
             history0.publish('history%d' % i, i)
             time.sleep(0.1)
 
-        interval_start = int(TestRestChannelHistory.time_offset + time.time())
+        interval_start = TestRestChannelHistory.ably.time()
 
         for i in range(20, 40):
             history0.publish('history%d' % i, i)
             time.sleep(0.1)
 
-        interval_end = int(TestRestChannelHistory.time_offset + time.time())
+        interval_end = TestRestChannelHistory.ably.time()
 
         for i in range(40, 60):
             history0.publish('history%d' % i, i)
@@ -205,13 +205,13 @@ class TestRestChannelHistory(unittest.TestCase):
             history0.publish('history%d' % i, i)
             time.sleep(0.1)
 
-        interval_start = int(TestRestChannelHistory.time_offset + time.time())
+        interval_start = TestRestChannelHistory.ably.time()
 
         for i in range(20, 40):
             history0.publish('history%d' % i, i)
             time.sleep(0.1)
 
-        interval_end = int(TestRestChannelHistory.time_offset + time.time())
+        interval_end = TestRestChannelHistory.ably.time()
 
         for i in range(40, 60):
             history0.publish('history%d' % i, i)
@@ -226,7 +226,7 @@ class TestRestChannelHistory(unittest.TestCase):
         self.assertEquals(20, len(messages))
 
         message_contents = {m.name:m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(39, 29, -1)]
+        expected_messages = [message_contents['history%d' % i] for i in range(39, 19, -1)]
 
         self.assertEquals(expected_messages, messages,
                 msg='Expect messages in reverse order')
