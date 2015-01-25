@@ -40,3 +40,7 @@ venv*
 
 # vim
 *.sw?
+
+# notes
+.notes
+test.sh
