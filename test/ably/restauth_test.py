@@ -8,16 +8,19 @@ from ably import AblyRest
 from ably import Auth
 from ably import Options
 
+
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
+
 
 log = logging.getLogger(__name__)
 
 class TestAuth(unittest.TestCase):
     def test_auth_init_key_only(self):
-        # 12 Factor App style: load keys from env
-        ably = AblyRest(Options.with_key(os.environ.get('ABLY_KEYSTR')))
+        log.debug(test_vars["keys"][0]["key_str"])
+        ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"]))
+        print(test_vars["keys"][0]["key_str"])
         log.debug("Method: %s" % ably.auth.auth_method)
         self.assertEquals(Auth.Method.BASIC, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
@@ -59,7 +62,7 @@ class TestAuth(unittest.TestCase):
                 msg="Unexpected Auth method mismatch")
         
     def test_auth_init_with_key_and_client_id(self):
-        options = Options.with_key(os.environ.get('ABLY_KEYSTR'))
+        options = Options.with_key(test_vars["keys"][0]["key_str"])
         options.client_id = "testClientId"
 
         ably = AblyRest(options)

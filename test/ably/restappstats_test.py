@@ -7,6 +7,7 @@ import logging
 import time
 import unittest
 
+
 from ably import AblyException
 from ably import AblyRest
 from ably import Options
@@ -24,6 +25,7 @@ class TestRestAppStats(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+
         cls.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
                 host=test_vars["host"],
                 port=test_vars["port"],

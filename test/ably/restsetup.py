@@ -21,6 +21,7 @@ print(app_spec_text)
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST')
 
+
 if host is None:
     host = "staging-rest.ably.io"
 
@@ -68,6 +69,17 @@ class RestSetup:
             }
 
             RestSetup.__test_vars = test_vars
+            try:
+                with open("test_vars_out", "w") as f:
+                    f.write(json.dumps(test_vars["keys"][0]["key_str"]))
+                    f.write("\n")
+            except Exception as e:
+                print("####")
+                print(e)
+                print(test_vars["keys"][0]["key_str"])
+                print("####")
+
+
 
         return RestSetup.__test_vars
 

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import functools
 import logging
+import six
 
 from ably.util.unicodemixin import UnicodeMixin
 

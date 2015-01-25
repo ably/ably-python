@@ -44,3 +44,6 @@ venv*
 # notes
 .notes
 test.sh
+test_vars_out
+.notes
+pytest

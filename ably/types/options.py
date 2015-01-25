@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from ably.types.authoptions import AuthOptions
+from ably.util.exceptions import AblyException
 
 class Options(AuthOptions):
     def __init__(self, client_id=None, log_level=0, tls=True, host=None, ws_host=None,
@@ -27,6 +28,7 @@ class Options(AuthOptions):
         key_components = key.split(':')
 
         if len(key_components) != 2:
+
             raise AblyException("invalid key parameter", 401, 40101)
 
         kwargs['key_id'] = key_components[0]
