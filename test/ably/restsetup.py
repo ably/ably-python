@@ -45,13 +45,14 @@ class RestSetup:
     __test_vars = None
 
     @staticmethod
-    def get_test_vars():
+    def get_test_vars(sender=None):
         if not RestSetup.__test_vars:
             r = ably.http.post("/apps", headers=HttpUtils.default_post_headers(),
                     body=app_spec_text, skip_auth=True)
             AblyException.raise_for_response(r)
-
+            
             app_spec = r.json()
+            
             app_id = app_spec.get("id", "")
 
             test_vars = {
@@ -63,24 +64,14 @@ class RestSetup:
                 "keys": [{
                     "key_id": "%s.%s" % (app_id, k.get("id", "")),
                     "key_value": k.get("value", ""),
-                    "key_str": "%s.%s:%s" % (app_id, k.get("id", ""), k.get("value", "")),
+                    "key_str": "%s:%s" % ( k.get("id", ""), k.get("value", "")),
                     "capability": Capability(json.loads(k.get("capability", "{}"))),
                 } for k in app_spec.get("keys", [])]
             }
 
             RestSetup.__test_vars = test_vars
-            try:
-                with open("test_vars_out", "w") as f:
-                    f.write(json.dumps(test_vars["keys"][0]["key_str"]))
-                    f.write("\n")
-            except Exception as e:
-                print("####")
-                print(e)
-                print(test_vars["keys"][0]["key_str"])
-                print("####")
-
-
-
+            log.debug([(app_id, k.get("id", ""), k.get("value", "")) 
+                  for k in app_spec.get("keys", [])])
         return RestSetup.__test_vars
 
     @staticmethod

@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 class TestAuth(unittest.TestCase):
     def test_auth_init_key_only(self):
-        log.debug(test_vars["keys"][0]["key_str"])
+        
         ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"]))
         print(test_vars["keys"][0]["key_str"])
         log.debug("Method: %s" % ably.auth.auth_method)

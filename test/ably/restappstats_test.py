@@ -13,9 +13,9 @@ from ably import AblyRest
 from ably import Options
 
 from test.ably.restsetup import RestSetup
-
-test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
+test_vars = RestSetup.get_test_vars()
+log.debug("KEY init: "+test_vars["keys"][0]["key_str"])
 
 
 class TestRestAppStats(unittest.TestCase):
@@ -25,7 +25,8 @@ class TestRestAppStats(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-
+        log.debug("KEY class: "+test_vars["keys"][0]["key_str"])
+        log.debug("TLS: "+str(test_vars["tls"]))
         cls.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
                 host=test_vars["host"],
                 port=test_vars["port"],

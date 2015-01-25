@@ -10,6 +10,7 @@ class Options(AuthOptions):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
+
         self.__client_id = client_id
         self.__log_level = log_level
         self.__tls = tls
@@ -28,9 +29,10 @@ class Options(AuthOptions):
         key_components = key.split(':')
 
         if len(key_components) != 2:
-
-            raise AblyException("invalid key parameter", 401, 40101)
-
+            raise AblyException("key of not len 2 parameters: {0}"
+                                .format(key.split(':')),
+                                401, 40101)
+       
         kwargs['key_id'] = key_components[0]
         kwargs['key_value'] = key_components[1]
 
