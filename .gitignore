@@ -49,3 +49,5 @@ test_vars_out
 pytest
 app_spec
 app_spec.pkl
+ably/types/options.py.orig
+test/ably/restsetup.py.orig

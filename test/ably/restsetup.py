@@ -53,7 +53,7 @@ class RestSetup:
             
             app_spec = r.json()
             
-            app_id = app_spec.get("id", "")
+            app_id = app_spec.get("appId", "")
 
             test_vars = {
                 "app_id": app_id,
