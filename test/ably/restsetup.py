@@ -64,7 +64,7 @@ class RestSetup:
                 "keys": [{
                     "key_id": "%s.%s" % (app_id, k.get("id", "")),
                     "key_value": k.get("value", ""),
-                    "key_str": "%s:%s" % ( k.get("id", ""), k.get("value", "")),
+                    "key_str": "%s.%s:%s" % (app_id,  k.get("id", ""), k.get("value", "")),
                     "capability": Capability(json.loads(k.get("capability", "{}"))),
                 } for k in app_spec.get("keys", [])]
             }
