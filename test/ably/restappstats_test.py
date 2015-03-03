@@ -35,11 +35,11 @@ class TestRestAppStats(unittest.TestCase):
         time_from_service = cls.ably.time()
         cls.time_offset = time_from_service / 1000.0 - time.time()
 
-        #cls._test_infos = {}
-        #cls._publish(50)
-        #cls._publish(60)
-        #cls._publish(70)
-        #cls.sleep_for(timedelta(seconds=8))
+        cls._test_infos = {}
+        cls._publish(50)
+        cls._publish(60)
+        cls._publish(70)
+        cls.sleep_for(timedelta(seconds=8))
 
     @classmethod
     def server_now(cls):
@@ -79,8 +79,20 @@ class TestRestAppStats(unittest.TestCase):
             channel.publish('stats%d' % i, i)
 
         cls.interval_end = cls.server_now()
-
         cls.sleep_for(timedelta(seconds=8))
+
+    def test_publish(self):
+        TestRestAppStats._publish(50, 'appstats_0')
+        params = {
+            'direction': 'forwards',
+            'start': TestRestAppStats.interval_start,
+            'end': TestRestAppStats.interval_end,
+        }
+
+        stats_pages = TestRestAppStats.ably.stats(**params)
+        stats_page = stats_pages.current
+        self.assertEquals(1, len(stats_page), "Expected 1 record, got {0}".format(len(stats_page)))
+        self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
 
     def test_app_stats_01_minute_level_forwards(self):
         TestRestAppStats._publish(50, 'appstats_0')
@@ -92,7 +104,7 @@ class TestRestAppStats(unittest.TestCase):
         stats_pages = TestRestAppStats.ably.stats(**params)
         stats_page = stats_pages.current
 
-        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(1, len(stats_page), "Expected 1 record, got {0}".format(len(stats_page)))
         self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
 
     def test_app_stats_02_hour_level_forwards(self):
@@ -105,7 +117,7 @@ class TestRestAppStats(unittest.TestCase):
         stats_pages = TestRestAppStats.ably.stats(**params)
         stats_page = stats_pages.current
 
-        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(1, len(stats_page), "Expected 1 record, got {0}".format(len(stats_page)))
         self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
 
     def test_app_stats_03_day_level_forwards(self):
@@ -118,7 +130,7 @@ class TestRestAppStats(unittest.TestCase):
         stats_pages = TestRestAppStats.ably.stats(**params)
         stats_page = stats_pages.current
 
-        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(1, len(stats_page), "Expected 1 record, got {0}".format(len(stats_page)))
         self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
 
     def test_app_stats_04_month_level_forwards(self):
@@ -131,7 +143,7 @@ class TestRestAppStats(unittest.TestCase):
         stats_pages = TestRestAppStats.ably.stats(**params)
         stats_page = stats_pages.current
 
-        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(1, len(stats_page), "Expected 1 record, got {0}".format(len(stats_page)))
         self.assertEquals(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
 
     def test_app_stats_05_minute_level_backwards(self):
@@ -144,7 +156,7 @@ class TestRestAppStats(unittest.TestCase):
         stats_pages = TestRestAppStats.ably.stats(**params)
         stats_page = stats_pages.current
 
-        self.assertEquals(1, len(stats_page), "Expected 1 record")
+        self.assertEquals(1, len(stats_page), "Expected 1 record, got {0}".format(len(stats_page)))
         self.assertEquals(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
 
     def test_app_stats_06_hour_level_backwards(self):

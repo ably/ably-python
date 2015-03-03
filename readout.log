@@ -1,0 +1,217 @@
+running test
+running egg_info
+writing requirements to ably_python.egg-info/requires.txt
+writing ably_python.egg-info/PKG-INFO
+writing top-level names to ably_python.egg-info/top_level.txt
+writing dependency_links to ably_python.egg-info/dependency_links.txt
+reading manifest file 'ably_python.egg-info/SOURCES.txt'
+writing manifest file 'ably_python.egg-info/SOURCES.txt'
+running build_ext
+ERROR
+test_auth_init_key_only (test.ably.restauth_test.TestAuth) ... ok
+test_auth_init_token_only (test.ably.restauth_test.TestAuth) ... ok
+test_auth_init_with_key_and_client_id (test.ably.restauth_test.TestAuth) ... ok
+test_auth_init_with_token (test.ably.restauth_test.TestAuth) ... ok
+test_auth_init_with_token_callback (test.ably.restauth_test.TestAuth) ... ok
+test_blanket_intersection_with_key (test.ably.restcapability_test.TestRestCapability) ... ok
+test_empty_ops_intersection (test.ably.restcapability_test.TestRestCapability) ... ok
+test_empty_paths_intersection (test.ably.restcapability_test.TestRestCapability) ... ok
+test_equal_intersection_with_key (test.ably.restcapability_test.TestRestCapability) ... ok
+test_invalid_capabilities (test.ably.restcapability_test.TestRestCapability) ... ok
+test_invalid_capabilities_2 (test.ably.restcapability_test.TestRestCapability) ... ok
+test_invalid_capabilities_3 (test.ably.restcapability_test.TestRestCapability) ... ok
+test_non_empty_ops_intersection (test.ably.restcapability_test.TestRestCapability) ... ok
+test_non_empty_paths_intersection (test.ably.restcapability_test.TestRestCapability) ... ok
+test_wildcard_ops_intersection (test.ably.restcapability_test.TestRestCapability) ... ok
+test_wildcard_ops_intersection_2 (test.ably.restcapability_test.TestRestCapability) ... ok
+test_wildcard_resources_intersection (test.ably.restcapability_test.TestRestCapability) ... ok
+test_wildcard_resources_intersection_2 (test.ably.restcapability_test.TestRestCapability) ... ok
+test_wildcard_resources_intersection_3 (test.ably.restcapability_test.TestRestCapability) ... ok
+test_channel_history_limit_backwards (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_limit_forwards (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_multi_50_backwards (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_multi_50_forwards (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_paginate_backwards (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_paginate_backwards_rel_first (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_paginate_forwards (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_time_backwards (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_time_forwards (test.ably.restchannelhistory_test.TestRestChannelHistory) ... ok
+test_channel_history_types (test.ably.restchannelhistory_test.TestRestChannelHistory) ... FAIL
+test_publish_various_datatypes_text (test.ably.restchannelpublish_test.TestRestChannelPublish) ... FAIL
+test_cbc_channel_cipher (test.ably.restcrypto_test.TestRestCrypto) ... ok
+test_crypto_publish_key_mismatch (test.ably.restcrypto_test.TestRestCrypto) ... FAIL
+test_crypto_publish_text (test.ably.restcrypto_test.TestRestCrypto) ... FAIL
+test_crypto_publish_text_256 (test.ably.restcrypto_test.TestRestCrypto) ... FAIL
+test_crypto_send_encrypted_unhandled (test.ably.restcrypto_test.TestRestCrypto) ... FAIL
+test_crypto_send_unencrypted (test.ably.restcrypto_test.TestRestCrypto) ... FAIL
+test_key_in_options (test.ably.restinit_test.TestRestInit) ... ok
+test_key_only (test.ably.restinit_test.TestRestInit) ... ok
+test_specified_host (test.ably.restinit_test.TestRestInit) ... ok
+test_specified_port (test.ably.restinit_test.TestRestInit) ... ok
+test_tls_can_be_disabled (test.ably.restinit_test.TestRestInit) ... ok
+test_tls_defaults_to_true (test.ably.restinit_test.TestRestInit) ... ok
+test_time_accuracy (test.ably.resttime_test.TestRestTime) ... ok
+test_time_fails_without_valid_host (test.ably.resttime_test.TestRestTime) ... ok
+test_time_without_key_or_token (test.ably.resttime_test.TestRestTime) ... ok
+test_request_token_explicit_invalid_timestamp (test.ably.resttoken_test.TestRestToken) ... ok
+test_request_token_explicit_timestamp (test.ably.resttoken_test.TestRestToken) ... ok
+test_request_token_null_params (test.ably.resttoken_test.TestRestToken) ... ok
+test_request_token_with_capability_that_subsets_key_capability (test.ably.resttoken_test.TestRestToken) ... ok
+test_request_token_with_duplicate_nonce (test.ably.resttoken_test.TestRestToken) ... ok
+test_request_token_with_invalid_mac (test.ably.resttoken_test.TestRestToken) ... ok
+test_request_token_with_specified_key (test.ably.resttoken_test.TestRestToken) ... ok
+test_request_token_with_specified_ttl (test.ably.resttoken_test.TestRestToken) ... ok
+test_request_token_with_system_timestamp (test.ably.resttoken_test.TestRestToken) ... ok
+test_token_generation_with_invalid_ttl (test.ably.resttoken_test.TestRestToken) ... ok
+test_token_with_excessive_ttl (test.ably.resttoken_test.TestRestToken) ... ok
+
+======================================================================
+ERROR: <nose.suite.ContextSuite context=TestRestAppStats>
+test suite for <class 'test.ably.restappstats_test.TestRestAppStats'>
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/main/.virtualenvs/ably/lib/python2.7/site-packages/nose/suite.py", line 209, in run
+    self.setUp()
+  File "/home/main/.virtualenvs/ably/lib/python2.7/site-packages/nose/suite.py", line 292, in setUp
+    self.setupContext(ancestor)
+  File "/home/main/.virtualenvs/ably/lib/python2.7/site-packages/nose/suite.py", line 315, in setupContext
+    try_run(context, names)
+  File "/home/main/.virtualenvs/ably/lib/python2.7/site-packages/nose/util.py", line 470, in try_run
+    return func()
+  File "/home/main/Projects/temp/ably-python-rest/test/ably/restappstats_test.py", line 39, in setUpClass
+    cls._publish(50)
+TypeError: _publish() takes exactly 3 arguments (2 given)
+-------------------- >> begin captured stdout << ---------------------
+{
+	"keys": [
+		{},
+		{
+			"capability": "{\"testchannel\":[\"publish\"]}"
+		},
+		{
+			"capability": "{\"*\":[\"subscribe\"],\"canpublish:*\":[\"publish\"],\"canpublish:andpresence\":[\"presence\",\"publish\"]}"
+		},
+		{
+			"capability": "{\"candoall\":[\"*\"]}"
+		},
+		{
+			"capability": "{\"channel0\":[\"publish\"],\"channel1\":[\"publish\"],\"channel2\":[\"publish\",\"subscribe\"],\"channel3\":[\"subscribe\"],\"channel4\":[\"presence\",\"publish\",\"subscribe\"],\"channel5\":[\"presence\"],\"channel6\":[\"*\"]}"
+		},
+		{
+			"privileged": true,
+			"capability": "{\"channel0\":[\"publish\"],\"channel1\":[\"publish\"],\"channel2\":[\"publish\",\"subscribe\"],\"channel3\":[\"subscribe\"],\"channel4\":[\"presence\",\"publish\",\"subscribe\"],\"channel5\":[\"presence\"],\"channel6\":[\"*\"]}"
+		}
+	],
+	"namespaces": [
+		{
+			"id": "persisted",
+			"persisted": true
+		}
+	]
+}
+
+--------------------- >> end captured stdout << ----------------------
+-------------------- >> begin captured logging << --------------------
+ably.rest.auth: INFO: no authentication parameters supplied
+test.ably.restsetup: DEBUG: [(u'rgcW3g', u'z-f1fQ', u'7y4ZrhkTGQv1sUQl'), (u'rgcW3g', u'b1MHhQ', u'P9XMs16o7jHV4-BF'), (u'rgcW3g', u'Joq5nA', u've2rXq14Fj0h_TU4'), (u'rgcW3g', u'tXPfHA', u'5w6lUTbrzfny-RXs'), (u'rgcW3g', u'H-9JQA', u'zp7DSqiLkJ5Khccd'), (u'rgcW3g', u'byPWzw', u'CicqpyPiT1zezRyt')]
+test.ably.restappstats_test: DEBUG: KEY init: rgcW3g.z-f1fQ:7y4ZrhkTGQv1sUQl
+test.ably.restappstats_test: DEBUG: KEY class: rgcW3g.z-f1fQ:7y4ZrhkTGQv1sUQl
+test.ably.restappstats_test: DEBUG: TLS: True
+ably.rest.auth: INFO: anonymous, using basic auth
+--------------------- >> end captured logging << ---------------------
+
+======================================================================
+FAIL: test_channel_history_types (test.ably.restchannelhistory_test.TestRestChannelHistory)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/main/Projects/temp/ably-python-rest/test/ably/restchannelhistory_test.py", line 58, in test_channel_history_types
+    msg="Expect history0 to be Boolean(true)")
+AssertionError: Expect history0 to be Boolean(true)
+-------------------- >> begin captured logging << --------------------
+ably.http.paginatedresult: DEBUG: Links: {'current': {'url': './messages?start=0&end=1425380630382&limit=100&direction=backwards&format=json&first_end=1425380630382&from_date=1425380630382', 'rel': 'current'}, 'first': {'url': './messages?start=0&end=1425380630382&limit=100&direction=backwards&format=json&first_end=1425380630382&from_date=1425380630382', 'rel': 'first'}}
+ably.http.paginatedresult: DEBUG: Response: 200
+--------------------- >> end captured logging << ---------------------
+
+======================================================================
+FAIL: test_publish_various_datatypes_text (test.ably.restchannelpublish_test.TestRestChannelPublish)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/main/Projects/temp/ably-python-rest/test/ably/restchannelpublish_test.py", line 63, in test_publish_various_datatypes_text
+    msg="Expect publish0 to be Boolean(true)")
+AssertionError: Expect publish0 to be Boolean(true)
+-------------------- >> begin captured logging << --------------------
+ably.rest.auth: INFO: anonymous, using basic auth
+ably.rest.auth: INFO: anonymous, using basic auth
+ably.http.paginatedresult: DEBUG: Links: {'current': {'url': './messages?start=0&end=1425380648023&limit=100&direction=backwards&format=json&first_end=1425380648023&from_date=1425380648023', 'rel': 'current'}, 'first': {'url': './messages?start=0&end=1425380648023&limit=100&direction=backwards&format=json&first_end=1425380648023&from_date=1425380648023', 'rel': 'first'}}
+ably.http.paginatedresult: DEBUG: Response: 200
+test.ably.restchannelpublish_test: DEBUG: message_contents: {u'publish3': u'This is a string message payload', u'publish2': u'24.234', u'publish1': u'24', u'publish0': u'true', u'publish6': u'This is a JSONArray message payload', u'publish5': u'[object Object]', u'publish4': 'This is a byte[] message payload'}
+--------------------- >> end captured logging << ---------------------
+
+======================================================================
+FAIL: test_crypto_publish_key_mismatch (test.ably.restcrypto_test.TestRestCrypto)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/main/Projects/temp/ably-python-rest/test/ably/restcrypto_test.py", line 163, in test_crypto_publish_key_mismatch
+    history = rx_channel.history()
+AssertionError: AblyException not raised
+-------------------- >> begin captured logging << --------------------
+ably.http.paginatedresult: DEBUG: Links: {'current': {'url': './messages?start=0&end=1425380666182&limit=100&direction=backwards&format=json&first_end=1425380666182&from_date=1425380666182', 'rel': 'current'}, 'first': {'url': './messages?start=0&end=1425380666182&limit=100&direction=backwards&format=json&first_end=1425380666182&from_date=1425380666182', 'rel': 'first'}}
+ably.http.paginatedresult: DEBUG: Response: 200
+--------------------- >> end captured logging << ---------------------
+
+======================================================================
+FAIL: test_crypto_publish_text (test.ably.restcrypto_test.TestRestCrypto)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/main/Projects/temp/ably-python-rest/test/ably/restcrypto_test.py", line 84, in test_crypto_publish_text
+    msg="Expect publish0 to be Boolean(true)")
+AssertionError: Expect publish0 to be Boolean(true)
+-------------------- >> begin captured logging << --------------------
+ably.http.paginatedresult: DEBUG: Links: {'current': {'url': './messages?start=0&end=1425380683471&limit=100&direction=backwards&format=json&first_end=1425380683471&from_date=1425380683471', 'rel': 'current'}, 'first': {'url': './messages?start=0&end=1425380683471&limit=100&direction=backwards&format=json&first_end=1425380683471&from_date=1425380683471', 'rel': 'first'}}
+ably.http.paginatedresult: DEBUG: Response: 200
+test.ably.restcrypto_test: DEBUG: message_contents: {u'publish3': '\x1d\xad[\x0c\x1c\xbf8\x8fko\x1d~\xd0\xc6J\x91\xdd\xf3\x04\xec\x11\xc5#\xcb\xe6]E\\\xbc<\xf3\x9f\xb2sV*\xb5\xdb\x9aB\x959c\xd2F\x87\xfcl\xf4\xdb\x17RF\xedrM-\x9dL\xefRT,\xa3', u'publish2': '}\xad\xea\x15\x87(\x9f\xa5h\xb5\xfcW\x18\x83\xf1\xa6\x1d\xad[\x0c\x1c\xbf8\x8fko\x1d~\xd0\xc6J\x91', u'publish1': '\xca\nd\xaf\xb8\xe6\xb0\x16kI@R\xe4\x0e\xe5\xb8}\xad\xea\x15\x87(\x9f\xa5h\xb5\xfcW\x18\x83\xf1\xa6', u'publish0': u'true', u'publish6': '\xa1\xe7\xd55P\xd9\x96S\xf53\xc2_\xc3d\xe3\x17\xa2\x84 \x99\x85\x95\xe9}\xd5i~\xce\xf4\x04\x1e\x8e\xcc\xa8\xd2p\x1b\x9f\x1b\x1bc\x1b\xd5\x9d\x18\x83=\x19\xb5\xe4\x03\x0cY\x1c\xab\xd7t\x93\xbd\xbc\x87\x9c\xdc\x98', u'publish5': "#\x95\xce\xc9\xf68\xc4\t\x8d\x909e\xc2\x11\xf5\xe4\xa8\xfb\xe7\xab\xe2j\xe1\x18+\xd4#\xff\xe3\x81\xc4?'\xfe\xbf\xb7U\xfb\xb9\xcdU\x97\xe62o\x0c\xef\xd8\xdf\xd8\x06h\x18#f;\x03N\xae\xc6?\x1b\xd1m\xa1\xe7\xd55P\xd9\x96S\xf53\xc2_\xc3d\xe3\x17", u'publish4': '\xf4\xdb\x17RF\xedrM-\x9dL\xefRT,\xa3\xf9\xa4\\;{`3H\t\x9fM9T\x92\xfceC\\o\xaa\x13}^\xae\xeePy\x85\xeb\x95\x13`#\x95\xce\xc9\xf68\xc4\t\x8d\x909e\xc2\x11\xf5\xe4'}
+--------------------- >> end captured logging << ---------------------
+
+======================================================================
+FAIL: test_crypto_publish_text_256 (test.ably.restcrypto_test.TestRestCrypto)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/main/Projects/temp/ably-python-rest/test/ably/restcrypto_test.py", line 129, in test_crypto_publish_text_256
+    msg="Expect publish0 to be Boolean(true)")
+AssertionError: Expect publish0 to be Boolean(true)
+-------------------- >> begin captured logging << --------------------
+ably.http.paginatedresult: DEBUG: Links: {'current': {'url': './messages?start=0&end=1425380700623&limit=100&direction=backwards&format=json&first_end=1425380700623&from_date=1425380700623', 'rel': 'current'}, 'first': {'url': './messages?start=0&end=1425380700623&limit=100&direction=backwards&format=json&first_end=1425380700623&from_date=1425380700623', 'rel': 'first'}}
+ably.http.paginatedresult: DEBUG: Response: 200
+test.ably.restcrypto_test: DEBUG: message_contents: {u'publish3': '%\x94\x87\xb2r\xe8&\n\x9d!7\xdb\x93\xa9\x13\x8b3\xaa\xb0\xce\xa2V\xed\x81@\xf6Z\xa8HX\xa8\x7fd}\x90_\xa1u;\xd6\xb0Pe\x1f\xcc\x89\xd6`\x90\x1d\x8e\x9d\xc4Z\xd2\x1a\xe8wXw\xadr\xef0', u'publish2': '\xb5^0\x9e\xbd\x1fT\xaf+\xddt\x8e*\x15\xf8\xb7%\x94\x87\xb2r\xe8&\n\x9d!7\xdb\x93\xa9\x13\x8b', u'publish1': '\xff\x1fTd\x08:V\x0f\x9e8Y\xc6f\xdd\x1bn\xb5^0\x9e\xbd\x1fT\xaf+\xddt\x8e*\x15\xf8\xb7', u'publish0': u'true', u'publish6': 'Y\xb3)\xf4o\xd8c\xbb)\x8a \xecgU\xef\x1cf\xdd\x15\xab\x11\xf3\xdb\xd0\xcc\x15\xa8\x0e$J\xd5\x8a\x1cqJZW\xc0G\x8c\x1f"n,(\xd7:2"D\xadd\x8d\x8b\xc4\xe9\x18m~\x8alg\x0b\xc6', u'publish5': '\x8a$\xee\xc7e"n4\x02SlC\xea\xe5\x13\x85 "\xe0\xc17\x02-\xe2\x95w\xdc\xed\xbc93\x00i+\x86b\x80\x15\x10 M\x01\x87\x0c\xd4\xe5e\x8e\x90\x86\xfa@\x04*E@\x1a\xe3\xcb-p\xdb5\x01Y\xb3)\xf4o\xd8c\xbb)\x8a \xecgU\xef\x1c', u'publish4': '\x90\x1d\x8e\x9d\xc4Z\xd2\x1a\xe8wXw\xadr\xef0\xe1\xcc\xe8\xd4~g\x99$\x93\xe7\xee\xfa\x80\xe3^&QC\xfaZ\xed\xc2\xb7\xb6\x8f"\x8a\x1e\xd5\xa2Zq\x8a$\xee\xc7e"n4\x02SlC\xea\xe5\x13\x85'}
+--------------------- >> end captured logging << ---------------------
+
+======================================================================
+FAIL: test_crypto_send_encrypted_unhandled (test.ably.restcrypto_test.TestRestCrypto)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/main/Projects/temp/ably-python-rest/test/ably/restcrypto_test.py", line 236, in test_crypto_send_encrypted_unhandled
+    self.assertTrue(isinstance(v, CipherData))
+AssertionError: False is not true
+-------------------- >> begin captured logging << --------------------
+ably.http.paginatedresult: DEBUG: Links: {'current': {'url': './messages?start=0&end=1425380717910&limit=100&direction=backwards&format=json&first_end=1425380717910&from_date=1425380717910', 'rel': 'current'}, 'first': {'url': './messages?start=0&end=1425380717910&limit=100&direction=backwards&format=json&first_end=1425380717910&from_date=1425380717910', 'rel': 'first'}}
+ably.http.paginatedresult: DEBUG: Response: 200
+test.ably.restcrypto_test: DEBUG: message_contents: {u'publish3': 'G\xed\x0f\xaaF\x17\x02\xbbBM#\xae\x0b\x13c\x1c\xc1M\x97\x1e\xce@T\x8d\x08\x9bb\x82\xff\xb7\xfc#\x1d\x8c\xe0EY\xd306\x1a\x80\x1c\xde\x89\x9d\x8f\x89\xc3\x9d\x8b\x8a\x9f\x97\tA\x1d\xa8\x8dC\x0b\xd5n4', u'publish2': '\xcb\xdb\xa0\x9b\xc9\x8f\x08\x93m\xcc\x06\x97o\xca=[G\xed\x0f\xaaF\x17\x02\xbbBM#\xae\x0b\x13c\x1c', u'publish1': '\xbf\x0e \xe7\xb2,3\x15acRps\xbdH\xf1\xcb\xdb\xa0\x9b\xc9\x8f\x08\x93m\xcc\x06\x97o\xca=[', u'publish0': u'true', u'publish6': 'O>\xdd_\xb2\xd1\x0bj\x98\xc9c\xb6\x98\x98<\xb4\xa4\xbb_SX\xcah\xcc\xc3\t\xf2\xce1\xd8\xb8>\xd0\xc2\xf4\x9c\xfd\x9du\x19D\xc2% \xaf8\x84v\xeb(\xc8\xa1\xc5\xe8\x0f\x04\x14\x87w\xe2\xef\xb9I\xe4', u'publish5': '){\x05H|\x92\xe4\xdc\xb2\xf9mGvw\xf3\xf6\x07\xa9\x1c\x8a\xde\xef5\xde\x98\xa3iV\x8a\x16\xd7BA\xaco\xbb\x97\x99\xa2\xe5\xf5a\x97?I\xa4V\xd8\xd3\xe0\x82\xfd6\x9fr\xb9\x8d\xe7\x13^\xbd\xaf\xb5\x85O>\xdd_\xb2\xd1\x0bj\x98\xc9c\xb6\x98\x98<\xb4', u'publish4': '\xc3\x9d\x8b\x8a\x9f\x97\tA\x1d\xa8\x8dC\x0b\xd5n4\t5;&\xbc\xf8\xbd\xc9\xbb\x95\xf1\x05\x02\x99\x8c\xea7\x84i$\x9a5\xb6S\x12\x9b[\xe6F4\xef\xd6){\x05H|\x92\xe4\xdc\xb2\xf9mGvw\xf3\xf6'}
+--------------------- >> end captured logging << ---------------------
+
+======================================================================
+FAIL: test_crypto_send_unencrypted (test.ably.restcrypto_test.TestRestCrypto)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/main/Projects/temp/ably-python-rest/test/ably/restcrypto_test.py", line 191, in test_crypto_send_unencrypted
+    msg="Expect publish0 to be Boolean(true)")
+AssertionError: Expect publish0 to be Boolean(true)
+-------------------- >> begin captured logging << --------------------
+ably.http.paginatedresult: DEBUG: Links: {'current': {'url': './messages?start=0&end=1425380735342&limit=100&direction=backwards&format=json&first_end=1425380735342&from_date=1425380735342', 'rel': 'current'}, 'first': {'url': './messages?start=0&end=1425380735342&limit=100&direction=backwards&format=json&first_end=1425380735342&from_date=1425380735342', 'rel': 'first'}}
+ably.http.paginatedresult: DEBUG: Response: 200
+test.ably.restcrypto_test: DEBUG: message_contents: {u'publish3': u'This is a string message payload', u'publish2': u'24.234', u'publish1': u'24', u'publish0': u'true', u'publish6': u'This is a JSONArray message payload', u'publish5': u'[object Object]', u'publish4': 'This is a byte[] message payload'}
+--------------------- >> end captured logging << ---------------------
+
+----------------------------------------------------------------------
+Ran 56 tests in 357.709s
+
+FAILED (failures=7, errors=1)

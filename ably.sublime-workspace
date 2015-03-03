@@ -1,0 +1,1046 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"s",
+				"six.string_types"
+			],
+			[
+				"pyt",
+				"%%python2"
+			],
+			[
+				"__",
+				"__IPYTHON__"
+			],
+			[
+				"url",
+				"urllib"
+			],
+			[
+				"distr",
+				"distribution_parts"
+			],
+			[
+				"ROC",
+				"talib.ROCR100"
+			],
+			[
+				"CDL",
+				"talib.CDLABANDONEDBABY"
+			],
+			[
+				"__d",
+				"talib.__dict__"
+			],
+			[
+				"C",
+				"talib.CDLABANDONEDBABY"
+			],
+			[
+				"flush",
+				"flush_message"
+			],
+			[
+				"sell_coin",
+				"sell_coin_for_btc"
+			],
+			[
+				"buy",
+				"buy_coin_for_cny"
+			],
+			[
+				"sleep",
+				"sleep_time"
+			],
+			[
+				"func",
+				"func main	func main {...} ʂ"
+			],
+			[
+				"update",
+				"update_ohlc"
+			],
+			[
+				"Vol",
+				"VolumeBTC"
+			],
+			[
+				"tick",
+				"tickdb"
+			],
+			[
+				"urll",
+				"urllib2"
+			],
+			[
+				"nbt_",
+				"nbt_price"
+			],
+			[
+				"total",
+				"total_funds"
+			],
+			[
+				"btc_",
+				"btc_last_trade"
+			],
+			[
+				"place",
+				"placeOrder"
+			],
+			[
+				"cum",
+				"cumsum"
+			],
+			[
+				"Pa",
+				"path"
+			],
+			[
+				"li",
+				"list	list"
+			],
+			[
+				"Sp",
+				"Sprintln	string ƒ"
+			],
+			[
+				"S",
+				"Sleep	 ƒ"
+			],
+			[
+				"T",
+				"Ticker	struct ʈ"
+			],
+			[
+				"i",
+				"icons"
+			],
+			[
+				"cur",
+				"currencies_typed"
+			],
+			[
+				"time",
+				"timestamp"
+			],
+			[
+				"exc",
+				"Exception"
+			],
+			[
+				"app",
+				"appId"
+			],
+			[
+				"ap",
+				"app_spec"
+			],
+			[
+				"key",
+				"key_str"
+			],
+			[
+				"de",
+				"debug"
+			],
+			[
+				"tag",
+				"tag_filter"
+			],
+			[
+				"ta",
+				"tag_filter"
+			],
+			[
+				"un",
+				"unpack"
+			],
+			[
+				"for",
+				"format"
+			],
+			[
+				"e",
+				"except"
+			],
+			[
+				"p",
+				"periods"
+			],
+			[
+				"Lo",
+				"LoggedIn	bool ν"
+			],
+			[
+				"in",
+				"inlineCallbacks"
+			],
+			[
+				"D",
+				"Doc	*ast.CommentGroup ν"
+			],
+			[
+				"P",
+				"ParseDir	pkgs map[string]*ast.Package, first error ƒ"
+			],
+			[
+				"fu",
+				"fullstop	chan struct ν"
+			],
+			[
+				"F",
+				"FULLSTOP	Command ʈ"
+			],
+			[
+				"Pri",
+				"Println	 ƒ"
+			],
+			[
+				"R",
+				"Route	struct ʈ"
+			],
+			[
+				"M",
+				"Millisecond	 Ɩ"
+			],
+			[
+				"N",
+				"NaN	float64 ƒ"
+			],
+			[
+				"m",
+				"math	 package ρ"
+			],
+			[
+				"st",
+				"start	int32 ν"
+			],
+			[
+				"red",
+				"redisErr	 ν"
+			],
+			[
+				"ur",
+				"Urls	map[string]string ν"
+			],
+			[
+				"Url",
+				"Urls	map[string]string ν"
+			],
+			[
+				"Pr",
+				"Println	n int, err error ƒ"
+			],
+			[
+				"WithOption",
+				"WithOptions	func(httpclient.Map) *httpclient.HttpClient ν"
+			],
+			[
+				"w",
+				"WithOption	func(int, interface{}) *httpclient.HttpClient ν"
+			],
+			[
+				"pr",
+				"Println	n int, err error ƒ"
+			],
+			[
+				"ti",
+				"Time	struct ʈ"
+			],
+			[
+				"to",
+				"to_string"
+			],
+			[
+				"sec",
+				"secret_number"
+			],
+			[
+				"Ha",
+				"HandleFunc	 ƒ"
+			],
+			[
+				"se",
+				"secret_key"
+			],
+			[
+				"Fi",
+				"firstname	string ν"
+			],
+			[
+				"Pas",
+				"Password2	string ν"
+			],
+			[
+				"V",
+				"Validation	struct ʈ"
+			],
+			[
+				"d",
+				"destroyed"
+			],
+			[
+				"chec",
+				"check_cell"
+			],
+			[
+				"sub",
+				"submarine2"
+			],
+			[
+				"des",
+				"destroyer1"
+			],
+			[
+				"b",
+				"board"
+			],
+			[
+				"fi",
+				"fit"
+			],
+			[
+				"B",
+				"Battleship"
+			],
+			[
+				"check",
+				"check_y"
+			],
+			[
+				"sig",
+				"sign"
+			],
+			[
+				"che",
+				"check"
+			],
+			[
+				"c",
+				"Client	struct ʈ"
+			],
+			[
+				"Re",
+				"ReadFile	[]byte, error ƒ"
+			],
+			[
+				"St",
+				"StopTimer	 ƒ"
+			],
+			[
+				"if",
+				"ifmain	if __name__ == '__main__'"
+			],
+			[
+				"v",
+				"volume"
+			],
+			[
+				"_",
+				"_client"
+			],
+			[
+				"gogs",
+				"gogs_port"
+			],
+			[
+				"org",
+				"organization_name"
+			],
+			[
+				"or",
+				"organization"
+			],
+			[
+				"o",
+				"orgname"
+			],
+			[
+				"lo",
+				"location"
+			],
+			[
+				"desc",
+				"description"
+			],
+			[
+				"gog",
+				"gogs_url"
+			],
+			[
+				"pre",
+				"prepared"
+			],
+			[
+				"cr",
+				"create_organization"
+			],
+			[
+				"Se",
+				"Session"
+			],
+			[
+				"go",
+				"gogs_port"
+			],
+			[
+				"log",
+				"login"
+			],
+			[
+				"re",
+				"requests"
+			],
+			[
+				"last",
+				"last_status_code"
+			],
+			[
+				"respo",
+				"response_code"
+			],
+			[
+				"Gogs",
+				"GogsResponse"
+			],
+			[
+				"Gog",
+				"GogsResponse"
+			],
+			[
+				"ls",
+				"last_html_string"
+			],
+			[
+				"res",
+				"response"
+			],
+			[
+				"save",
+				"save_html"
+			],
+			[
+				"status",
+				"status_history"
+			],
+			[
+				"pag",
+				"page_history"
+			],
+			[
+				"resp",
+				"last_response"
+			],
+			[
+				"pass",
+				"password"
+			],
+			[
+				"user",
+				"username"
+			],
+			[
+				"base",
+				"base_url"
+			],
+			[
+				"repo",
+				"reponame"
+			],
+			[
+				"print",
+				"print_code"
+			],
+			[
+				"wi",
+				"width"
+			],
+			[
+				"l",
+				"layers"
+			],
+			[
+				"le",
+				"length"
+			],
+			[
+				"gru",
+				"group_into_levels"
+			],
+			[
+				"def",
+				"defaultdict"
+			],
+			[
+				"ea",
+				"east_wall"
+			],
+			[
+				"we",
+				"west_wall"
+			],
+			[
+				"sou",
+				"south_wall"
+			],
+			[
+				"north",
+				"north_wall"
+			],
+			[
+				"spli",
+				"splitlines"
+			],
+			[
+				"data",
+				"data_points"
+			],
+			[
+				"r",
+				"raw_data"
+			],
+			[
+				"park",
+				"park_list"
+			],
+			[
+				"api",
+				"apiKey"
+			],
+			[
+				"a",
+				"apiUrl"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "Packages/GoSublime/GoSublime.sublime-build",
+	"command_palette":
+	{
+		"height": 112.0,
+		"selected_items":
+		[
+			[
+				"Package Control: ins",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: insta",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: in",
+				"Package Control: Install Package"
+			],
+			[
+				"Snippet: ",
+				"Snippet: #!/usr/bin/env"
+			],
+			[
+				"package",
+				"Package Control: Install Package"
+			],
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
+			[
+				"package control",
+				"Package Control: Install Package"
+			],
+			[
+				"package sett",
+				"Preferences: Package Control Settings – User"
+			],
+			[
+				"pa",
+				"Package Control: Install Package"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"v",
+				"View: Toggle Menu"
+			],
+			[
+				"Snippet: s",
+				"Snippet: #!/usr/bin/env"
+			],
+			[
+				"",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 51.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/home/main/Projects/temp/ably-python-rest/readout.log",
+		"/home/main/Projects/temp/ably-python-rest/test/ably/restappstats_test.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/http/paginatedresult.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/http/http.py",
+		"/home/main/Projects/temp/ably-python-rest/test/ably/restcapability_test.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/rest/channel.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/types/options.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/types/message.py",
+		"/home/main/Projects/work/algobit/headers.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/__init__.py",
+		"/home/main/Projects/temp/ably-python-rest/test/ably/restchannelhistory_test.py",
+		"/home/main/Projects/temp/ably-python-rest/test/ably/restchannelpublish_test.py",
+		"/home/main/Projects/temp/ably-python-rest/test/ably/restcrypto_test.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/util/crypto.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/http/httputils.py",
+		"/home/main/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/home/main/.config/sublime-text-3/Packages/User/SublimeREPL.sublime-settings",
+		"/home/main/.config/sublime-text-3/Packages/SublimeREPL/SublimeREPL.sublime-settings",
+		"/home/main/Projects/temp/ably-python-rest/ably/types/capability.py",
+		"/home/main/Projects/GoogleApplication/DSA/MostPopular",
+		"/home/main/Projects/temp/ably-python-rest/ably/types/typedbuffer.py",
+		"/home/main/Projects/AlgorithmsBook/binary_search.md",
+		"/home/main/bin/calc",
+		"/home/main/.gvm/pkgsets/go1.4/global/src/github.com/jcrubino/Go-Numb/array.go",
+		"/home/main/binary_search.md",
+		"/home/main/Projects/BitcoinBotBook/book/Write Your Own Bitcoin Bot Series",
+		"/home/main/hosts",
+		"/home/main/Downloads/Python-ELM-master/notebook.py",
+		"/home/main/Blog/Reads/misc/CRBM.py",
+		"/home/main/Projects/temp/ably-python-rest/post.log",
+		"/home/main/Projects/temp/ably-python-rest/test/ably/__init__.py",
+		"/home/main/Projects/temp/ably-python-rest/test/__init__.py",
+		"/home/main/Projects/arXiv/flibusta-calibre-store-plugin-master/__init__.py",
+		"/home/main/Projects/arXiv/flibusta-calibre-store-plugin-master/arxiv.py",
+		"/home/main/Projects/iTrade/ELM/evolution_100_features_seed_1.dat",
+		"/home/main/Projects/iTrade/Patterns/ideas.md",
+		"/home/main/bin/cinterest.py",
+		"/home/main/Blog/content/post/code_highlights.md",
+		"/home/main/Blog/themes/hyde-x/layouts/partials/foot.html",
+		"/home/main/Blog/themes/hyde-x/layouts/partials/head.html",
+		"/home/main/Blog/themes/hyde-x/layouts/index.html",
+		"/home/main/Blog/config.toml",
+		"/home/main/Blog/themes/hyde-x/static/css/hyde-x.css",
+		"/home/main/Blog/themes/hyde-x/static/css/hyde.css",
+		"/home/main/Blog/themes/hyde-x/static/css/poole.css",
+		"/home/main/Blog/themes/hyde-x/static/css/hyde-overrides.css",
+		"/home/main/Blog/themes/hyde-x/static/css/highlight/custom.css",
+		"/home/main/Blog/content/license.md",
+		"/home/main/Blog/content/post/ast.md",
+		"/home/main/Blog/content/post/smart_contracts.md",
+		"/home/main/Blog/content/tutorial/bloom_filters.md",
+		"/home/main/Blog/content/tutorial/hyperlog_log.md",
+		"/home/main/Blog/content/post/steaming_algorithms.md",
+		"/home/main/Blog/content/post/rest_apis.go",
+		"/home/main/Blog/content/post/postgtres.sql",
+		"/home/main/Blog/content/post/non_linear_regression.md",
+		"/home/main/Blog/content/tutorials.md",
+		"/home/main/Blog/layouts/shortcodes/mermaid.html",
+		"/home/main/Blog/layouts/shortcodes/diagram.html",
+		"/home/main/Blog/content/post/chartExamples.md",
+		"/home/main/Blog/content/tutorial/bitcoin_arb.md",
+		"/home/main/Blog/content/tutorial/investor_networks.md",
+		"/home/main/Blog/content/post/trade_engine.md",
+		"/home/main/Blog/content/post/prime_brokerages.md",
+		"/home/main/Blog/content/post/bitcoin_networking.md",
+		"/home/main/.config/sublime-text-3/Packages/User/turnpike.sublime-snippet",
+		"/home/main/.config/sublime-text-3/Packages/User/blogpost.sublime-snippet",
+		"/home/main/Blog/content/datastructures.md",
+		"/home/main/Blog/content/algorithms.md",
+		"/home/main/Projects/iTrade/notebooks/arbitrage.py",
+		"/home/main/Projects/Interesting/NetworkApp",
+		"/home/main/Projects/DSA/LinkedList/Go/linkedlist.go",
+		"/home/main/Projects/BterTrade/Arbitrage/market.py",
+		"/home/main/Projects/Interesting/FloorLayoutwithSimulatedAnnealing",
+		"/home/main/Documents/MLChallenge",
+		"/home/main/Projects/BterTrade/bter_fetch.go",
+		"/home/main/Projects/BterTrade/Arbitrage/book.py",
+		"/home/main/Projects/BterTrade/Arbitrage/sell_coin.py",
+		"/home/main/Projects/temp/TIMUS/1000/main.go",
+		"/home/main/Projects/DSA/strings.go",
+		"/home/main/Projects/iTrade/arbitrage.py",
+		"/home/main/Projects/iTrade/feed.py",
+		"/home/main/.virtualenvs/iTrade/lib/python2.7/site-packages/peakutils/peak.py",
+		"/home/main/Projects/iTrade/analyze.py",
+		"/home/main/Projects/BterTrade/arb.py",
+		"/home/main/Projects/BterTrade/trade.py",
+		"/home/main/Projects/BterTrade/risk_agent.py",
+		"/home/main/Data/index.py",
+		"/home/main/Projects/temp/ably-python-rest/ably/http/ohlc.py",
+		"/home/main/Projects/BterTrade/bterapi/trade.py",
+		"/home/main/Projects/BterTrade/bot.py",
+		"/home/main/Projects/BterTrade/bterapi/public.py",
+		"/home/main/Projects/temp/ably-python-rest/test/ably/restsetup.py",
+		"/home/main/Projects/temp/ably-python-rest/pytest",
+		"/home/main/Projects/bot.py",
+		"/home/main/Projects/BterTrade/bterapi/bterconnection.py",
+		"/home/main/Projects/BterTrade/bterapi/common.py",
+		"/home/main/Projects/BterTrade/bterapi/__init__.py",
+		"/home/main/Projects/BterTrade/.secrets",
+		"/home/main/Projects/BterTrade/config/__init__.py",
+		"/home/main/Projects/BterTrade/server/server.go",
+		"/home/main/Projects/__init__.py",
+		"/home/main/Projects/BterArb/utils/pythran/utils.py",
+		"/home/main/Projects/BterArb/server/threadedRequests.py",
+		"/home/main/Projects/BterArb/book_utils.py",
+		"/home/main/Projects/BterArb/bot.py",
+		"/home/main/.gvm/pkgsets/go1.4/global/src/bitbucket.org/jcrubino/FeedMe/config.go",
+		"/home/main/.gvm/pkgsets/go1.4/global/src/bitbucket.org/jcrubino/FeedMe/oderbook.go",
+		"/home/main/.gvm/pkgsets/go1.4/global/src/bitbucket.org/jcrubino/bter/json.go",
+		"/home/main/.gvm/pkgsets/go1.4/global/src/bitbucket.org/jcrubino/BterBot/book.py",
+		"/home/main/.gvm/pkgsets/go1.4/global/src/bitbucket.org/jcrubino/BterBot/marketfeed.py",
+		"/home/main/.gvm/pkgsets/go1.4/global/src/bitbucket.org/jcrubino/BterBot/network.py",
+		"/home/main/.gvm/pkgsets/go1.4/global/src/bitbucket.org/jcrubino/BterBot/vwap.go",
+		"/home/main/bin/music.py",
+		"/home/main/Projects/Tseries/notes.txt",
+		"/home/main/network.log",
+		"/home/main/Projects/Coindex/coinmarketcap/ARMREADY/marketmonitor.go",
+		"/home/main/Projects/temp/stdflush.go",
+		"/home/main/Projects/Coindex/coinmarketcap/marketmonitor.go",
+		"/home/main/Projects/Coindex/coinmarketcap/ARMREADY/fetch.py",
+		"/run/media/main/Programs/Projects/TickDb/notes",
+		"/home/main/Projects/temp/ably-python-rest/clog/status.md",
+		"/home/main/Projects/temp/numgo/zeros.go",
+		"/home/main/Projects/Coindex/coinmarketcap/fetch.py",
+		"/home/main/bin/fetch.py",
+		"/home/main/Projects/Coindex/marketmon",
+		"/home/main/supervisord.conf",
+		"/tmp/crontab.NDZypN"
+	],
+	"find":
+	{
+		"height": 40.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"test_app_stats_05_minute_level_backwards",
+			"publish",
+			"test_app_stats_05_minute_level_backwards",
+			"test_publish_various_datatypes_text",
+			"test_app_stats_02_hour_level_forwards",
+			"test_app_stats_03_day_level_forwards",
+			"test_equal_intersection_with_key",
+			"make request url",
+			"test_channel_history_limit_backwards",
+			"# make request url",
+			"TestRestAppStats_publish",
+			"test_channel_history_limit_backwards",
+			"msgpack",
+			"json",
+			"json_protocol",
+			"use_",
+			"use_text_protocol",
+			"CipherData",
+			"json",
+			"protocol",
+			"binary",
+			"text",
+			"protocol",
+			"ably_binary",
+			"test_publish_various_datatypes_binary",
+			"binary",
+			"buy",
+			"teen",
+			"tee",
+			"teee",
+			"porn",
+			"fucd",
+			"binary",
+			"test_wildcard_resources_intersection_3",
+			"test_channel_history_limit_backwards",
+			"rstrip",
+			"test_app_stats_01_minute_level_forwards",
+			"test_app_stats_03_day_level_forwards",
+			"test_app_stats_02_hour_level_forwards",
+			"### URLENCODE ###",
+			"urlencode",
+			"### URLENCODE ###",
+			"n",
+			"3131",
+			"sample_rate",
+			"sample",
+			"### URLENCODE ###",
+			"loads",
+			"dumps",
+			"loads",
+			"ldb",
+			"leveldb",
+			"ldb",
+			"test_app_stats_01_minute_level_forwards",
+			"# STATS PAGES #",
+			"test_app_stats_01_minute_level_forwards",
+			"AblyException",
+			"fatal",
+			"persis",
+			"persist",
+			": found",
+			"pub",
+			"03_day_level_forwards",
+			"requests",
+			":",
+			"test_app_stats_01_minute_level_forwards",
+			"STATS PAGES",
+			"test_app_stats_01_minute_level_forwards",
+			"persisted:channelhistory_limit_f",
+			"Could not find path",
+			"persisted:publish0",
+			"/channels/persisted:publish0/messages",
+			"URL",
+			"url",
+			"Unsupported Message ",
+			"thrift",
+			"message",
+			"thrift",
+			"publish",
+			"test_channel_publish",
+			"data",
+			"restchannelpublish_test.py",
+			"publish",
+			"test_channel_publish",
+			"espeak",
+			"std_momentum",
+			"exchange.macd",
+			"np",
+			".roc",
+			"ticks",
+			"test_channel_history_limit_backwards",
+			"test_channel_history_limit_backwards ",
+			"test_app_stats_03_day_level_forwards",
+			"three_day_level",
+			"data",
+			"depth_data",
+			"multi_get",
+			"get('msg')",
+			"get_vwap",
+			"Decimal",
+			"fee_book",
+			"amt_cny",
+			"string",
+			"redis",
+			"key_id",
+			"hmac",
+			"auth",
+			"headers",
+			"Options",
+			"app_spec",
+			"k =",
+			"sys",
+			"Options",
+			"port",
+			"250",
+			"25",
+			"if",
+			"close",
+			"depth",
+			"ObjectId",
+			"ObjectID",
+			"Objects",
+			"Object",
+			"'",
+			"t",
+			"peatio",
+			"<div class=\"w5 h5\">",
+			"<div class=\"w2 h3\">"
+		],
+		"highlight": false,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"float",
+			"float64",
+			"Owner",
+			"CoinAddresses",
+			"CoinAddress",
+			"\"",
+			"<div class=\"w4 h3\">",
+			"<div class=\"w5 h5\">",
+			"<div class=\"w2",
+			"<div class=\"w6",
+			"static/",
+			"project",
+			"log",
+			" url(/static/fonts/",
+			"url(static/fonts",
+			"resumeApp",
+			"            <li class=\"list__item\"><a href=\"#ignore-click\">Vita brevis.<a></li>\n            <li class=\"list__item\"><a href=\"#ignore-click\">ars longa,</a></li>\n            <li class=\"list__item\"><a href=\"#ignore-click\">ocassio praeceps</a></li><li class=\"list__item\"><a href=\"#ignore-click\">experimentum periculosum,</a></li><li class=\"list__item\"><a href=\"#ignore-click\">iudicium difficile.</a></li>",
+			"Vita brevis,\nars longa,\noccasio praeceps,\nexperimentum periculosum,\niudicium difficile.",
+			"api",
+			"if",
+			"float64",
+			"log"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": false
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 32.0
+	},
+	"input":
+	{
+		"height": 34.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.9o:///home/main":
+	{
+		"height": 118.0
+	},
+	"output.9o:///home/main/.gvm/pkgsets/go1.4/global/src/bitbucket.org/jcrubino/ShareSpace/static/css/layouts":
+	{
+		"height": 26.0
+	},
+	"output.9o:///home/main/Development/Go2Markets":
+	{
+		"height": 30.0
+	},
+	"output.9o:///home/main/Development/Resumator/ProgrammingLanguages/Golang/BinaryTree":
+	{
+		"height": 30.0
+	},
+	"output.9o:///home/main/Projects/GoX":
+	{
+		"height": 124.0
+	},
+	"output.9o:///home/main/tmp/goji":
+	{
+		"height": 100.0
+	},
+	"output.9o:///home/main/tmp/lmdb":
+	{
+		"height": 88.0
+	},
+	"output.9o:///home/main/tmp/server":
+	{
+		"height": 118.0
+	},
+	"output.9o:///home/main/tmp/working/HTML5":
+	{
+		"height": 118.0
+	},
+	"output.GoSublime-main-output":
+	{
+		"height": 88.0
+	},
+	"output.GoSublime-output":
+	{
+		"height": 88.0
+	},
+	"output.MarGo-output":
+	{
+		"height": 29.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "ably.sublime-project",
+	"replace":
+	{
+		"height": 60.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 112.0,
+		"selected_items":
+		[
+		],
+		"width": 392.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 265.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

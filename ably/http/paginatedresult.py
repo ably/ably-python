@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import logging
 
+
 from ably.http.http import Request
 
 log = logging.getLogger(__name__)
@@ -60,7 +61,9 @@ class PaginatedResult(object):
         content_type = response.content_type
         links = response.links
         log.debug("Links: %s" % links)
-        log.debug("Response: %s" % response)
+
+        log.debug("Response: %s" % response.status_code)
+
         if 'first' in links:
             first_rel_request = request.with_relative_url(links['first']['url'])
         else:
