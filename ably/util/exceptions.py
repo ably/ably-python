@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import functools
 import logging
-import six
 
+import six
 from ably.util.unicodemixin import UnicodeMixin
 
 log = logging.getLogger(__name__)
@@ -15,8 +15,6 @@ class AblyException(BaseException, UnicodeMixin):
         self.reason = reason
         self.code = code
         self.status_code = status_code
-        
-
 
     def __unicode__(self):
         return six.u('%s %s %s') % (self.code, self.status_code, self.reason)

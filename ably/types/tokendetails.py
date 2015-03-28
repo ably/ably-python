@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from ably.types.capability import Capability
-
+from ably.util.exceptions import AblyException
 
 class TokenDetails(object):
     def __init__(self, id=None, expires=0, issued_at=0, capability=None, client_id=None):

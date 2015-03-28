@@ -4,6 +4,8 @@ import base64
 
 import six
 
+from ably.util.exceptions import AblyException
+
 class PresenceAction(object):
     ENTER = 0
     LEAVE = 1

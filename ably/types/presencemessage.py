@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import base64
 import json
 
+from ably.util.exceptions import AblyException
+
 class PresenceAction(object):
     ENTER = 0
     LEAVE = 1

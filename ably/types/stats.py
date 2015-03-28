@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import logging
 
 log = logging.getLogger(__name__)
+from ably.util.exceptions import AblyException
 
 class ResourceCount(object):
     def __init__(self, opened=0.0, peak=0.0, mean=0.0, min=0.0, refused=0.0):

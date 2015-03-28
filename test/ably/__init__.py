@@ -1,5 +1,6 @@
 from test.ably.restsetup import RestSetup
 
+
 def setup_package():
     RestSetup.get_test_vars()
 

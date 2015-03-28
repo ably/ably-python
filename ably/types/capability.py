@@ -7,6 +7,8 @@ import logging
 import six
 
 from ably.util.unicodemixin import UnicodeMixin
+from ably.util.exceptions import AblyException
+
 
 log = logging.getLogger(__name__)
 

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import functools
 import logging
-import urllib
 
 from six.moves import range
 from six.moves.urllib.parse import urljoin
@@ -14,23 +13,6 @@ from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyException
 
 log = logging.getLogger(__name__)
-
-
-
-def urlquote_url(url):
-    if ':' in url:
-        s = url.split('/')
-        msg = urllib.quote(s[2])
-        s[2] = msg
-        url = '/'.join(s)
-        return url
-    # if 'stats?start' in url and url[1:] != '/':
-    #     log.debug(url)
-    #     url = '/'+urllib.quote(url[1:])
-    #     return url 
-    else:
-        return url
-
 
 # Decorator to attempt fallback hosts in case of a host-error
 def fallback(func):
@@ -154,12 +136,7 @@ class Http(object):
         host = host or self.preferred_host
         port = port or self.preferred_port
         base_url = "%s://%s:%d" % (scheme, host, port)
-        #log.debug("# make request url")
-        #log.debug(url)
-        url = urlquote_url(url)
-        #log.debug(url)
-        url = urljoin(base_url, url)   
-        
+        url = urljoin(base_url, url)
 
         hdrs = headers or {}
         headers = HttpUtils.default_get_headers(not self.options.use_text_protocol)
@@ -176,7 +153,6 @@ class Http(object):
         #log.debug("Headers: %s" % headers)
         #log.debug("Body: %s" % body)
         #log.debug("Prepped: %s" % prepped)
-        
         # TODO add timeouts from options here
         response = self.__session.send(prepped)
 

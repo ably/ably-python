@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from ably.types.authoptions import AuthOptions
+
 from ably.util.exceptions import AblyException
 
 class Options(AuthOptions):
@@ -10,7 +11,6 @@ class Options(AuthOptions):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
-
         self.__client_id = client_id
         self.__log_level = log_level
         self.__tls = tls
@@ -28,11 +28,11 @@ class Options(AuthOptions):
 
         key_components = key.split(':')
 
-        if len(key_components) != 2:
-            raise AblyException("key of not len 2 parameters: {0}"
+        if len(key_components) != 3:
+            raise AblyException("key of not len 3 parameters: {0}"
                                 .format(key.split(':')),
-                                401, 40101)
-       
+                                401, 401)
+
         kwargs['key_id'] = key_components[0]
         kwargs['key_value'] = key_components[1]
 

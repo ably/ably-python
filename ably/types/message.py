@@ -10,6 +10,8 @@ import six
 from ably.types.typedbuffer import TypedBuffer
 from ably.util.crypto import CipherData
 
+from ably.util.exceptions import AblyException
+
 log = logging.getLogger(__name__)
 
 class Message(object):
