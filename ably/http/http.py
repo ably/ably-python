@@ -148,11 +148,11 @@ class Http(object):
         request = requests.Request(method, url, data=body, headers=headers)
         prepped = self.__session.prepare_request(request)
 
-        log.debug("Method: %s" % method)
-        log.debug("Url: %s" % url)
-        log.debug("Headers: %s" % headers)
-        log.debug("Body: %s" % body)
-        log.debug("Prepped: %s" % prepped)
+        # log.debug("Method: %s" % method)
+        # log.debug("Url: %s" % url)
+        # log.debug("Headers: %s" % headers)
+        # log.debug("Body: %s" % body)
+        # log.debug("Prepped: %s" % prepped)
         
         # TODO add timeouts from options here
         response = self.__session.send(prepped)

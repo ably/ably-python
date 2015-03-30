@@ -44,7 +44,7 @@ class Auth(object):
         if options.key_value is not None and options.client_id is None:
             # We have the key, no need to authenticate the client
             # default to using basic auth
-            log.info("anonymous, using basic auth")
+            log.debug("anonymous, using basic auth")
             self.__auth_method = Auth.Method.BASIC
             basic_key = "%s:%s" % (options.key_id, options.key_value)
             basic_key = base64.b64encode(basic_key.encode('utf-8'))
@@ -60,23 +60,23 @@ class Auth(object):
             self.__token_details = None
 
         if options.auth_callback:
-            log.info("using token auth with auth_callback")
+            log.debug("using token auth with auth_callback")
         elif options.auth_url:
-            log.info("using token auth with auth_url")
+            log.debug("using token auth with auth_url")
         elif options.key_value:
-            log.info("using token auth with client-side signing")
+            log.debug("using token auth with client-side signing")
         elif options.auth_token:
-            log.info("using token auth with supplied token only")
+            log.debug("using token auth with supplied token only")
         else:
             # Not a hard error, but any operation requiring authentication
             # will fail
-            log.info("no authentication parameters supplied")
+            log.debug("no authentication parameters supplied")
 
     def authorise(self, force=False, **kwargs):
         if self.__token_details:
             if self.__token_details.expires > self._timestamp():
                 if not force:
-                    log.info("using cached token; expires = %d" %
+                    llog.debug("using cached token; expires = %d" %
                              self.__token_details.expires)
                     return self.__token_details
             else:
@@ -112,10 +112,10 @@ class Auth(object):
 
         log.debug("Token Params: %s" % token_params)
         if auth_callback:
-            log.info("using token auth with authCallback")
+            log.debug("using token auth with authCallback")
             signed_token_request = auth_callback(**token_params)
         elif auth_url:
-            log.info("using token auth with authUrl")
+            log.debug("using token auth with authUrl")
             response = self.ably.http.post(auth_url,
                     headers=auth_headers,
                     body=json.dumps(token_params),
@@ -125,7 +125,7 @@ class Auth(object):
 
             signed_token_request = response.text
         elif key_value:
-            log.info("using token auth with client-side signing")
+            log.debug("using token auth with client-side signing")
             signed_token_request = self.create_token_request(
                 key_id=key_id,
                 key_value=key_value,
@@ -222,7 +222,7 @@ class Auth(object):
         req["mac"] = token_params.get("mac")
 
         signed_request = json.dumps(req)
-        log.info("generated signed request: %s", signed_request)
+        log.debug("generated signed request: %s", signed_request)
 
         return signed_request
 

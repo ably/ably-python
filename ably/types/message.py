@@ -6,9 +6,12 @@ import logging
 import time
 
 import six
+import msgpack
 
 from ably.types.typedbuffer import TypedBuffer
 from ably.util.crypto import CipherData
+
+
 
 log = logging.getLogger(__name__)
 
@@ -127,6 +130,57 @@ class Message(object):
         elif encoding and encoding == six.u('cipher+base64'):
             ciphertext = base64.b64decode(data)
             data = CipherData(ciphertext, obj.get('type'))
+
+        return Message(name=name, data=data,timestamp=timestamp)
+
+    def as_msgpack(self):
+        data = self.data
+        encoding = None
+        data_type = None
+
+        #log.debug(data.__class__)
+
+        if isinstance(data, CipherData):
+            data_type = data.type
+            data = base64.b64encode(data.buffer).decode('ascii')
+            encoding = 'cipher+base64'
+        if isinstance(data, six.binary_type):
+            data = base64.b64encode(data).decode('ascii')
+            encoding = 'base64'
+
+        #log.debug(data)
+        #log.debug(data.__class__)
+
+        request_body = {
+            'name': self.name,
+            'data': data,
+            'timestamp': self.timestamp or int(time.time() * 1000.0),
+        }
+
+        if encoding:
+            request_body['encoding'] = encoding
+
+        if data_type:
+            request_body['type'] = data_type
+
+        request_body = json.dumps(request_body)
+        return request_body
+
+    @staticmethod
+    def from_msgpack(obj):
+        name = obj.get('name')
+        data = obj.get('data')
+        timestamp = obj.get('timestamp')
+        encoding = obj.get('encoding')
+
+        #log.debug("MESSAGE: %s", str(obj))
+
+        if encoding and encoding == six.u('base64'):
+            data = msgpack.loads(base64.b64decode(data))
+        elif encoding and encoding == six.u('cipher+base64'):
+            ciphertext = base64.b64decode(data)
+            data = CipherData(ciphertext, obj.get('type'))
+            data = msgpack.loads(data)
 
         return Message(name=name, data=data,timestamp=timestamp)
 
