@@ -42,7 +42,7 @@ class TestRestToken(unittest.TestCase):
         self.assertLessEqual(token_details.issued_at,
                 post_time,
                 msg="Unexpected issued at time")
-        self.assertEquals(self.permit_all,
+        self.assertEqual(self.permit_all,
                 six.text_type(token_details.capability),
                 msg="Unexpected capability")
 
@@ -59,7 +59,7 @@ class TestRestToken(unittest.TestCase):
         self.assertLessEqual(token_details.issued_at,
                 post_time,
                 msg="Unexpected issued at time")
-        self.assertEquals(self.permit_all,
+        self.assertEqual(self.permit_all,
                 six.text_type(Capability(token_details.capability)),
                 msg="Unexpected Capability")
 
@@ -81,7 +81,7 @@ class TestRestToken(unittest.TestCase):
         self.assertLessEqual(token_details.issued_at,
                 post_time,
                 msg="Unexpected issued at time")
-        self.assertEquals(self.permit_all,
+        self.assertEqual(self.permit_all,
                 six.text_type(Capability(token_details.capability)),
                 msg="Unexpected Capability")
 
@@ -112,7 +112,7 @@ class TestRestToken(unittest.TestCase):
 
         self.assertIsNotNone(token_details)
         self.assertIsNotNone(token_details.id)
-        self.assertEquals(capability, token_details.capability,
+        self.assertEqual(capability, token_details.capability,
                 msg="Unexpected capability")
 
     def test_request_token_with_specified_key(self):
@@ -120,7 +120,7 @@ class TestRestToken(unittest.TestCase):
         token_details = self.ably.auth.request_token(key_id=key["key_id"],
                 key_value=key["key_value"])
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(key.get("capability"),
+        self.assertEqual(key.get("capability"),
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -133,7 +133,7 @@ class TestRestToken(unittest.TestCase):
             "ttl":100
         })
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(token_details.issued_at + 100,
+        self.assertEqual(token_details.issued_at + 100,
                 token_details.expires, msg="Unexpected expires")
 
     def test_token_with_excessive_ttl(self):

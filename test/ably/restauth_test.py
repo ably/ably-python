@@ -2,22 +2,27 @@ from __future__ import absolute_import
 
 import logging
 import unittest
+import os 
 
 from ably import AblyRest
 from ably import Auth
 from ably import Options
 
+
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
+
 
 log = logging.getLogger(__name__)
 
 class TestAuth(unittest.TestCase):
     def test_auth_init_key_only(self):
+        
         ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"]))
+        print(test_vars["keys"][0]["key_str"])
         log.debug("Method: %s" % ably.auth.auth_method)
-        self.assertEquals(Auth.Method.BASIC, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.BASIC, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
 
     def test_auth_init_token_only(self):
@@ -27,7 +32,7 @@ class TestAuth(unittest.TestCase):
 
         ably = AblyRest(Options(auth_token="this_is_not_really_a_token"))
 
-        self.assertEquals(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
 
     def test_auth_init_with_token_callback(self):
@@ -53,7 +58,7 @@ class TestAuth(unittest.TestCase):
             pass
 
         self.assertTrue(callback_called, msg="Token callback not called")
-        self.assertEquals(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
         
     def test_auth_init_with_key_and_client_id(self):
@@ -62,7 +67,7 @@ class TestAuth(unittest.TestCase):
 
         ably = AblyRest(options)
 
-        self.assertEquals(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
 
     def test_auth_init_with_token(self):
@@ -71,5 +76,5 @@ class TestAuth(unittest.TestCase):
 
         ably = AblyRest(options)
 
-        self.assertEquals(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")

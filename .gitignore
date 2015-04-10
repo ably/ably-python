@@ -40,3 +40,14 @@ venv*
 
 # vim
 *.sw?
+
+# notes
+.notes
+test.sh
+test_vars_out
+.notes
+pytest
+app_spec
+app_spec.pkl
+ably/types/options.py.orig
+test/ably/restsetup.py.orig

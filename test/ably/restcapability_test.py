@@ -36,7 +36,7 @@ class TestRestCapability(unittest.TestCase):
                 key_value=key['key_value'])
         expected_capability = Capability(key["capability"])
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability.")
 
@@ -54,7 +54,7 @@ class TestRestCapability(unittest.TestCase):
         expected_capability = Capability(key["capability"])
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -107,7 +107,7 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -132,7 +132,7 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -156,7 +156,7 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -181,7 +181,7 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -205,7 +205,7 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -229,7 +229,7 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -253,7 +253,7 @@ class TestRestCapability(unittest.TestCase):
         token_details = self.ably.auth.request_token(**kwargs)
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEquals(expected_capability,
+        self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
@@ -270,8 +270,8 @@ class TestRestCapability(unittest.TestCase):
             token_details = self.ably.auth.request_token(**kwargs)
 
         the_exception = cm.exception
-        self.assertEquals(400, the_exception.status_code)
-        self.assertEquals(40000, the_exception.code)
+        self.assertEqual(400, the_exception.status_code)
+        self.assertEqual(40000, the_exception.code)
 
     def test_invalid_capabilities_2(self):
         kwargs = {
@@ -286,8 +286,8 @@ class TestRestCapability(unittest.TestCase):
             token_details = self.ably.auth.request_token(**kwargs)
 
         the_exception = cm.exception
-        self.assertEquals(400, the_exception.status_code)
-        self.assertEquals(40000, the_exception.code)
+        self.assertEqual(400, the_exception.status_code)
+        self.assertEqual(40000, the_exception.code)
 
 
     def test_invalid_capabilities_3(self):
@@ -307,7 +307,7 @@ class TestRestCapability(unittest.TestCase):
             token_details = self.ably.auth.request_token(**kwargs)
 
         the_exception = cm.exception
-        self.assertEquals(400, the_exception.status_code)
-        self.assertEquals(40000, the_exception.code)
+        self.assertEqual(400, the_exception.status_code)
+        self.assertEqual(40000, the_exception.code)
 
 
