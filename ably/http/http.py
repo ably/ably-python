@@ -14,6 +14,7 @@ from ably.util.exceptions import AblyException
 
 log = logging.getLogger(__name__)
 
+
 # Decorator to attempt fallback hosts in case of a host-error
 def fallback(func):
     @functools.wraps(func)
@@ -38,6 +39,7 @@ def fallback(func):
 
         raise last_exception
     return wrapper
+
 
 def reauth_if_expired(func):
     @functools.wraps(func)
@@ -120,6 +122,7 @@ class Response(object):
     def links(self):
         return self.response.links
 
+
 class Http(object):
     def __init__(self, ably, options):
         options = options or {}
@@ -153,7 +156,7 @@ class Http(object):
         # log.debug("Headers: %s" % headers)
         # log.debug("Body: %s" % body)
         # log.debug("Prepped: %s" % prepped)
-        
+
         # TODO add timeouts from options here
         response = self.__session.send(prepped)
 

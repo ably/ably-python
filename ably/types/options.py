@@ -3,10 +3,11 @@ from __future__ import absolute_import
 from ably.types.authoptions import AuthOptions
 from ably.util.exceptions import AblyException
 
+
 class Options(AuthOptions):
-    def __init__(self, client_id=None, log_level=0, tls=True, host=None, ws_host=None,
-            port=0, tls_port=0, use_text_protocol=True, queue_messages=False,
-            recover=False, **kwargs):
+    def __init__(self, client_id=None, log_level=0, tls=True, host=None,
+                 ws_host=None, port=0, tls_port=0, use_text_protocol=True,
+                 queue_messages=False, recover=False, **kwargs):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
@@ -32,7 +33,7 @@ class Options(AuthOptions):
             raise AblyException("key of not len 2 parameters: {0}"
                                 .format(key.split(':')),
                                 401, 40101)
-       
+
         kwargs['key_id'] = key_components[0]
         kwargs['key_value'] = key_components[1]
 
@@ -108,4 +109,4 @@ class Options(AuthOptions):
 
     @recover.setter
     def recover(self, value):
-        self.__recover = recover
+        self.__recover = value

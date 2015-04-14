@@ -15,8 +15,6 @@ class AblyException(BaseException, UnicodeMixin):
         self.reason = reason
         self.code = code
         self.status_code = status_code
-        
-
 
     def __unicode__(self):
         return six.u('%s %s %s') % (self.code, self.status_code, self.reason)
@@ -34,12 +32,12 @@ class AblyException(BaseException, UnicodeMixin):
                     raise AblyException(json_response['reason'],
                                         json_response['statusCode'],
                                         json_response['code'])
-                except KeyError as e:
+                except KeyError:
                     msg = "Unexpected exception decoding server response: %s"
                     msg = msg % response.text
                     raise AblyException(msg, 500, 50000)
         except:
-            log.debug("Response: %d %s" % (response.status_code, response.text))
+            log.debug("Response: %d %s", response.status_code, response.text)
             raise AblyException(
                 response.text,
                 response.status_code,
