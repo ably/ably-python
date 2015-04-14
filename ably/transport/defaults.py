@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+
 class Defaults(object):
     protocol_version = 1
     fallback_hosts = [
@@ -21,7 +22,7 @@ class Defaults(object):
     comet_recv_timeout = 90000
     comet_send_timeout = 10000
 
-    transports = [] # ["web_socket", "comet"]
+    transports = []  # ["web_socket", "comet"]
 
     @staticmethod
     def get_host(options):

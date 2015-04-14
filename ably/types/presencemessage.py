@@ -3,6 +3,9 @@ from __future__ import absolute_import
 import base64
 import json
 
+import six
+
+
 class PresenceAction(object):
     ENTER = 0
     LEAVE = 1
@@ -10,7 +13,8 @@ class PresenceAction(object):
 
 
 class PresenceMessage(object):
-    def __init__(self, action, client_id=None, client_data=None, member_id=None):
+    def __init__(self, action, client_id=None,
+                 client_data=None, member_id=None):
         self.__action = action
         self.__client_id = client_id
         self.__client_data = client_data
@@ -63,9 +67,10 @@ class PresenceMessage(object):
         d = {
             "action": self.action,
         }
-        if None != self.client_id:
+        if self.client_id is not None:
             d["clientId"] = self.client_id
-        if None != self.client_data:
+
+        if self.client_data is not None:
             if isinstance(self.client_data, six.byte_type):
                 d['clientData'] = base64.b64encode(self.client_data)
                 d['encoding'] = 'base64'

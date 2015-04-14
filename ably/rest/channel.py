@@ -1,10 +1,7 @@
 from __future__ import absolute_import
 
-import base64
 import calendar
-import json
 import logging
-import time
 
 import six
 from six.moves.urllib.parse import urlencode, quote
@@ -12,7 +9,7 @@ from six.moves.urllib.parse import urlencode, quote
 from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.message import Message, message_response_handler, make_encrypted_message_response_handler
-from ably.types.presence import PresenceMessage, presence_response_handler
+from ably.types.presence import presence_response_handler
 from ably.util.crypto import get_cipher
 from ably.util.exceptions import catch_all
 
@@ -37,8 +34,13 @@ class Presence(object):
 
         headers = HttpUtils.default_get_headers(self.__binary)
         response = self.__http.get(url, headers=headers)
-        return PaginatedResult.paginated_query(self.__http, url, headers,
-                presence_response_handler)
+        # FIXME: Why response is not used here?
+        return PaginatedResult.paginated_query(
+            self.__http,
+            url,
+            headers,
+            presence_response_handler
+        )
 
 
 class Channel(object):
@@ -90,7 +92,13 @@ class Channel(object):
             message_handler = make_encrypted_message_response_handler(self.__cipher)
         else:
             message_handler = message_response_handler
-        return PaginatedResult.paginated_query(self.ably.http, path, None, message_handler)
+
+        return PaginatedResult.paginated_query(
+            self.ably.http,
+            path,
+            None,
+            message_handler
+        )
 
     @catch_all
     def publish(self, name, data, timeout=None):
@@ -113,7 +121,12 @@ class Channel(object):
 
         path = '/channels/%s/publish' % self.__name
         headers = HttpUtils.default_post_headers(not self.ably.options.use_text_protocol)
-        return self.ably.http.post(path, headers=headers, body=request_body, timeout=timeout).json()
+        return self.ably.http.post(
+            path,
+            headers=headers,
+            body=request_body,
+            timeout=timeout
+        ).json()
 
     @property
     def ably(self):

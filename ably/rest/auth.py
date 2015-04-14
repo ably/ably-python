@@ -7,11 +7,8 @@ import json
 import logging
 import random
 import time
-import types
 
 import six
-
-import requests
 
 from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
@@ -76,8 +73,10 @@ class Auth(object):
         if self.__token_details:
             if self.__token_details.expires > self._timestamp():
                 if not force:
-                    llog.debug("using cached token; expires = %d" %
-                             self.__token_details.expires)
+                    log.debug(
+                        "using cached token; expires = %d",
+                        self.__token_details.expires
+                    )
                     return self.__token_details
             else:
                 # token has expired
@@ -116,10 +115,12 @@ class Auth(object):
             signed_token_request = auth_callback(**token_params)
         elif auth_url:
             log.debug("using token auth with authUrl")
-            response = self.ably.http.post(auth_url,
-                    headers=auth_headers,
-                    body=json.dumps(token_params),
-                    skip_auth=True)
+            response = self.ably.http.post(
+                auth_url,
+                headers=auth_headers,
+                body=json.dumps(token_params),
+                skip_auth=True
+            )
 
             AblyException.raise_for_response(response)
 
@@ -139,10 +140,12 @@ class Auth(object):
                 40000)
 
         token_path = "/keys/%s/requestToken" % key_id
-        response = self.ably.http.post(token_path,
-                headers=auth_headers,
-                body=signed_token_request,
-                skip_auth=True)
+        response = self.ably.http.post(
+            token_path,
+            headers=auth_headers,
+            body=signed_token_request,
+            skip_auth=True
+        )
 
         AblyException.raise_for_response(response)
 
@@ -173,7 +176,8 @@ class Auth(object):
             token_params["capability"] = ""
         else:
             token_params['capability'] = six.text_type(
-                    Capability(token_params["capability"]))
+                Capability(token_params["capability"])
+            )
 
         if token_params.get("client_id") is None:
             token_params["client_id"] = ""

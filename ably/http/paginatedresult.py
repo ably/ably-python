@@ -6,8 +6,10 @@ from ably.http.http import Request
 
 log = logging.getLogger(__name__)
 
+
 class PaginatedResult(object):
-    def __init__(self, http, current, content_type, rel_first, rel_current, rel_next, response_processor):
+    def __init__(self, http, current, content_type, rel_first, rel_current,
+                 rel_next, response_processor):
         self.__http = http
         self.__current = current
         self.__content_type = content_type
@@ -78,4 +80,6 @@ class PaginatedResult(object):
         else:
             next_rel_request = None
 
-        return PaginatedResult(http, current_val, content_type, first_rel_request, current_rel_request, next_rel_request, response_processor)
+        return PaginatedResult(http, current_val, content_type,
+                               first_rel_request, current_rel_request,
+                               next_rel_request, response_processor)

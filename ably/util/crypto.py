@@ -100,11 +100,13 @@ class CipherData(TypedBuffer):
 DEFAULT_KEYLENGTH = 16
 DEFAULT_BLOCKLENGTH = 16
 
+
 def get_default_params(key=None):
     rndfile = Random.new()
     key = key or rndfile.read(DEFAULT_KEYLENGTH)
     iv = rndfile.read(DEFAULT_BLOCKLENGTH)
     return CipherParams(algorithm='AES', secret_key=key, iv=iv)
+
 
 def get_cipher(cipher_params):
     if cipher_params is None:

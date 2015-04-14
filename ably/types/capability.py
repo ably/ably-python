@@ -10,6 +10,7 @@ from ably.util.unicodemixin import UnicodeMixin
 
 log = logging.getLogger(__name__)
 
+
 class Capability(MutableMapping, UnicodeMixin):
     def __init__(self, obj={}):
         self.__dict = dict(obj)
@@ -51,14 +52,14 @@ class Capability(MutableMapping, UnicodeMixin):
             if not isinstance(val, six.string_types):
                 raise ValueError('Operations must be strings')
             operations.add(val)
-            
+
         self.__dict[key] = operations
 
     def __delitem__(self, key):
         del self.__dict[key]
 
     def setdefault(self, key, default):
-        if not key in self:
+        if key not in self:
             self[key] = default
         return self[key]
 
@@ -75,5 +76,8 @@ class Capability(MutableMapping, UnicodeMixin):
 
     @staticmethod
     def c14n(capability):
-        sorted_ops = {k:sorted(v) for k, v in six.iteritems(capability)}
+        sorted_ops = {
+            k: sorted(v)
+            for k, v in six.iteritems(capability)
+        }
         return six.text_type(json.dumps(sorted_ops, sort_keys=True))

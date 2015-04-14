@@ -4,8 +4,11 @@ import six
 
 from ably.util.exceptions import AblyException
 
+
 class AuthOptions(object):
-    def __init__(self, auth_callback=None, auth_url=None, auth_token=None, auth_headers=None, auth_params=None, key_id=None, key_value=None, query_time=False):
+    def __init__(self, auth_callback=None, auth_url=None, auth_token=None,
+                 auth_headers=None, auth_params=None, key_id=None, key_value=None,
+                 query_time=False):
         self.__auth_callback = auth_callback
         self.__auth_url = auth_url
         self.__auth_token = auth_token
@@ -28,8 +31,6 @@ class AuthOptions(object):
         kwargs['key_value'] = key_components[1]
 
         return cls(**kwargs)
-
-
 
     def merge(self, other):
         if self.__auth_callback is None:
@@ -106,7 +107,7 @@ class AuthOptions(object):
     @property
     def auth_params(self):
         return self.__auth_params
-        
+
     @auth_params.setter
     def auth_params(self, value):
         self.__auth_params = value

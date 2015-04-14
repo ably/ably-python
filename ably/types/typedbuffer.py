@@ -8,6 +8,7 @@ import struct
 
 import six
 
+
 class DataType(object):
     NONE = 0
     TRUE = 1

@@ -2,17 +2,16 @@ from __future__ import absolute_import
 
 import base64
 
-import six
 
 class PresenceAction(object):
     ENTER = 0
     LEAVE = 1
     UPDATE = 2
-    
+
 
 class PresenceMessage(object):
-    def __init__(self, action=PresenceAction.ENTER, client_id=None, member_id=None,
-            client_data=None):
+    def __init__(self, action=PresenceAction.ENTER, client_id=None,
+                 member_id=None, client_data=None):
         self.__action = action
         self.__client_id = client_id
         self.__member_id = member_id
@@ -29,10 +28,13 @@ class PresenceMessage(object):
         if client_data and 'base64' == encoding:
             client_data = base64.b64decode(client_data)
 
-        return PresenceMessage(action=action, client_id=client_id, 
-                member_id=member_id, client_data=client_data)
+        return PresenceMessage(
+            action=action,
+            client_id=client_id,
+            member_id=member_id,
+            client_data=client_data
+        )
 
-        
     @staticmethod
     def messages_from_array(obj):
         return [PresenceMessage.from_dict(d) for d in obj]
@@ -69,6 +71,7 @@ class PresenceMessage(object):
     @property
     def member_id(self):
         return self.__member_id
+
 
 def presence_response_handler(response):
     # TODO implement
