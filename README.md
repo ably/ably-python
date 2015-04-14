@@ -23,11 +23,11 @@ The ably-python client has one dependency,
 
 ### From a git url
 
-    pip install git@bitbucket.org:jjwchoy/ably-python.git
+    pip install -e git+https://github.com/ably/ably-python#egg=AblyPython
 
 ### Locally
 
-    git clone git@bitbucket.org:jjwchoy/ably-python.git
+    git clone https://github.com/ably/ably-python.git
     cd ably-python
     python setup.py install
 
@@ -37,22 +37,23 @@ The ably-python client has one dependency,
 
 ## Basic Usage
 
-    from ably.rest import AblyRest
+```python
+from ably.rest import AblyRest
 
-    ably = AblyRest("key_str")
-    ably.time() # returns the server time in ms since the unix epoch
-    ably.stats() # returns an array of stats
+ably = AblyRest("key_str")
+ably.time() # returns the server time in ms since the unix epoch
+ably.stats() # returns an array of stats
 
-    # Channels:
-    # Publish a message to channel 'foo'
-    ably.channels.foo.publish('msg_name', 'msg_data')
+# Channels:
+# Publish a message to channel 'foo'
+ably.channels.foo.publish('msg_name', 'msg_data')
 
-    # Get the history for channel 'foo'
-    ably.channels.foo.history()
+# Get the history for channel 'foo'
+ably.channels.foo.history()
 
-    # Get presence for channel 'foo'
-    ably.channels.foo.presence()
-
+# Get presence for channel 'foo'
+ably.channels.foo.presence()
+```
 ## Options
 
 ### Credentials
@@ -60,9 +61,11 @@ The ably-python client has one dependency,
 You can provide either a `key` string or `app_id` + `key_id` + `key_value`
 combination.
 
-    ably = AblyRest("key-string")
-
+```python
+ably = AblyRest("key-string")
+```
 or
 
-    ably = AblyRest(app_id="app-id", key_id="key-id", key_value="key-value")
-
+```python
+ably = AblyRest(app_id="app-id", key_id="key-id", key_value="key-value")
+```
