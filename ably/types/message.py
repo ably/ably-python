@@ -11,9 +11,8 @@ import msgpack
 from ably.types.typedbuffer import TypedBuffer
 from ably.util.crypto import CipherData
 
-
-
 log = logging.getLogger(__name__)
+
 
 class Message(object):
     def __init__(self, name=None, data=None, client_id=None, timestamp=None):
@@ -24,8 +23,8 @@ class Message(object):
         elif isinstance(name, six.binary_type):
             self.__name = name.decode('ascii')
         else:
-            #log.debug(name)
-            #log.debug(name.__class__)
+            # log.debug(name)
+            # log.debug(name.__class__)
             raise ValueError("name must be a string or bytes")
         self.__client_id = client_id
         self.__data = data
@@ -34,9 +33,9 @@ class Message(object):
     def __eq__(self, other):
         if isinstance(other, Message):
             return (self.name == other.name
-                and self.data == other.data
-                and self.client_id == other.client_id
-                and self.timestamp == other.timestamp)
+                    and self.data == other.data
+                    and self.client_id == other.client_id
+                    and self.timestamp == other.timestamp)
         return NotImplemented
 
     def __ne__(self, other):
@@ -88,7 +87,7 @@ class Message(object):
         encoding = None
         data_type = None
 
-        #log.debug(data.__class__)
+        # log.debug(data.__class__)
 
         if isinstance(data, CipherData):
             data_type = data.type
@@ -98,8 +97,8 @@ class Message(object):
             data = base64.b64encode(data).decode('ascii')
             encoding = 'base64'
 
-        #log.debug(data)
-        #log.debug(data.__class__)
+        # log.debug(data)
+        # log.debug(data.__class__)
 
         request_body = {
             'name': self.name,
@@ -123,7 +122,7 @@ class Message(object):
         timestamp = obj.get('timestamp')
         encoding = obj.get('encoding')
 
-        #log.debug("MESSAGE: %s", str(obj))
+        # log.debug("MESSAGE: %s", str(obj))
 
         if encoding and encoding == six.u('base64'):
             data = base64.b64decode(data)
@@ -131,14 +130,14 @@ class Message(object):
             ciphertext = base64.b64decode(data)
             data = CipherData(ciphertext, obj.get('type'))
 
-        return Message(name=name, data=data,timestamp=timestamp)
+        return Message(name=name, data=data, timestamp=timestamp)
 
     def as_msgpack(self):
         data = self.data
         encoding = None
         data_type = None
 
-        #log.debug(data.__class__)
+        # log.debug(data.__class__)
 
         if isinstance(data, CipherData):
             data_type = data.type
@@ -148,8 +147,8 @@ class Message(object):
             data = base64.b64encode(data).decode('ascii')
             encoding = 'base64'
 
-        #log.debug(data)
-        #log.debug(data.__class__)
+        # log.debug(data)
+        # log.debug(data.__class__)
 
         request_body = {
             'name': self.name,
@@ -173,7 +172,7 @@ class Message(object):
         timestamp = obj.get('timestamp')
         encoding = obj.get('encoding')
 
-        #log.debug("MESSAGE: %s", str(obj))
+        # log.debug("MESSAGE: %s", str(obj))
 
         if encoding and encoding == six.u('base64'):
             data = msgpack.loads(base64.b64decode(data))
@@ -182,10 +181,12 @@ class Message(object):
             data = CipherData(ciphertext, obj.get('type'))
             data = msgpack.loads(data)
 
-        return Message(name=name, data=data,timestamp=timestamp)
+        return Message(name=name, data=data, timestamp=timestamp)
+
 
 def message_response_handler(response):
     return [Message.from_json(j) for j in response.json()]
+
 
 def make_encrypted_message_response_handler(cipher):
     def encrypted_message_response_handler(response):

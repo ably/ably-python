@@ -1,5 +1,6 @@
 import six
 
+
 class UnicodeMixin(object):
     if six.PY3:
         def __str__(self):

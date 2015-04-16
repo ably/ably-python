@@ -2,11 +2,8 @@ from __future__ import absolute_import
 
 import calendar
 import logging
-import types
 
 from six.moves.urllib.parse import urlencode
-
-import requests
 
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult
@@ -49,10 +46,10 @@ class AblyRest(object):
 
         self.__client_id = options.client_id
 
-        #if self.__keep_alive:
-        #    self.__session = requests.Session()
-        #else:
-        #    self.__session = None
+        # if self.__keep_alive:
+        #     self.__session = requests.Session()
+        # else:
+        #     self.__session = None
 
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
@@ -70,7 +67,6 @@ class AblyRest(object):
             return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
         except:
             return '%s' % t
-
 
     @catch_all
     def stats(self, direction=None, start=None, end=None, params=None,
@@ -93,7 +89,9 @@ class AblyRest(object):
         if params:
             url += '?' + urlencode(params)
 
-        return PaginatedResult.paginated_query(self.http, url, None, stats_response_processor)
+        return PaginatedResult.paginated_query(self.http,
+                                               url, None,
+                                               stats_response_processor)
 
     @catch_all
     def time(self, timeout=None):

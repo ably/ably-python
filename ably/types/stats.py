@@ -4,6 +4,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class ResourceCount(object):
     def __init__(self, opened=0.0, peak=0.0, mean=0.0, min=0.0, refused=0.0):
         self.opened = opened
@@ -22,6 +23,9 @@ class ResourceCount(object):
             "min": rc_dict.get("min"),
             "refused": rc_dict.get("refused"),
         }
+
+        return ResourceCount(**kwargs)
+
 
 class ConnectionTypes(object):
     def __init__(self, all=None, plain=None, tls=None):
@@ -103,15 +107,17 @@ class RequestCount(object):
     def from_dict(rc_dict):
         rc_dict = rc_dict or {}
         kwargs = {
-                "succeeded": rc_dict.get("succeeded"),
-                "failed": rc_dict.get("failed"),
-                "refused": rc_dict.get("refused"),
+            "succeeded": rc_dict.get("succeeded"),
+            "failed": rc_dict.get("failed"),
+            "refused": rc_dict.get("refused"),
         }
         return RequestCount(**kwargs)
 
 
 class Stats(object):
-    def __init__(self, all=None, inbound=None, outbound=None, persisted=None, connections=None, channels=None, api_requests=None, token_requests=None):
+    def __init__(self, all=None, inbound=None, outbound=None, persisted=None,
+                 connections=None, channels=None, api_requests=None,
+                 token_requests=None):
         self.all = all or MessageTypes()
         self.inbound = inbound or MessageTraffic()
         self.outbound = outbound or MessageTraffic()
@@ -141,6 +147,7 @@ class Stats(object):
     @staticmethod
     def from_array(stats_array):
         return [Stats.from_dict(d) for d in stats_array]
+
 
 def stats_response_processor(response):
     stats_array = response.json()

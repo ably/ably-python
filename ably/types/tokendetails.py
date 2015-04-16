@@ -4,7 +4,8 @@ from ably.types.capability import Capability
 
 
 class TokenDetails(object):
-    def __init__(self, id=None, expires=0, issued_at=0, capability=None, client_id=None):
+    def __init__(self, id=None, expires=0, issued_at=0,
+                 capability=None, client_id=None):
         self.__id = id
         self.__expires = expires
         self.__issued_at = issued_at
@@ -33,8 +34,10 @@ class TokenDetails(object):
 
     @staticmethod
     def from_dict(obj):
-        return TokenDetails(id=obj.get("id"),
-                expires=int(obj.get("expires", 0)),
-                issued_at=int(obj.get("issued_at", 0)),
-                capability=obj.get("capability"),
-                client_id=obj.get("clientId"))
+        return TokenDetails(
+            id=obj.get("id"),
+            expires=int(obj.get("expires", 0)),
+            issued_at=int(obj.get("issued_at", 0)),
+            capability=obj.get("capability"),
+            client_id=obj.get("clientId")
+        )
