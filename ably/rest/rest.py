@@ -68,7 +68,6 @@ class AblyRest(object):
         except:
             return '%s' % t
 
-    @catch_all
     def stats(self, direction=None, start=None, end=None, params=None,
               limit=None, paginated=None, by=None, timeout=None):
         """Returns the stats for this application"""

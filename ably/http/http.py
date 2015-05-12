@@ -32,7 +32,7 @@ def fallback(func):
         for host in fallback_hosts:
             try:
                 kwargs["host"] = host
-                return func(rest, *args, **kwargs)
+                return func(http, *args, **kwargs)
             except requests.exceptions.ConnectionError as e:
                 # TODO: as above
                 last_exception = e

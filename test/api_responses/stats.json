@@ -1,0 +1,1116 @@
+[
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:10"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 1
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:09"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:08"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 1
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:07"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:06"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:05"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:04"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:03"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:02"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:01"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:18:00"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:59"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:58"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:57"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 1
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:56"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 2
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:55"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:54"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:53"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:52"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:51"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:50"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:49"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 2
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:48"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:47"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 4
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:46"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:45"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 1
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:44"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 1
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:43"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 1
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:42"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:41"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 1
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:40"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:39"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:38"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:37"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:36"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:35"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:34"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:33"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:32"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:31"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:30"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:29"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:28"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:27"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:26"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:25"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"apiRequests": {
+			"succeeded": 1
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:24"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			},
+			"all": {
+				"peak": 1,
+				"min": 1,
+				"mean": 1
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 3,
+			"mean": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:23"
+	},
+	{
+		"connections": {
+			"tls": {
+				"peak": 1,
+				"min": 0,
+				"mean": 0.6666666666666666,
+				"opened": 2
+			},
+			"all": {
+				"peak": 1,
+				"min": 0,
+				"mean": 0.6666666666666666,
+				"opened": 2
+			}
+		},
+		"channels": {
+			"peak": 3,
+			"min": 0,
+			"mean": 2,
+			"opened": 3
+		},
+		"count": 0,
+		"unit": "minute",
+		"intervalId": "2015-05-12:17:22"
+	}
+]
