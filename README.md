@@ -1,7 +1,14 @@
 ably-python
 -----------
 
-Ably.io python client library - REST interface
+.. image:: https://img.shields.io/travis/ably/ably-python.svg
+        :target: https://travis-ci.org/ably/ably-python
+
+.. image:: https://img.shields.io/pypi/v/ably-python.svg
+        :target: https://pypi.python.org/pypi/ably-python
+
+
+Python REST client for Ably real-time messaging service
 
 ## Dependencies
 

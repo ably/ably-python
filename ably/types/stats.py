@@ -138,8 +138,8 @@ class Stats(object):
             "persisted": MessageTypes.from_dict(stats_dict.get("persisted")),
             "connections": ConnectionTypes.from_dict(stats_dict.get("connections")),
             "channels": ResourceCount.from_dict(stats_dict["channels"]),
-            "api_requests": RequestCount.from_dict(stats_dict["apiRequests"]),
-            "token_requests": RequestCount.from_dict(stats_dict["tokenRequests"]),
+            "api_requests": RequestCount.from_dict(stats_dict.get("apiRequests", 0)),
+            "token_requests": RequestCount.from_dict(stats_dict.get("tokenRequests", 0)),
         }
 
         return Stats(**kwargs)
