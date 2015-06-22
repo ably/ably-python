@@ -5,23 +5,31 @@ from ably.util.exceptions import AblyException
 
 
 class Options(AuthOptions):
-    def __init__(self, client_id=None, log_level=0, tls=True, host=None,
+    def __init__(self, clientId=None, keyId=None, keyValue=None,log_level=0, tls=True, restHost=None,
                  ws_host=None, port=0, tls_port=0, use_text_protocol=True,
-                 queue_messages=False, recover=False, **kwargs):
+                 queue_messages=False, recover=False, useTokenAuth=False, authUrl=None, authCb=None, environment=None,**kwargs):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
 
-        self.__client_id = client_id
+
+        self.__clientId = clientId
         self.__log_level = log_level
         self.__tls = tls
-        self.__host = host
+        self.__restHost = restHost
+            
         self.__ws_host = ws_host
         self.__port = port
         self.__tls_port = tls_port
         self.__use_text_protocol = use_text_protocol
         self.__queue_messages = queue_messages
         self.__recover = recover
+        self.__useTokenAuth = useTokenAuth
+        self.__authUrl = authUrl
+        self.__authCb = authCb
+        self.__keyId = keyId
+        self.__keyValue = keyValue
+        self.__environment = environment
 
     @classmethod
     def with_key(cls, key, **kwargs):
@@ -34,18 +42,46 @@ class Options(AuthOptions):
                                 .format(key.split(':')),
                                 401, 40101)
 
-        kwargs['key_id'] = key_components[0]
-        kwargs['key_value'] = key_components[1]
+        kwargs['keyId'] = key_components[0]
+        kwargs['keyValue'] = key_components[1]
 
         return cls(**kwargs)
 
-    @property
-    def client_id(self):
-        return self.__client_id
 
-    @client_id.setter
-    def client_id(self, value):
-        self.__client_id = value
+    @property
+    def environment(self):
+        return self.__environment
+
+    @environment.setter
+    def environment(self, value):
+        self.__environment = value
+    
+    @property
+    def keyId(self):
+        return self.__keyId
+    @property
+    def keyValue(self):
+        return self.__keyValue
+    
+    @property
+    def useTokenAuth(self):
+        return self.__useTokenAuth
+
+    @property
+    def authUrl(self):
+        return self.__authUrl
+
+    @property
+    def authCb(self):
+        return self.__authCb
+    
+    @property
+    def clientId(self):
+        return self.__clientId
+
+    @clientId.setter
+    def clientId(self, value):
+        self.__clientId = value
 
     @property
     def log_level(self):
@@ -64,12 +100,12 @@ class Options(AuthOptions):
         self.__tls = value
 
     @property
-    def host(self):
-        return self.__host
+    def restHost(self):
+        return self.__restHost
 
-    @host.setter
-    def host(self, value):
-        self.__host = value
+    @restHost.setter
+    def restHost(self, value):
+        self.__restHost = value
 
     @property
     def port(self):

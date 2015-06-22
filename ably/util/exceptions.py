@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 class AblyException(BaseException, UnicodeMixin):
     def __init__(self, reason, status_code, code):
         super(AblyException, self).__init__()
+        log.error("AblyException: " + reason + ", code: " + str(code) + ", status code: " + str(status_code))
         self.reason = reason
         self.code = code
         self.status_code = status_code

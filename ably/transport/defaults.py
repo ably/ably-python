@@ -11,25 +11,29 @@ class Defaults(object):
         "E.ably-realtime.com",
     ]
 
-    host = "rest.ably.io"
+    restHost = "rest.ably.io"
     ws_host = "realtime.ably.io"
 
     port = 80
     tls_port = 443
     connect_timeout = 15000
     disconnect_timeout = 10000
-    suspended_timeout = 60000
+    suspended_timeout = 6e0000
     comet_recv_timeout = 90000
     comet_send_timeout = 10000
 
     transports = []  # ["web_socket", "comet"]
 
+    
     @staticmethod
     def get_host(options):
-        if options.host:
-            return options.host
+        if options.restHost:
+            if options.environment:
+                return options.environment+"-" + options.restHost
+            else:
+                return options.restHost
         else:
-            return Defaults.host
+            return Defaults.restHost
 
     @staticmethod
     def get_port(options):
@@ -46,7 +50,7 @@ class Defaults(object):
 
     @staticmethod
     def get_fallback_hosts(options):
-        if options.host:
+        if options.restHost:
             return []
         else:
             return Defaults.fallback_hosts
@@ -57,3 +61,5 @@ class Defaults(object):
             return "https"
         else:
             return "http"
+
+
