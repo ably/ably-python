@@ -13,6 +13,8 @@ from ably.util.exceptions import AblyException
 
 log = logging.getLogger(__name__)
 
+class CipherData(TypedBuffer):
+    pass
 
 class CipherParams(object):
     def __init__(self, algorithm='AES', secret_key=None, iv=None):
@@ -91,10 +93,6 @@ class CbcChannelCipher(object):
     @property
     def iv(self):
         return self.__iv
-
-
-class CipherData(TypedBuffer):
-    pass
 
 
 DEFAULT_KEYLENGTH = 16

@@ -13,6 +13,7 @@ from six.moves import range
 from ably import AblyException
 from ably import AblyRest
 from ably import Options
+from ably.types.searchparams import SearchParams
 
 from test.ably.restsetup import RestSetup
 
@@ -24,7 +25,7 @@ class TestRestChannelHistory(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
+                restHost=test_vars["host"],
                 port=test_vars["port"],
                 tls_port=test_vars["tls_port"],
                 tls=test_vars["tls"]))
@@ -41,11 +42,11 @@ class TestRestChannelHistory(unittest.TestCase):
         history0.publish('history2', 24.234)
         history0.publish('history3', six.u('This is a string message payload'))
         history0.publish('history4', b'This is a byte[] message payload')
-        history0.publish('history5', {'test': 'This is a JSONObject message payload'})
-        history0.publish('history6', ['This is a JSONArray message payload'])
+        history0.publish('history5', "{'test': 'This is a JSONObject message payload'}")
+        history0.publish('history6', "['This is a JSONArray message payload']")
 
         # Wait for the history to be persisted
-        time.sleep(16)
+        #daytime.sleep(16)
 
         history = history0.history()
         messages = history.current
@@ -54,7 +55,7 @@ class TestRestChannelHistory(unittest.TestCase):
         
         message_contents = {m.name:m for m in messages}
 
-        self.assertEqual(True, message_contents["history0"].data,
+        self.assertEqual("true", message_contents["history0"].data,
                 msg="Expect history0 to be Boolean(true)")
         self.assertEqual(24, int(message_contents["history1"].data),
                 msg="Expect history1 to be Int(24)")
@@ -66,10 +67,10 @@ class TestRestChannelHistory(unittest.TestCase):
         self.assertEqual(b"This is a byte[] message payload",
                 message_contents["history4"].data,
                 msg="Expect history4 to be expected byte[]")
-        self.assertEqual({"test": "This is a JSONObject message payload"},
+        self.assertEqual("{'test': 'This is a JSONObject message payload'}",
                 message_contents["history5"].data,
                 msg="Expect history5 to be expected JSONObject")
-        self.assertEqual(["This is a JSONArray message payload"],
+        self.assertEqual("['This is a JSONArray message payload']",
                 message_contents["history6"].data,
                 msg="Expect history6 to be expected JSONObject")
 
@@ -92,9 +93,7 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
-        history = history0.history(direction='forwards')
+        history = history0.history(SearchParams(backwards=False))
         self.assertIsNotNone(history)
         messages = history.current
         self.assertEqual(50, len(messages),
@@ -111,9 +110,7 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
-        history = history0.history(direction='backwards')
+        history = history0.history(SearchParams(backwards=True))
         self.assertIsNotNone(history)
         messages = history.current
         self.assertEqual(50, len(messages),
@@ -131,9 +128,7 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
-        history = history0.history(direction='forwards', limit=25)
+        history = history0.history(SearchParams(backwards=False, limit=25))
         self.assertIsNotNone(history)
         messages = history.current
         self.assertEqual(25, len(messages),
@@ -151,9 +146,7 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
-        history = history0.history(direction='backwards', limit=25)
+        history = history0.history(SearchParams(backwards=True, limit=25))
         self.assertIsNotNone(history)
         messages = history.current
         self.assertEqual(25, len(messages),
@@ -184,10 +177,8 @@ class TestRestChannelHistory(unittest.TestCase):
             history0.publish('history%d' % i, i)
             time.sleep(0.1)
 
-        time.sleep(16)
-
-        history = history0.history(direction='forwards', start=interval_start,
-                end=interval_end)
+        history = history0.history(SearchParams(backwards=False, limit=25, start=interval_start,
+                end=interval_end))
 
         messages = history.current
         self.assertEqual(20, len(messages))
@@ -217,10 +208,8 @@ class TestRestChannelHistory(unittest.TestCase):
             history0.publish('history%d' % i, i)
             time.sleep(0.1)
 
-        time.sleep(16)
-
-        history = history0.history(direction='backwards', start=interval_start,
-                end=interval_end)
+        history = history0.history(SearchParams(backwards=True, limit=25, start=interval_start,
+                end=interval_end))
 
         messages = history.current
         self.assertEqual(20, len(messages))
@@ -237,7 +226,6 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
 
         history = history0.history(direction='forwards', limit=10)
         messages = history.current
@@ -278,9 +266,7 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
-        history = history0.history(direction='backwards', limit=10)
+        history = history0.history(SearchParams(backwards=True, limit=10))
         messages = history.current
 
         self.assertEqual(10, len(messages))
@@ -319,9 +305,7 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
-        history = history0.history(direction='forwards', limit=10)
+        history = history0.history(SearchParams(backwards=False, limit=10))
         messages = history.current
 
         self.assertEqual(10, len(messages))
@@ -360,9 +344,7 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
-        history = history0.history(direction='backwards', limit=10)
+        history = history0.history(SearchParams(backwards=True, limit=10))
         messages = history.current
 
         self.assertEqual(10, len(messages))

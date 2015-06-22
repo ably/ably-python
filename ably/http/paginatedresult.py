@@ -2,7 +2,10 @@ from __future__ import absolute_import
 
 import logging
 
+
 from ably.http.http import Request
+from ably.types.searchparams import SearchParams
+from ably.transport.defaults import Defaults
 
 log = logging.getLogger(__name__)
 
@@ -10,8 +13,9 @@ log = logging.getLogger(__name__)
 class PaginatedResult(object):
     def __init__(self, http, current, content_type, rel_first, rel_current,
                  rel_next, response_processor):
-        self.__http = http
+        self.__http = http   
         self.__current = current
+
         self.__content_type = content_type
         self.__rel_first = rel_first
         self.__rel_current = rel_current
@@ -22,6 +26,10 @@ class PaginatedResult(object):
     def has_first(self):
         return self.__rel_first is not None
 
+    @property
+    def items(self):
+        return self.__current
+    
     @property
     def current(self):
         return self.__current
@@ -49,8 +57,11 @@ class PaginatedResult(object):
         return PaginatedResult.paginated_query_with_request(self.__http, rel_req, self.__response_processor)
 
     @staticmethod
-    def paginated_query(http, url, headers, response_processor):
-        req = Request(method='GET', url=url, headers=headers, body=None, skip_auth=True)
+    def paginated_query(http, url, headers, response_processor, searchParams = None):
+        theUrl = url
+        if searchParams:
+            theUrl = searchParams.append_to_url(url)
+        req = Request(method='GET', url=theUrl, headers=headers, body=None, skip_auth=True, timeout=Defaults.disconnect_timeout)
         return PaginatedResult.paginated_query_with_request(http, req, response_processor)
 
     @staticmethod
