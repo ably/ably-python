@@ -21,7 +21,7 @@ class TestRestCapability(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
+                restHost=test_vars["host"],
                 port=test_vars["port"],
                 tls_port=test_vars["tls_port"],
                 tls=test_vars["tls"]))
@@ -32,9 +32,9 @@ class TestRestCapability(unittest.TestCase):
 
     def test_blanket_intersection_with_key(self):
         key = test_vars['keys'][1]
-        token_details = self.ably.auth.request_token(key_id=key['key_id'],
-                key_value=key['key_value'])
-        expected_capability = Capability(key["capability"])
+        token_details = self.ably.auth.requestToken(keyId=key['keyId'],
+                keyValue=key['keyValue'])
+        expected_capability =key["capability"] 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEqual(expected_capability,
                 token_details.capability,
@@ -47,11 +47,13 @@ class TestRestCapability(unittest.TestCase):
             "capability": key["capability"],
         }
 
-        token_details = self.ably.auth.request_token(key_id=key['key_id'],
-                key_value=key['key_value'], 
+        token_details = self.ably.auth.requestToken(keyId=key['keyId'],
+                keyValue=key['keyValue'], 
                 token_params=token_params)
 
-        expected_capability = Capability(key["capability"])
+
+        #TODO capability calss
+        expected_capability = key["capability"]
 
         self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEqual(expected_capability,
@@ -63,196 +65,142 @@ class TestRestCapability(unittest.TestCase):
         key = test_vars['keys'][1]
         
         token_params = {
-            "capability": {
-                "testchannel": ["subscribe"],
-            },
+            "capability": '{"testchannel": ["subscribe"],}',
         }
 
-        self.assertRaises(AblyException, self.ably.auth.request_token, 
-                key_id=key['key_id'],
-                key_value=key['key_value'], 
+        self.assertRaises(AblyException, self.ably.auth.requestToken, 
+                keyId=key['keyId'],
+                keyValue=key['keyValue'], 
                 token_params=token_params)
 
     def test_empty_paths_intersection(self):
         key = test_vars['keys'][1]
         
         token_params = {
-            "capability": {
-                "testchannelx": ["publish"],
-            },
+            "capability": '{"testchannelx": ["publish"],}',
         }
 
-        self.assertRaises(AblyException, self.ably.auth.request_token, 
-                key_id=key['key_id'],
-                key_value=key['key_value'], 
+        self.assertRaises(AblyException, self.ably.auth.requestToken, 
+                keyId=key['keyId'],
+                keyValue=key['keyValue'], 
                 token_params=token_params)
 
     def test_non_empty_ops_intersection(self):
-        key = test_vars['keys'][4]
+        key = test_vars['keys'][1]
         
         kwargs = {
-            "key_id": key["key_id"],
-            "key_value": key["key_value"],
+            "keyId": key["keyId"],
+            "keyValue": key["keyValue"],
             "token_params": {
-                "capability": {
-                    "channel2": ["presence", "subscribe"],
-                },
+                "capability": '{"channel2": ["presence", "subscribe"]}'
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
 
-        expected_capability = Capability({
-            "channel2": ["subscribe"]
-        })
-
-        token_details = self.ably.auth.request_token(**kwargs)
-
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
+        expected_capability = '{"channel2":["subscribe"]}'
         self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
     def test_non_empty_paths_intersection(self):
-        key = test_vars['keys'][4]
+        key = test_vars['keys'][1]
         
         kwargs = {
-            "key_id": key["key_id"],
-            "key_value": key["key_value"],
+            "keyId": key["keyId"],
+            "keyValue": key["keyValue"],
             "token_params": {
-                "capability": {
-                    "channel2": ["presence", "subscribe"],
-                    "channelx": ["presence", "subscribe"],
-                },
+                "capability": '{"channel2": ["presence", "subscribe"],"channelx": ["presence", "subscribe"]}',
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
+        expected_capability = '{"channel2":["subscribe"]}'
 
-        expected_capability = Capability({
-            "channel2": ["subscribe"]
-        })
-
-        token_details = self.ably.auth.request_token(**kwargs)
-
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
     def test_wildcard_ops_intersection(self):
-        key = test_vars['keys'][4]
+        key = test_vars['keys'][1]
         
         kwargs = {
-            "key_id": key["key_id"],
-            "key_value": key["key_value"],
+            "keyId": key["keyId"],
+            "keyValue": key["keyValue"],
             "token_params": {
-                "capability": {
-                    "channel2": ["*"],
-                },
+                "capability": '{"channel2": ["*"]}',
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
+        expected_capability = '{"channel2":["publish","subscribe"]}'
 
-        expected_capability = Capability({
-            "channel2": ["subscribe", "publish"]
-        })
-
-        token_details = self.ably.auth.request_token(**kwargs)
-
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
-
     def test_wildcard_ops_intersection_2(self):
-        key = test_vars['keys'][4]
+        key = test_vars['keys'][1]
         
         kwargs = {
-            "key_id": key["key_id"],
-            "key_value": key["key_value"],
+            "keyId": key["keyId"],
+            "keyValue": key["keyValue"],
             "token_params": {
-                "capability": {
-                    "channel6": ["publish", "subscribe"],
-                },
+                "capability": '{"channel6": ["publish", "subscribe"]}',
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
+        expected_capability = '{"channel6":["publish","subscribe"]}'
 
-        expected_capability = Capability({
-            "channel6": ["subscribe", "publish"]
-        })
-
-        token_details = self.ably.auth.request_token(**kwargs)
-
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
     def test_wildcard_resources_intersection(self):
-        key = test_vars['keys'][2]
+        key = test_vars['keys'][1]
         
         kwargs = {
-            "key_id": key["key_id"],
-            "key_value": key["key_value"],
+            "keyId": key["keyId"],
+            "keyValue": key["keyValue"],
             "token_params": {
-                "capability": {
-                    "cansubscribe": ["subscribe"],
-                },
+                "capability": '{"cansubscribe": ["subscribe"]}',
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
 
-        expected_capability = Capability({
-            "cansubscribe": ["subscribe"]
-        })
+        expected_capability = '{"cansubscribe":["subscribe"]}'
 
-        token_details = self.ably.auth.request_token(**kwargs)
-
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
     def test_wildcard_resources_intersection_2(self):
-        key = test_vars['keys'][2]
+        key = test_vars['keys'][1]
         
         kwargs = {
-            "key_id": key["key_id"],
-            "key_value": key["key_value"],
+            "keyId": key["keyId"],
+            "keyValue": key["keyValue"],
             "token_params": {
-                "capability": {
-                    "cansubscribe:check": ["subscribe"],
-                },
+                "capability": '{"cansubscribe:check": ["subscribe"]}'
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
+        expected_capability = '{"cansubscribe:check":["subscribe"]}'
 
-        expected_capability = Capability({
-            "cansubscribe:check": ["subscribe"]
-        })
-
-        token_details = self.ably.auth.request_token(**kwargs)
-
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
 
     def test_wildcard_resources_intersection_3(self):
-        key = test_vars['keys'][2]
+        key = test_vars['keys'][1]
         
         kwargs = {
-            "key_id": key["key_id"],
-            "key_value": key["key_value"],
+            "keyId": key["keyId"],
+            "keyValue": key["keyValue"],
             "token_params": {
-                "capability": {
-                    "cansubscribe:*": ["subscribe"],
-                },
-            },
+                "capability": '{"cansubscribe:*": ["subscribe"]}'
+            }
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
+        expected_capability = '{"cansubscribe:*":["subscribe"]}'
 
-        expected_capability = Capability({
-            "cansubscribe:*": ["subscribe"]
-        })
-
-        token_details = self.ably.auth.request_token(**kwargs)
-
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
         self.assertEqual(expected_capability,
                 token_details.capability,
                 msg="Unexpected capability")
@@ -260,14 +208,12 @@ class TestRestCapability(unittest.TestCase):
     def test_invalid_capabilities(self):
         kwargs = {
             "token_params": {
-                "capability": {
-                    "channel0": ["publish_"],
-                },
+                "capability": '{"channel0": ["publish_"]}',
             },
         }
 
         with self.assertRaises(AblyException) as cm:
-            token_details = self.ably.auth.request_token(**kwargs)
+            token_details = self.ably.auth.requestToken(**kwargs)
 
         the_exception = cm.exception
         self.assertEqual(400, the_exception.status_code)
@@ -276,35 +222,28 @@ class TestRestCapability(unittest.TestCase):
     def test_invalid_capabilities_2(self):
         kwargs = {
             "token_params": {
-                "capability": {
-                    "channel0": ["*", "publish"],
-                },
+                "capability": '{"channel0": ["*", "publish"]}',
             },
         }
 
         with self.assertRaises(AblyException) as cm:
-            token_details = self.ably.auth.request_token(**kwargs)
+            token_details = self.ably.auth.requestToken(**kwargs)
 
         the_exception = cm.exception
         self.assertEqual(400, the_exception.status_code)
         self.assertEqual(40000, the_exception.code)
 
-
     def test_invalid_capabilities_3(self):
-        capability = Capability({
-            "channel0": []
-        })
+        capability = '"channel0": []}'
         
         kwargs = {
             "token_params": {
-                "capability": {
-                    "channel0": [],
-                },
+                "capability": '{"channel0": []}',
             },
         }
 
         with self.assertRaises(AblyException) as cm:
-            token_details = self.ably.auth.request_token(**kwargs)
+            token_details = self.ably.auth.requestToken(**kwargs)
 
         the_exception = cm.exception
         self.assertEqual(400, the_exception.status_code)

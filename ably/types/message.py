@@ -15,7 +15,8 @@ log = logging.getLogger(__name__)
 
 
 class Message(object):
-    def __init__(self, name=None, data=None, client_id=None, timestamp=None):
+    def __init__(self, name=None, data=None, clientId=None, timestamp=None):
+        print("Message type name  " + (name if name is not None else "NONE") + ", " + (data if data is not None else "NO BODY"))
         if name is None:
             self.__name = None
         elif isinstance(name, six.string_types):
@@ -26,7 +27,7 @@ class Message(object):
             # log.debug(name)
             # log.debug(name.__class__)
             raise ValueError("name must be a string or bytes")
-        self.__client_id = client_id
+        self.__clientId = clientId
         self.__data = data
         self.__timestamp = timestamp
 
@@ -34,7 +35,7 @@ class Message(object):
         if isinstance(other, Message):
             return (self.name == other.name
                     and self.data == other.data
-                    and self.client_id == other.client_id
+                    and self.clientId == other.clientId
                     and self.timestamp == other.timestamp)
         return NotImplemented
 
@@ -50,8 +51,8 @@ class Message(object):
         return self.__name
 
     @property
-    def client_id(self):
-        return self.__client_id
+    def clientId(self):
+        return self.__clientId
 
     @property
     def data(self):
@@ -185,6 +186,7 @@ class Message(object):
 
 
 def message_response_handler(response):
+    print("MESSAGE RESPONSE IS " + str(response.json()))
     return [Message.from_json(j) for j in response.json()]
 
 
