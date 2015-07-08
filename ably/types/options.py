@@ -7,7 +7,7 @@ from ably.util.exceptions import AblyException
 class Options(AuthOptions):
     def __init__(self, clientId=None, keyId=None, keyValue=None,log_level=0, tls=True, restHost=None,
                  ws_host=None, port=0, tls_port=0, use_text_protocol=True,
-                 queue_messages=False, recover=False, useTokenAuth=False, authUrl=None, authCb=None, environment=None,**kwargs):
+                 queue_messages=False, recover=False, useTokenAuth=False, authUrl=None, environment=None,**kwargs):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
@@ -26,10 +26,10 @@ class Options(AuthOptions):
         self.__recover = recover
         self.__useTokenAuth = useTokenAuth
         self.__authUrl = authUrl
-        self.__authCb = authCb
         self.__keyId = keyId
         self.__keyValue = keyValue
         self.__environment = environment
+
 
     @classmethod
     def with_key(cls, key, **kwargs):
@@ -52,6 +52,7 @@ class Options(AuthOptions):
     def environment(self):
         return self.__environment
 
+
     @environment.setter
     def environment(self, value):
         self.__environment = value
@@ -71,9 +72,9 @@ class Options(AuthOptions):
     def authUrl(self):
         return self.__authUrl
 
-    @property
-    def authCb(self):
-        return self.__authCb
+    @authUrl.setter
+    def authUrl(self, value):
+        self.__authUrl = value
     
     @property
     def clientId(self):

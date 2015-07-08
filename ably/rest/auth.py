@@ -33,7 +33,7 @@ class Auth(object):
         self.__basic_credentials = None
         self.__token_credentials = None
         self.__auth_params = None
-        self.__token_details = None
+        self._token_details = None
         self.__auth_method = Auth.Method.BASIC
         useToken = self.shouldUseTokenAuth()
         if options and options.keyValue is not None:
@@ -54,9 +54,9 @@ class Auth(object):
             self.__auth_method = Auth.Method.TOKEN
 
             if options.auth_token:
-                self.__token_details = TokenDetails(id=options.auth_token)
+                self._token_details = TokenDetails(id=options.auth_token)
             else:
-                self.__token_details = None
+                self._token_details = None
 
             if options.auth_callback:
                 log.debug("using token auth with auth_callback")
@@ -72,29 +72,39 @@ class Auth(object):
                 log.debug("no authentication parameters supplied")
 
 
+    def can_request_token(self):
+      if options.keyId and options.keyValue:
+          return True
+      if options.authUrl:
+          return True
+      if options.auth_callback:
+         return True
+      return False
+      
     def shouldUseTokenAuth(self):
-        return self.__auth_options.useTokenAuth or self.__auth_options.clientId or self.__auth_options.authUrl or self.__auth_options.authCb 
+        return self.__auth_options.useTokenAuth or self.__auth_options.clientId or self.__auth_options.authUrl or self.__auth_options.auth_callback 
 
 
     def authorise(self, force=False, **kwargs):
-        if self.__token_details:
-            if self.__token_details.expires > self._timestamp():
+        if self._token_details:
+            if self._token_details.expires > self._timestamp():
                 if not force:
                     log.debug(
                         "using cached token; expires = %d",
-                        self.__token_details.expires
+                        self._token_details.expires
                     )
-                    return self.__token_details
+                    return self._token_details
             else:
                 # token has expired
-                self.__token_details = None
+                self._token_details = None
 
-        self.__token_details = self.requestToken(**kwargs)
-        return self.__token_details
+        self._token_details = self.requestToken(**kwargs)
+        return self._token_details
 
     def requestToken(self, keyId=None, keyValue=None, query_time=None,
                       auth_token=None, auth_callback=None, auth_url=None,
                       auth_headers=None, auth_params=None, token_params=None):
+        print ("requesting token...")
 
         keyId = keyId or self.auth_options.keyId
         keyValue = keyValue or self.auth_options.keyValue
@@ -115,6 +125,8 @@ class Auth(object):
 
         token_params.setdefault("clientId", self.ably.clientId)
         token_params.setdefault("capability", self.ably.options.capability)
+        if self.ably.options.ttl:
+            token_params.setdefault("ttl", self.ably.options.ttl)
 
         signed_token_request = ""
 
@@ -160,7 +172,11 @@ class Auth(object):
         #access_token = response.json()["token"]
         #log.debug("Token: %s" % str(access_token))
 
-        return TokenDetails.from_dict(response.json())
+        if not response.error:
+            return TokenDetails.from_dict(response.json())
+        else:
+            print("TODO handle this error ... " + response.error.message)
+            return TokenDetails()
 
     def create_token_request(self, keyId=None, keyValue=None,
                              query_time=False, token_params=None):

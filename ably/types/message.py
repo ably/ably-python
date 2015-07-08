@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 
 class Message(object):
     def __init__(self, name=None, data=None, clientId=None, timestamp=None):
+        print("Message type name  " + (name if name is not None else "NONE") + ", " + (data if data is not None else "NO BODY"))
         if name is None:
             self.__name = None
         elif isinstance(name, six.string_types):
@@ -185,6 +186,7 @@ class Message(object):
 
 
 def message_response_handler(response):
+    print("MESSAGE RESPONSE IS " + str(response.json()))
     return [Message.from_json(j) for j in response.json()]
 
 

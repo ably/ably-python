@@ -45,7 +45,7 @@ class AblyRest(object):
           - `keep_alive`: use persistent connections. Defaults to True
         """
         hasKey = key or (options and options.keyValue and options.keyId)
-        hasMeansToFetchToken = options and ( options.authUrl  or options.authCb)
+        hasMeansToFetchToken = options and ( options.authUrl  or options.auth_callback)
         hasToken = token or (options and options.auth_token)
         if token and options and options.auth_token and token != options.auth_token:
             raise AblyException(reason="AblyRest token and AblyRest options token don't match. Only one needs to be set",
@@ -72,6 +72,9 @@ class AblyRest(object):
         self.__http = Http(self, self.__options)
         self.__auth = Auth(self, self.__options)
         self.__http.auth = self.__auth
+
+
+
 
 
     @classmethod

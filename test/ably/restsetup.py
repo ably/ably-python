@@ -47,15 +47,15 @@ class RestSetup:
     __test_vars = None
 
     @staticmethod
-    def testOptions():
+    def testOptions(keyNumber=0):
         if not RestSetup.__test_vars:
             get_test_vars()
 
-        key = RestSetup.__test_vars["keys"][0]["key_str"]
+        key = RestSetup.__test_vars["keys"][keyNumber]["key_str"]
         keyComponents = key.split(':')
         keyId = keyComponents[0]
         keyValue = keyComponents[1]
-        capability=RestSetup.__test_vars["keys"][0]["capability"]
+        capability=RestSetup.__test_vars["keys"][keyNumber]["capability"]
         return Options(restHost=host, port=port, tls_port=tls_port,tls=tls,keyValue=keyValue,keyId=keyId, capability=capability)
 
 

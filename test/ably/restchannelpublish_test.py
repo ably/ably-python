@@ -178,6 +178,35 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertEqual(channelCount, 1)
         self.assertEqual(names[0], channelName2)
 
+    def test_publish_status(self):
+        channel1 = TestRestChannelPublish.ably.channels.get("channelName")
+        response = channel1.publish("msg", "data")
+        self.assertEqual(response.error, None)
+        restrictedAbly = AblyRest(RestSetup.testOptions(1))
+        restrictedChannel = restrictedAbly.channels.get("restrictedChannel")
+        response =restrictedChannel.publish("msg", "data")
+        self.assertEqual(response.error.statusCode, 401)
+        self.assertEqual(response.error.code, 40160)
+
+
+    def test_publish_array(self):
+        channel1 = TestRestChannelPublish.ably.channels.get("channelName")
+        channel1.publish("msg", ['d1','d2'])
+        messages1 = channel1.history().current
+
+        self.assertEqual(len(messages1), 2)
+        #this fails by returning an array but the messages have no name or data. 
+        self.assertEqual(messages1[0].data, 'd1')
+        self.assertEqual(messages1[1].data, 'd2')
+        
+
+
+
+
+
+
+
+
 
 
 

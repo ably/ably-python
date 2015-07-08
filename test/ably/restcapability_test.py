@@ -95,6 +95,7 @@ class TestRestCapability(unittest.TestCase):
                 "capability": '{"channel2": ["presence", "subscribe"]}'
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
 
         expected_capability = '{"channel2":["subscribe"]}'
         self.assertEqual(expected_capability,
@@ -111,6 +112,7 @@ class TestRestCapability(unittest.TestCase):
                 "capability": '{"channel2": ["presence", "subscribe"],"channelx": ["presence", "subscribe"]}',
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
         expected_capability = '{"channel2":["subscribe"]}'
 
         self.assertEqual(expected_capability,
@@ -127,6 +129,7 @@ class TestRestCapability(unittest.TestCase):
                 "capability": '{"channel2": ["*"]}',
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
         expected_capability = '{"channel2":["publish","subscribe"]}'
 
         self.assertEqual(expected_capability,
@@ -143,6 +146,7 @@ class TestRestCapability(unittest.TestCase):
                 "capability": '{"channel6": ["publish", "subscribe"]}',
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
         expected_capability = '{"channel6":["publish","subscribe"]}'
 
         self.assertEqual(expected_capability,
@@ -159,6 +163,7 @@ class TestRestCapability(unittest.TestCase):
                 "capability": '{"cansubscribe": ["subscribe"]}',
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
 
         expected_capability = '{"cansubscribe":["subscribe"]}'
 
@@ -176,6 +181,7 @@ class TestRestCapability(unittest.TestCase):
                 "capability": '{"cansubscribe:check": ["subscribe"]}'
             },
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
         expected_capability = '{"cansubscribe:check":["subscribe"]}'
 
         self.assertEqual(expected_capability,
@@ -192,6 +198,7 @@ class TestRestCapability(unittest.TestCase):
                 "capability": '{"cansubscribe:*": ["subscribe"]}'
             }
         }
+        token_details = self.ably.auth.requestToken(**kwargs)
         expected_capability = '{"cansubscribe:*":["subscribe"]}'
 
         self.assertEqual(expected_capability,

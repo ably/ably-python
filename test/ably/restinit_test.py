@@ -7,7 +7,7 @@ from ably import AblyRest
 from ably import AblyException
 from ably import Options
 from ably.transport.defaults import Defaults
-
+from ably.types.fallback import Fallback
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
@@ -83,6 +83,27 @@ class TestRestInit(unittest.TestCase):
 
         resolvedHost = Defaults.get_host(options)
         self.assertEqual(resolvedHost, "testEnv-another.host.com")
+
+
+    def test_get_random_fallback_host(self):
+        hosts =["one", "two", "three"]
+        fb = Fallback(hosts)
+        set_of_hosts= set(hosts)
+        h1 = fb.random_host()
+        h2= fb.random_host()
+        h3 = fb.random_host()
+        self.assertEqual(fb.random_host(), None) #all hosts used
+        self.assertFalse(h1 == h2)
+        self.assertFalse(h1 == h3)
+        self.assertFalse(h2 == h3)
+        self.assertTrue(h1 in set_of_hosts)
+        self.assertTrue(h2 in set_of_hosts)
+        self.assertTrue(h3 in set_of_hosts)
+
+
+
+
+
 
 
 

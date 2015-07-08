@@ -10,6 +10,7 @@ import requests
 
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
+from ably.types.fallback import Fallback
 from ably.util.exceptions import AblyException
 from ably.rest.auth import Auth
 
@@ -17,6 +18,8 @@ log = logging.getLogger(__name__)
 
 
 # Decorator to attempt fallback hosts in case of a host-error
+
+#TODO rm or use 
 def fallback(func):
     @functools.wraps(func)
     def wrapper(http, *args, **kwargs):
@@ -42,6 +45,7 @@ def fallback(func):
     return wrapper
 
 
+#TODO rm or use
 def reauth_if_expired(func):
     @functools.wraps(func)
     def wrapper(rest, *args, **kwargs):
@@ -97,24 +101,55 @@ class Request(object):
     def skip_auth(self):
         return self.__skip_auth
 
-class StatusResponse(object):
-    def __init__(self, response):
-        self.__response = response
-        self.__ok = response.status_code < 40000
+    
+class AblyError(object):
+    def __init__(self,statusCode=400, code=40000, message=""):
+        self.__statusCode = statusCode
+        self.__code = code
+        self.__message = message
 
     @property
-    def response(self):
-        return self._response
+    def statusCode(self):
+        return self.__statusCode
 
     @property
-    def ok(self):
-        return self.__ok
-    
-    
+    def code(self):
+        return self.__code
 
+    @property
+    def message(self):
+        return self.__message
+
+    @staticmethod
+    def from_json(json):
+        return AblyError(statusCode=json["statusCode"], code=json["code"], message=json["message"])
+
+    def __repr__(self):
+        return "message: " + self.message + ", statusCode: " + str(self.statusCode) + ", code: " + str(self.code)
+
+    __str__ = __repr__
+
+    
 class Response(object):
     def __init__(self, response):
         self.__response = response
+        print("response jons is " + str(self.json()))
+        json = response.json()
+        if "error" in json:
+            self.__error = AblyError.from_json(json["error"])
+        else:
+            self.__error = None
+
+        self.__ok = response.status_code >=200 and response.status_code <300
+
+
+    @property
+    def error(self):
+        return self.__error
+    
+    @property
+    def ok(self):
+        return self.__ok
 
     def json(self):
         return self.response.json()
@@ -152,8 +187,8 @@ class Http(object):
         self.__session = requests.Session()
         self.__auth = None
 
-    @fallback
-    @reauth_if_expired
+    #@fallback
+    #@reauth_if_expired
     def make_request(self, method, url, headers=None, body=None, skip_auth=False, timeout=None, scheme=None, host=None, port=0):
         scheme = scheme or self.preferred_scheme
         if scheme == "http" and self.__auth.auth_method == Auth.Method.BASIC:
@@ -186,11 +221,41 @@ class Http(object):
 
         # TODO add timeouts from options here
 
-        response = self.__session.send(prepped)
-    
+        result = self.__session.send(prepped)
+        response = Response(result)
+
+        print("responesi s " + str(response.json()))
+
+        if response and response.error is not None:
+            if self.handleInvalidToken(response):
+                if self.auth.can_request_token():
+                    self.auth.authorise(force=True)
+                else:
+                    raise AblyException(reason="No way to renew invalid token", status_code=401, code=40140)
+
+            elif self.handleFallback(response):
+                print ("TODO hanlde fallback cpmplete, now try again")
+                fb = Fallback(Defaults.get_fallback_hostsself.options)
+                fb_host = ""
+                while fb.should_use_fallback(options, response) and fb_host is not None:
+                    fb_host = fb.random_host()
+                    log.debug("attempting fallback for host " + fb_host)
+                    response = self.make_request(method=method,url=url,headers=headers,body=body,skip_auth=skip_auth,timeout=timeout,scheme=scheme,host=fb_host,port=port)
+
         AblyException.raise_for_response(response)
 
-        return Response(response)
+        return response
+
+    def handleInvalidToken(self, response):
+        if response and response.error and response.error.code == 40140:
+            return True
+        else:
+            return False
+
+    def handleFallback(self,response):
+        print("TODO implmeent fallabck")
+        return False
+        
 
     def request(self, request):
         return self.make_request(request.method, request.url, headers=request.headers, body=request.body, timeout=request.timeout)

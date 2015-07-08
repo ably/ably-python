@@ -3,11 +3,11 @@ from __future__ import absolute_import
 import logging
 
 import six
+import json
 from six.moves.urllib.parse import urlencode, quote
 
 from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
-from ably.http.http import StatusResponse
 from ably.types.message import Message, message_response_handler, make_encrypted_message_response_handler
 from ably.types.presencemessage import presence_response_handler
 from ably.util.crypto import get_cipher
@@ -82,6 +82,33 @@ class Channel(object):
             searchParams
         )
 
+
+    def publish_array(self, name, data, timeout=None):
+        request_body = []
+        for i in range(len(data)):
+            datum = data[i]
+            message = Message(name, datum)
+            if self.encrypted:
+                message.encrypt(self.__cipher)
+
+            if self.ably.options.use_text_protocol:
+                request_body.append(message.as_json())
+            else:
+                print("WARN, sending as json but supposed to send as binary")
+                #TODO was as_thrift
+                request_body.append(message.as_json())
+
+        path = '/channels/%s/publish' % self.__name
+        headers = HttpUtils.default_post_headers(not self.ably.options.use_text_protocol)
+        rqeuest_body = json.dumps(request_body)
+
+        return self.ably.http.post(
+            path,
+            headers=headers,
+            body=request_body,
+            timeout=timeout
+        )
+
     @catch_all
     def publish(self, name, data, timeout=None):
         """Publishes a message on this channel.
@@ -90,6 +117,10 @@ class Channel(object):
         - `name`: the name for this message
         - `data`: the data for this message
         """
+
+        if isinstance(data, list):
+            return self.publish_array(name, data, timeout)
+
         message = Message(name, data)
 
         if self.encrypted:
@@ -104,12 +135,15 @@ class Channel(object):
 
         path = '/channels/%s/publish' % self.__name
         headers = HttpUtils.default_post_headers(not self.ably.options.use_text_protocol)
-        return StatusResponse(self.ably.http.post(
+        return self.ably.http.post(
             path,
             headers=headers,
             body=request_body,
             timeout=timeout
-        ))
+        )
+
+
+
 
     @property
     def ably(self):

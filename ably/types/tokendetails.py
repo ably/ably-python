@@ -10,7 +10,7 @@ class TokenDetails(object):
     def __init__(self, id=None, expires=0, issued_at=0,
                  capability=None, clientId=None):
         self.__id = id
-        self.__expires = expires
+        self._expires = expires #can be set with _expires for testing
         self.__issued_at = issued_at
         self.__capability = capability
         self.__clientId = clientId
@@ -19,9 +19,15 @@ class TokenDetails(object):
     def id(self):
         return self.__id
 
+    @id.setter
+    def id(self, value):
+        self.__id = id
+
     @property
     def expires(self):
-        return self.__expires
+        return self._expires
+
+
 
     @property
     def issued_at(self):

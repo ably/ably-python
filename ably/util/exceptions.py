@@ -22,17 +22,20 @@ class AblyException(BaseException, UnicodeMixin):
 
     @staticmethod
     def raise_for_response(response):
-        if response.status_code >= 200 and response.status_code < 300:
+        #TODO are there any responses that must be exceptions? if not, rm riase_for_response
+        return
+        #if response.status_code >= 200 and response.status_code < 300:
             # Valid response
-            return
+           # return
 
         try:
             json_response = response.json()
             if json_response:
                 try:
-                    raise AblyException(json_response['reason'],
-                                        json_response['statusCode'],
-                                        json_response['code'])
+                    error =json_response["error"]
+                    raise AblyException(error['message'],
+                                        statusCode['statusCode'],
+                                        code['code'])
                 except KeyError:
                     msg = "Unexpected exception decoding server response: %s"
                     msg = msg % response.text
