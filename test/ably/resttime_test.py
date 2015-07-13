@@ -15,7 +15,7 @@ test_vars = RestSetup.get_test_vars()
 class TestRestTime(unittest.TestCase):
     def test_time_accuracy(self):
         ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
+                restHost=test_vars["host"],
                 port=test_vars["port"],
                 tls_port=test_vars["tls_port"],
                 tls=test_vars["tls"]))
@@ -27,18 +27,13 @@ class TestRestTime(unittest.TestCase):
                 msg="Time is not within 2 seconds")
 
     def test_time_without_key_or_token(self):
-        ably = AblyRest(Options(host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["tls"]))
-
+        ably = AblyRest(RestSetup.testOptions())
         ably.time()
     
     def test_time_fails_without_valid_host(self):
-        ably = AblyRest(Options(host="this.host.does.not.exist",
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"]))
-
+        options = RestSetup.testOptions()
+        options.restHost="this.host.does.not.exist",
+        ably = AblyRest(options)
         self.assertRaises(AblyException, ably.time)
 
 

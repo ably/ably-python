@@ -9,16 +9,19 @@ from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
+from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyException, catch_all
 from ably.types.options import Options
+
 from ably.types.stats import stats_response_processor
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("ably")
+#logging.basicConfig(level=logging.WARNING)
 
 
 class AblyRest(object):
     """Ably Rest Client"""
-    def __init__(self, options=None):
+    def __init__(self, options=None, key=None, token=None):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -26,11 +29,11 @@ class AblyRest(object):
           - `key`: a valid key string
 
           **Or**
-          - `key_id`: Your Ably key id
-          - `key_value`: Your Ably key value
+          - `keyId`: Your Ably key id
+          - `keyValue`: Your Ably key value
 
           **Optional Parameters**
-          - `client_id`: Undocumented
+          - `clientId`: Undocumented
           - `host`: The host to connect to. Defaults to rest.ably.io
           - `port`: The port to connect to. Defaults to 80
           - `tls_port`: The tls_port to connect to. Defaults to 443
@@ -41,22 +44,38 @@ class AblyRest(object):
           - `auth_url`: Undocumented
           - `keep_alive`: use persistent connections. Defaults to True
         """
+        hasKey = key or (options and options.keyValue and options.keyId)
+        hasMeansToFetchToken = options and ( options.authUrl  or options.auth_callback)
+        hasToken = token or (options and options.auth_token)
+        if token and options and options.auth_token and token != options.auth_token:
+            raise AblyException(reason="AblyRest token and AblyRest options token don't match. Only one needs to be set",
+                                status_code=400,
+                                code=40000)
 
-        options = options or Options()
+        if token:
+            options.auth_token = token
 
-        self.__client_id = options.client_id
+        if not hasKey and not hasToken and not hasMeansToFetchToken:
+            raise AblyException(reason="Cannot instantiate AblyRest without a key, a token, or the means to fetch a token",
+                                    status_code=400,
+                                    code=40000)
 
-        # if self.__keep_alive:
-        #     self.__session = requests.Session()
-        # else:
-        #     self.__session = None
+        if options:
+            self.__options = options
+        elif key:
+            self.__options = Options.with_key(key)
+        elif token:
+            self.__options = Options()
 
-        self.__http = Http(self, options)
-        self.__auth = Auth(self, options)
+        self.__channels = Channels(self)    
+        self.__clientId = options.clientId if options and options.clientId  else ""
+        self.__http = Http(self, self.__options)
+        self.__auth = Auth(self, self.__options)
         self.__http.auth = self.__auth
 
-        self.__channels = Channels(self)
-        self.__options = options
+
+
+
 
     @classmethod
     def with_key(cls, key):
@@ -69,40 +88,23 @@ class AblyRest(object):
             return '%s' % t
 
     @catch_all
-    def stats(self, direction=None, start=None, end=None, params=None,
-              limit=None, paginated=None, by=None, timeout=None):
+    def stats(self, searchParams):
         """Returns the stats for this application"""
-        params = params or {}
-
-        if direction:
-            params["direction"] = "%s" % direction
-        if start:
-            params["start"] = self._format_time_param(start)
-        if end:
-            params["end"] = self._format_time_param(end)
-        if limit:
-            params["limit"] = "%d" % limit
-        if by:
-            params["by"] = "%s" % by
-
         url = '/stats'
-        if params:
-            url += '?' + urlencode(params)
-
         return PaginatedResult.paginated_query(self.http,
                                                url, None,
-                                               stats_response_processor)
+                                               stats_response_processor, searchParams)
 
     @catch_all
-    def time(self, timeout=None):
+    def time(self):
         """Returns the current server time in ms since the unix epoch"""
-        r = self.http.get('/time', skip_auth=True, timeout=timeout)
+        r = self.http.get('/time', skip_auth=True, timeout=Defaults.disconnect_timeout)
         AblyException.raise_for_response(r)
         return r.json()[0]
 
     @property
-    def client_id(self):
-        return self.options.client_id
+    def clientId(self):
+        return self.options.clientId
 
     @property
     def channels(self):
@@ -120,3 +122,6 @@ class AblyRest(object):
     @property
     def options(self):
         return self.__options
+
+    def setLogLevel(self,level):
+      logging.basicConfig(level=level)

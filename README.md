@@ -58,7 +58,7 @@ ably.channels.foo.presence()
 
 ### Credentials
 
-You can provide either a `key` string or `app_id` + `key_id` + `key_value`
+You can provide either a `key` string or `app_id` + `keyId` + `keyValue`
 combination.
 
 ```python
@@ -67,5 +67,5 @@ ably = AblyRest("key-string")
 or
 
 ```python
-ably = AblyRest(app_id="app-id", key_id="key-id", key_value="key-value")
+ably = AblyRest(app_id="app-id", keyId="key-id", keyValue="key-value")
 ```

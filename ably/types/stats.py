@@ -137,9 +137,9 @@ class Stats(object):
             "outbound": MessageTraffic.from_dict(stats_dict.get("outbound")),
             "persisted": MessageTypes.from_dict(stats_dict.get("persisted")),
             "connections": ConnectionTypes.from_dict(stats_dict.get("connections")),
-            "channels": ResourceCount.from_dict(stats_dict["channels"]),
-            "api_requests": RequestCount.from_dict(stats_dict["apiRequests"]),
-            "token_requests": RequestCount.from_dict(stats_dict["tokenRequests"]),
+            #"channels": ResourceCount.from_dict(stats_dict["channels"]),
+           # "api_requests": RequestCount.from_dict(stats_dict["apiRequests"]),
+           # "token_requests": RequestCount.from_dict(stats_dict["tokenRequests"]),
         }
 
         return Stats(**kwargs)

@@ -1,24 +1,33 @@
 from __future__ import absolute_import
 
+import six
+import base64
+
 from ably.types.capability import Capability
 
 
 class TokenDetails(object):
     def __init__(self, id=None, expires=0, issued_at=0,
-                 capability=None, client_id=None):
+                 capability=None, clientId=None):
         self.__id = id
-        self.__expires = expires
+        self._expires = expires #can be set with _expires for testing
         self.__issued_at = issued_at
-        self.__capability = Capability(capability or {})
-        self.__client_id = client_id
+        self.__capability = capability
+        self.__clientId = clientId
 
     @property
     def id(self):
         return self.__id
 
+    @id.setter
+    def id(self, value):
+        self.__id = id
+
     @property
     def expires(self):
-        return self.__expires
+        return self._expires
+
+
 
     @property
     def issued_at(self):
@@ -29,15 +38,15 @@ class TokenDetails(object):
         return self.__capability
 
     @property
-    def client_id(self):
-        return self.__client_id
+    def clientId(self):
+        return self.__clientId
 
     @staticmethod
     def from_dict(obj):
         return TokenDetails(
-            id=obj.get("id"),
+            id=base64.b64encode(obj.get("token")),
             expires=int(obj.get("expires", 0)),
-            issued_at=int(obj.get("issued_at", 0)),
+            issued_at=int(obj.get("issued", 0)),
             capability=obj.get("capability"),
-            client_id=obj.get("clientId")
+            clientId=obj.get("clientId")
         )
