@@ -129,6 +129,8 @@ class Message(object):
         elif encoding and encoding == six.u('cipher+base64'):
             ciphertext = base64.b64decode(data)
             data = CipherData(ciphertext, obj.get('type'))
+        elif encoding and encoding == six.u('json'):
+            data = json.loads(data)
 
         return Message(name=name, data=data, timestamp=timestamp)
 

@@ -117,6 +117,7 @@ class Channel(object):
         if self.ably.options.use_text_protocol:
             request_body = message.as_json()
         else:
+            # TODO: messagepack
             request_body = message.as_thrift()
 
         path = '/channels/%s/publish' % self.__name

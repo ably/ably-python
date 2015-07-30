@@ -36,47 +36,31 @@ class TestRestChannelHistory(unittest.TestCase):
 
     def test_channel_history_types(self):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_types']
-        history0.publish('history0', True)
-        history0.publish('history1', 24)
-        history0.publish('history2', 24.234)
-        history0.publish('history3', six.u('This is a string message payload'))
-        history0.publish('history4', b'This is a byte[] message payload')
-        history0.publish('history5', {'test': 'This is a JSONObject message payload'})
-        history0.publish('history6', ['This is a JSONArray message payload'])
-
-        # Wait for the history to be persisted
-        time.sleep(16)
+        history0.publish('history0', six.u('This is a string message payload'))
+        history0.publish('history1', b'This is a byte[] message payload')
+        history0.publish('history2', {'test': 'This is a JSONObject message payload'})
+        history0.publish('history3', ['This is a JSONArray message payload'])
 
         history = history0.history()
         messages = history.current
         self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(7, len(messages), msg="Expected 7 messages")
-        
-        message_contents = {m.name:m for m in messages}
+        self.assertEqual(4, len(messages), msg="Expected 4 messages")
 
-        self.assertEqual(True, message_contents["history0"].data,
-                msg="Expect history0 to be Boolean(true)")
-        self.assertEqual(24, int(message_contents["history1"].data),
-                msg="Expect history1 to be Int(24)")
-        self.assertEqual(24.234, float(message_contents["history2"].data),
-                msg="Expect history2 to be Double(24.234)")
+        message_contents = {m.name: m for m in messages}
         self.assertEqual(six.u("This is a string message payload"),
-                message_contents["history3"].data,
-                msg="Expect history3 to be expected String)")
+                         message_contents["history0"].data,
+                         msg="Expect history0 to be expected String)")
         self.assertEqual(b"This is a byte[] message payload",
-                message_contents["history4"].data,
-                msg="Expect history4 to be expected byte[]")
+                         message_contents["history1"].data,
+                         msg="Expect history1 to be expected byte[]")
         self.assertEqual({"test": "This is a JSONObject message payload"},
-                message_contents["history5"].data,
-                msg="Expect history5 to be expected JSONObject")
+                         message_contents["history2"].data,
+                         msg="Expect history2 to be expected JSONObject")
         self.assertEqual(["This is a JSONArray message payload"],
-                message_contents["history6"].data,
-                msg="Expect history6 to be expected JSONObject")
+                         message_contents["history3"].data,
+                         msg="Expect history3 to be expected JSONObject")
 
         expected_message_history = [
-            message_contents['history6'],
-            message_contents['history5'],
-            message_contents['history4'],
             message_contents['history3'],
             message_contents['history2'],
             message_contents['history1'],
@@ -91,8 +75,6 @@ class TestRestChannelHistory(unittest.TestCase):
 
         for i in range(50):
             history0.publish('history%d' % i, i)
-
-        time.sleep(16)
 
         history = history0.history(direction='forwards')
         self.assertIsNotNone(history)
@@ -110,8 +92,6 @@ class TestRestChannelHistory(unittest.TestCase):
 
         for i in range(50):
             history0.publish('history%d' % i, i)
-
-        time.sleep(16)
 
         history = history0.history(direction='backwards')
         self.assertIsNotNone(history)
@@ -131,8 +111,6 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
         history = history0.history(direction='forwards', limit=25)
         self.assertIsNotNone(history)
         messages = history.current
@@ -151,8 +129,6 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
         history = history0.history(direction='backwards', limit=25)
         self.assertIsNotNone(history)
         messages = history.current
@@ -170,24 +146,19 @@ class TestRestChannelHistory(unittest.TestCase):
 
         for i in range(20):
             history0.publish('history%d' % i, i)
-            time.sleep(0.1)
 
         interval_start = TestRestChannelHistory.ably.time()
 
         for i in range(20, 40):
             history0.publish('history%d' % i, i)
-            time.sleep(0.1)
 
         interval_end = TestRestChannelHistory.ably.time()
 
         for i in range(40, 60):
             history0.publish('history%d' % i, i)
-            time.sleep(0.1)
-
-        time.sleep(16)
 
         history = history0.history(direction='forwards', start=interval_start,
-                end=interval_end)
+                                   end=interval_end)
 
         messages = history.current
         self.assertEqual(20, len(messages))
@@ -203,24 +174,19 @@ class TestRestChannelHistory(unittest.TestCase):
 
         for i in range(20):
             history0.publish('history%d' % i, i)
-            time.sleep(0.1)
 
         interval_start = TestRestChannelHistory.ably.time()
 
         for i in range(20, 40):
             history0.publish('history%d' % i, i)
-            time.sleep(0.1)
 
         interval_end = TestRestChannelHistory.ably.time()
 
         for i in range(40, 60):
             history0.publish('history%d' % i, i)
-            time.sleep(0.1)
-
-        time.sleep(16)
 
         history = history0.history(direction='backwards', start=interval_start,
-                end=interval_end)
+                                   end=interval_end)
 
         messages = history.current
         self.assertEqual(20, len(messages))
@@ -236,8 +202,6 @@ class TestRestChannelHistory(unittest.TestCase):
 
         for i in range(50):
             history0.publish('history%d' % i, i)
-
-        time.sleep(16)
 
         history = history0.history(direction='forwards', limit=10)
         messages = history.current
@@ -278,8 +242,6 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
         history = history0.history(direction='backwards', limit=10)
         messages = history.current
 
@@ -319,8 +281,6 @@ class TestRestChannelHistory(unittest.TestCase):
         for i in range(50):
             history0.publish('history%d' % i, i)
 
-        time.sleep(16)
-
         history = history0.history(direction='forwards', limit=10)
         messages = history.current
 
@@ -359,8 +319,6 @@ class TestRestChannelHistory(unittest.TestCase):
 
         for i in range(50):
             history0.publish('history%d' % i, i)
-
-        time.sleep(16)
 
         history = history0.history(direction='backwards', limit=10)
         messages = history.current

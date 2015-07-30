@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 class TestRestToken(unittest.TestCase):
     def server_time(self):
-        return int(self.ably.time() / 1000.0)
+        return self.ably.time()
 
     def setUp(self):
         capability = {"*":["*"]}
@@ -35,13 +35,13 @@ class TestRestToken(unittest.TestCase):
         pre_time = self.server_time()
         token_details = self.ably.auth.request_token()
         post_time = self.server_time()
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertGreaterEqual(token_details.issued_at,
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertGreaterEqual(token_details.issued,
                 pre_time,
-                msg="Unexpected issued at time")
-        self.assertLessEqual(token_details.issued_at,
+                msg="Unexpected issued time")
+        self.assertLessEqual(token_details.issued,
                 post_time,
-                msg="Unexpected issued at time")
+                msg="Unexpected issued time")
         self.assertEqual(self.permit_all,
                 six.text_type(token_details.capability),
                 msg="Unexpected capability")
@@ -52,20 +52,20 @@ class TestRestToken(unittest.TestCase):
             "timestamp":pre_time
             })
         post_time = self.server_time()
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertGreaterEqual(token_details.issued_at,
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertGreaterEqual(token_details.issued,
                 pre_time,
-                msg="Unexpected issued at time")
-        self.assertLessEqual(token_details.issued_at,
+                msg="Unexpected issued time")
+        self.assertLessEqual(token_details.issued,
                 post_time,
-                msg="Unexpected issued at time")
+                msg="Unexpected issued time")
         self.assertEqual(self.permit_all,
                 six.text_type(Capability(token_details.capability)),
                 msg="Unexpected Capability")
 
     def test_request_token_explicit_invalid_timestamp(self):
         request_time = self.server_time()
-        explicit_timestamp = request_time - 30 * 60
+        explicit_timestamp = request_time - 30 * 60 * 1000
 
         self.assertRaises(AblyException, self.ably.auth.request_token,
                 token_params={"timestamp":explicit_timestamp})
@@ -74,13 +74,13 @@ class TestRestToken(unittest.TestCase):
         pre_time = self.server_time()
         token_details = self.ably.auth.request_token(query_time=True)
         post_time = self.server_time()
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertGreaterEqual(token_details.issued_at,
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertGreaterEqual(token_details.issued,
                 pre_time,
-                msg="Unexpected issued at time")
-        self.assertLessEqual(token_details.issued_at,
+                msg="Unexpected issued time")
+        self.assertLessEqual(token_details.issued,
                 post_time,
-                msg="Unexpected issued at time")
+                msg="Unexpected issued time")
         self.assertEqual(self.permit_all,
                 six.text_type(Capability(token_details.capability)),
                 msg="Unexpected Capability")
@@ -91,7 +91,7 @@ class TestRestToken(unittest.TestCase):
             "timestamp":request_time,
             "nonce":'1234567890123456'
         })
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
 
         self.assertRaises(AblyException, self.ably.auth.request_token,
                 token_params={
@@ -111,7 +111,7 @@ class TestRestToken(unittest.TestCase):
         token_details = self.ably.auth.request_token(token_params=token_params)
 
         self.assertIsNotNone(token_details)
-        self.assertIsNotNone(token_details.id)
+        self.assertIsNotNone(token_details.token)
         self.assertEqual(capability, token_details.capability,
                 msg="Unexpected capability")
 
@@ -119,7 +119,7 @@ class TestRestToken(unittest.TestCase):
         key = RestSetup.get_test_vars()["keys"][1]
         token_details = self.ably.auth.request_token(key_id=key["key_id"],
                 key_value=key["key_value"])
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
         self.assertEqual(key.get("capability"),
                 token_details.capability,
                 msg="Unexpected capability")
@@ -132,12 +132,12 @@ class TestRestToken(unittest.TestCase):
         token_details = self.ably.auth.request_token(token_params={
             "ttl":100
         })
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(token_details.issued_at + 100,
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(token_details.issued + 100,
                 token_details.expires, msg="Unexpected expires")
 
     def test_token_with_excessive_ttl(self):
-        excessive_ttl = 365 * 24 * 60 * 60
+        excessive_ttl = 365 * 24 * 60 * 60 * 1000
         self.assertRaises(AblyException, self.ably.auth.request_token,
                 token_params={"ttl":excessive_ttl})
 

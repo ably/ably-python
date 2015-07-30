@@ -17,6 +17,7 @@ from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
 
+
 class TestRestCapability(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -33,12 +34,11 @@ class TestRestCapability(unittest.TestCase):
     def test_blanket_intersection_with_key(self):
         key = test_vars['keys'][1]
         token_details = self.ably.auth.request_token(key_id=key['key_id'],
-                key_value=key['key_value'])
+                                                     key_value=key['key_value'])
         expected_capability = Capability(key["capability"])
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability.")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability.")
 
     def test_equal_intersection_with_key(self):
         key = test_vars['keys'][1]
@@ -53,11 +53,9 @@ class TestRestCapability(unittest.TestCase):
 
         expected_capability = Capability(key["capability"])
 
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability")
-
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability")
 
     def test_empty_ops_intersection(self):
         key = test_vars['keys'][1]
@@ -106,10 +104,9 @@ class TestRestCapability(unittest.TestCase):
 
         token_details = self.ably.auth.request_token(**kwargs)
 
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability")
 
     def test_non_empty_paths_intersection(self):
         key = test_vars['keys'][4]
@@ -131,10 +128,9 @@ class TestRestCapability(unittest.TestCase):
 
         token_details = self.ably.auth.request_token(**kwargs)
 
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability")
 
     def test_wildcard_ops_intersection(self):
         key = test_vars['keys'][4]
@@ -155,11 +151,9 @@ class TestRestCapability(unittest.TestCase):
 
         token_details = self.ably.auth.request_token(**kwargs)
 
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability")
-
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability")
 
     def test_wildcard_ops_intersection_2(self):
         key = test_vars['keys'][4]
@@ -180,10 +174,9 @@ class TestRestCapability(unittest.TestCase):
 
         token_details = self.ably.auth.request_token(**kwargs)
 
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability")
 
     def test_wildcard_resources_intersection(self):
         key = test_vars['keys'][2]
@@ -204,14 +197,13 @@ class TestRestCapability(unittest.TestCase):
 
         token_details = self.ably.auth.request_token(**kwargs)
 
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability")
 
     def test_wildcard_resources_intersection_2(self):
         key = test_vars['keys'][2]
-        
+
         kwargs = {
             "key_id": key["key_id"],
             "key_value": key["key_value"],
@@ -228,10 +220,9 @@ class TestRestCapability(unittest.TestCase):
 
         token_details = self.ably.auth.request_token(**kwargs)
 
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability")
 
     def test_wildcard_resources_intersection_3(self):
         key = test_vars['keys'][2]
@@ -252,10 +243,9 @@ class TestRestCapability(unittest.TestCase):
 
         token_details = self.ably.auth.request_token(**kwargs)
 
-        self.assertIsNotNone(token_details.id, msg="Expected token id")
-        self.assertEqual(expected_capability,
-                token_details.capability,
-                msg="Unexpected capability")
+        self.assertIsNotNone(token_details.token, msg="Expected token")
+        self.assertEqual(expected_capability, token_details.capability,
+                         msg="Unexpected capability")
 
     def test_invalid_capabilities(self):
         kwargs = {

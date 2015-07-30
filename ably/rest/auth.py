@@ -52,7 +52,7 @@ class Auth(object):
         self.__auth_method = Auth.Method.TOKEN
 
         if options.auth_token:
-            self.__token_details = TokenDetails(id=options.auth_token)
+            self.__token_details = TokenDetails(token=options.auth_token)
         else:
             self.__token_details = None
 
@@ -148,10 +148,9 @@ class Auth(object):
         )
 
         AblyException.raise_for_response(response)
-
-        access_token = response.json()["access_token"]
-        log.debug("Token: %s" % str(access_token))
-        return TokenDetails.from_dict(access_token)
+        response_json = response.json()
+        log.debug("Token: %s" % str(response_json.get("token")))
+        return TokenDetails.from_dict(response_json)
 
     def create_token_request(self, key_id=None, key_value=None,
                              query_time=False, token_params=None):
@@ -166,7 +165,7 @@ class Auth(object):
 
         if not token_params.get("timestamp"):
             if query_time:
-                token_params["timestamp"] = self.ably.time() / 1000.0
+                token_params["timestamp"] = self.ably.time()
             else:
                 token_params["timestamp"] = self._timestamp()
 
@@ -190,7 +189,7 @@ class Auth(object):
             token_params["nonce"] = self._random()
 
         req = {
-            "id": key_id,
+            "keyName": key_id,
             "capability": token_params["capability"],
             "client_id": token_params["client_id"],
             "timestamp": token_params["timestamp"],
@@ -261,12 +260,12 @@ class Auth(object):
             }
         else:
             return {
-                'Authorization': 'Bearer %s' % self.authorise().id,
+                'Authorization': 'Bearer %s' % self.authorise().token,
             }
 
     def _timestamp(self):
-        """Returns the local time in seconds since the unix epoch"""
-        return int(time.time())
+        """Returns the local time in milliseconds since the unix epoch"""
+        return int(time.time() * 1000)
 
     def _random(self):
         return "%016d" % rnd.randint(0, 9999999999999999)
