@@ -41,10 +41,14 @@ class TokenDetails(object):
 
     @staticmethod
     def from_dict(obj):
-        return TokenDetails(
-            token=obj.get("token"),
-            expires=int(obj.get("expires", 0)),
-            issued=int(obj.get("issued", 0)),
-            capability=obj.get("capability"),
-            client_id=obj.get("clientId")
-        )
+        kwargs = {
+            'token': obj.get("token"),
+            'capability': obj.get("capability"),
+            'client_id': obj.get("clientId")
+        }
+        expires = obj.get("expires")
+        kwargs['expires'] = expires if expires is None else int(expires)
+        issued = obj.get("issued")
+        kwargs['issued'] = issued if issued is None else int(issued)
+
+        return TokenDetails(**kwargs)
