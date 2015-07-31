@@ -1,6 +1,9 @@
 ably-python
 -----------
 
+[![Build Status](https://travis-ci.org/ably/ably-python.svg?branch=master)](https://travis-ci.org/ably/ably-python)
+[![Coverage Status](https://coveralls.io/repos/ably/ably-python/badge.svg?branch=master&service=github)](https://coveralls.io/github/ably/ably-python?branch=master)
+
 Ably.io python client library - REST interface
 
 ## Dependencies
