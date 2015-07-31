@@ -8,29 +8,27 @@ from ably.util.exceptions import AblyException
 class AuthOptions(object):
     def __init__(self, auth_callback=None, auth_url=None, auth_token=None,
                  auth_headers=None, auth_params=None, key_id=None, key_value=None,
-                 query_time=False):
+                 key=None, query_time=False):
         self.__auth_callback = auth_callback
         self.__auth_url = auth_url
         self.__auth_token = auth_token
         self.__auth_headers = auth_headers
         self.__auth_params = auth_params
-        self.__key_id = key_id
-        self.__key_value = key_value
+        if key is not None:
+            self.__key_id, self.__key_value = self.parse_key(key)
+        else:
+            self.__key_id = key_id
+            self.__key_value = key_value
         self.__query_time = query_time
 
-    @classmethod
-    def with_key(cls, key, **kwargs):
-        kwargs = kwargs or {}
-
-        key_components = key.split(':')
-
-        if len(key_components) != 2:
-            raise AblyException("invalid key parameter", 401, 40101)
-
-        kwargs['key_id'] = key_components[0]
-        kwargs['key_value'] = key_components[1]
-
-        return cls(**kwargs)
+    def parse_key(self, key):
+        try:
+            key_id, key_value = key.split(':')
+            return key_id, key_value
+        except ValueError:
+            raise AblyException("key of not len 2 parameters: {0}"
+                                .format(key.split(':')),
+                                401, 40101)
 
     def merge(self, other):
         if self.__auth_callback is None:

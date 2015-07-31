@@ -35,10 +35,11 @@ else:
     tls_port = 8081
 
 
-ably = AblyRest(Options(host=host,
-        port=port,
-        tls_port=tls_port,
-        tls=tls))
+ably = AblyRest(token='not_a_real_token',
+                options=Options(host=host,
+                                port=port,
+                                tls_port=tls_port,
+                                tls=tls))
 
 
 class RestSetup:
@@ -77,12 +78,12 @@ class RestSetup:
     @staticmethod
     def clear_test_vars():
         test_vars = RestSetup.__test_vars
-        options = Options.with_key(test_vars["keys"][0]["key_str"])
+        options = Options(key=test_vars["keys"][0]["key_str"])
         options.host = test_vars["host"]
         options.port = test_vars["port"]
         options.tls_port = test_vars["tls_port"]
         options.tls = test_vars["tls"]
-        ably = AblyRest(options)
+        ably = AblyRest(options=options)
 
         headers = HttpUtils.default_get_headers()
         ably.http.delete('/apps/' + test_vars['app_id'], headers)

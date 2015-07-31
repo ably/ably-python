@@ -25,11 +25,11 @@ class TestRestToken(unittest.TestCase):
     def setUp(self):
         capability = {"*":["*"]}
         self.permit_all = six.text_type(Capability(capability))
-        self.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["tls"]))
+        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                             options=Options(host=test_vars["host"],
+                                             port=test_vars["port"],
+                                             tls_port=test_vars["tls_port"],
+                                             tls=test_vars["tls"]))
 
     def test_request_token_null_params(self):
         pre_time = self.server_time()

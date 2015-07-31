@@ -22,14 +22,14 @@ log = logging.getLogger(__name__)
 class TestRestCrypto(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        options = Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["tls"],
-                use_text_protocol=True)
-        cls.ably = AblyRest(options)
-        cls.ably2 = AblyRest(options)
+        options = Options(key=test_vars["keys"][0]["key_str"],
+                          host=test_vars["host"],
+                          port=test_vars["port"],
+                          tls_port=test_vars["tls_port"],
+                          tls=test_vars["tls"],
+                          use_text_protocol=True)
+        cls.ably = AblyRest(options=options)
+        cls.ably2 = AblyRest(options=options)
 
     def test_cbc_channel_cipher(self):
         key = six.b(

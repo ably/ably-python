@@ -22,19 +22,19 @@ log = logging.getLogger(__name__)
 class TestRestChannelPublish(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["tls"],
-                use_text_protocol=True))
+        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                            options=Options(host=test_vars["host"],
+                                            port=test_vars["port"],
+                                            tls_port=test_vars["tls_port"],
+                                            tls=test_vars["tls"],
+                                            use_text_protocol=True))
 
-        cls.ably_binary = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["tls"],
-                use_text_protocol=False))
+        cls.ably_binary = AblyRest(key=test_vars["keys"][0]["key_str"],
+                                   options=Options(host=test_vars["host"],
+                                                   port=test_vars["port"],
+                                                   tls_port=test_vars["tls_port"],
+                                                   tls=test_vars["tls"],
+                                                   use_text_protocol=False))
 
     def test_publish_various_datatypes_text(self):
         publish0 = TestRestChannelPublish.ably.channels["persisted:publish0"]

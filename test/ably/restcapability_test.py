@@ -21,11 +21,11 @@ test_vars = RestSetup.get_test_vars()
 class TestRestCapability(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["tls"]))
+        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                            options=Options(host=test_vars["host"],
+                                            port=test_vars["port"],
+                                            tls_port=test_vars["tls_port"],
+                                            tls=test_vars["tls"]))
 
     @property
     def ably(self):

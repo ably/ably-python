@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 class AblyRest(object):
     """Ably Rest Client"""
-    def __init__(self, options=None):
+    def __init__(self, key=None, token=None, options=None):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -26,8 +26,7 @@ class AblyRest(object):
           - `key`: a valid key string
 
           **Or**
-          - `key_id`: Your Ably key id
-          - `key_value`: Your Ably key value
+          - `token`: Your Ably key id
 
           **Optional Parameters**
           - `client_id`: Undocumented
@@ -41,8 +40,21 @@ class AblyRest(object):
           - `auth_url`: Undocumented
           - `keep_alive`: use persistent connections. Defaults to True
         """
-
-        options = options or Options()
+        if key is not None:
+            if options is None:
+                options = Options(key=key)
+            else:
+                options.key_id, options.key_value = options.parse_key(key)
+        elif token is not None:
+            if options is None:
+                options = Options(auth_token=token)
+            else:
+                options.auth_token = token
+        elif options is None or not (options.auth_callback or options.auth_url or
+                                     options.key_value or options.auth_token):
+            # TODO: what's the pattern for error codes?
+            raise AblyException("No authentication information provided",
+                                0, 0)
 
         self.__client_id = options.client_id
 
@@ -57,10 +69,6 @@ class AblyRest(object):
 
         self.__channels = Channels(self)
         self.__options = options
-
-    @classmethod
-    def with_key(cls, key):
-        return cls(Options.with_key(key))
 
     def _format_time_param(self, t):
         try:

@@ -27,11 +27,11 @@ class TestRestAppStats(unittest.TestCase):
     def setUpClass(cls):
         log.debug("KEY class: "+test_vars["keys"][0]["key_str"])
         log.debug("TLS: "+str(test_vars["tls"]))
-        cls.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["tls"]))
+        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                            options=Options(host=test_vars["host"],
+                                            port=test_vars["port"],
+                                            tls_port=test_vars["tls_port"],
+                                            tls=test_vars["tls"]))
         time_from_service = cls.ably.time()
         cls.time_offset = time_from_service / 1000.0 - time.time()
 
