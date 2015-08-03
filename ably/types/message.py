@@ -125,7 +125,7 @@ class Message(object):
         # log.debug("MESSAGE: %s", str(obj))
 
         if encoding and encoding == six.u('base64'):
-            data = base64.b64decode(data)
+            data = base64.b64decode(data.encode('ascii'))
         elif encoding and encoding == six.u('cipher+base64'):
             ciphertext = base64.b64decode(data)
             data = CipherData(ciphertext, obj.get('type'))
