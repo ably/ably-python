@@ -26,7 +26,7 @@ class AblyRest(object):
           - `key`: a valid key string
 
           **Or**
-          - `token`: Your Ably key id
+          - `token`: a valid token string
 
           **Optional Parameters**
           - `client_id`: Undocumented
@@ -52,9 +52,8 @@ class AblyRest(object):
                 options.auth_token = token
         elif options is None or not (options.auth_callback or options.auth_url or
                                      options.key_value or options.auth_token):
-            # TODO: what's the pattern for error codes?
-            raise AblyException("No authentication information provided",
-                                0, 0)
+            raise AblyException("Must include valid auth parameters",
+                                400, 40000)
 
         self.__client_id = options.client_id
 
