@@ -70,8 +70,6 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
-        time.sleep(16)
-
         history = publish0.history()
         messages = history.current
         self.assertIsNotNone(messages, msg="Expected non-None messages")
@@ -115,8 +113,6 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
-        time.sleep(16)
-
         history = publish0.history()
         messages = history.current
         self.assertIsNotNone(messages, msg="Expected non-None messages")
@@ -156,7 +152,6 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
-        time.sleep(16)
         rx_channel = TestRestCrypto.ably2.channels.get("persisted:crypto_publish_key_mismatch", channel_options)
         
         try:
@@ -183,7 +178,6 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
-        time.sleep(16)
         rx_options = ChannelOptions(encrypted=True)
         rx_channel = TestRestCrypto.ably2.channels.get('persisted:crypto_send_unencrypted', rx_options)
 
@@ -225,8 +219,6 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish4", six.b("This is a byte[] message payload"))
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
-
-        time.sleep(16)
 
         rx_channel = TestRestCrypto.ably2.channels['persisted:crypto_send_encrypted_unhandled']
         history = rx_channel.history()
