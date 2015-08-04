@@ -14,6 +14,7 @@ from six.moves import range
 from ably import AblyException
 from ably import AblyRest
 from ably import Options
+from ably import ChannelOptions
 from ably.rest.channel import Channel, Channels
 
 from test.ably.restsetup import RestSetup
@@ -33,6 +34,18 @@ class TestChannels(unittest.TestCase):
     def test_rest_channels_attr(self):
         self.assertTrue(hasattr(self.ably, 'channels'))
         self.assertIsInstance(self.ably.channels, Channels)
+
+    def test_channels_get_returns_new_or_existing(self):
+        channel = self.ably.channels.get('new_channel')
+        self.assertIsInstance(channel, Channel)
+        channel_same = self.ably.channels.get('new_channel')
+        self.assertIs(channel, channel_same)
+
+    def test_channels_get_returns_new_with_options(self):
+        options = ChannelOptions(encrypted=False)
+        channel = self.ably.channels.get('new_channel', options=options)
+        self.assertIsInstance(channel, Channel)
+        self.assertIs(channel.options, options)
 
     def test_channels_in(self):
         self.assertTrue('new_channel' not in self.ably.channels)
