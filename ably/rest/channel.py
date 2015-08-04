@@ -202,5 +202,8 @@ class Channels(object):
         except AttributeError:  # Python 3
             return iter(self.__attached.values())
 
-    def __delitem__(self, key):
+    def release(self, key):
         del self.__attached[key]
+
+    def __delitem__(self, key):
+        return self.release(key)

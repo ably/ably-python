@@ -79,6 +79,13 @@ class TestChannels(unittest.TestCase):
             self.assertIsInstance(channel, Channel)
             self.assertEqual(name, channel.name)
 
+    def test_channels_remove(self):
+        self.ably.channels.get('new_channel')
+        self.ably.channels.release('new_channel')
+
+        with self.assertRaises(KeyError):
+            self.ably.channels.release('new_channel')
+
     def test_channels_del(self):
         self.ably.channels.get('new_channel')
         del self.ably.channels['new_channel']
