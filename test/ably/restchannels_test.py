@@ -47,12 +47,35 @@ class TestChannels(unittest.TestCase):
         self.assertIsInstance(channel, Channel)
         self.assertIs(channel.options, options)
 
+    def test_channels_get_updates_existing_with_options(self):
+        options = ChannelOptions(encrypted=True)
+        options_new = ChannelOptions(encrypted=False)
+
+        channel = self.ably.channels.get('new_channel', options=options)
+        self.assertIs(channel.options, options)
+
+        channel_same = self.ably.channels.get('new_channel', options=options_new)
+        self.assertIs(channel, channel_same)
+        self.assertIs(channel.options, options_new)
+
+    def test_channels_get_doesnt_updates_existing_with_none_options(self):
+        options = ChannelOptions(encrypted=True)
+        options_new = None
+
+        channel = self.ably.channels.get('new_channel', options=options)
+        self.assertIs(channel.options, options)
+
+        channel_same = self.ably.channels.get('new_channel', options=options_new)
+        self.assertIs(channel, channel_same)
+        self.assertIsNot(channel.options, None)
+        self.assertIs(channel.options, options)
+
     def test_channels_in(self):
         self.assertTrue('new_channel' not in self.ably.channels)
         self.ably.channels.get('new_channel')
-        self.ably.channels.get('new_channel_2')
+        new_channel_2 = self.ably.channels.get('new_channel_2')
         self.assertTrue('new_channel' in self.ably.channels)
-        self.assertTrue('new_channel_2' in self.ably.channels)
+        self.assertTrue(new_channel_2 in self.ably.channels)
 
     def test_channels_iteration(self):
         channel_names = ['channel_{}'.format(i) for i in range(5)]
