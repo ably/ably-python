@@ -188,3 +188,6 @@ class Channels(object):
 
     def __iter__(self):
         return self.__attached.itervalues()
+
+    def __delitem__(self, key):
+        del self.__attached[key]
