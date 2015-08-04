@@ -82,7 +82,7 @@ class Message(object):
 
         self.__data = decrypted_typed_buffer.decode()
 
-    def as_json(self):
+    def as_dict(self):
         data = self.data
         encoding = None
         data_type = None
@@ -112,8 +112,10 @@ class Message(object):
         if data_type:
             request_body['type'] = data_type
 
-        request_body = json.dumps(request_body)
         return request_body
+
+    def as_json(self):
+        return json.dumps(self.as_dict())
 
     @staticmethod
     def from_json(obj):
@@ -197,3 +199,11 @@ def make_encrypted_message_response_handler(cipher):
             message.decrypt(cipher)
         return messages
     return encrypted_message_response_handler
+
+
+class MessageJSONEncoder(json.JSONEncoder):
+    def default(self, message):
+        if isinstance(message, Message):
+            return message.as_dict()
+        else:
+            return json.JSONEncoder.default(self, message)

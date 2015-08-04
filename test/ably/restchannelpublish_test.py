@@ -9,15 +9,18 @@ import time
 import unittest
 
 import six
+from six.moves import range
 
 from ably import AblyException
 from ably import AblyRest
 from ably import Options
+from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
+
 
 class TestRestChannelPublish(unittest.TestCase):
     @classmethod
@@ -39,76 +42,76 @@ class TestRestChannelPublish(unittest.TestCase):
     def test_publish_various_datatypes_text(self):
         publish0 = TestRestChannelPublish.ably.channels["persisted:publish0"]
 
-        publish0.publish("publish0", True)
-        publish0.publish("publish1", 24)
-        publish0.publish("publish2", 24.234)
-        publish0.publish("publish3", six.u("This is a string message payload"))
-        publish0.publish("publish4", b"This is a byte[] message payload")
-        publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
-        publish0.publish("publish6", ["This is a JSONArray message payload"])
+        publish0.publish("publish0", six.u("This is a string message payload"))
+        publish0.publish("publish1", b"This is a byte[] message payload")
+        publish0.publish("publish2", {"test": "This is a JSONObject message payload"})
+        publish0.publish("publish3", ["This is a JSONArray message payload"])
 
         # Get the history for this channel
         history = publish0.history()
         messages = history.current
         self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(7, len(messages), msg="Expected 7 messages")
-        
+        self.assertEqual(4, len(messages), msg="Expected 4 messages")
+
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        self.assertEqual(True, message_contents["publish0"],
-                msg="Expect publish0 to be Boolean(true)")
-        self.assertEqual(24, int(message_contents["publish1"]),
-                msg="Expect publish1 to be Int(24)")
-        self.assertEqual(24.234, float(message_contents["publish2"]),
-                msg="Expect publish2 to be Double(24.234)")
         self.assertEqual(six.u("This is a string message payload"),
-                message_contents["publish3"],
-                msg="Expect publish3 to be expected String)")
+                         message_contents["publish0"],
+                         msg="Expect publish0 to be expected String)")
         self.assertEqual(b"This is a byte[] message payload",
-                message_contents["publish4"],
-                msg="Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4']))
+                         message_contents["publish1"],
+                         msg="Expect publish1 to be expected byte[]. Actual: %s" %
+                             str(message_contents['publish1']))
         self.assertEqual({"test": "This is a JSONObject message payload"},
-                message_contents["publish5"],
-                msg="Expect publish5 to be expected JSONObject")
+                         message_contents["publish2"],
+                         msg="Expect publish2 to be expected JSONObject")
         self.assertEqual(["This is a JSONArray message payload"],
-                message_contents["publish6"],
-                msg="Expect publish6 to be expected JSONObject")
+                         message_contents["publish3"],
+                         msg="Expect publish3 to be expected JSONObject")
 
-    def test_publish_various_datatypes_binary(self):
-        publish1 = TestRestChannelPublish.ably_binary.channels.publish1
+    # TODO: test messagepack later
+    # def test_publish_various_datatypes_binary(self):
+    #     publish1 = TestRestChannelPublish.ably_binary.channels.publish1
 
-        publish1.publish("publish0", True)
-        publish1.publish("publish1", 24)
-        publish1.publish("publish2", 24.234)
-        publish1.publish("publish3", "This is a string message payload")
-        publish1.publish("publish4", bytearray("This is a byte[] message payload", "utf_8"))
-        publish1.publish("publish5", {"test": "This is a JSONObject message payload"})
-        publish1.publish("publish6", ["This is a JSONArray message payload"])
+    #     publish1.publish("publish0", "This is a string message payload")
+    #     publish1.publish("publish1", bytearray("This is a byte[] message payload", "utf_8"))
+    #     publish1.publish("publish2", {"test": "This is a JSONObject message payload"})
+    #     publish1.publish("publish3", ["This is a JSONArray message payload"])
+
+    #     # Get the history for this channel
+    #     messages = publish1.history()
+    #     self.assertIsNotNone(messages, msg="Expected non-None messages")
+    #     self.assertEqual(4, len(messages), msg="Expected 4 messages")
+
+    #     message_contents = dict((m.name, m.data) for m in messages)
+
+    #     self.assertEqual("This is a string message payload",
+    #                      message_contents["publish0"],
+    #                      msg="Expect publish0 to be expected String)")
+    #     self.assertEqual("This is a byte[] message payload",
+    #                      message_contents["publish1"],
+    #                      msg="Expect publish1 to be expected byte[]")
+    #     self.assertEqual({"test": "This is a JSONObject message payload"},
+    #                      json.loads(message_contents["publish2"]),
+    #                      msg="Expect publish2 to be expected JSONObject")
+    #     self.assertEqual(["This is a JSONArray message payload"],
+    #                      json.loads(message_contents["publish3"]),
+    #                      msg="Expect publish3 to be expected JSONObject")
+
+    def test_publish_message_list(self):
+        channel = TestRestChannelPublish.ably.channels["message_list_channel"]
+        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
+
+        channel.publish(messages=expected_messages)
 
         # Get the history for this channel
-        messages = publish1.history()
+        history = channel.history()
+        messages = history.current
         self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(7, len(messages), msg="Expected 7 messages")
+        self.assertEqual(len(messages), len(expected_messages), msg="Expected 3 messages")
 
-        message_contents = dict((m.name, m.data) for m in messages)
-
-        self.assertEqual(True, message_contents["publish0"],
-               msg="Expect publish0 to be Boolean(true)")
-        self.assertEqual(24, int(message_contents["publish1"]),
-               msg="Expect publish1 to be Int(24)")
-        self.assertEqual(24.234, float(message_contents["publish2"]),
-               msg="Expect publish2 to be Double(24.234)")
-        self.assertEqual("This is a string message payload",
-               message_contents["publish3"],
-               msg="Expect publish3 to be expected String)")
-        self.assertEqual("This is a byte[] message payload",
-               message_contents["publish4"],
-               msg="Expect publish4 to be expected byte[]")
-        self.assertEqual({"test": "This is a JSONObject message payload"},
-               json.loads(message_contents["publish5"]),
-               msg="Expect publish5 to be expected JSONObject")
-        self.assertEqual(["This is a JSONArray message payload"],
-               json.loads(message_contents["publish6"]),
-               msg="Expect publish6 to be expected JSONObject")
-
+        for m, expected_m in zip(sorted(messages,          key=lambda m: m.name),
+                                 sorted(expected_messages, key=lambda m: m.name)):
+            self.assertEqual(m.name, expected_m.name)
+            self.assertEqual(m.data, expected_m.data)

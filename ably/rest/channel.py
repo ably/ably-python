@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import calendar
 import logging
+import json
 from collections import OrderedDict
 
 import six
@@ -9,7 +10,9 @@ from six.moves.urllib.parse import urlencode, quote
 
 from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
-from ably.types.message import Message, message_response_handler, make_encrypted_message_response_handler
+from ably.types.message import (
+    Message, message_response_handler, make_encrypted_message_response_handler,
+    MessageJSONEncoder)
 from ably.types.presence import presence_response_handler
 from ably.util.crypto import get_cipher
 from ably.util.exceptions import catch_all
@@ -97,24 +100,35 @@ class Channel(object):
         )
 
     @catch_all
-    def publish(self, name, data, timeout=None):
+    def publish(self, name=None, data=None, messages=None, timeout=None):
         """Publishes a message on this channel.
 
         :Parameters:
-        - `name`: the name for this message
-        - `data`: the data for this message
+        - `name`: the name for this message.
+        - `data`: the data for this message.
+        - `messages`: list of `Message` objects to be published.
+            Specify this param OR `name` and `data`.
+
+        :attention: You can publish using `name` and `data` OR `messages`, never all three.
         """
+        if not messages:
+            messages = [Message(name, data)]
 
-        message = Message(name, data)
+        # TODO: messagepack
+        if not self.ably.options.use_text_protocol:
+            raise NotImplementedError
 
-        if self.encrypted:
-            message.encrypt(self.__cipher)
+        request_body_list = []
+        for m in messages:
+            if self.encrypted:
+                m.encrypt(self.__cipher)
 
-        if self.ably.options.use_text_protocol:
-            request_body = message.as_json()
+            request_body_list.append(m)
+
+        if len(request_body_list) == 1:
+            request_body = request_body_list[0].as_json()
         else:
-            # TODO: messagepack
-            request_body = message.as_thrift()
+            request_body = json.dumps(request_body_list, cls=MessageJSONEncoder)
 
         path = '/channels/%s/publish' % self.__name
         headers = HttpUtils.default_post_headers(not self.ably.options.use_text_protocol)
