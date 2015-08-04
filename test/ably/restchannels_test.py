@@ -53,12 +53,11 @@ class TestChannels(unittest.TestCase):
 
     def test_channels_get_doesnt_updates_existing_with_none_options(self):
         options = ChannelOptions(encrypted=True)
-        options_new = None
 
         channel = self.ably.channels.get('new_channel', options=options)
         self.assertIs(channel.options, options)
 
-        channel_same = self.ably.channels.get('new_channel', options=options_new)
+        channel_same = self.ably.channels.get('new_channel')
         self.assertIs(channel, channel_same)
         self.assertIsNot(channel.options, None)
         self.assertIs(channel.options, options)
