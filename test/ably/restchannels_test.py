@@ -1,17 +1,10 @@
 from __future__ import absolute_import
 
-import math
-from datetime import datetime
-from datetime import timedelta
-import logging
-import time
 import collections
 import unittest
 
-import six
 from six.moves import range
 
-from ably import AblyException
 from ably import AblyRest
 from ably import Options
 from ably import ChannelOptions
