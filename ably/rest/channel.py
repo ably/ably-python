@@ -197,10 +197,7 @@ class Channels(object):
         return name in self.__attached
 
     def __iter__(self):
-        try:
-            return self.__attached.itervalues()
-        except AttributeError:  # Python 3
-            return iter(self.__attached.values())
+        return iter(six.itervalues(self.__attached))
 
     def release(self, key):
         del self.__attached[key]
