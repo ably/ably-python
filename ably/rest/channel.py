@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import calendar
 import logging
+from collections import OrderedDict
 
 import six
 from six.moves.urllib.parse import urlencode, quote
@@ -134,6 +135,10 @@ class Channel(object):
         return self.__ably
 
     @property
+    def name(self):
+        return self.__name
+
+    @property
     def base_path(self):
         return self.__base_path
 
@@ -153,7 +158,7 @@ class Channel(object):
 class Channels(object):
     def __init__(self, rest):
         self.__ably = rest
-        self.__attached = {}
+        self.__attached = OrderedDict()
 
     def get(self, name, options=None):
         if isinstance(name, six.binary_type):
@@ -170,3 +175,16 @@ class Channels(object):
             return getattr(super(Channels, self), name)
         except AttributeError:
             return self.get(name)
+
+    def __contains__(self, item):
+        if isinstance(item, Channel):
+            name = item.name
+        elif isinstance(item, six.binary_type):
+            name = item.decode('ascii')
+        else:
+            name = item
+
+        return name in self.__attached
+
+    def __iter__(self):
+        return self.__attached.itervalues()
