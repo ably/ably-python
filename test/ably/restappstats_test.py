@@ -18,6 +18,7 @@ test_vars = RestSetup.get_test_vars()
 log.debug("KEY init: "+test_vars["keys"][0]["key_str"])
 
 
+@unittest.skip("stats not implemented")
 class TestRestAppStats(unittest.TestCase):
     test_start = 0
     interval_start = 0
