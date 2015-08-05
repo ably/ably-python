@@ -10,6 +10,7 @@ import unittest
 
 import six
 from six.moves import range
+import mock
 
 from ably import AblyException
 from ably import AblyRest
@@ -108,10 +109,80 @@ class TestRestChannelPublish(unittest.TestCase):
         # Get the history for this channel
         history = channel.history()
         messages = history.current
+
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(len(messages), len(expected_messages), msg="Expected 3 messages")
 
-        for m, expected_m in zip(sorted(messages,          key=lambda m: m.name),
-                                 sorted(expected_messages, key=lambda m: m.name)):
+        for m, expected_m in zip(messages, reversed(expected_messages)):
             self.assertEqual(m.name, expected_m.name)
             self.assertEqual(m.data, expected_m.data)
+
+    def test_publish_message_null_name(self):
+        channel = TestRestChannelPublish.ably.channels["message_null_name_channel"]
+
+        data = "String message"
+        channel.publish(name=None, data=data)
+
+        # Get the history for this channel
+        history = channel.history()
+        messages = history.current
+
+        self.assertIsNotNone(messages, msg="Expected non-None messages")
+        self.assertEqual(len(messages), 1, msg="Expected 1 message")
+
+        self.assertIsNone(messages[0].name)
+        self.assertEqual(messages[0].data, data)
+
+    def test_publish_message_null_data(self):
+        channel = TestRestChannelPublish.ably.channels["message_null_data_channel"]
+
+        name = "Test name"
+        channel.publish(name=name, data=None)
+
+        # Get the history for this channel
+        history = channel.history()
+        messages = history.current
+
+        self.assertIsNotNone(messages, msg="Expected non-None messages")
+        self.assertEqual(len(messages), 1, msg="Expected 1 message")
+
+        self.assertEqual(messages[0].name, name)
+        self.assertIsNone(messages[0].data)
+
+    def test_publish_message_null_name_and_data(self):
+        channel = TestRestChannelPublish.ably.channels["null_name_and_data_channel"]
+
+        channel.publish(name=None, data=None)
+        channel.publish()
+
+        # Get the history for this channel
+        history = channel.history()
+        messages = history.current
+
+        self.assertIsNotNone(messages, msg="Expected non-None messages")
+        self.assertEqual(len(messages), 2, msg="Expected 2 messages")
+
+        for m in messages:
+            self.assertIsNone(m.name)
+            self.assertIsNone(m.data)
+
+    def test_publish_message_null_name_and_data_keys_arent_sent(self):
+        channel = TestRestChannelPublish.ably.channels[
+            "null_name_and_data_keys_arent_sent_channel"]
+
+        with mock.patch('ably.rest.rest.Http.post',
+                        wraps=channel.ably.http.post) as post_mock:
+            channel.publish(name=None, data=None)
+
+            history = channel.history()
+            messages = history.current
+
+            self.assertIsNotNone(messages, msg="Expected non-None messages")
+            self.assertEqual(len(messages), 1, msg="Expected 1 message")
+
+            self.assertEqual(post_mock.call_count, 1)
+
+            posted_body = json.loads(post_mock.call_args[1]['body'])
+            self.assertIn('timestamp', posted_body)
+            self.assertNotIn('name', posted_body)
+            self.assertNotIn('data', posted_body)

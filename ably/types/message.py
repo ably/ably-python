@@ -87,8 +87,6 @@ class Message(object):
         encoding = None
         data_type = None
 
-        # log.debug(data.__class__)
-
         if isinstance(data, CipherData):
             data_type = data.type
             data = base64.b64encode(data.buffer).decode('ascii')
@@ -97,14 +95,13 @@ class Message(object):
             data = base64.b64encode(data).decode('ascii')
             encoding = 'base64'
 
-        # log.debug(data)
-        # log.debug(data.__class__)
-
         request_body = {
             'name': self.name,
             'data': data,
             'timestamp': self.timestamp or int(time.time() * 1000.0),
         }
+        request_body = {k: v for (k, v) in request_body.items()
+                        if v is not None}  # None values aren't included
 
         if encoding:
             request_body['encoding'] = encoding
