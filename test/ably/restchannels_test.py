@@ -6,9 +6,8 @@ import unittest
 from six.moves import range
 
 from ably import AblyRest
-from ably import Options
 from ably import ChannelOptions
-from ably.rest.channel import Channel, Channels
+from ably.rest.channel import Channel, Channels, Presence
 
 from test.ably.restsetup import RestSetup
 
@@ -91,3 +90,8 @@ class TestChannels(unittest.TestCase):
 
         with self.assertRaises(KeyError):
             del self.ably.channels['new_channel']
+
+    def test_channel_has_presence(self):
+        channel = self.ably.channels.get('new_channnel')
+        self.assertTrue(channel.presence)
+        self.assertTrue(isinstance(channel.presence, Presence))

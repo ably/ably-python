@@ -28,17 +28,22 @@ class Presence(object):
         self.__http = channel.ably.http
 
     def get(self):
-        path = '%s/presence' % self.__base_path
+        path = '%s/presence' % self.__base_path.rstrip('/')
         headers = HttpUtils.default_get_headers(self.__binary)
-        response = self.__http.get(path, headers=headers)
-        return presence_response_handler(response)
+        # TODO: when PaginatedResult supports page limit change this to
+        # allow it to be sent via parameters with default being 100
+        return PaginatedResult.paginated_query(
+            self.__http,
+            path,
+            headers,
+            presence_response_handler)
 
     def history(self):
-        url = '/presence/history'
+        url = '%s/presence/history' % self.__base_path.rstrip('/')
 
         headers = HttpUtils.default_get_headers(self.__binary)
-        response = self.__http.get(url, headers=headers)
-        # FIXME: Why response is not used here?
+        # TODO: when PaginatedResult supports page limit change this to
+        # allow it to be sent via parameters with default being 100
         return PaginatedResult.paginated_query(
             self.__http,
             url,
@@ -60,13 +65,6 @@ class Channel(object):
             return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
         except:
             return '%s' % t
-
-    @catch_all
-    def presence(self, params=None, timeout=None):
-        """Returns the presence for this channel"""
-        params = params or {}
-        path = '/channels/%s/presence' % self.__name
-        return self.__ably._get(path, params=params, timeout=timeout).json()
 
     @catch_all
     def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
@@ -162,6 +160,10 @@ class Channel(object):
     @property
     def options(self):
         return self.__options
+
+    @property
+    def presence(self):
+        return self.__presence
 
     @options.setter
     def options(self, options):
