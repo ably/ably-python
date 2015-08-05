@@ -18,11 +18,11 @@ test_vars = RestSetup.get_test_vars()
 class TestChannels(unittest.TestCase):
 
     def setUp(self):
-        self.ably = AblyRest(Options.with_key(test_vars["keys"][0]["key_str"],
+        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                              host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"]))
+                             tls=test_vars["tls"])
 
     def test_rest_channels_attr(self):
         self.assertTrue(hasattr(self.ably, 'channels'))

@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 class AblyRest(object):
     """Ably Rest Client"""
-    def __init__(self, key=None, token=None, options=None):
+    def __init__(self, key=None, token=None, **kwargs):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -40,21 +40,19 @@ class AblyRest(object):
           - `auth_url`: Undocumented
           - `keep_alive`: use persistent connections. Defaults to True
         """
+        if key is not None and ('key_name' in kwargs or 'key_secret' in kwargs):
+            raise ValueError("key and key_name or key_secret are mutually exclusive. "
+                             "Provider either a key or key_name & key_secret")
         if key is not None:
-            if options is None:
-                options = Options(key=key)
-            else:
-                options.key_id, options.key_value = options.parse_key(key)
+            options = Options(key=key, **kwargs)
         elif token is not None:
-            if options is None:
-                options = Options(auth_token=token)
-            else:
-                options.auth_token = token
-        elif options is None or not (options.auth_callback or options.auth_url or
-                                     options.key_value or options.auth_token):
-            raise AblyException("Must include valid auth parameters",
-                                400, 40000)
-
+            options = Options(auth_token=token, **kwargs)
+        elif ('auth_callback' not in kwargs and 'auth_url' not in kwargs and
+              # and don't have both key_name and key_secret
+              not ('key_name' in kwargs and 'key_secret' in kwargs)):
+            raise ValueError("key is missing. Either an API key, token, or token auth method must be provided")
+        else:
+            options = Options(**kwargs)
         self.__client_id = options.client_id
 
         # if self.__keep_alive:

@@ -36,15 +36,12 @@ class TestAuth(unittest.TestCase):
             callback_called.append(True)
             return "this_is_not_really_a_token_request"
 
-        options = Options()
-        options.key_id = test_vars["keys"][0]["key_id"]
-        options.host = test_vars["host"]
-        options.port = test_vars["port"]
-        options.tls_port = test_vars["tls_port"]
-        options.tls = test_vars["tls"]
-        options.auth_callback = token_callback
-
-        ably = AblyRest(options=options)
+        ably = AblyRest(key_name=test_vars["keys"][0]["key_name"],
+                        host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        auth_callback= token_callback)
 
         try:
             ably.stats(None)
@@ -57,19 +54,19 @@ class TestAuth(unittest.TestCase):
         
     def test_auth_init_with_key_and_client_id(self):
         options = Options(key=test_vars["keys"][0]["key_str"])
-        options.client_id = "testClientId"
 
-        ably = AblyRest(options=options)
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"], client_id='testClientId')
 
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
 
     def test_auth_init_with_token(self):
-        options = Options(host=test_vars["host"], port=test_vars["port"],
-            tls_port=test_vars["tls_port"], tls=test_vars["tls"])
 
         ably = AblyRest(token="this_is_not_really_a_token",
-                        options=options)
+                        host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"])
 
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")

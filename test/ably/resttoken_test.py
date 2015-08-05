@@ -26,10 +26,10 @@ class TestRestToken(unittest.TestCase):
         capability = {"*":["*"]}
         self.permit_all = six.text_type(Capability(capability))
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             options=Options(host=test_vars["host"],
-                                             port=test_vars["port"],
-                                             tls_port=test_vars["tls_port"],
-                                             tls=test_vars["tls"]))
+                             host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
 
     def test_request_token_null_params(self):
         pre_time = self.server_time()
@@ -117,8 +117,8 @@ class TestRestToken(unittest.TestCase):
 
     def test_request_token_with_specified_key(self):
         key = RestSetup.get_test_vars()["keys"][1]
-        token_details = self.ably.auth.request_token(key_id=key["key_id"],
-                key_value=key["key_value"])
+        token_details = self.ably.auth.request_token(key_name=key["key_name"],
+                key_secret=key["key_secret"])
         self.assertIsNotNone(token_details.token, msg="Expected token")
         self.assertEqual(key.get("capability"),
                 token_details.capability,

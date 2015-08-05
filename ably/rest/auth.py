@@ -38,12 +38,12 @@ class Auth(object):
         self.__auth_params = None
         self.__token_details = None
 
-        if options.key_value is not None and options.client_id is None:
+        if options.key_secret is not None and options.client_id is None:
             # We have the key, no need to authenticate the client
             # default to using basic auth
             log.debug("anonymous, using basic auth")
             self.__auth_method = Auth.Method.BASIC
-            basic_key = "%s:%s" % (options.key_id, options.key_value)
+            basic_key = "%s:%s" % (options.key_name, options.key_secret)
             basic_key = base64.b64encode(basic_key.encode('utf-8'))
             self.__basic_credentials = basic_key.decode('ascii')
             return
@@ -60,7 +60,7 @@ class Auth(object):
             log.debug("using token auth with auth_callback")
         elif options.auth_url:
             log.debug("using token auth with auth_url")
-        elif options.key_value:
+        elif options.key_secret:
             log.debug("using token auth with client-side signing")
         elif options.auth_token:
             log.debug("using token auth with supplied token only")
@@ -85,11 +85,11 @@ class Auth(object):
         self.__token_details = self.request_token(**kwargs)
         return self.__token_details
 
-    def request_token(self, key_id=None, key_value=None, query_time=None,
+    def request_token(self, key_name=None, key_secret=None, query_time=None,
                       auth_token=None, auth_callback=None, auth_url=None,
                       auth_headers=None, auth_params=None, token_params=None):
-        key_id = key_id or self.auth_options.key_id
-        key_value = key_value or self.auth_options.key_value
+        key_name = key_name or self.auth_options.key_name
+        key_secret = key_secret or self.auth_options.key_secret
 
         log.debug("Auth callback: %s" % auth_callback)
         log.debug("Auth options: %s" % six.text_type(self.auth_options))
@@ -125,21 +125,21 @@ class Auth(object):
             AblyException.raise_for_response(response)
 
             signed_token_request = response.text
-        elif key_value:
+        elif key_secret:
             log.debug("using token auth with client-side signing")
             signed_token_request = self.create_token_request(
-                key_id=key_id,
-                key_value=key_value,
+                key_name=key_name,
+                key_secret=key_secret,
                 query_time=query_time,
                 token_params=token_params)
         else:
-            log.debug('No auth_callback, auth_url or key_value specified')
+            log.debug('No auth_callback, auth_url or key_secret specified')
             raise AblyException(
                 "Auth.request_token() must include valid auth parameters",
                 400,
                 40000)
 
-        token_path = "/keys/%s/requestToken" % key_id
+        token_path = "/keys/%s/requestToken" % key_name
         response = self.ably.http.post(
             token_path,
             headers=auth_headers,
@@ -152,15 +152,15 @@ class Auth(object):
         log.debug("Token: %s" % str(response_json.get("token")))
         return TokenDetails.from_dict(response_json)
 
-    def create_token_request(self, key_id=None, key_value=None,
+    def create_token_request(self, key_name=None, key_secret=None,
                              query_time=False, token_params=None):
         token_params = token_params or {}
 
-        if token_params.setdefault("id", key_id) != key_id:
+        if token_params.setdefault("id", key_name) != key_name:
             raise AblyException("Incompatible key specified", 401, 40102)
 
-        if not key_id or not key_value:
-            log.debug('key_id or key_value blank')
+        if not key_name or not key_secret:
+            log.debug('key_name or key_secret blank')
             raise AblyException("No key specified", 401, 40101)
 
         if not token_params.get("timestamp"):
@@ -189,7 +189,7 @@ class Auth(object):
             token_params["nonce"] = self._random()
 
         req = {
-            "keyName": key_id,
+            "keyName": key_name,
             "capability": token_params["capability"],
             "client_id": token_params["client_id"],
             "timestamp": token_params["timestamp"],
@@ -213,12 +213,12 @@ class Auth(object):
                 token_params.get("nonce", ""),
                 "",  # to get the trailing new line
             ]])
-            key_value = key_value.encode('utf8')
+            key_secret = key_secret.encode('utf8')
             sign_text = sign_text.encode('utf8')
-            log.debug("Key value: %s" % key_value)
+            log.debug("Key value: %s" % key_secret)
             log.debug("Sign text: %s" % sign_text)
 
-            mac = hmac.new(key_value, sign_text, hashlib.sha256).digest()
+            mac = hmac.new(key_secret, sign_text, hashlib.sha256).digest()
             mac = base64.b64encode(mac).decode('utf8')
             token_params["mac"] = mac
 
