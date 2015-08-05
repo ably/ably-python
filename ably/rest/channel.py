@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import calendar
 import logging
+from collections import OrderedDict
 
 import six
 from six.moves.urllib.parse import urlencode, quote
@@ -47,14 +48,9 @@ class Channel(object):
     def __init__(self, ably, name, options):
         self.__ably = ably
         self.__name = name
-        self.__options = options
         self.__base_path = '/channels/%s/' % quote(name)
         self.__presence = Presence(self)
-
-        if options and options.encrypted:
-            self.__cipher = get_cipher(options.cipher_params)
-        else:
-            self.__cipher = None
+        self.options = options
 
     def _format_time_param(self, t):
         try:
@@ -134,6 +130,10 @@ class Channel(object):
         return self.__ably
 
     @property
+    def name(self):
+        return self.__name
+
+    @property
     def base_path(self):
         return self.__base_path
 
@@ -149,18 +149,33 @@ class Channel(object):
     def options(self):
         return self.__options
 
+    @options.setter
+    def options(self, options):
+        self.__options = options
+
+        if options and options.encrypted:
+            self.__cipher = get_cipher(options.cipher_params)
+        else:
+            self.__cipher = None
+
 
 class Channels(object):
     def __init__(self, rest):
         self.__ably = rest
-        self.__attached = {}
+        self.__attached = OrderedDict()
 
     def get(self, name, options=None):
         if isinstance(name, six.binary_type):
             name = name.decode('ascii')
+
         if name not in self.__attached:
-            self.__attached[name] = Channel(self.__ably, name, options)
-        return self.__attached[name]
+            result = self.__attached[name] = Channel(self.__ably, name, options)
+        else:
+            result = self.__attached[name]
+            if options is not None:
+                result.options = options
+
+        return result
 
     def __getitem__(self, key):
         return self.get(key)
@@ -170,3 +185,22 @@ class Channels(object):
             return getattr(super(Channels, self), name)
         except AttributeError:
             return self.get(name)
+
+    def __contains__(self, item):
+        if isinstance(item, Channel):
+            name = item.name
+        elif isinstance(item, six.binary_type):
+            name = item.decode('ascii')
+        else:
+            name = item
+
+        return name in self.__attached
+
+    def __iter__(self):
+        return iter(six.itervalues(self.__attached))
+
+    def release(self, key):
+        del self.__attached[key]
+
+    def __delitem__(self, key):
+        return self.release(key)
