@@ -35,10 +35,9 @@ else:
     tls_port = 8081
 
 
-ably = AblyRest(Options(host=host,
-        port=port,
-        tls_port=tls_port,
-        tls=tls))
+ably = AblyRest(token='not_a_real_token', host=host,
+                port=port, tls_port=tls_port,
+                tls=tls)
 
 
 class RestSetup:
@@ -62,8 +61,8 @@ class RestSetup:
                 "tls_port": tls_port,
                 "tls": tls,
                 "keys": [{
-                    "key_id": "%s.%s" % (app_id, k.get("id", "")),
-                    "key_value": k.get("value", ""),
+                    "key_name": "%s.%s" % (app_id, k.get("id", "")),
+                    "key_secret": k.get("value", ""),
                     "key_str": "%s.%s:%s" % (app_id,  k.get("id", ""), k.get("value", "")),
                     "capability": Capability(json.loads(k.get("capability", "{}"))),
                 } for k in app_spec.get("keys", [])]
@@ -77,12 +76,16 @@ class RestSetup:
     @staticmethod
     def clear_test_vars():
         test_vars = RestSetup.__test_vars
-        options = Options.with_key(test_vars["keys"][0]["key_str"])
+        options = Options(key=test_vars["keys"][0]["key_str"])
         options.host = test_vars["host"]
         options.port = test_vars["port"]
         options.tls_port = test_vars["tls_port"]
         options.tls = test_vars["tls"]
-        ably = AblyRest(options)
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        host = test_vars["host"],
+                        port = test_vars["port"],
+                        tls_port = test_vars["tls_port"],
+                        tls = test_vars["tls"])
 
         headers = HttpUtils.default_get_headers()
         ably.http.delete('/apps/' + test_vars['app_id'], headers)

@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 class AblyRest(object):
     """Ably Rest Client"""
-    def __init__(self, options=None):
+    def __init__(self, key=None, token=None, **kwargs):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -26,8 +26,7 @@ class AblyRest(object):
           - `key`: a valid key string
 
           **Or**
-          - `key_id`: Your Ably key id
-          - `key_value`: Your Ably key value
+          - `token`: a valid token string
 
           **Optional Parameters**
           - `client_id`: Undocumented
@@ -41,9 +40,19 @@ class AblyRest(object):
           - `auth_url`: Undocumented
           - `keep_alive`: use persistent connections. Defaults to True
         """
-
-        options = options or Options()
-
+        if key is not None and ('key_name' in kwargs or 'key_secret' in kwargs):
+            raise ValueError("key and key_name or key_secret are mutually exclusive. "
+                             "Provider either a key or key_name & key_secret")
+        if key is not None:
+            options = Options(key=key, **kwargs)
+        elif token is not None:
+            options = Options(auth_token=token, **kwargs)
+        elif ('auth_callback' not in kwargs and 'auth_url' not in kwargs and
+              # and don't have both key_name and key_secret
+              not ('key_name' in kwargs and 'key_secret' in kwargs)):
+            raise ValueError("key is missing. Either an API key, token, or token auth method must be provided")
+        else:
+            options = Options(**kwargs)
         self.__client_id = options.client_id
 
         # if self.__keep_alive:
@@ -57,10 +66,6 @@ class AblyRest(object):
 
         self.__channels = Channels(self)
         self.__options = options
-
-    @classmethod
-    def with_key(cls, key):
-        return cls(Options.with_key(key))
 
     def _format_time_param(self, t):
         try:

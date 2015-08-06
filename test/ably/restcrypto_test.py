@@ -22,14 +22,16 @@ log = logging.getLogger(__name__)
 class TestRestCrypto(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        options = Options.with_key(test_vars["keys"][0]["key_str"],
-                host=test_vars["host"],
-                port=test_vars["port"],
-                tls_port=test_vars["tls_port"],
-                tls=test_vars["tls"],
-                use_text_protocol=True)
-        cls.ably = AblyRest(options)
-        cls.ably2 = AblyRest(options)
+        options = {
+            "key": test_vars["keys"][0]["key_str"],
+            "host": test_vars["host"],
+            "port": test_vars["port"],
+            "tls_port": test_vars["tls_port"],
+            "tls": test_vars["tls"],
+            "use_text_protocol": True
+        }
+        cls.ably = AblyRest(**options)
+        cls.ably2 = AblyRest(**options)
 
     def test_cbc_channel_cipher(self):
         key = six.b(
@@ -53,7 +55,7 @@ class TestRestCrypto(unittest.TestCase):
                 '\xdf\x7f\x6e\x38\x17\x4a\xff\x50'
                 '\x73\x23\xbb\xca\x16\xb0\xe2\x84'
         )
-        
+
         actual_ciphertext = cipher.encrypt(plaintext)
 
         self.assertEqual(expected_ciphertext, actual_ciphertext)
@@ -153,10 +155,10 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
         rx_channel = TestRestCrypto.ably2.channels.get("persisted:crypto_publish_key_mismatch", channel_options)
-        
+
         try:
             with self.assertRaises(AblyException) as cm:
-                messages = rx_channel.history()                
+                messages = rx_channel.history()
         except Exception as e:
             log.debug('test_crypto_publish_key_mismatch_fail: rx_channel.history not creating exception')
             log.debug(messages.current[0].data)

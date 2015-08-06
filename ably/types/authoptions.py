@@ -7,30 +7,28 @@ from ably.util.exceptions import AblyException
 
 class AuthOptions(object):
     def __init__(self, auth_callback=None, auth_url=None, auth_token=None,
-                 auth_headers=None, auth_params=None, key_id=None, key_value=None,
-                 query_time=False):
+                 auth_headers=None, auth_params=None, key_name=None, key_secret=None,
+                 key=None, query_time=False):
         self.__auth_callback = auth_callback
         self.__auth_url = auth_url
         self.__auth_token = auth_token
         self.__auth_headers = auth_headers
         self.__auth_params = auth_params
-        self.__key_id = key_id
-        self.__key_value = key_value
+        if key is not None:
+            self.__key_name, self.__key_secret = self.parse_key(key)
+        else:
+            self.__key_name = key_name
+            self.__key_secret = key_secret
         self.__query_time = query_time
 
-    @classmethod
-    def with_key(cls, key, **kwargs):
-        kwargs = kwargs or {}
-
-        key_components = key.split(':')
-
-        if len(key_components) != 2:
-            raise AblyException("invalid key parameter", 401, 40101)
-
-        kwargs['key_id'] = key_components[0]
-        kwargs['key_value'] = key_components[1]
-
-        return cls(**kwargs)
+    def parse_key(self, key):
+        try:
+            key_name, key_secret = key.split(':')
+            return key_name, key_secret
+        except ValueError:
+            raise AblyException("key of not len 2 parameters: {0}"
+                                .format(key.split(':')),
+                                401, 40101)
 
     def merge(self, other):
         if self.__auth_callback is None:
@@ -39,11 +37,11 @@ class AuthOptions(object):
         if self.__auth_url is None:
             self.__auth_url = other.auth_url
 
-        if self.__key_id is None:
-            self.__key_id = other.key_id
+        if self.__key_name is None:
+            self.__key_name = other.key_name
 
-        if self.__key_value is None:
-            self.__key_value = other.key_value
+        if self.__key_secret is None:
+            self.__key_secret = other.key_secret
 
         if self.__auth_token is None:
             self.__auth_token = other.auth_token
@@ -73,20 +71,20 @@ class AuthOptions(object):
         self.__auth_url = value
 
     @property
-    def key_id(self):
-        return self.__key_id
+    def key_name(self):
+        return self.__key_name
 
-    @key_id.setter
-    def key_id(self, value):
-        self.__key_id = value
+    @key_name.setter
+    def key_name(self, value):
+        self.__key_name = value
 
     @property
-    def key_value(self):
-        return self.__key_value
+    def key_secret(self):
+        return self.__key_secret
 
-    @key_value.setter
-    def key_value(self, value):
-        self.__key_value = value
+    @key_secret.setter
+    def key_secret(self, value):
+        self.__key_secret = value
 
     @property
     def auth_token(self):

@@ -61,14 +61,18 @@ ably.channels.foo.presence()
 
 ### Credentials
 
-You can provide either a `key` string or `app_id` + `key_id` + `key_value`
-combination.
+You can provide either a `key`, a `token` or, attributes to the `Options` object.
 
 ```python
-ably = AblyRest("key-string")
+ably = AblyRest("api:key")
 ```
+
 or
 
 ```python
-ably = AblyRest(app_id="app-id", key_id="key-id", key_value="key-value")
+AblyRest(token="token.string")
+```
+
+```python
+AblyRest(key="api:key", host="custom.host", port=8080)
 ```

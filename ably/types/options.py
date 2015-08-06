@@ -23,22 +23,6 @@ class Options(AuthOptions):
         self.__queue_messages = queue_messages
         self.__recover = recover
 
-    @classmethod
-    def with_key(cls, key, **kwargs):
-        kwargs = kwargs or {}
-
-        key_components = key.split(':')
-
-        if len(key_components) != 2:
-            raise AblyException("key of not len 2 parameters: {0}"
-                                .format(key.split(':')),
-                                401, 40101)
-
-        kwargs['key_id'] = key_components[0]
-        kwargs['key_value'] = key_components[1]
-
-        return cls(**kwargs)
-
     @property
     def client_id(self):
         return self.__client_id
