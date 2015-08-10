@@ -19,6 +19,8 @@ from test.ably.restsetup import RestSetup
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
+
+@unittest.skip("crypto not implemented")
 class TestRestCrypto(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

@@ -82,12 +82,10 @@ class Message(object):
 
         self.__data = decrypted_typed_buffer.decode()
 
-    def as_json(self):
+    def as_dict(self):
         data = self.data
         encoding = None
         data_type = None
-
-        # log.debug(data.__class__)
 
         if isinstance(data, CipherData):
             data_type = data.type
@@ -97,14 +95,13 @@ class Message(object):
             data = base64.b64encode(data).decode('ascii')
             encoding = 'base64'
 
-        # log.debug(data)
-        # log.debug(data.__class__)
-
         request_body = {
             'name': self.name,
             'data': data,
             'timestamp': self.timestamp or int(time.time() * 1000.0),
         }
+        request_body = {k: v for (k, v) in request_body.items()
+                        if v is not None}  # None values aren't included
 
         if encoding:
             request_body['encoding'] = encoding
@@ -112,8 +109,10 @@ class Message(object):
         if data_type:
             request_body['type'] = data_type
 
-        request_body = json.dumps(request_body)
         return request_body
+
+    def as_json(self):
+        return json.dumps(self.as_dict())
 
     @staticmethod
     def from_json(obj):
@@ -197,3 +196,11 @@ def make_encrypted_message_response_handler(cipher):
             message.decrypt(cipher)
         return messages
     return encrypted_message_response_handler
+
+
+class MessageJSONEncoder(json.JSONEncoder):
+    def default(self, message):
+        if isinstance(message, Message):
+            return message.as_dict()
+        else:
+            return json.JSONEncoder.default(self, message)
