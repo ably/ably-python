@@ -135,8 +135,8 @@ class TestRestChannelPublish(unittest.TestCase):
         with self.assertRaises(AblyException) as cm:
             ably.channels["only_subscribe"].publish()
 
-        self.assertEqual(400, cm.exception.status_code)
-        self.assertEqual(40000, cm.exception.code)
+        self.assertEqual(401, cm.exception.status_code)
+        self.assertEqual(40160, cm.exception.code)
 
     def test_publish_message_null_name(self):
         channel = TestRestChannelPublish.ably.channels["message_null_name_channel"]

@@ -10,14 +10,14 @@ log = logging.getLogger(__name__)
 
 
 class AblyException(BaseException, UnicodeMixin):
-    def __init__(self, reason, status_code, code):
+    def __init__(self, message, status_code, code):
         super(AblyException, self).__init__()
-        self.reason = reason
+        self.message = message
         self.code = code
         self.status_code = status_code
 
     def __unicode__(self):
-        return six.u('%s %s %s') % (self.code, self.status_code, self.reason)
+        return six.u('%s %s %s') % (self.code, self.status_code, self.message)
 
     @staticmethod
     def raise_for_response(response):
@@ -27,23 +27,29 @@ class AblyException(BaseException, UnicodeMixin):
 
         try:
             json_response = response.json()
-            if json_response:
+        except Exception:
+            log.debug("Response not json: %d %s",
+                      response.status_code,
+                      response.text)
+            raise AblyException(message=response.text,
+                                status_code=response.status_code,
+                                code=response.status_code * 100)
+        else:
+            if json_response and 'error' in json_response:
                 try:
-                    raise AblyException(json_response['reason'],
-                                        json_response['statusCode'],
-                                        json_response['code'])
+                    raise AblyException(message=json_response['error']['message'],
+                                        status_code=json_response['error']['statusCode'],
+                                        code=int(json_response['error']['code']))
                 except KeyError:
                     msg = "Unexpected exception decoding server response: %s"
                     msg = msg % response.text
-                    raise AblyException(msg, 500, 50000)
-        except:
-            log.debug("Response: %d %s", response.status_code, response.text)
-            raise AblyException(
-                response.text,
-                response.status_code,
-                response.status_code * 100)
+                    raise AblyException(message=msg,
+                                        status_code=500,
+                                        code=50000)
 
-        raise AblyException("", response.status_code, response.status_code*100)
+            raise AblyException(message="",
+                                status_code=response.status_code,
+                                code=response.status_code * 100)
 
     @staticmethod
     def from_exception(e):

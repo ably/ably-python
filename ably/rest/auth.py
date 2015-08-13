@@ -251,17 +251,25 @@ class Auth(object):
         return self.__basic_credentials
 
     @property
+    def token_credentials(self):
+        if self.__token_details:
+            token = self.__token_details.token
+            token_key = base64.b64encode(token.encode('utf-8'))
+            return token_key.decode('ascii')
+
+    @property
     def token_details(self):
         return self.__token_details
 
     def _get_auth_headers(self):
         if self.__auth_method == Auth.Method.BASIC:
             return {
-                'Authorization': 'Basic %s' % self.__basic_credentials,
+                'Authorization': 'Basic %s' % self.basic_credentials,
             }
         else:
+            self.authorise()
             return {
-                'Authorization': 'Bearer %s' % self.authorise().token,
+                'Authorization': 'Bearer %s' % self.token_credentials,
             }
 
     def _timestamp(self):
