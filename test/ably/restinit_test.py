@@ -15,9 +15,9 @@ class TestRestInit(unittest.TestCase):
     def test_key_only(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"])
         self.assertEqual(ably.options.key_name, test_vars["keys"][0]["key_name"],
-                         "Key id does not match")
+                         "Key name does not match")
         self.assertEqual(ably.options.key_secret, test_vars["keys"][0]["key_secret"],
-                         "Key value does not match")
+                         "Key secret does not match")
 
     def test_with_token(self):
         ably = AblyRest(token="foo")
@@ -46,9 +46,9 @@ class TestRestInit(unittest.TestCase):
     def test_with_key_name_and_secret(self):
         ably = AblyRest(key_name="foo", key_secret="bar")
         self.assertEqual(ably.options.key_name, "foo",
-                         "Key id does not match")
+                         "Key name does not match")
         self.assertEqual(ably.options.key_secret, "bar",
-                         "Key value does not match")
+                         "Key secret does not match")
 
     def test_with_options_auth_url(self):
         AblyRest(auth_url='not_really_an_url')

@@ -78,7 +78,7 @@ class TestChannels(unittest.TestCase):
             self.assertIsInstance(channel, Channel)
             self.assertEqual(name, channel.name)
 
-    def test_channels_remove(self):
+    def test_channels_release(self):
         self.ably.channels.get('new_channel')
         self.ably.channels.release('new_channel')
 
