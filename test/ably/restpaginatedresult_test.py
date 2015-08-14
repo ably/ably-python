@@ -34,17 +34,18 @@ class TestPaginatedResult(unittest.TestCase):
         # Mocked responses
         # without headers
         responses.add(responses.GET,
-                              'http://rest.ably.io/channels/channel_name/ch1',
-                              body='[{"id": 0}, {"id": 1}]', status=200,
-                              content_type='application/json')
+                      'http://rest.ably.io/channels/channel_name/ch1',
+                      body='[{"id": 0}, {"id": 1}]', status=200,
+                      content_type='application/json')
         # with headers
         responses.add_callback(
             responses.GET,
             'http://rest.ably.io/channels/channel_name/ch2',
             self.get_response_callback(
                 headers={
-                        'link':
-                    '<http://rest.ably.io/channels/channel_name/ch2?page=1>; rel="first", <http://rest.ably.io/channels/channel_name/ch2?page=2>; rel="next"'
+                    'link':
+                    '<http://rest.ably.io/channels/channel_name/ch2?page=1>; rel="first",'
+                    ' <http://rest.ably.io/channels/channel_name/ch2?page=2>; rel="next"'
                 },
                 body='[{"id": 0}, {"id": 1}]',
                 status=200),
