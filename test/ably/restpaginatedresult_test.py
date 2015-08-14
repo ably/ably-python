@@ -7,7 +7,6 @@ import responses
 
 from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
-from ably.types.presence import PresenceMessage
 
 from test.ably.restsetup import RestSetup
 

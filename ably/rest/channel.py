@@ -4,6 +4,7 @@ import calendar
 import logging
 import json
 from collections import OrderedDict
+from datetime import datetime
 
 import six
 from six.moves.urllib.parse import urlencode, quote
@@ -27,26 +28,54 @@ class Presence(object):
         self.__binary = not channel.ably.options.use_text_protocol
         self.__http = channel.ably.http
 
-    def get(self):
-        path = '%s/presence' % self.__base_path.rstrip('/')
+    def _path_with_qs(self, rel_path, qs=None):
+        path = rel_path
+        if qs:
+            path += ('?' + urlencode(qs))
+        return path
+
+    def _ms_since_epoch(self, dt):
+        epoch = datetime.utcfromtimestamp(0)
+        delta = dt - epoch
+        return int(delta.total_seconds() * 1000)
+
+    def get(self, limit=None):
+        qs = {}
+        if limit:
+            qs['limit'] = min(limit, 1000)
+        path = self._path_with_qs('%s/presence' % self.__base_path.rstrip('/'), qs)
         headers = HttpUtils.default_get_headers(self.__binary)
-        # TODO: when PaginatedResult supports page limit change this to
-        # allow it to be sent via parameters with default being 100
         return PaginatedResult.paginated_query(
             self.__http,
             path,
             headers,
             presence_response_handler)
 
-    def history(self):
-        url = '%s/presence/history' % self.__base_path.rstrip('/')
+    def history(self, limit=None, direction=None, start=None, end=None):
+        qs = {}
+        if limit:
+            qs['limit'] = min(limit, 1000)
+        if direction:
+            qs['direction'] = direction
+        if start:
+            if isinstance(start, int):
+                qs['start'] = start
+            else:
+                qs['start'] = self._ms_since_epoch(start)
+        if end:
+            if isinstance(end, int):
+                qs['end'] = end
+            else:
+                qs['end'] = self._ms_since_epoch(end)
 
+        if 'start' in qs and 'end' in qs and qs['start']  > qs['end']:
+            raise ValueError("'end' parameter has to be greater than 'start'")
+
+        path = self._path_with_qs('%s/presence/history' % self.__base_path.rstrip('/'), qs)
         headers = HttpUtils.default_get_headers(self.__binary)
-        # TODO: when PaginatedResult supports page limit change this to
-        # allow it to be sent via parameters with default being 100
         return PaginatedResult.paginated_query(
             self.__http,
-            url,
+            path,
             headers,
             presence_response_handler
         )
