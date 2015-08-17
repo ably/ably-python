@@ -32,7 +32,6 @@ class TestPresence(unittest.TestCase):
         self.assertTrue(isinstance(member, PresenceMessage))
         self.assertTrue(member.action)
         self.assertTrue(member.client_id)
-        self.assertTrue(member.member_id)
         self.assertTrue(member.client_data)
         self.assertTrue(member.connection_id)
         self.assertTrue(member.timestamp)
@@ -45,7 +44,6 @@ class TestPresence(unittest.TestCase):
         self.assertTrue(isinstance(member, PresenceMessage))
         self.assertTrue(member.action)
         self.assertTrue(member.client_id)
-        self.assertTrue(member.member_id)
         self.assertTrue(member.client_data)
         self.assertTrue(member.connection_id)
         self.assertTrue(member.timestamp)
@@ -152,5 +150,5 @@ class TestPresence(unittest.TestCase):
         end = datetime(2015, 8, 15, 17, 11, 44, 706539)
         start = end + timedelta(hours=1)
         responses.add(responses.GET, url, body='{}')
-        with self.assertRaisesRegexp(ValueError, "'end' parameter has to be greater than 'start'"):
+        with self.assertRaisesRegexp(ValueError, "'end' parameter has to be greater than or equal to 'start'"):
             self.channel.presence.history(start=start, end=end)
