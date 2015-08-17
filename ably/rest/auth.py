@@ -34,7 +34,6 @@ class Auth(object):
         self.__auth_options = options
 
         self.__basic_credentials = None
-        self.__token_credentials = None
         self.__auth_params = None
         self.__token_details = None
 
@@ -70,6 +69,8 @@ class Auth(object):
             log.debug("no authentication parameters supplied")
 
     def authorise(self, force=False, **kwargs):
+        self.__auth_method = Auth.Method.TOKEN
+
         if self.__token_details:
             if self.__token_details.expires > self._timestamp():
                 if not force:
@@ -251,16 +252,24 @@ class Auth(object):
 
     @property
     def token_credentials(self):
-        return self.__token_credentials
+        if self.__token_details:
+            token = self.__token_details.token
+            token_key = base64.b64encode(token.encode('utf-8'))
+            return token_key.decode('ascii')
+
+    @property
+    def token_details(self):
+        return self.__token_details
 
     def _get_auth_headers(self):
         if self.__auth_method == Auth.Method.BASIC:
             return {
-                'Authorization': 'Basic %s' % self.__basic_credentials,
+                'Authorization': 'Basic %s' % self.basic_credentials,
             }
         else:
+            self.authorise()
             return {
-                'Authorization': 'Bearer %s' % self.authorise().token,
+                'Authorization': 'Bearer %s' % self.token_credentials,
             }
 
     def _timestamp(self):

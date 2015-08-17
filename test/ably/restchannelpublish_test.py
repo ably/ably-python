@@ -117,6 +117,27 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertEqual(m.name, expected_m.name)
             self.assertEqual(m.data, expected_m.data)
 
+    def test_publish_error(self):
+        token_params = {
+            "capability": {
+                "only_subscribe": ["subscribe"],
+            }
+        }
+
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        use_text_protocol=True)
+        ably.auth.authorise(token_params=token_params)
+
+        with self.assertRaises(AblyException) as cm:
+            ably.channels["only_subscribe"].publish()
+
+        self.assertEqual(401, cm.exception.status_code)
+        self.assertEqual(40160, cm.exception.code)
+
     def test_publish_message_null_name(self):
         channel = TestRestChannelPublish.ably.channels["message_null_name_channel"]
 
