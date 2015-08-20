@@ -29,10 +29,11 @@ class TestPresence(unittest.TestCase):
         self.assertIsInstance(presence_page, PaginatedResult)
         self.assertEqual(len(presence_page.items), 6)
         member = presence_page.items[0]
-        self.assertTrue(isinstance(member, PresenceMessage))
+        self.assertIsInstance(member, PresenceMessage)
         self.assertTrue(member.action)
+        self.assertTrue(member.id)
         self.assertTrue(member.client_id)
-        self.assertTrue(member.client_data)
+        self.assertTrue(member.data)
         self.assertTrue(member.connection_id)
         self.assertTrue(member.timestamp)
 
@@ -41,12 +42,30 @@ class TestPresence(unittest.TestCase):
         self.assertIsInstance(presence_history, PaginatedResult)
         self.assertEqual(len(presence_history.items), 6)
         member = presence_history.items[0]
-        self.assertTrue(isinstance(member, PresenceMessage))
+        self.assertIsInstance(member, PresenceMessage)
         self.assertTrue(member.action)
+        self.assertTrue(member.id)
         self.assertTrue(member.client_id)
-        self.assertTrue(member.client_data)
+        self.assertTrue(member.data)
         self.assertTrue(member.connection_id)
         self.assertTrue(member.timestamp)
+        self.assertTrue(member.encoding)
+
+    def test_presence_message_without_action(self):
+        p = PresenceMessage()
+        self.assertRaises(KeyError, p.to_dict)
+
+    def test_timestamp_is_datetime(self):
+        presence_page = self.channel.presence.get()
+        member = presence_page.items[0]
+        self.assertIsInstance(member.timestamp, datetime)
+
+    def test_presence_message_has_correct_member_key(self):
+        presence_page = self.channel.presence.get()
+        member = presence_page.items[0]
+
+        self.assertEqual(member.member_key, "%s:%s" % (member.connection_id,
+                                                       member.client_id))
 
     def presence_mock_url(self):
         kwargs = {

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import six
 from six.moves.urllib.parse import urlencode
@@ -10,43 +10,65 @@ from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
 
 
+def _ms_since_epoch(dt):
+    epoch = datetime.utcfromtimestamp(0)
+    delta = dt - epoch
+    return int(delta.total_seconds() * 1000)
+
+
+def _dt_from_ms_epoch(ms):
+    epoch = datetime.utcfromtimestamp(0)
+    return  epoch + timedelta(milliseconds=ms)
+
+
 class PresenceAction(object):
-    ENTER = 0
-    LEAVE = 1
-    UPDATE = 2
+    ABSENT = 0
+    PRESENT = 1
+    ENTER = 2
+    LEAVE = 3
+    UPDATE = 4
 
 
 class PresenceMessage(object):
-    def __init__(self, action=PresenceAction.ENTER, client_id=None,
-                 member_id=None, client_data=None, message_id=None,
+    def __init__(self, id=None, action=None, client_id=None,
+                 member_key=None, data=None, encoding=None,
                  connection_id=None, timestamp=None):
+        self.__id = id
         self.__action = action
         self.__client_id = client_id
-        self.__member_id = member_id
-        self.__message_id = message_id
-        self.__client_data = client_data
         self.__connection_id = connection_id
+        if member_key is None:
+            self.__member_key = "%s:%s" % (self.connection_id, self.client_id)
+        else:
+            self.__member_key = member_key
+        self.__data = data
+        self.__encoding = encoding
         self.__timestamp = timestamp
 
     @staticmethod
     def from_dict(obj):
+        id = obj.get('id')
         action = obj.get('action', PresenceAction.ENTER)
         client_id = obj.get('clientId')
-        message_id = obj.get('id')
+        member_key = obj.get('memberKey')
         connection_id = obj.get('connectionId')
-        timestamp = obj.get('timestamp')
 
         encoding = obj.get('encoding')
-        client_data = obj.get('data')
-        if client_data and 'base64' == encoding:
-            client_data = base64.b64decode(client_data)
+        data = obj.get('data')
+        if data and 'base64' == encoding:
+            data = base64.b64decode(data)
 
+        timestamp = obj.get('timestamp')
+        if timestamp is not None:
+            timestamp = _dt_from_ms_epoch(timestamp)
         return PresenceMessage(
+            id=id,
             action=action,
             client_id=client_id,
-            message_id=message_id,
-            client_data=client_data,
+            member_key=member_key,
+            data=data,
             connection_id=connection_id,
+            encoding=encoding,
             timestamp=timestamp
         )
 
@@ -55,6 +77,8 @@ class PresenceMessage(object):
         return [PresenceMessage.from_dict(d) for d in obj]
 
     def to_dict(self):
+        if self.action is None:
+            raise KeyError('action is missing or invalid, cannot generate a valid Hash for ProtocolMessage')
         obj = {
             'action': self.action,
         }
@@ -62,18 +86,26 @@ class PresenceMessage(object):
         if self.client_id is not None:
             obj['clientId'] = self.client_id
 
-        if self.client_data is not None:
-            if isinstance(self.client_data, six.byte_type):
-                obj['clientData'] = base64.b64encode(self.client_data)
-                obj['encoding'] = 'base64'
+        if self.encoding is not None:
+            obj['encoding'] = self.encoding
+
+        if self.member_key is not None:
+            obj['memberKey'] = self.member_key
+
+        if self.connection_id is not None:
+            obj['connectionId'] = self.connection_id
+
+        if self.data is not None:
+            if isinstance(self.data, six.byte_type) and obj['encoding'] == 'base64':
+                obj['clientData'] = base64.b64encode(self.data)
             else:
-                obj['clientData'] = self.client_data
+                obj['clientData'] = self.data
 
-        if self.member_id is not None:
-            obj['memberId'] = self.member_id
+        if self.id is not None:
+            obj['id'] = self.id
 
-        if self.message_id is not None:
-            obj['id'] = self.message_id
+        if self.timestamp is not None:
+            obj['timestamp'] = _ms_since_epoch(self.timestamp)
 
         return obj
 
@@ -86,12 +118,20 @@ class PresenceMessage(object):
         return self.__client_id
 
     @property
-    def client_data(self):
-        return self.__client_data
+    def encoding(self):
+        return self.__encoding
 
     @property
-    def member_id(self):
-        return self.__member_id
+    def member_key(self):
+        return self.__member_key
+
+    @property
+    def data(self):
+        return self.__data
+
+    @property
+    def id(self):
+        return self.__id
 
     @property
     def connection_id(self):
@@ -113,11 +153,6 @@ class Presence(object):
         if qs:
             path += ('?' + urlencode(qs))
         return path
-
-    def _ms_since_epoch(self, dt):
-        epoch = datetime.utcfromtimestamp(0)
-        delta = dt - epoch
-        return int(delta.total_seconds() * 1000)
 
     def get(self, limit=None):
         qs = {}
@@ -141,12 +176,12 @@ class Presence(object):
             if isinstance(start, int):
                 qs['start'] = start
             else:
-                qs['start'] = self._ms_since_epoch(start)
+                qs['start'] = _ms_since_epoch(start)
         if end:
             if isinstance(end, int):
                 qs['end'] = end
             else:
-                qs['end'] = self._ms_since_epoch(end)
+                qs['end'] = _ms_since_epoch(end)
 
         if 'start' in qs and 'end' in qs and qs['start'] > qs['end']:
             raise ValueError("'end' parameter has to be greater than or equal to 'start'")
