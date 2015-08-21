@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import functools
 import logging
+import socket
+import time
 
 from six.moves import range
 from six.moves.urllib.parse import urljoin
@@ -92,6 +94,13 @@ class Request(object):
 
 
 class Http(object):
+    CONNECTION_RETRY = {
+        'single_request_connect_timeout': 4,
+        'single_request_read_timeout': 15,
+        'max_retry_attempts': 3,
+        'cumulative_timeout': 10,
+    }
+
     def __init__(self, ably, options):
         options = options or {}
         self.__ably = ably
@@ -116,21 +125,39 @@ class Http(object):
         if not skip_auth:
             headers.update(self.auth._get_auth_headers())
 
-        request = requests.Request(method, url, data=body, headers=headers)
-        prepped = self.__session.prepare_request(request)
+        single_request_connect_timeout = self.CONNECTION_RETRY['single_request_connect_timeout']
+        single_request_read_timeout = self.CONNECTION_RETRY['single_request_read_timeout']
+        max_retry_attempts = self.CONNECTION_RETRY['max_retry_attempts']
+        cumulative_timeout = self.CONNECTION_RETRY['cumulative_timeout']
+        requested_at = time.time()
+        for retry_count in range(max_retry_attempts):
+            try:
+                request = requests.Request(method, url, data=body, headers=headers)
+                prepped = self.__session.prepare_request(request)
+                response = self.__session.send(
+                    prepped,
+                    timeout=(single_request_connect_timeout,
+                             single_request_read_timeout))
 
-        # log.debug("Method: %s" % method)
-        # log.debug("Url: %s" % url)
-        # log.debug("Headers: %s" % headers)
-        # log.debug("Body: %s" % body)
-        # log.debug("Prepped: %s" % prepped)
+                AblyException.raise_for_response(response)
+                return response
+            except (requests.exceptions.RequestException,
+                    socket.timeout,
+                    socket.error,
+                    AblyException) as e:
+                # See http://docs.python-requests.org/en/latest/user/quickstart/#errors-and-exceptions
+                # and https://github.com/kennethreitz/requests/issues/1236
+                # for why catching these exceptions.
 
-        # TODO add timeouts from options here
-        response = self.__session.send(prepped)
+                # if not server error, throw exception up
+                if isinstance(e, AblyException) and not e.is_server_error:
+                    raise e
 
-        AblyException.raise_for_response(response)
-
-        return response
+                # if last try or cumulative timeout is done, throw exception up
+                time_passed = time.time() - requested_at
+                if retry_count == max_retry_attempts - 1 or \
+                   time_passed > cumulative_timeout:
+                    raise e
 
     def request(self, request):
         return self.make_request(request.method, request.url, headers=request.headers, body=request.body)
