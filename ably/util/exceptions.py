@@ -19,6 +19,10 @@ class AblyException(BaseException, UnicodeMixin):
     def __unicode__(self):
         return six.u('%s %s %s') % (self.code, self.status_code, self.message)
 
+    @property
+    def is_server_error(self):
+        return self.status_code == 500
+
     @staticmethod
     def raise_for_response(response):
         if response.status_code >= 200 and response.status_code < 300:
