@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import functools
 import logging
-import socket
 import time
 
 from six.moves import range
@@ -173,13 +172,9 @@ class Http(object):
 
                 AblyException.raise_for_response(response)
                 return Response(response)
-            except (requests.exceptions.RequestException,
-                    socket.timeout,
-                    socket.error,
-                    AblyException) as e:
-                # See http://docs.python-requests.org/en/latest/user/quickstart/#errors-and-exceptions
-                # and https://github.com/kennethreitz/requests/issues/1236
-                # for why catching these exceptions.
+            except Exception as e:
+                # Need to catch `Exception`, see:
+                # https://github.com/kennethreitz/requests/issues/1236#issuecomment-133312626
 
                 # if not server error, throw exception up
                 if isinstance(e, AblyException) and not e.is_server_error:
