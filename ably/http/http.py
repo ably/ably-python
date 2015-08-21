@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import functools
+import itertools
 import logging
 import time
 
@@ -14,32 +15,6 @@ from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyException
 
 log = logging.getLogger(__name__)
-
-
-# Decorator to attempt fallback hosts in case of a host-error
-def fallback(func):
-    @functools.wraps(func)
-    def wrapper(http, *args, **kwargs):
-        try:
-            return func(http, *args, **kwargs)
-        except requests.exceptions.ConnectionError as e:
-            # if we cannot attempt a fallback, re-raise
-            # TODO: See if we can determine why this failed
-            fallback_hosts = Defaults.get_fallback_hosts(http.options)
-            if kwargs.get("host") or not fallback_hosts:
-                raise
-
-        last_exception = None
-        for host in fallback_hosts:
-            try:
-                kwargs["host"] = host
-                return func(rest, *args, **kwargs)
-            except requests.exceptions.ConnectionError as e:
-                # TODO: as above
-                last_exception = e
-
-        raise last_exception
-    return wrapper
 
 
 def reauth_if_expired(func):
@@ -96,7 +71,7 @@ class Http(object):
     CONNECTION_RETRY = {
         'single_request_connect_timeout': 4,
         'single_request_read_timeout': 15,
-        'max_retry_attempts': 3,
+        'max_retry_attempts': len(Defaults.fallback_hosts),
         'cumulative_timeout': 10,
     }
 
@@ -108,21 +83,17 @@ class Http(object):
         self.__session = requests.Session()
         self.__auth = None
 
-    @fallback
     @reauth_if_expired
-    def make_request(self, method, url, headers=None, body=None, skip_auth=False, timeout=None, scheme=None, host=None, port=0):
-        scheme = scheme or self.preferred_scheme
-        host = host or self.preferred_host
-        port = port or self.preferred_port
-        base_url = "%s://%s:%d" % (scheme, host, port)
-        url = urljoin(base_url, url)
+    def make_request(self, method, path, headers=None, body=None, skip_auth=False, timeout=None):
+        fallback_hosts = Defaults.get_fallback_hosts(self.__options)
+        if fallback_hosts:
+            fallback_hosts.insert(0, self.preferred_host)
+            fallback_hosts = itertools.cycle(fallback_hosts)
 
-        hdrs = headers or {}
-        headers = HttpUtils.default_get_headers(not self.options.use_text_protocol)
-        headers.update(hdrs)
-
+        all_headers = HttpUtils.default_get_headers(not self.options.use_text_protocol)
+        all_headers.update(headers or {})
         if not skip_auth:
-            headers.update(self.auth._get_auth_headers())
+            all_headers.update(self.auth._get_auth_headers())
 
         single_request_connect_timeout = self.CONNECTION_RETRY['single_request_connect_timeout']
         single_request_read_timeout = self.CONNECTION_RETRY['single_request_read_timeout']
@@ -131,7 +102,13 @@ class Http(object):
         requested_at = time.time()
         for retry_count in range(max_retry_attempts):
             try:
-                request = requests.Request(method, url, data=body, headers=headers)
+                host = next(fallback_hosts) if fallback_hosts else self.preferred_host
+
+                base_url = "%s://%s:%d" % (self.preferred_scheme,
+                                           host,
+                                           self.preferred_port)
+                url = urljoin(base_url, path)
+                request = requests.Request(method, url, data=body, headers=all_headers)
                 prepped = self.__session.prepare_request(request)
                 response = self.__session.send(
                     prepped,

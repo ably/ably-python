@@ -21,7 +21,7 @@ class AblyException(BaseException, UnicodeMixin):
 
     @property
     def is_server_error(self):
-        return self.status_code == 500
+        return 500 <= self.status_code <= 504
 
     @staticmethod
     def raise_for_response(response):
