@@ -15,7 +15,8 @@ log = logging.getLogger(__name__)
 
 
 class Message(object):
-    def __init__(self, name=None, data=None, client_id=None, timestamp=None):
+    def __init__(self, name=None, data=None, client_id=None,
+                 id=None, connection_id=None, timestamp=None):
         if name is None:
             self.__name = None
         elif isinstance(name, six.string_types):
@@ -26,9 +27,12 @@ class Message(object):
             # log.debug(name)
             # log.debug(name.__class__)
             raise ValueError("name must be a string or bytes")
+        self.__id = id
         self.__client_id = client_id
         self.__data = data
         self.__timestamp = timestamp
+        self.__connection_id = connection_id
+        self.__encoding_array = []
 
     def __eq__(self, other):
         if isinstance(other, Message):
@@ -58,8 +62,24 @@ class Message(object):
         return self.__data
 
     @property
+    def connection_id(self):
+        return self.__connection_id
+
+    @property
+    def id(self):
+        return self.__id
+
+    @property
     def timestamp(self):
         return self.__timestamp
+
+    @property
+    def encoding(self):
+        return '/'.join(self.__encoding_array)
+
+    @encoding.setter
+    def encoding(self, encoding):
+        self.__encoding_array = encoding.split('/')
 
     def encrypt(self, channel_cipher):
         if isinstance(self.data, CipherData):
@@ -109,6 +129,15 @@ class Message(object):
         if data_type:
             request_body['type'] = data_type
 
+        if self.client_id:
+            request_body['clientId'] = self.client_id
+
+        if self.id:
+            request_body['id'] = self.id
+
+        if self.connection_id:
+            request_body['connectionId'] = self.connection_id
+
         return request_body
 
     def as_json(self):
@@ -116,8 +145,11 @@ class Message(object):
 
     @staticmethod
     def from_json(obj):
+        id = obj.get('id')
         name = obj.get('name')
         data = obj.get('data')
+        client_id = obj.get('clientId')
+        connection_id = obj.get('connectionId')
         timestamp = obj.get('timestamp')
         encoding = obj.get('encoding')
 
@@ -131,7 +163,14 @@ class Message(object):
         elif encoding and encoding == six.u('json'):
             data = json.loads(data)
 
-        return Message(name=name, data=data, timestamp=timestamp)
+        return Message(
+            id=id,
+            name=name, 
+            data=data, 
+            connection_id=connection_id, 
+            client_id=client_id, 
+            timestamp=timestamp
+        )
 
     def as_msgpack(self):
         data = self.data

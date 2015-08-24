@@ -207,3 +207,18 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertIn('timestamp', posted_body)
             self.assertNotIn('name', posted_body)
             self.assertNotIn('data', posted_body)
+
+    def test_message_attr(self):
+        publish0 = TestRestChannelPublish.ably.channels["persisted:publish"]
+        publish0.publish("publish", {"test": "This is a JSONObject message payload"})
+
+        # Get the history for this channel
+        history = publish0.history()
+        message = history.items[0]
+
+        self.assertIsInstance(message, Message)
+        self.assertTrue(message.id)
+        self.assertTrue(message.name)
+        self.assertTrue(message.data)
+        self.assertEqual(message.encoding, '')
+        self.assertTrue(message.timestamp)
