@@ -50,7 +50,7 @@ class TestRestChannelPublish(unittest.TestCase):
 
         # Get the history for this channel
         history = publish0.history()
-        messages = history.current
+        messages = history.items
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(4, len(messages), msg="Expected 4 messages")
 
@@ -108,7 +108,7 @@ class TestRestChannelPublish(unittest.TestCase):
 
         # Get the history for this channel
         history = channel.history()
-        messages = history.current
+        messages = history.items
 
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(len(messages), len(expected_messages), msg="Expected 3 messages")
@@ -146,7 +146,7 @@ class TestRestChannelPublish(unittest.TestCase):
 
         # Get the history for this channel
         history = channel.history()
-        messages = history.current
+        messages = history.items
 
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(len(messages), 1, msg="Expected 1 message")
@@ -162,7 +162,7 @@ class TestRestChannelPublish(unittest.TestCase):
 
         # Get the history for this channel
         history = channel.history()
-        messages = history.current
+        messages = history.items
 
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(len(messages), 1, msg="Expected 1 message")
@@ -178,7 +178,7 @@ class TestRestChannelPublish(unittest.TestCase):
 
         # Get the history for this channel
         history = channel.history()
-        messages = history.current
+        messages = history.items
 
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(len(messages), 2, msg="Expected 2 messages")
@@ -196,7 +196,7 @@ class TestRestChannelPublish(unittest.TestCase):
             channel.publish(name=None, data=None)
 
             history = channel.history()
-            messages = history.current
+            messages = history.items
 
             self.assertIsNotNone(messages, msg="Expected non-None messages")
             self.assertEqual(len(messages), 1, msg="Expected 1 message")

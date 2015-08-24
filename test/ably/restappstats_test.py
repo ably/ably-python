@@ -91,7 +91,7 @@ class TestRestAppStats(unittest.TestCase):
             'end': TestRestAppStats.interval_end,
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
@@ -104,7 +104,7 @@ class TestRestAppStats(unittest.TestCase):
             'by': 'hour',
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
@@ -117,7 +117,7 @@ class TestRestAppStats(unittest.TestCase):
             'by': 'day',
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
@@ -130,7 +130,7 @@ class TestRestAppStats(unittest.TestCase):
             'by': 'month',
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
@@ -143,7 +143,7 @@ class TestRestAppStats(unittest.TestCase):
             'end': TestRestAppStats.interval_end,
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
@@ -156,7 +156,7 @@ class TestRestAppStats(unittest.TestCase):
             'by': 'hour',
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
         if (1 == len(stats_page)):
@@ -173,7 +173,7 @@ class TestRestAppStats(unittest.TestCase):
             'by': 'day',
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
         if (1 == len(stats_page)):
@@ -189,7 +189,7 @@ class TestRestAppStats(unittest.TestCase):
             'by': 'month',
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
         if (1 == len(stats_page)):
@@ -206,7 +206,7 @@ class TestRestAppStats(unittest.TestCase):
             'limit': 1,
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
@@ -219,7 +219,7 @@ class TestRestAppStats(unittest.TestCase):
             'limit': 1,
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
@@ -232,27 +232,27 @@ class TestRestAppStats(unittest.TestCase):
             'limit': 1,
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
 
-        self.assertTrue(stats_pages.has_next)
-        stats_pages = stats_pages.get_next()
-        stats_page = stats_pages.current
+        self.assertTrue(stats_pages.has_next())
+        stats_pages = stats_pages.next()
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
 
-        self.assertTrue(stats_pages.has_next)
-        stats_pages = stats_pages.get_next()
-        stats_page = stats_pages.current
+        self.assertTrue(stats_pages.has_next())
+        stats_pages = stats_pages.next()
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
 
-        self.assertFalse(stats_pages.has_next)
-        stats_pages = stats_pages.get_next()
+        self.assertFalse(stats_pages.has_next())
+        stats_pages = stats_pages.next()
         self.assertIsNone(stats_pages, "Expected None")
 
     def test_app_stats_12_pagination_forwards(self):
@@ -263,30 +263,30 @@ class TestRestAppStats(unittest.TestCase):
             'limit': 1,
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
 
-        self.assertTrue(stats_pages.has_next)
-        stats_pages = stats_pages.get_next()
-        stats_page = stats_pages.current
+        self.assertTrue(stats_pages.has_next())
+        stats_pages = stats_pages.next()
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
 
-        self.assertTrue(stats_pages.has_next)
-        stats_pages = stats_pages.get_next()
-        stats_page = stats_pages.current
+        self.assertTrue(stats_pages.has_next())
+        stats_pages = stats_pages.next()
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
 
-        self.assertFalse(stats_pages.has_next)
-        stats_pages = stats_pages.get_next()
+        self.assertFalse(stats_pages.has_next())
+        stats_pages = stats_pages.next()
         self.assertIsNone(stats_pages, "Expected None")
 
-    def test_app_stats_13_pagination_backwards_get_first(self):
+    def test_app_stats_13_pagination_backwards_first(self):
         params = {
             'direction': 'backwards',
             'start': TestRestAppStats.test_start,
@@ -294,26 +294,26 @@ class TestRestAppStats(unittest.TestCase):
             'limit': 1,
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
 
-        self.assertTrue(stats_pages.has_next)
-        stats_pages = stats_pages.get_next()
-        stats_page = stats_pages.current
+        self.assertTrue(stats_pages.has_next())
+        stats_pages = stats_pages.next()
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
 
-        self.assertTrue(stats_pages.has_first)
-        stats_pages = stats_pages.get_first()
-        stats_page = stats_pages.current
+        self.assertTrue(stats_pages.has_first())
+        stats_pages = stats_pages.first()
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
 
-    def test_app_stats_14_pagination_forwards_get_first(self):
+    def test_app_stats_14_pagination_forwards_first(self):
         params = {
             'direction': 'forwards',
             'start': TestRestAppStats.test_start,
@@ -321,21 +321,21 @@ class TestRestAppStats(unittest.TestCase):
             'limit': 1,
         }
         stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.current
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
 
-        self.assertTrue(stats_pages.has_next)
-        stats_pages = stats_pages.get_next()
-        stats_page = stats_pages.current
+        self.assertTrue(stats_pages.has_next())
+        stats_pages = stats_pages.next()
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
 
-        self.assertTrue(stats_pages.has_first)
-        stats_pages = stats_pages.get_first()
-        stats_page = stats_pages.current
+        self.assertTrue(stats_pages.has_first())
+        stats_pages = stats_pages.first()
+        stats_page = stats_pages.items
 
         self.assertEqual(1, len(stats_page), "Expected 1 record")
         self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")

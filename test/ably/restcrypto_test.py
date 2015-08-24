@@ -75,7 +75,7 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
         history = publish0.history()
-        messages = history.current
+        messages = history.items
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(7, len(messages), msg="Expected 7 messages")
 
@@ -118,7 +118,7 @@ class TestRestCrypto(unittest.TestCase):
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
         history = publish0.history()
-        messages = history.current
+        messages = history.items
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(7, len(messages), msg="Expected 7 messages")
 
@@ -163,8 +163,8 @@ class TestRestCrypto(unittest.TestCase):
                 messages = rx_channel.history()
         except Exception as e:
             log.debug('test_crypto_publish_key_mismatch_fail: rx_channel.history not creating exception')
-            log.debug(messages.current[0].data)
-            log.debug(messages.current[0].decrypt())
+            log.debug(messages.items[0].data)
+            log.debug(messages.items[0].decrypt())
 
             raise(e)
 
@@ -186,7 +186,7 @@ class TestRestCrypto(unittest.TestCase):
         rx_channel = TestRestCrypto.ably2.channels.get('persisted:crypto_send_unencrypted', rx_options)
 
         history = rx_channel.history()
-        messages = history.current
+        messages = history.items
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(7, len(messages), msg="Expected 7 messages")
 
@@ -226,7 +226,7 @@ class TestRestCrypto(unittest.TestCase):
 
         rx_channel = TestRestCrypto.ably2.channels['persisted:crypto_send_encrypted_unhandled']
         history = rx_channel.history()
-        messages = history.current
+        messages = history.items
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(7, len(messages), msg="Expected 7 messages")
 

@@ -13,38 +13,11 @@ from ably.http.paginatedresult import PaginatedResult
 from ably.types.message import (
     Message, message_response_handler, make_encrypted_message_response_handler,
     MessageJSONEncoder)
-from ably.types.presence import presence_response_handler
+from ably.types.presence import Presence
 from ably.util.crypto import get_cipher
 from ably.util.exceptions import catch_all
 
-
 log = logging.getLogger(__name__)
-
-
-class Presence(object):
-    def __init__(self, channel):
-        self.__base_path = channel.base_path
-        self.__binary = not channel.ably.options.use_text_protocol
-        self.__http = channel.ably.http
-
-    def get(self):
-        path = '%s/presence' % self.__base_path
-        headers = HttpUtils.default_get_headers(self.__binary)
-        response = self.__http.get(path, headers=headers)
-        return presence_response_handler(response)
-
-    def history(self):
-        url = '/presence/history'
-
-        headers = HttpUtils.default_get_headers(self.__binary)
-        response = self.__http.get(url, headers=headers)
-        # FIXME: Why response is not used here?
-        return PaginatedResult.paginated_query(
-            self.__http,
-            url,
-            headers,
-            presence_response_handler
-        )
 
 
 class Channel(object):
@@ -60,13 +33,6 @@ class Channel(object):
             return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
         except:
             return '%s' % t
-
-    @catch_all
-    def presence(self, params=None, timeout=None):
-        """Returns the presence for this channel"""
-        params = params or {}
-        path = '/channels/%s/presence' % self.__name
-        return self.__ably._get(path, params=params, timeout=timeout).json()
 
     @catch_all
     def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
@@ -162,6 +128,10 @@ class Channel(object):
     @property
     def options(self):
         return self.__options
+
+    @property
+    def presence(self):
+        return self.__presence
 
     @options.setter
     def options(self, options):

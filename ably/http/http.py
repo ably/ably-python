@@ -91,38 +91,6 @@ class Request(object):
         return self.__skip_auth
 
 
-class Response(object):
-    def __init__(self, response):
-        self.__response = response
-
-    def json(self):
-        return self.response.json()
-
-    @property
-    def response(self):
-        return self.__response
-
-    @property
-    def text(self):
-        return self.response.text
-
-    @property
-    def status_code(self):
-        return self.response.status_code
-
-    @property
-    def headers(self):
-        return self.headers
-
-    @property
-    def content_type(self):
-        return self.response.headers['Content-Type']
-
-    @property
-    def links(self):
-        return self.response.links
-
-
 class Http(object):
     def __init__(self, ably, options):
         options = options or {}
@@ -162,7 +130,7 @@ class Http(object):
 
         AblyException.raise_for_response(response)
 
-        return Response(response)
+        return response
 
     def request(self, request):
         return self.make_request(request.method, request.url, headers=request.headers, body=request.body)
