@@ -86,7 +86,7 @@ class TestRestHttp(unittest.TestCase):
                                            expected_call_list):
                 self.assertEqual(call, expected_call)
 
-    def test_no_host_fallback_if_custom_host(self):
+    def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
         ably = AblyRest(token="foo", host=custom_host)
         self.assertIn('max_retry_attempts', ably.http.CONNECTION_RETRY)
@@ -103,18 +103,12 @@ class TestRestHttp(unittest.TestCase):
             except requests.exceptions.RequestException:
                 pass
 
+            self.assertEqual(send_mock.call_count, 1)
             self.assertEqual(
-                send_mock.call_count,
-                ably.http.CONNECTION_RETRY['max_retry_attempts'])
+                send_mock.call_args,
+                mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY))
 
-            expected_call_list = [
-                mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY)
-            ]
-            for call, expected_call in zip(send_mock.call_args_list,
-                                           expected_call_list):
-                self.assertEqual(call, expected_call)
-
-    def test_no_retry_if_not_500_to_504_http_code(self):
+    def test_no_retry_if_not_500_to_599_http_code(self):
         default_host = Defaults.get_host(Options())
         ably = AblyRest(token="foo")
         self.assertIn('max_retry_attempts', ably.http.CONNECTION_RETRY)
@@ -125,8 +119,8 @@ class TestRestHttp(unittest.TestCase):
             ably.http.preferred_port)
 
         def raise_ably_exception(*args, **kwagrs):
-            raise AblyException(reason="",
-                                status_code=505,
+            raise AblyException(message="",
+                                status_code=600,
                                 code=50500)
 
         with mock.patch('requests.Request',

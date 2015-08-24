@@ -97,7 +97,10 @@ class Http(object):
 
         single_request_connect_timeout = self.CONNECTION_RETRY['single_request_connect_timeout']
         single_request_read_timeout = self.CONNECTION_RETRY['single_request_read_timeout']
-        max_retry_attempts = self.CONNECTION_RETRY['max_retry_attempts']
+        if fallback_hosts:
+            max_retry_attempts = self.CONNECTION_RETRY['max_retry_attempts']
+        else:
+            max_retry_attempts = 1
         cumulative_timeout = self.CONNECTION_RETRY['cumulative_timeout']
         requested_at = time.time()
         for retry_count in range(max_retry_attempts):
@@ -114,7 +117,6 @@ class Http(object):
                     prepped,
                     timeout=(single_request_connect_timeout,
                              single_request_read_timeout))
-
                 AblyException.raise_for_response(response)
                 return response
             except Exception as e:
