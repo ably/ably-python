@@ -31,16 +31,12 @@ class PresenceAction(object):
 
 class PresenceMessage(object):
     def __init__(self, id=None, action=None, client_id=None,
-                 member_key=None, data=None, encoding=None,
-                 connection_id=None, timestamp=None):
+                 data=None, encoding=None, connection_id=None,
+                 timestamp=None):
         self.__id = id
         self.__action = action
         self.__client_id = client_id
         self.__connection_id = connection_id
-        if member_key is None:
-            self.__member_key = "%s:%s" % (self.connection_id, self.client_id)
-        else:
-            self.__member_key = member_key
         self.__data = data
         self.__encoding = encoding
         self.__timestamp = timestamp
@@ -50,7 +46,6 @@ class PresenceMessage(object):
         id = obj.get('id')
         action = obj.get('action', PresenceAction.ENTER)
         client_id = obj.get('clientId')
-        member_key = obj.get('memberKey')
         connection_id = obj.get('connectionId')
 
         encoding = obj.get('encoding')
@@ -65,7 +60,6 @@ class PresenceMessage(object):
             id=id,
             action=action,
             client_id=client_id,
-            member_key=member_key,
             data=data,
             connection_id=connection_id,
             encoding=encoding,
@@ -88,9 +82,6 @@ class PresenceMessage(object):
 
         if self.encoding is not None:
             obj['encoding'] = self.encoding
-
-        if self.member_key is not None:
-            obj['memberKey'] = self.member_key
 
         if self.connection_id is not None:
             obj['connectionId'] = self.connection_id
@@ -123,7 +114,8 @@ class PresenceMessage(object):
 
     @property
     def member_key(self):
-        return self.__member_key
+        if self.connection_id and self.client_id:
+            return "%s:%s" % (self.connection_id, self.client_id)
 
     @property
     def data(self):
@@ -157,7 +149,9 @@ class Presence(object):
     def get(self, limit=None):
         qs = {}
         if limit:
-            qs['limit'] = min(limit, 1000)
+            if limit > 1000:
+                raise ValueError("The maximum allowed limit is 1000")
+            qs['limit'] = limit
         path = self._path_with_qs('%s/presence' % self.__base_path.rstrip('/'), qs)
         headers = HttpUtils.default_get_headers(self.__binary)
         return PaginatedResult.paginated_query(
@@ -169,7 +163,9 @@ class Presence(object):
     def history(self, limit=None, direction=None, start=None, end=None):
         qs = {}
         if limit:
-            qs['limit'] = min(limit, 1000)
+            if limit > 1000:
+                raise ValueError("The maximum allowed limit is 1000")
+            qs['limit'] = limit
         if direction:
             qs['direction'] = direction
         if start:

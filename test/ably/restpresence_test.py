@@ -112,8 +112,7 @@ class TestPresence(unittest.TestCase):
     def test_get_presence_max_limit_is_1000(self):
         url = self.presence_mock_url()
         responses.add(responses.GET, url, body='{}')
-        self.channel.presence.get(5000)
-        self.assertIn('limit=1000', responses.calls[0].request.url.split('?')[-1])
+        self.assertRaises(ValueError, self.channel.presence.get, 5000)
 
     @responses.activate
     def test_history_default_limit(self):
@@ -140,8 +139,7 @@ class TestPresence(unittest.TestCase):
     def test_history_max_limit_is_1000(self):
         url = self.history_mock_url()
         responses.add(responses.GET, url, body='{}')
-        self.channel.presence.history(5000)
-        self.assertIn('limit=1000', responses.calls[0].request.url.split('?')[-1])
+        self.assertRaises(ValueError, self.channel.presence.history, 5000)
 
     @responses.activate
     def test_with_milisecond_start_end(self):
