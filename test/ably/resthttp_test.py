@@ -78,13 +78,14 @@ class TestRestHttp(unittest.TestCase):
                 send_mock.call_count,
                 ably.http.CONNECTION_RETRY['max_retry_attempts'])
 
-            expected_call_list = [
-                mock.call(mock.ANY, make_url(host), data=mock.ANY, headers=mock.ANY)
-                for host in Defaults.get_fallback_hosts(Options())
-            ]
-            for call, expected_call in zip(send_mock.call_args_list,
-                                           expected_call_list):
-                self.assertEqual(call, expected_call)
+            expected_urls_set = set([
+                make_url(host)
+                for host in ([ably.http.preferred_host] +
+                             Defaults.get_fallback_hosts(Options()))
+            ])
+            for ((__, url), ___) in send_mock.call_args_list:
+                self.assertIn(url, expected_urls_set)
+                expected_urls_set.remove(url)
 
     def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'

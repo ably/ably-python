@@ -71,7 +71,7 @@ class Http(object):
     CONNECTION_RETRY = {
         'single_request_connect_timeout': 4,
         'single_request_read_timeout': 15,
-        'max_retry_attempts': len(Defaults.fallback_hosts),
+        'max_retry_attempts': 3,
         'cumulative_timeout': 10,
     }
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import random
 
 
 class Defaults(object):
@@ -49,7 +50,9 @@ class Defaults(object):
         if options.host:
             return []
         else:
-            return Defaults.fallback_hosts
+            fallback_hosts_copy = list(Defaults.fallback_hosts)
+            random.shuffle(fallback_hosts_copy)
+            return fallback_hosts_copy
 
     @staticmethod
     def get_scheme(options):
