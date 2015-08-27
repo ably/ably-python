@@ -22,10 +22,8 @@ class TestRestHttp(unittest.TestCase):
 
         with mock.patch('requests.sessions.Session.send',
                         side_effect=requests.exceptions.RequestException) as send_mock:
-            try:
+            with self.assertRaises(requests.exceptions.RequestException):
                 ably.http.make_request('GET', '/', skip_auth=True)
-            except requests.exceptions.RequestException:
-                pass
 
             self.assertEqual(
                 send_mock.call_count,
@@ -48,10 +46,8 @@ class TestRestHttp(unittest.TestCase):
 
         with mock.patch('requests.sessions.Session.send',
                         side_effect=sleep_and_raise) as send_mock:
-            try:
+            with self.assertRaises(requests.exceptions.RequestException):
                 ably.http.make_request('GET', '/', skip_auth=True)
-            except requests.exceptions.RequestException:
-                pass
 
             self.assertEqual(send_mock.call_count, 1)
 
@@ -67,25 +63,24 @@ class TestRestHttp(unittest.TestCase):
                                        ably.http.preferred_port)
             return urljoin(base_url, '/')
 
-        with mock.patch('requests.Request',
-                        side_effect=requests.exceptions.RequestException) as send_mock:
-            try:
-                ably.http.make_request('GET', '/', skip_auth=True)
-            except requests.exceptions.RequestException:
-                pass
+        with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
+            with mock.patch('requests.sessions.Session.send',
+                            side_effect=requests.exceptions.RequestException) as send_mock:
+                with self.assertRaises(requests.exceptions.RequestException):
+                    ably.http.make_request('GET', '/', skip_auth=True)
 
-            self.assertEqual(
-                send_mock.call_count,
-                ably.http.CONNECTION_RETRY['max_retry_attempts'])
+                self.assertEqual(
+                    send_mock.call_count,
+                    ably.http.CONNECTION_RETRY['max_retry_attempts'])
 
-            expected_urls_set = set([
-                make_url(host)
-                for host in ([ably.http.preferred_host] +
-                             Defaults.get_fallback_hosts(Options()))
-            ])
-            for ((__, url), ___) in send_mock.call_args_list:
-                self.assertIn(url, expected_urls_set)
-                expected_urls_set.remove(url)
+                expected_urls_set = set([
+                    make_url(host)
+                    for host in ([ably.http.preferred_host] +
+                                 Defaults.get_fallback_hosts(Options()))
+                ])
+                for ((__, url), ___) in request_mock.call_args_list:
+                    self.assertIn(url, expected_urls_set)
+                    expected_urls_set.remove(url)
 
     def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
@@ -97,17 +92,16 @@ class TestRestHttp(unittest.TestCase):
             custom_host,
             ably.http.preferred_port)
 
-        with mock.patch('requests.Request',
-                        side_effect=requests.exceptions.RequestException) as send_mock:
-            try:
-                ably.http.make_request('GET', '/', skip_auth=True)
-            except requests.exceptions.RequestException:
-                pass
+        with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
+            with mock.patch('requests.sessions.Session.send',
+                            side_effect=requests.exceptions.RequestException) as send_mock:
+                with self.assertRaises(requests.exceptions.RequestException):
+                    ably.http.make_request('GET', '/', skip_auth=True)
 
-            self.assertEqual(send_mock.call_count, 1)
-            self.assertEqual(
-                send_mock.call_args,
-                mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY))
+                self.assertEqual(send_mock.call_count, 1)
+                self.assertEqual(
+                    request_mock.call_args,
+                    mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY))
 
     def test_no_retry_if_not_500_to_599_http_code(self):
         default_host = Defaults.get_host(Options())
@@ -124,14 +118,13 @@ class TestRestHttp(unittest.TestCase):
                                 status_code=600,
                                 code=50500)
 
-        with mock.patch('requests.Request',
-                        side_effect=raise_ably_exception) as send_mock:
-            try:
-                ably.http.make_request('GET', '/', skip_auth=True)
-            except AblyException:
-                pass
+        with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
+            with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
+                            side_effect=raise_ably_exception) as send_mock:
+                with self.assertRaises(AblyException):
+                    ably.http.make_request('GET', '/', skip_auth=True)
 
-            self.assertEqual(send_mock.call_count, 1)
-            self.assertEqual(
-                send_mock.call_args,
-                mock.call(mock.ANY, default_url, data=mock.ANY, headers=mock.ANY))
+                self.assertEqual(send_mock.call_count, 1)
+                self.assertEqual(
+                    request_mock.call_args,
+                    mock.call(mock.ANY, default_url, data=mock.ANY, headers=mock.ANY))

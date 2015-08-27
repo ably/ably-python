@@ -104,34 +104,35 @@ class Http(object):
         cumulative_timeout = self.CONNECTION_RETRY['cumulative_timeout']
         requested_at = time.time()
         for retry_count in range(max_retry_attempts):
-            try:
-                host = next(fallback_hosts) if fallback_hosts else self.preferred_host
+            host = next(fallback_hosts) if fallback_hosts else self.preferred_host
 
-                base_url = "%s://%s:%d" % (self.preferred_scheme,
-                                           host,
-                                           self.preferred_port)
-                url = urljoin(base_url, path)
-                request = requests.Request(method, url, data=body, headers=all_headers)
-                prepped = self.__session.prepare_request(request)
+            base_url = "%s://%s:%d" % (self.preferred_scheme,
+                                       host,
+                                       self.preferred_port)
+            url = urljoin(base_url, path)
+            request = requests.Request(method, url, data=body, headers=all_headers)
+            prepped = self.__session.prepare_request(request)
+            try:
                 response = self.__session.send(
                     prepped,
                     timeout=(single_request_connect_timeout,
                              single_request_read_timeout))
-                AblyException.raise_for_response(response)
-                return response
             except Exception as e:
                 # Need to catch `Exception`, see:
                 # https://github.com/kennethreitz/requests/issues/1236#issuecomment-133312626
-
-                # if not server error, throw exception up
-                if isinstance(e, AblyException) and not e.is_server_error:
-                    raise e
 
                 # if last try or cumulative timeout is done, throw exception up
                 time_passed = time.time() - requested_at
                 if retry_count == max_retry_attempts - 1 or \
                    time_passed > cumulative_timeout:
                     raise e
+            else:
+                try:
+                    AblyException.raise_for_response(response)
+                    return response
+                except AblyException as e:
+                    if not e.is_server_error:
+                        raise e
 
     def request(self, request):
         return self.make_request(request.method, request.url, headers=request.headers, body=request.body)
