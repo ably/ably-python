@@ -16,7 +16,7 @@ class HttpUtils(object):
     @staticmethod
     def default_get_headers(binary=False):
         if binary:
-            raise AblyException(reason="Binary protocol is not implemented",
+            raise AblyException(message="Binary protocol is not implemented",
                                 status_code=400,
                                 code=40000)
         else:
@@ -27,7 +27,7 @@ class HttpUtils(object):
     @staticmethod
     def default_post_headers(binary=False):
         if binary:
-            raise AblyException(reason="Binary protocol is not implemented",
+            raise AblyException(message="Binary protocol is not implemented",
                                 status_code=400,
                                 code=40000)
         else:

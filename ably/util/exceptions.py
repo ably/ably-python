@@ -9,7 +9,7 @@ from ably.util.unicodemixin import UnicodeMixin
 log = logging.getLogger(__name__)
 
 
-class AblyException(BaseException, UnicodeMixin):
+class AblyException(Exception, UnicodeMixin):
     def __init__(self, message, status_code, code):
         super(AblyException, self).__init__()
         self.message = message
@@ -18,6 +18,10 @@ class AblyException(BaseException, UnicodeMixin):
 
     def __unicode__(self):
         return six.u('%s %s %s') % (self.code, self.status_code, self.message)
+
+    @property
+    def is_server_error(self):
+        return 500 <= self.status_code <= 599
 
     @staticmethod
     def raise_for_response(response):
