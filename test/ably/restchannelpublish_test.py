@@ -71,6 +71,11 @@ class TestRestChannelPublish(unittest.TestCase):
                          message_contents["publish3"],
                          msg="Expect publish3 to be expected JSONObject")
 
+    def test_unsuporsed_payload_must_raise_exception(self):
+        channel = TestRestChannelPublish.ably.channels["persisted:publish0"]
+        for data in [1, 1.1, True]:
+            self.assertRaises(AblyException, channel.publish, 'event', data)
+
     @unittest.skip("messagepack not implemented")
     def test_publish_various_datatypes_binary(self):
         publish1 = TestRestChannelPublish.ably_binary.channels.publish1
@@ -215,7 +220,6 @@ class TestRestChannelPublish(unittest.TestCase):
         # Get the history for this channel
         history = publish0.history()
         message = history.items[0]
-
         self.assertIsInstance(message, Message)
         self.assertTrue(message.id)
         self.assertTrue(message.name)

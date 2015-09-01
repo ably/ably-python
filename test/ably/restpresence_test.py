@@ -1,5 +1,8 @@
+# encoding: utf-8
+
 from __future__ import absolute_import
 
+import six
 import unittest
 from datetime import datetime, timedelta
 
@@ -8,6 +11,8 @@ import responses
 from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.presence import PresenceMessage
+from ably import ChannelOptions, CipherParams
+from ably.util.crypto import get_default_params, get_cipher
 
 from test.ably.restsetup import RestSetup
 
@@ -51,9 +56,52 @@ class TestPresence(unittest.TestCase):
         self.assertTrue(member.timestamp)
         self.assertTrue(member.encoding)
 
-    def test_presence_message_without_action(self):
-        p = PresenceMessage()
-        self.assertRaises(KeyError, p.to_dict)
+    def test_presence_get_encoded(self):
+        presence_history = self.channel.presence.history()
+        self.assertEqual(presence_history.items[-1].data, six.u("true"))
+        self.assertEqual(presence_history.items[-2].data, six.u("24"))
+        self.assertEqual(presence_history.items[-3].data,
+                         six.u("This is a string clientData payload"))
+        # this one doesn't have encoding field
+        self.assertEqual(presence_history.items[-4].data,
+                         six.u('{ "test": "This is a JSONObject clientData payload"}'))
+        self.assertEqual(presence_history.items[-5].data,
+                         {"example": {"json": "Object"}})
+
+    def test_presence_history_encrypted(self):
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        use_text_protocol=True)
+        params = get_default_params('0123456789abcdef')
+        self.channel = ably.channels.get('persisted:presence_fixtures',
+                                         options=ChannelOptions(
+                                            encrypted=True,
+                                            cipher_params=params))
+        presence_history = self.channel.presence.history()
+        self.assertEqual(presence_history.items[0].data,
+                         {'foo': 'bar'})
+
+    def test_presence_get_encrypted(self):
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        use_text_protocol=True)
+        params = get_default_params('0123456789abcdef')
+        self.channel = ably.channels.get('persisted:presence_fixtures',
+                                         options=ChannelOptions(
+                                            encrypted=True,
+                                            cipher_params=params))
+        presence_messages = self.channel.presence.get()
+        message = list(filter(
+            lambda message: message.client_id == 'client_encoded',
+            presence_messages.items))[0]
+
+        self.assertEqual(message.data, {'foo': 'bar'})
 
     def test_timestamp_is_datetime(self):
         presence_page = self.channel.presence.get()

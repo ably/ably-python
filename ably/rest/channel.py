@@ -25,8 +25,8 @@ class Channel(object):
         self.__ably = ably
         self.__name = name
         self.__base_path = '/channels/%s/' % quote(name)
-        self.__presence = Presence(self)
         self.options = options
+        self.__presence = Presence(self)
 
     def _format_time_param(self, t):
         try:
