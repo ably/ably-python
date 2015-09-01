@@ -223,6 +223,7 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertIsInstance(message, Message)
         self.assertTrue(message.id)
         self.assertTrue(message.name)
-        self.assertTrue(message.data)
+        self.assertEqual(message.data,
+                         {six.u('test'): six.u('This is a JSONObject message payload')})
         self.assertEqual(message.encoding, '')
-        self.assertTrue(message.timestamp)
+        self.assertIsInstance(message.timestamp, int)
