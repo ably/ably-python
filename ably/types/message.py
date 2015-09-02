@@ -114,6 +114,7 @@ class Message(EncodeDataMixin):
         encoding = self._encoding_array[:]
         if isinstance(data, dict) or isinstance(data, list):
             encoding.append('json')
+            data = json.dumps(data)
 
         elif isinstance(self.data, six.binary_type):
             data = base64.b64encode(data).decode('ascii')

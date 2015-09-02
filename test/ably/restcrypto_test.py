@@ -219,7 +219,7 @@ class AbstractTestCryptoWithFixture(object):
 
     @classmethod
     def setUpClass(cls):
-        with open(os.path.dirname(__file__) + '/../assets/%s' % cls.fixture_file, 'r') as f:
+        with open(os.path.dirname(__file__) + '/../../submodules/test-resources/%s' % cls.fixture_file, 'r') as f:
             cls.fixture = json.loads(f.read())
             cls.params = {
                 'secret_key': base64.b64decode(cls.fixture['key'].encode('ascii')),

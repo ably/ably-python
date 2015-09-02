@@ -1,7 +1,5 @@
 # -*- encoding: utf-8 -*-
 
-from __future__ import absolute_import
-
 import base64
 import json
 import logging
@@ -13,6 +11,7 @@ import mock
 from ably import AblyRest
 from ably import ChannelOptions, CipherParams
 from ably.util.crypto import get_cipher, get_default_params
+from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
 
@@ -61,7 +60,7 @@ class TestEncodersNoEncryption(unittest.TestCase):
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish('event', data)
             _, kwargs = post_mock.call_args
-            raw_data = json.loads(kwargs['body'])['data']
+            raw_data = json.loads(json.loads(kwargs['body'])['data'])
             self.assertEqual(raw_data, data)
             self.assertEqual(json.loads(kwargs['body'])['encoding'].strip('/'),
                              'json')
@@ -73,7 +72,7 @@ class TestEncodersNoEncryption(unittest.TestCase):
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish('event', data)
             _, kwargs = post_mock.call_args
-            raw_data = json.loads(kwargs['body'])['data']
+            raw_data = json.loads(json.loads(kwargs['body'])['data'])
             self.assertEqual(raw_data, data)
             self.assertEqual(json.loads(kwargs['body'])['encoding'].strip('/'),
                              'json')
@@ -85,6 +84,7 @@ class TestEncodersNoEncryption(unittest.TestCase):
         message = channel.history().items[0]
         self.assertEqual(message.data, six.u('fóo'))
         self.assertIsInstance(message.data, six.text_type)
+        self.assertFalse(message.encoding)
 
     def test_with_binary_type_decode(self):
         channel = self.ably.channels["persisted:binarydecode"]
@@ -93,6 +93,7 @@ class TestEncodersNoEncryption(unittest.TestCase):
         message = channel.history().items[0]
         self.assertEqual(message.data, six.b('foob'))
         self.assertIsInstance(message.data, six.binary_type)
+        self.assertFalse(message.encoding)
 
     def test_with_json_dict_data_decode(self):
         channel = self.ably.channels["persisted:jsondict"]
@@ -100,6 +101,7 @@ class TestEncodersNoEncryption(unittest.TestCase):
         channel.publish('event', data)
         message = channel.history().items[0]
         self.assertEqual(message.data, data)
+        self.assertFalse(message.encoding)
 
     def test_with_json_list_data_decode(self):
         channel = self.ably.channels["persisted:jsonarray"]
@@ -107,6 +109,14 @@ class TestEncodersNoEncryption(unittest.TestCase):
         channel.publish('event', data)
         message = channel.history().items[0]
         self.assertEqual(message.data, data)
+        self.assertFalse(message.encoding)
+
+    def test_decode_with_invalid_encoding(self):
+        data = six.u('foó')
+        encoded = base64.b64encode(data.encode('utf-8'))
+        decoded_data = Message.decode(encoded, 'foo/bar/utf-8/base64')
+        self.assertEqual(decoded_data['data'], data)
+        self.assertEqual(decoded_data['encoding'], 'foo/bar')
 
 
 class TestEncodersEncryption(unittest.TestCase):
@@ -196,6 +206,7 @@ class TestEncodersEncryption(unittest.TestCase):
         message = channel.history().items[0]
         self.assertEqual(message.data, six.u('foó'))
         self.assertIsInstance(message.data, six.text_type)
+        self.assertFalse(message.encoding)
 
     def test_with_binary_type_decode(self):
         channel = self.ably.channels.get("persisted:enc_binarydecode",
@@ -207,6 +218,7 @@ class TestEncodersEncryption(unittest.TestCase):
         message = channel.history().items[0]
         self.assertEqual(message.data, six.b('foob'))
         self.assertIsInstance(message.data, six.binary_type)
+        self.assertFalse(message.encoding)
 
     def test_with_json_dict_data_decode(self):
         channel = self.ably.channels.get("persisted:enc_jsondict",
@@ -217,6 +229,7 @@ class TestEncodersEncryption(unittest.TestCase):
         channel.publish('event', data)
         message = channel.history().items[0]
         self.assertEqual(message.data, data)
+        self.assertFalse(message.encoding)
 
     def test_with_json_list_data_decode(self):
         channel = self.ably.channels.get("persisted:enc_list",
@@ -227,3 +240,4 @@ class TestEncodersEncryption(unittest.TestCase):
         channel.publish('event', data)
         message = channel.history().items[0]
         self.assertEqual(message.data, data)
+        self.assertFalse(message.encoding)
