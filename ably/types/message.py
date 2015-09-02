@@ -128,11 +128,8 @@ class Message(EncodeDataMixin):
             data = base64.b64encode(data.buffer).decode('ascii')
             encoding.append('base64')
 
-        if (not isinstance(data, six.binary_type) and
-                not isinstance(data, six.text_type) and
-                not isinstance(data, list) and
-                not isinstance(data, dict) and
-                data is not None):
+        if not (isinstance(data, (six.binary_type, six.text_type, list, dict)) or
+                data is None):
             raise AblyException("Invalid data payload", 400, 40011)
 
         request_body = {
