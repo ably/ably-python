@@ -13,6 +13,7 @@ from six.moves import range
 from ably import AblyException
 from ably import AblyRest
 from ably import Options
+from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
 
@@ -42,6 +43,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0.publish('history3', ['This is a JSONArray message payload'])
 
         history = history0.history()
+        self.assertIsInstance(history, PaginatedResult)
         messages = history.items
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(4, len(messages), msg="Expected 4 messages")
