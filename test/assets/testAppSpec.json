@@ -35,7 +35,7 @@
         { "clientId": "client_decoded", "data": "{\"example\":{\"json\":\"Object\"}}", "encoding": "json/utf-8" },
         {
           "clientId": "client_encoded",
-          "data": "HO4cYSP8LybPYBPZPHQOtuD53yrD3YV3NBoTEYBh4U0N1QXHbtkfsDfTspKeLQFt",
+          "data": "O5ExL1suyT7v+CzpfU+IUZM+o4S/xshIRp/uPrhf8wg=",
           "encoding": "json/utf-8/cipher+aes-128-cbc/base64"
         }
       ]

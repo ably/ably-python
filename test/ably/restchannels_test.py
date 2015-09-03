@@ -8,6 +8,7 @@ from six.moves import range
 from ably import AblyRest
 from ably import ChannelOptions
 from ably.rest.channel import Channel, Channels, Presence
+from ably.util.crypto import get_default_params
 
 from test.ably.restsetup import RestSetup
 
@@ -40,7 +41,8 @@ class TestChannels(unittest.TestCase):
         self.assertIs(channel.options, options)
 
     def test_channels_get_updates_existing_with_options(self):
-        options = ChannelOptions(encrypted=True)
+        options = ChannelOptions(encrypted=True,
+                                 cipher_params=get_default_params())
         options_new = ChannelOptions(encrypted=False)
 
         channel = self.ably.channels.get('new_channel', options=options)
@@ -51,7 +53,8 @@ class TestChannels(unittest.TestCase):
         self.assertIs(channel.options, options_new)
 
     def test_channels_get_doesnt_updates_existing_with_none_options(self):
-        options = ChannelOptions(encrypted=True)
+        options = ChannelOptions(encrypted=True,
+                                 cipher_params=get_default_params())
 
         channel = self.ably.channels.get('new_channel', options=options)
         self.assertIs(channel.options, options)
@@ -95,3 +98,7 @@ class TestChannels(unittest.TestCase):
         channel = self.ably.channels.get('new_channnel')
         self.assertTrue(channel.presence)
         self.assertTrue(isinstance(channel.presence, Presence))
+
+    def test_channel_options_encrypted_without_params(self):
+        with self.assertRaises(ValueError):
+            ChannelOptions(encrypted=True)

@@ -74,7 +74,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_multi_50_f']
 
         for i in range(50):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards')
         self.assertIsNotNone(history)
@@ -91,7 +91,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_multi_50_b']
 
         for i in range(50):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards')
         self.assertIsNotNone(history)
@@ -109,7 +109,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit_f']
 
         for i in range(50):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards', limit=25)
         self.assertIsNotNone(history)
@@ -127,7 +127,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit_f']
 
         for i in range(50):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards', limit=25)
         self.assertIsNotNone(history)
@@ -145,17 +145,17 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_time_f']
 
         for i in range(20):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         interval_start = TestRestChannelHistory.ably.time()
 
         for i in range(20, 40):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         interval_end = TestRestChannelHistory.ably.time()
 
         for i in range(40, 60):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards', start=interval_start,
                                    end=interval_end)
@@ -173,17 +173,17 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_time_b']
 
         for i in range(20):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         interval_start = TestRestChannelHistory.ably.time()
 
         for i in range(20, 40):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         interval_end = TestRestChannelHistory.ably.time()
 
         for i in range(40, 60):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards', start=interval_start,
                                    end=interval_end)
@@ -201,7 +201,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_paginate_f']
 
         for i in range(50):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards', limit=10)
         messages = history.items
@@ -240,7 +240,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_paginate_b']
 
         for i in range(50):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards', limit=10)
         messages = history.items
@@ -275,11 +275,11 @@ class TestRestChannelHistory(unittest.TestCase):
         self.assertEqual(expected_messages, messages,
                 msg='Expected 10 messages')
         
-    def test_channel_history_paginate_forwards(self):
+    def test_channel_history_paginate_forwards_first(self):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_paginate_first_f']
 
         for i in range(50):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards', limit=10)
         messages = history.items
@@ -318,7 +318,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_paginate_first_b']
 
         for i in range(50):
-            history0.publish('history%d' % i, i)
+            history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards', limit=10)
         messages = history.items

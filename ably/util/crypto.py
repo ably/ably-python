@@ -15,9 +15,12 @@ log = logging.getLogger(__name__)
 
 
 class CipherParams(object):
-    def __init__(self, algorithm='AES', secret_key=None, iv=None):
+    def __init__(self, algorithm='AES', mode='CBC', secret_key=None,
+                 iv=None):
         self.__algorithm = algorithm
         self.__secret_key = secret_key
+        self.__key_length = len(secret_key) * 8 if secret_key is not None else 128
+        self.__mode = mode
         self.__iv = iv
 
     @property
@@ -32,13 +35,32 @@ class CipherParams(object):
     def iv(self):
         return self.__iv
 
+    @property
+    def key_length(self):
+        return self.__key_length
+
+    @property
+    def mode(self):
+        return self.__mode
+
+    @property
+    def key_length(self):
+        return self.__key_length
+
 
 class CbcChannelCipher(object):
     def __init__(self, cipher_params):
-        self.__secret_key = cipher_params.secret_key or self.__random(32)
+        self.__secret_key = (cipher_params.secret_key or
+                             self.__random(cipher_params.key_length / 8))
         self.__iv = cipher_params.iv or self.__random(16)
         self.__block_size = len(self.__iv)
+        if cipher_params.algorithm.lower() != 'aes':
+            raise NotImplementedError('Only AES algorithm is supported')
         self.__algorithm = cipher_params.algorithm
+        if cipher_params.mode.lower() != 'cbc':
+            raise NotImplementedError('Only CBC mode is supported')
+        self.__mode = cipher_params.mode
+        self.__key_length = cipher_params.key_length
         self.__encryptor = AES.new(self.__secret_key, AES.MODE_CBC, self.__iv)
 
     def __pad(self, data):
@@ -92,10 +114,22 @@ class CbcChannelCipher(object):
     def iv(self):
         return self.__iv
 
+    @property
+    def cipher_type(self):
+        return ("%s-%s-%s" % (self.__algorithm, self.__key_length,
+                self.__mode)).lower()
+
 
 class CipherData(TypedBuffer):
-    pass
+    ENCODING_ID = 'cipher'
 
+    def __init__(self, buffer, type, cipher_type=None, **kwargs):
+        self.__cipher_type = cipher_type
+        super(CipherData, self).__init__(buffer, type, **kwargs)
+
+    @property
+    def encoding_str(self):
+        return self.ENCODING_ID + '+' + self.__cipher_type
 
 DEFAULT_KEYLENGTH = 16
 DEFAULT_BLOCKLENGTH = 16

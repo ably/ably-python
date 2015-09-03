@@ -8,6 +8,7 @@ from six.moves.urllib.parse import urlencode
 
 from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
+from ably.types.mixins import EncodeDataMixin
 
 
 def _ms_since_epoch(dt):
@@ -29,7 +30,7 @@ class PresenceAction(object):
     UPDATE = 4
 
 
-class PresenceMessage(object):
+class PresenceMessage(EncodeDataMixin):
     def __init__(self, id=None, action=None, client_id=None,
                  data=None, encoding=None, connection_id=None,
                  timestamp=None):
@@ -42,63 +43,34 @@ class PresenceMessage(object):
         self.__timestamp = timestamp
 
     @staticmethod
-    def from_dict(obj):
+    def from_dict(obj, cipher=None):
         id = obj.get('id')
         action = obj.get('action', PresenceAction.ENTER)
         client_id = obj.get('clientId')
         connection_id = obj.get('connectionId')
 
-        encoding = obj.get('encoding')
-        data = obj.get('data')
-        if data and 'base64' == encoding:
-            data = base64.b64decode(data)
-
+        encoding = obj.get('encoding', '')
         timestamp = obj.get('timestamp')
+
         if timestamp is not None:
             timestamp = _dt_from_ms_epoch(timestamp)
+
+        data = obj.get('data')
+
+        decoded_data = PresenceMessage.decode(data, encoding, cipher)
+
         return PresenceMessage(
             id=id,
             action=action,
             client_id=client_id,
-            data=data,
             connection_id=connection_id,
-            encoding=encoding,
-            timestamp=timestamp
+            timestamp=timestamp,
+            **decoded_data
         )
 
     @staticmethod
-    def messages_from_array(obj):
-        return [PresenceMessage.from_dict(d) for d in obj]
-
-    def to_dict(self):
-        if self.action is None:
-            raise KeyError('action is missing or invalid, cannot generate a valid Hash for ProtocolMessage')
-        obj = {
-            'action': self.action,
-        }
-
-        if self.client_id is not None:
-            obj['clientId'] = self.client_id
-
-        if self.encoding is not None:
-            obj['encoding'] = self.encoding
-
-        if self.connection_id is not None:
-            obj['connectionId'] = self.connection_id
-
-        if self.data is not None:
-            if isinstance(self.data, six.byte_type) and obj['encoding'] == 'base64':
-                obj['clientData'] = base64.b64encode(self.data)
-            else:
-                obj['clientData'] = self.data
-
-        if self.id is not None:
-            obj['id'] = self.id
-
-        if self.timestamp is not None:
-            obj['timestamp'] = _ms_since_epoch(self.timestamp)
-
-        return obj
+    def messages_from_array(obj, cipher=None):
+        return [PresenceMessage.from_dict(d, cipher) for d in obj]
 
     @property
     def action(self):
@@ -139,6 +111,7 @@ class Presence(object):
         self.__base_path = channel.base_path
         self.__binary = not channel.ably.options.use_text_protocol
         self.__http = channel.ably.http
+        self.__cipher = channel.cipher
 
     def _path_with_qs(self, rel_path, qs=None):
         path = rel_path
@@ -154,11 +127,17 @@ class Presence(object):
             qs['limit'] = limit
         path = self._path_with_qs('%s/presence' % self.__base_path.rstrip('/'), qs)
         headers = HttpUtils.default_get_headers(self.__binary)
+
+        if self.__cipher:
+            presence_handler = make_encrypted_presence_response_handler(self.__cipher)
+        else:
+            presence_handler = presence_response_handler
+
         return PaginatedResult.paginated_query(
             self.__http,
             path,
             headers,
-            presence_response_handler)
+            presence_handler)
 
     def history(self, limit=None, direction=None, start=None, end=None):
         qs = {}
@@ -184,13 +163,26 @@ class Presence(object):
 
         path = self._path_with_qs('%s/presence/history' % self.__base_path.rstrip('/'), qs)
         headers = HttpUtils.default_get_headers(self.__binary)
+
+        if self.__cipher:
+            presence_handler = make_encrypted_presence_response_handler(self.__cipher)
+        else:
+            presence_handler = presence_response_handler
+
         return PaginatedResult.paginated_query(
             self.__http,
             path,
             headers,
-            presence_response_handler
+            presence_handler
         )
 
 
 def presence_response_handler(response):
     return [PresenceMessage.from_dict(presence) for presence in response.json()]
+
+
+def make_encrypted_presence_response_handler(cipher):
+    def encrypted_presence_response_handler(response):
+        return [PresenceMessage.from_dict(presence, cipher) for presence in
+                response.json()]
+    return encrypted_presence_response_handler

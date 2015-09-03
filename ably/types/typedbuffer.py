@@ -89,10 +89,10 @@ class TypedBuffer(object):
             buffer = struct.pack('>d', obj)
         elif isinstance(obj, list):
             type = DataType.JSONARRAY
-            buffer = json.dumps(obj).encode('utf-8')
+            buffer = json.dumps(obj, separators=(',', ':')).encode('utf-8')
         elif isinstance(obj, dict):
             type = DataType.JSONOBJECT
-            buffer = json.dumps(obj).encode('utf-8')
+            buffer = json.dumps(obj, separators=(',', ':')).encode('utf-8')
         else:
             raise 'unsupported-type'
 
