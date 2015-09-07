@@ -42,6 +42,8 @@ class Channel(object):
         if direction:
             params['direction'] = '%s' % direction
         if limit:
+            if limit > 1000:
+                raise ValueError("The maximum allowed limit is 1000")
             params['limit'] = '%d' % limit
         if start:
             params['start'] = self._format_time_param(start)

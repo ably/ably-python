@@ -7,12 +7,14 @@ import logging
 import time
 import unittest
 
+import responses
 import six
 from six.moves import range
 
 from ably import AblyException
 from ably import AblyRest
 from ably import Options
+from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
 
@@ -42,6 +44,7 @@ class TestRestChannelHistory(unittest.TestCase):
         history0.publish('history3', ['This is a JSONArray message payload'])
 
         history = history0.history()
+        self.assertIsInstance(history, PaginatedResult)
         messages = history.items
         self.assertIsNotNone(messages, msg="Expected non-None messages")
         self.assertEqual(4, len(messages), msg="Expected 4 messages")
@@ -104,6 +107,43 @@ class TestRestChannelHistory(unittest.TestCase):
 
         self.assertEqual(expected_messages, messages,
                 msg='Expect messages in reverse order')
+
+    def history_mock_url(self, channel_name):
+        kwargs = {
+            'scheme': 'https' if test_vars['tls'] else 'http',
+            'host': test_vars['host'],
+            'channel_name': channel_name
+        }
+        port = test_vars['tls_port'] if test_vars.get('tls') else kwargs['port']
+        if port == 80:
+            kwargs['port_sufix'] = ''
+        else:
+            kwargs['port_sufix'] = ':' + str(port)
+        url = '{scheme}://{host}{port_sufix}/channels/{channel_name}/history'
+        return url.format(**kwargs)
+
+    @responses.activate
+    def test_channel_history_default_limit(self):
+        channel = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit']
+        url = self.history_mock_url('persisted:channelhistory_limit')
+        responses.add(responses.GET, url, body='{}')
+        channel.history()
+        self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
+
+    @responses.activate
+    def test_channel_history_with_limits(self):
+        channel = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit']
+        url = self.history_mock_url('persisted:channelhistory_limit')
+        responses.add(responses.GET, url, body='{}')
+        channel.history(limit=500)
+        self.assertIn('limit=500', responses.calls[0].request.url.split('?')[-1])
+        channel.history(limit=1000)
+        self.assertIn('limit=1000', responses.calls[1].request.url.split('?')[-1])
+
+    def test_channel_history_max_limit_is_1000(self):
+        channel = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit']
+        with self.assertRaises(AblyException):
+            channel.history(limit=1001)
 
     def test_channel_history_limit_forwards(self):
         history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit_f']
