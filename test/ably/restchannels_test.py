@@ -5,9 +5,10 @@ import unittest
 
 from six.moves import range
 
-from ably import AblyRest
+from ably import AblyRest, AblyException
 from ably import ChannelOptions
 from ably.rest.channel import Channel, Channels, Presence
+from ably.types.capability import Capability
 from ably.util.crypto import get_default_params
 
 from test.ably.restsetup import RestSetup
@@ -102,3 +103,16 @@ class TestChannels(unittest.TestCase):
     def test_channel_options_encrypted_without_params(self):
         with self.assertRaises(ValueError):
             ChannelOptions(encrypted=True)
+
+    def test_without_permissions(self):
+        key = test_vars["keys"][2]
+        ably = AblyRest(key=key["key_str"],
+                        host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"])
+        with self.assertRaises(AblyException) as cm:
+            ably.channels['asd'].publish('foo', 'woop')
+
+        the_exception = cm.exception
+        self.assertIn('not permitted', the_exception.message)
