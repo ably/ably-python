@@ -118,7 +118,7 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertEqual(m.data, expected_m.data)
 
     def test_message_list_generate_one_request(self):
-        channel = TestRestChannelPublish.ably.channels["message_list_channel"]
+        channel = TestRestChannelPublish.ably.channels["message_list_channel_one_request"]
         expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
 
         with mock.patch('ably.rest.rest.Http.post',
@@ -221,7 +221,7 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertNotIn('data', posted_body)
 
     def test_message_attr(self):
-        publish0 = TestRestChannelPublish.ably.channels["persisted:publish"]
+        publish0 = TestRestChannelPublish.ably.channels["persisted:publish-message_attr"]
         messages = [Message('publish',
                             {"test": "This is a JSONObject message payload"},
                             client_id='client_id')]
