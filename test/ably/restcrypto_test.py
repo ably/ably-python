@@ -241,7 +241,7 @@ class AbstractTestCryptoWithFixture(object):
     def test_decode(self):
         for item in self.items:
             self.assertEqual(item['encoded']['name'], item['encrypted']['name'])
-            message = Message.from_json(item['encrypted'], self.cipher)
+            message = Message.from_dict(item['encrypted'], self.cipher)
             self.assertEqual(message.encoding, '')
             expected_data = self.get_encoded(item['encoded'])
             self.assertEqual(expected_data, message.data)

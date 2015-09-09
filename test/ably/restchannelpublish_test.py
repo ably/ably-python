@@ -7,6 +7,7 @@ import unittest
 import six
 from six.moves import range
 import mock
+import msgpack
 
 from ably import AblyException
 from ably import AblyRest
@@ -71,33 +72,31 @@ class TestRestChannelPublish(unittest.TestCase):
         for data in [1, 1.1, True]:
             self.assertRaises(AblyException, channel.publish, 'event', data)
 
-    @unittest.skip("messagepack not implemented")
     def test_publish_various_datatypes_binary(self):
         publish1 = TestRestChannelPublish.ably_binary.channels.publish1
 
-        publish1.publish("publish0", "This is a string message payload")
-        publish1.publish("publish1", bytearray("This is a byte[] message payload", "utf_8"))
+        publish1.publish("publish0", six.u("This is a string message payload"))
+        publish1.publish("publish1", six.b("This is a byte[] message payload"))
         publish1.publish("publish2", {"test": "This is a JSONObject message payload"})
         publish1.publish("publish3", ["This is a JSONArray message payload"])
 
         # Get the history for this channel
         messages = publish1.history()
         self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(4, len(messages), msg="Expected 4 messages")
+        self.assertEqual(4, len(messages.items), msg="Expected 3 messages")
 
-        message_contents = dict((m.name, m.data) for m in messages)
-
-        self.assertEqual("This is a string message payload",
+        message_contents = dict((m.name, m.data) for m in messages.items)
+        self.assertEqual(six.u("This is a string message payload"),
                          message_contents["publish0"],
                          msg="Expect publish0 to be expected String)")
-        self.assertEqual("This is a byte[] message payload",
+        self.assertEqual(six.b("This is a byte[] message payload"),
                          message_contents["publish1"],
                          msg="Expect publish1 to be expected byte[]")
         self.assertEqual({"test": "This is a JSONObject message payload"},
-                         json.loads(message_contents["publish2"]),
+                         message_contents["publish2"],
                          msg="Expect publish2 to be expected JSONObject")
         self.assertEqual(["This is a JSONArray message payload"],
-                         json.loads(message_contents["publish3"]),
+                         message_contents["publish3"],
                          msg="Expect publish3 to be expected JSONObject")
 
     def test_publish_message_list(self):
@@ -117,7 +116,7 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertEqual(m.name, expected_m.name)
             self.assertEqual(m.data, expected_m.data)
 
-    def test_message_list_generate_one_request(self):
+    def test_message_list_generate_one_request_text(self):
         channel = TestRestChannelPublish.ably.channels["message_list_channel_one_request"]
         expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
 
@@ -126,6 +125,18 @@ class TestRestChannelPublish(unittest.TestCase):
             channel.publish(messages=expected_messages)
         self.assertEqual(post_mock.call_count, 1)
         for i, message in enumerate(json.loads(post_mock.call_args[1]['body'])):
+            self.assertEqual(message['name'], 'name-' + str(i))
+            self.assertEqual(message['data'], six.text_type(i))
+
+    def test_message_list_generate_one_request_binary(self):
+        channel = TestRestChannelPublish.ably_binary.channels["message_list_channel_one_request_bin"]
+        expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
+
+        with mock.patch('ably.rest.rest.Http.post',
+                        wraps=channel.ably.http.post) as post_mock:
+            channel.publish(messages=expected_messages)
+        self.assertEqual(post_mock.call_count, 1)
+        for i, message in enumerate(msgpack.unpackb(post_mock.call_args[1]['body'], encoding='utf-8')):
             self.assertEqual(message['name'], 'name-' + str(i))
             self.assertEqual(message['data'], six.text_type(i))
 
