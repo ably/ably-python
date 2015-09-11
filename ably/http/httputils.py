@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-from ably.util.exceptions import AblyException
-
 
 class HttpUtils(object):
     default_format = "json"
@@ -28,7 +26,7 @@ class HttpUtils(object):
     def default_post_headers(binary=False):
         if binary:
             return {
-                "Accept": "application/x-msgpack" ,
+                "Accept": "application/x-msgpack",
                 "Content-Type": "application/x-msgpack"
             }
         else:
