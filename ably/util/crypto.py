@@ -43,10 +43,6 @@ class CipherParams(object):
     def mode(self):
         return self.__mode
 
-    @property
-    def key_length(self):
-        return self.__key_length
-
 
 class CbcChannelCipher(object):
     def __init__(self, cipher_params):
