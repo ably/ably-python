@@ -1,10 +1,14 @@
 from __future__ import absolute_import
 
 import logging
+import time
+import unittest
 
+import mock
 from ably import AblyRest
 from ably import Auth
 from ably import Options
+from ably.types.tokendetails import TokenDetails
 
 
 from test.ably.restsetup import RestSetup
@@ -71,3 +75,60 @@ class TestAuth(BaseTestCase):
 
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
+
+
+class TestAuthAuthorize(unittest.TestCase):
+
+    def setUp(self):
+        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                             host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
+
+    def test_if_authorize_changes_auth_method_to_token(self):
+
+        self.assertEqual(Auth.Method.BASIC, self.ably.auth.auth_method,
+                         msg="Unexpected Auth method mismatch")
+
+        self.ably.auth.authorise()
+
+        self.assertEqual(Auth.Method.TOKEN, self.ably.auth.auth_method,
+                         msg="Authorise should change the Auth method")
+
+    def test_authorize_shouldnt_create_token_if_not_expired(self):
+
+        token = self.ably.auth.authorise()
+
+        new_token = self.ably.auth.authorise()
+
+        self.assertGreater(token.expires, time.time()*1000)
+
+        self.assertIs(new_token, token)
+
+    def test_authorize_should_create_new_token_if_forced(self):
+
+        token = self.ably.auth.authorise()
+
+        new_token = self.ably.auth.authorise(force=True)
+
+        self.assertGreater(token.expires, time.time()*1000)
+
+        self.assertIsNot(new_token, token)
+        self.assertGreater(new_token.expires, token.expires)
+
+    def test_authorize_create_new_token_if_expired(self):
+
+        token = self.ably.auth.authorise()
+
+        with mock.patch('ably.types.tokendetails.TokenDetails.expires',
+                        new_callable=mock.PropertyMock(return_value=42)):
+            new_token = self.ably.auth.authorise()
+
+        self.assertIsNot(token, new_token)
+
+    def test_authorize_returns_a_token_details(self):
+
+        token = self.ably.auth.authorise()
+
+        self.assertIsInstance(token, TokenDetails)
