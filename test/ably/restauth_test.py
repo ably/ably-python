@@ -132,3 +132,15 @@ class TestAuthAuthorize(unittest.TestCase):
         token = self.ably.auth.authorise()
 
         self.assertIsInstance(token, TokenDetails)
+
+    def test_authorize_adhere_to_request_token(self):
+
+        token_params = {'ttl': 100}
+        auth_params = {'auth_url': 'http://somewhere.com'}
+
+        with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
+            self.ably.auth.authorise(auth_params=auth_params,
+                                     token_params=token_params)
+
+        request_mock.assert_called_once_with(auth_params=auth_params,
+                                             token_params=token_params)
