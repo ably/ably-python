@@ -90,8 +90,7 @@ class Http(object):
             fallback_hosts.insert(0, self.preferred_host)
             fallback_hosts = itertools.cycle(fallback_hosts)
 
-        all_headers = HttpUtils.default_get_headers(not self.options.use_text_protocol)
-        all_headers.update(headers or {})
+        all_headers = headers or {}
         if not skip_auth:
             all_headers.update(self.auth._get_auth_headers())
 

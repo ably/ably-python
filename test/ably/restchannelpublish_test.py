@@ -27,14 +27,13 @@ class TestRestChannelPublish(unittest.TestCase):
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"],
-                            use_text_protocol=True)
+                            use_binary_protocol=False)
 
         cls.ably_binary = AblyRest(key=test_vars["keys"][0]["key_str"],
                                    host=test_vars["host"],
                                    port=test_vars["port"],
                                    tls_port=test_vars["tls_port"],
-                                   tls=test_vars["tls"],
-                                   use_text_protocol=False)
+                                   tls=test_vars["tls"])
 
     def test_publish_various_datatypes_text(self):
         publish0 = TestRestChannelPublish.ably.channels["persisted:publish0"]
@@ -151,8 +150,7 @@ class TestRestChannelPublish(unittest.TestCase):
                         host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"],
-                        use_text_protocol=True)
+                        tls=test_vars["tls"])
         ably.auth.authorise(token_params=token_params)
 
         with self.assertRaises(AblyException) as cm:

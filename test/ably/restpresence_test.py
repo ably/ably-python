@@ -90,13 +90,13 @@ class TestPresence(unittest.TestCase):
                              host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+                             tls=test_vars["tls"],
+                             use_binary_protocol=False)
         self.ably_bin = AblyRest(test_vars["keys"][0]["key_str"],
                                  host=test_vars["host"],
                                  port=test_vars["port"],
                                  tls_port=test_vars["tls_port"],
-                                 tls=test_vars["tls"],
-                                 use_text_protocol=False)
+                                 tls=test_vars["tls"])
         self.channel = self.ably.channels.get('persisted:presence_fixtures')
         self.channel_bin = self.ably_bin.channels.get('persisted:presence_fixtures')
         self.channels = [self.channel, self.channel_bin]
@@ -148,13 +148,13 @@ class TestPresence(unittest.TestCase):
 
     @assert_responses_types(['json', 'msgpack'])
     def test_presence_history_encrypted(self):
-        for use_text_protocol in [True, False]:
+        for use_binary_protocol in [False, True]:
             ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                             host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"],
-                            use_text_protocol=use_text_protocol)
+                            use_binary_protocol=use_binary_protocol)
             params = get_default_params('0123456789abcdef')
             self.channel = ably.channels.get('persisted:presence_fixtures',
                                              options=ChannelOptions(
@@ -166,13 +166,13 @@ class TestPresence(unittest.TestCase):
 
     @assert_responses_types(['json', 'msgpack'])
     def test_presence_get_encrypted(self):
-        for use_text_protocol in [True, False]:
+        for use_binary_protocol in [False, True]:
             ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                             host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"],
-                            use_text_protocol=use_text_protocol)
+                            use_binary_protocol=use_binary_protocol)
             params = get_default_params('0123456789abcdef')
             self.channel = ably.channels.get('persisted:presence_fixtures',
                                              options=ChannelOptions(

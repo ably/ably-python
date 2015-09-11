@@ -28,7 +28,7 @@ class TestTextEncodersNoEncryption(unittest.TestCase):
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"],
-                            use_text_protocol=True)
+                            use_binary_protocol=False)
 
     def test_text_utf8(self):
         channel = self.ably.channels["persisted:publish"]
@@ -124,7 +124,7 @@ class TestTextEncodersEncryption(unittest.TestCase):
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"],
-                            use_text_protocol=True)
+                            use_binary_protocol=False)
         cls.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
                                          algorithm='aes')
 
@@ -243,8 +243,7 @@ class TestBinaryEncodersNoEncryption(unittest.TestCase):
                             host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"],
-                            use_text_protocol=False)
+                            tls=test_vars["tls"])
 
     def decode(self, data):
         return msgpack.unpackb(data, encoding='utf-8')
@@ -335,8 +334,7 @@ class TesBinaryEncodersEncryption(unittest.TestCase):
                             host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"],
-                            use_text_protocol=False)
+                            tls=test_vars["tls"])
         cls.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
                                          algorithm='aes')
 

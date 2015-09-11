@@ -6,7 +6,7 @@ from ably.util.exceptions import AblyException
 
 class Options(AuthOptions):
     def __init__(self, client_id=None, log_level=0, tls=True, host=None,
-                 ws_host=None, port=0, tls_port=0, use_text_protocol=True,
+                 ws_host=None, port=0, tls_port=0, use_binary_protocol=True,
                  queue_messages=False, recover=False, **kwargs):
         super(Options, self).__init__(**kwargs)
 
@@ -19,7 +19,7 @@ class Options(AuthOptions):
         self.__ws_host = ws_host
         self.__port = port
         self.__tls_port = tls_port
-        self.__use_text_protocol = use_text_protocol
+        self.__use_binary_protocol = use_binary_protocol
         self.__queue_messages = queue_messages
         self.__recover = recover
 
@@ -72,12 +72,12 @@ class Options(AuthOptions):
         self.__tls_port = value
 
     @property
-    def use_text_protocol(self):
-        return self.__use_text_protocol
+    def use_binary_protocol(self):
+        return self.__use_binary_protocol
 
-    @use_text_protocol.setter
-    def use_text_protocol(self, value):
-        self.__use_text_protocol = value
+    @use_binary_protocol.setter
+    def use_binary_protocol(self, value):
+        self.__use_binary_protocol = value
 
     @property
     def queue_messages(self):

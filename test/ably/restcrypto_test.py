@@ -31,7 +31,7 @@ class TestRestCrypto(unittest.TestCase):
             "port": test_vars["port"],
             "tls_port": test_vars["tls_port"],
             "tls": test_vars["tls"],
-            "use_text_protocol": True
+            "use_binary_protocol": False
         }
         cls.ably = AblyRest(**options)
         cls.ably2 = AblyRest(**options)

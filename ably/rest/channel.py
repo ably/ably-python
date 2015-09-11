@@ -58,10 +58,10 @@ class Channel(object):
 
         if self.__cipher:
             message_handler = make_encrypted_message_response_handler(
-                self.__cipher, not self.ably.options.use_text_protocol)
+                self.__cipher, self.ably.options.use_binary_protocol)
         else:
             message_handler = make_message_response_handler(
-                not self.ably.options.use_text_protocol)
+                self.ably.options.use_binary_protocol)
 
         return PaginatedResult.paginated_query(
             self.ably.http,
@@ -92,7 +92,7 @@ class Channel(object):
 
             request_body_list.append(m)
 
-        if self.ably.options.use_text_protocol:
+        if not self.ably.options.use_binary_protocol:
             if len(request_body_list) == 1:
                 request_body = request_body_list[0].as_json()
             else:
@@ -106,7 +106,7 @@ class Channel(object):
                     use_bin_type=True)
 
         path = '/channels/%s/publish' % self.__name
-        headers = HttpUtils.default_post_headers(not self.ably.options.use_text_protocol)
+        headers = HttpUtils.default_post_headers(self.ably.options.use_binary_protocol)
 
         return self.ably.http.post(
             path,
