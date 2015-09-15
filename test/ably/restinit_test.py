@@ -100,5 +100,22 @@ class TestRestInit(unittest.TestCase):
             self.assertFalse(local_time.called)
             self.assertTrue(server_time.called)
 
+    def test_requests_over_https_production(self):
+        ably = AblyRest(token='token')
+        self.assertEquals('https://rest.ably.io',
+                          '{0}://{1}'.format(
+                            ably.http.preferred_scheme,
+                            ably.http.preferred_host))
+        self.assertEqual(ably.http.preferred_port, 443)
+
+    def test_requests_over_http_production(self):
+        ably = AblyRest(token='token', tls=False)
+        self.assertEquals('http://rest.ably.io',
+                          '{0}://{1}'.format(
+                            ably.http.preferred_scheme,
+                            ably.http.preferred_host))
+        self.assertEqual(ably.http.preferred_port, 80)
+
+
 if __name__ == "__main__":
     unittest.main()
