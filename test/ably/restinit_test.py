@@ -116,6 +116,16 @@ class TestRestInit(unittest.TestCase):
                             ably.http.preferred_host))
         self.assertEqual(ably.http.preferred_port, 80)
 
+    def test_request_basic_auth_over_http_fails(self):
+        ably = AblyRest(key_secret='foo', key_name='bar', tls=False)
+
+        with self.assertRaises(AblyException) as cm:
+            ably.http.get('/time', skip_auth=False)
+
+        self.assertEqual(401, cm.exception.status_code)
+        self.assertEqual(40103, cm.exception.code)
+        self.assertEqual('Cannot use Basic Auth over non-TLS connections',
+                         cm.exception.message)
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,7 @@ from six.moves.urllib.parse import urljoin
 
 import requests
 
+from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyException
@@ -93,6 +94,11 @@ class Http(object):
         all_headers = HttpUtils.default_get_headers(not self.options.use_text_protocol)
         all_headers.update(headers or {})
         if not skip_auth:
+            if self.auth.auth_method == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
+                raise AblyException(
+                    "Cannot use Basic Auth over non-TLS connections",
+                    401,
+                    40103)
             all_headers.update(self.auth._get_auth_headers())
 
         single_request_connect_timeout = self.CONNECTION_RETRY['single_request_connect_timeout']
