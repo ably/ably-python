@@ -5,6 +5,7 @@ import json
 import logging
 import unittest
 
+from mock import patch
 import six
 
 from ably import AblyException
@@ -144,3 +145,19 @@ class TestRestToken(unittest.TestCase):
     def test_token_generation_with_invalid_ttl(self):
         self.assertRaises(AblyException, self.ably.auth.request_token,
                 token_params={"ttl":-1})
+
+    def test_token_generation_with_local_time(self):
+        timestamp = self.ably.auth._timestamp
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+            self.ably.auth.request_token()
+            self.assertTrue(local_time.called)
+            self.assertFalse(server_time.called)
+
+    def test_token_generation_with_server_time(self):
+        timestamp = self.ably.auth._timestamp
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+            self.ably.auth.request_token(query_time=True)
+            self.assertFalse(local_time.called)
+            self.assertTrue(server_time.called)

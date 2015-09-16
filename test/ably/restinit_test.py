@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import unittest
 
+from mock import patch
+
 from ably import AblyRest
 from ably import AblyException
 from ably.transport.defaults import Defaults
@@ -84,6 +86,19 @@ class TestRestInit(unittest.TestCase):
     def test_with_no_auth_params(self):
         self.assertRaises(ValueError, AblyRest, port=111)
 
+    def test_query_time_param(self):
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"], query_time=True)
+
+        timestamp = ably.auth._timestamp
+        with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\
+                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+            ably.auth.request_token()
+            self.assertFalse(local_time.called)
+            self.assertTrue(server_time.called)
 
 if __name__ == "__main__":
     unittest.main()

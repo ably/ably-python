@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 
 
 class Auth(object):
+
     class Method:
         BASIC = "BASIC"
         TOKEN = "TOKEN"
@@ -94,6 +95,8 @@ class Auth(object):
 
         log.debug("Auth callback: %s" % auth_callback)
         log.debug("Auth options: %s" % six.text_type(self.auth_options))
+        if query_time is None:
+            query_time = self.auth_options.query_time
         query_time = bool(query_time)
         auth_token = auth_token or self.auth_options.auth_token
         auth_callback = auth_callback or self.auth_options.auth_callback
@@ -154,7 +157,7 @@ class Auth(object):
         return TokenDetails.from_dict(response_json)
 
     def create_token_request(self, key_name=None, key_secret=None,
-                             query_time=False, token_params=None):
+                             query_time=None, token_params=None):
         token_params = token_params or {}
 
         if token_params.setdefault("id", key_name) != key_name:
@@ -163,6 +166,9 @@ class Auth(object):
         if not key_name or not key_secret:
             log.debug('key_name or key_secret blank')
             raise AblyException("No key specified", 401, 40101)
+
+        if query_time is None:
+            query_time = self.auth_options.query_time
 
         if not token_params.get("timestamp"):
             if query_time:
