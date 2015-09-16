@@ -112,7 +112,7 @@ class TestChannels(unittest.TestCase):
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"])
         with self.assertRaises(AblyException) as cm:
-            ably.channels['asd'].publish('foo', 'woop')
+            ably.channels['test_publish_without_permission'].publish('foo', 'woop')
 
         the_exception = cm.exception
         self.assertIn('not permitted', the_exception.message)
