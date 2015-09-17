@@ -1,11 +1,7 @@
 from __future__ import absolute_import
 
-import math
-from datetime import datetime
-from datetime import timedelta
 import json
 import logging
-import time
 import unittest
 
 import six
@@ -14,7 +10,6 @@ import mock
 
 from ably import AblyException
 from ably import AblyRest
-from ably import Options
 from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
@@ -122,6 +117,18 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertEqual(m.name, expected_m.name)
             self.assertEqual(m.data, expected_m.data)
 
+    def test_message_list_generate_one_request(self):
+        channel = TestRestChannelPublish.ably.channels["message_list_channel_one_request"]
+        expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
+
+        with mock.patch('ably.rest.rest.Http.post',
+                        wraps=channel.ably.http.post) as post_mock:
+            channel.publish(messages=expected_messages)
+        self.assertEqual(post_mock.call_count, 1)
+        for i, message in enumerate(json.loads(post_mock.call_args[1]['body'])):
+            self.assertEqual(message['name'], 'name-' + str(i))
+            self.assertEqual(message['data'], six.text_type(i))
+
     def test_publish_error(self):
         token_params = {
             "capability": {
@@ -214,8 +221,11 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertNotIn('data', posted_body)
 
     def test_message_attr(self):
-        publish0 = TestRestChannelPublish.ably.channels["persisted:publish"]
-        publish0.publish("publish", {"test": "This is a JSONObject message payload"})
+        publish0 = TestRestChannelPublish.ably.channels["persisted:publish-message_attr"]
+        messages = [Message('publish',
+                            {"test": "This is a JSONObject message payload"},
+                            client_id='client_id')]
+        publish0.publish("publish", messages=messages)
 
         # Get the history for this channel
         history = publish0.history()
@@ -226,4 +236,5 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertEqual(message.data,
                          {six.u('test'): six.u('This is a JSONObject message payload')})
         self.assertEqual(message.encoding, '')
+        self.assertEqual(message.client_id, 'client_id')
         self.assertIsInstance(message.timestamp, int)

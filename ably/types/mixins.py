@@ -28,7 +28,6 @@ class EncodeDataMixin(object):
                     continue
                 data = json.loads(data)
             elif encoding == 'base64' and isinstance(data, six.binary_type):
-
                 data = base64.b64decode(data)
             elif encoding == 'base64':
                 data = base64.b64decode(data.encode('utf-8'))
