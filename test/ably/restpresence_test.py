@@ -5,7 +5,6 @@ from __future__ import absolute_import
 import json
 import unittest
 from datetime import datetime, timedelta
-from functools import wraps
 
 import six
 import mock
@@ -19,68 +18,10 @@ from ably.types.presence import (PresenceMessage, make_presence_response_handler
 from ably import ChannelOptions
 from ably.util.crypto import get_default_params
 
+from test.ably.utils import assert_responses_types
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
-
-
-def assert_responses_types(types):
-    """
-    This code is a bit complicated but saves a lot of coding.
-    It is a decorator to check if we retrieved presence with the correct protocol.
-    usage:
-
-    @assert_responses_types(['json', 'msgpack'])
-    def test_something(self):
-        ...
-
-    this will check if we receive two responses, the first using json and the
-    second msgpack
-    """
-    responses = []
-
-    def presence_side_effect(binary):
-        def handler(response):
-            responses.append(response)
-            return make_presence_response_handler(binary)(response)
-        return handler
-
-    def encrypted_side_effect(cipher, binary):
-        def handler(response):
-            responses.append(response)
-            return make_encrypted_presence_response_handler(cipher, binary)(response)
-        return handler
-
-    def patch_handlers():
-            p1 = mock.patch('ably.types.presence.make_presence_response_handler',
-                            side_effect=presence_side_effect)
-            p2 = mock.patch('ably.types.presence.make_encrypted_presence_response_handler',
-                            side_effect=encrypted_side_effect)
-            p1.start()
-            p2.start()
-            return p1, p2
-
-    def unpatch_handlers(patchers):
-        for patcher in patchers:
-            patcher.stop()
-
-    def test_decorator(fn):
-        @wraps(fn)
-        def test_decorated(self, *args, **kwargs):
-            patchers = patch_handlers()
-            fn(self, *args, **kwargs)
-            unpatch_handlers(patchers)
-            self.assertEquals(len(types), len(responses))
-            for type_name, response in zip(types, responses):
-                if type_name == 'json':
-                    self.assertEquals(response.headers['content-type'], 'application/json')
-                    json.loads(response.text)
-                else:
-                    self.assertEquals(response.headers['content-type'], 'application/x-msgpack')
-                    msgpack.unpackb(response.content, encoding='utf-8')
-
-        return test_decorated
-    return test_decorator
 
 
 class TestPresence(unittest.TestCase):

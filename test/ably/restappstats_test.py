@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-import math
+import json
 from datetime import datetime
 from datetime import timedelta
 import logging
@@ -8,334 +8,277 @@ import time
 import unittest
 
 
-from ably import AblyException
 from ably import AblyRest
-from ably import Options
+from ably.types.stats import Stats
+from ably.util.exceptions import AblyException
+from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import assert_responses_types
+
 log = logging.getLogger(__name__)
 test_vars = RestSetup.get_test_vars()
-log.debug("KEY init: "+test_vars["keys"][0]["key_str"])
 
 
-@unittest.skip("stats not implemented")
-class TestRestAppStats(unittest.TestCase):
-    test_start = 0
-    interval_start = 0
-    interval_end = 0
+class TestRestAppStatsSetup(object):
+
+    @classmethod
+    def get_params(cls):
+        return {
+            'start': cls.last_interval,
+            'end': cls.last_interval,
+            'unit': 'minute',
+            'limit': 1
+        }
 
     @classmethod
     def setUpClass(cls):
-        log.debug("KEY class: "+test_vars["keys"][0]["key_str"])
-        log.debug("TLS: "+str(test_vars["tls"]))
+        RestSetup._RestSetup__test_vars = None
+        test_vars = RestSetup.get_test_vars()
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                             host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"])
-        time_from_service = cls.ably.time()
-        cls.time_offset = time_from_service / 1000.0 - time.time()
+        cls.ably_text = AblyRest(key=test_vars["keys"][0]["key_str"],
+                                 host=test_vars["host"],
+                                 port=test_vars["port"],
+                                 tls_port=test_vars["tls_port"],
+                                 tls=test_vars["tls"],
+                                 use_binary_protocol=False)
 
-        #cls._test_infos = {}
-        #cls._publish(50)
-        #cls._publish(60)
-        #cls._publish(70)
-        #cls.sleep_for(timedelta(seconds=8))
+        cls.last_year = datetime.now().year - 1
+        cls.previous_year = datetime.now().year - 2
+        cls.last_interval = datetime(cls.last_year, 2, 3, 15, 5)
+        cls.previous_interval = datetime(cls.previous_year, 2, 3, 15, 5)
+        previous_year_stats = 120
+        stats = [
+            {
+                'intervalId': Stats.to_interval_id(cls.last_interval -
+                                                   timedelta(minutes=2),
+                                                   'minute'),
+                'inbound': {'realtime': {'messages': {'count': 50, 'data': 5000}}},
+                'outbound': {'realtime': {'messages': {'count': 20, 'data': 2000}}}
+            },
+            {
+                'intervalId': Stats.to_interval_id(cls.last_interval - timedelta(minutes=1),
+                                                   'minute'),
+                'inbound': {'realtime': {'messages': {'count': 60, 'data': 6000}}},
+                'outbound': {'realtime': {'messages': {'count': 10, 'data': 1000}}}
+            },
+            {
+                'intervalId': Stats.to_interval_id(cls.last_interval, 'minute'),
+                'inbound': {'realtime': {'messages': {'count': 70, 'data': 7000}}},
+                'outbound': {'realtime': {'messages': {'count': 40, 'data': 4000}}},
+                'persisted': {'presence': {'count': 20, 'data': 2000}},
+                'connections': {'tls':   {'peak': 20, 'opened': 10}},
+                'channels': {'peak': 50, 'opened': 30},
+                'apiRequests': {'succeeded': 50, 'failed': 10},
+                'tokenRequests': {'succeeded': 60, 'failed': 20},
+            }
+        ]
+
+        previous_stats = []
+        for i in range(previous_year_stats):
+            previous_stats.append(
+                {
+                    'intervalId': Stats.to_interval_id(cls.previous_interval -
+                                                       timedelta(minutes=i),
+                                                       'minute'),
+                    'inbound':  {'realtime': {'messages': {'count': i}}}
+                }
+            )
+
+        cls.ably.http.post('/stats', body=json.dumps(stats + previous_stats))
+
+        cls.stats_pages = cls.ably.stats(**cls.get_params())
+
+    def setUp(self):
+        self.stats = self.stats_pages.items
+        self.stat = self.stats[0]
+
+
+class TestDirectionForwards(TestRestAppStatsSetup, unittest.TestCase):
 
     @classmethod
-    def server_now(cls):
-        return datetime.fromtimestamp(cls.time_offset + time.time())
+    def get_params(cls):
+        return {
+            'start': cls.last_interval - timedelta(minutes=2),
+            'end': cls.last_interval,
+            'unit': 'minute',
+            'direction': 'forwards',
+            'limit': 1
+        }
+
+    def test_stats_are_forward(self):
+        self.assertEqual(self.stat.inbound.realtime.all.count, 50)
+
+    def test_three_pages(self):
+        self.assertFalse(self.stats_pages.is_last())
+        page3 = self.stats_pages.next().next()
+        self.assertEqual(page3.items[0].inbound.realtime.all.count, 70)
+
+
+class TestDirectionBackwards(TestRestAppStatsSetup, unittest.TestCase):
 
     @classmethod
-    def sleep_until_next_minute(cls):
-        server_now = cls.server_now()
-        one_minute = timedelta(minutes=1)
-        next_minute = server_now + one_minute
-        next_minute = next_minute.replace(second=0, microsecond=0)
+    def get_params(cls):
+        return {
+            'end': cls.last_interval,
+            'unit': 'minute',
+            'direction': 'backwards',
+            'limit': 1
+        }
 
-        cls.sleep_for(next_minute - server_now)
+    def test_stats_are_forward(self):
+        self.assertEqual(self.stat.inbound.realtime.all.count, 70)
+
+    def test_three_pages(self):
+        self.assertFalse(self.stats_pages.is_last())
+        page3 = self.stats_pages.next().next()
+        self.assertEqual(page3.items[0].inbound.realtime.all.count, 50)
+
+
+class TestOnlyLastYear(TestRestAppStatsSetup, unittest.TestCase):
 
     @classmethod
-    def sleep_for(cls, td):
-        cls.sleep_until(datetime.utcnow() + td)
+    def get_params(cls):
+        return {
+            'end': cls.last_interval,
+            'unit': 'minute',
+            'limit': 3
+        }
 
-    @staticmethod
-    def sleep_until(until):
-        now = datetime.utcnow()
-        while now < until:
-            dt = until - now
-            time.sleep(dt.total_seconds())
-            now = datetime.utcnow()
+    def test_default_is_backwards(self):
+        self.assertEqual(self.stats[0].inbound.realtime.messages.count, 70)
+        self.assertEqual(self.stats[-1].inbound.realtime.messages.count, 50)
+
+
+class TestPreviousYear(TestRestAppStatsSetup, unittest.TestCase):
 
     @classmethod
-    def _publish(cls, num_messages, channel_name):
-        cls.sleep_until_next_minute()
-        cls.interval_start = cls.server_now()
-
-        if not cls.test_start:
-            cls.test_start = cls.interval_start
-
-        channel = cls.ably.channels.get(channel_name)
-        for i in range(num_messages):
-            channel.publish('stats%d' % i, i)
-
-        cls.interval_end = cls.server_now()
-
-        cls.sleep_for(timedelta(seconds=8))
-
-    def test_app_stats_01_minute_level_forwards(self):
-        TestRestAppStats._publish(50, 'appstats_0')
-        params = {
-            'direction': 'forwards',
-            'start': TestRestAppStats.interval_start,
-            'end': TestRestAppStats.interval_end,
+    def get_params(cls):
+        return {
+            'end': cls.previous_interval,
+            'unit': 'minute',
         }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
 
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+    def test_default_100_pagination(self):
+        self.assertEqual(len(self.stats), 100)
+        next_page = self.stats_pages.next().items
+        self.assertEqual(len(next_page), 20)
 
-    def test_app_stats_02_hour_level_forwards(self):
+
+class TestRestAppStats(TestRestAppStatsSetup, unittest.TestCase):
+
+    @assert_responses_types(['msgpack', 'json'])
+    def test_protocols(self):
+        self.stats_pages = self.ably.stats(**self.get_params())
+        self.stats_pages1 = self.ably_text.stats(**self.get_params())
+        self.assertEqual(len(self.stats_pages.items),
+                         len(self.stats_pages1.items))
+
+    def test_paginated_response(self):
+        self.assertIsInstance(self.stats_pages, PaginatedResult)
+        self.assertIsInstance(self.stats_pages.items[0], Stats)
+
+    def test_units(self):
+        for unit in ['hour', 'day', 'month']:
+            params = {
+                'start': self.last_interval,
+                'end': self.last_interval,
+                'unit': unit,
+                'direction': 'forwards',
+                'limit': 1
+            }
+            stats_pages = self.ably.stats(**params)
+            stat = stats_pages.items[0]
+            self.assertEquals(len(stats_pages.items), 1)
+            self.assertEqual(stat.all.messages.count,
+                             50 + 20 + 60 + 10 + 70 + 40)
+            self.assertEqual(stat.all.messages.data,
+                             5000 + 2000 + 6000 + 1000 + 7000 + 4000)
+
+    def test_when_argument_start_is_after_end(self):
         params = {
-            'direction': 'forwards',
-            'start': TestRestAppStats.interval_start,
-            'end': TestRestAppStats.interval_end,
-            'by': 'hour',
+            'start': self.last_interval,
+            'end': self.last_interval - timedelta(minutes=2),
+            'unit': 'minute',
         }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
+        with self.assertRaisesRegexp(AblyException, "'end' parameter has to be greater than or equal to 'start'"):
+            self.ably.stats(**params)
 
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
-
-    def test_app_stats_03_day_level_forwards(self):
+    def test_when_limit_gt_1000(self):
         params = {
-            'direction': 'forwards',
-            'start': TestRestAppStats.interval_start,
-            'end': TestRestAppStats.interval_end,
-            'by': 'day',
+            'end': self.last_interval,
+            'limit': 5000
         }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
+        with self.assertRaisesRegexp(AblyException, "The maximum allowed limit is 1000"):
+            self.ably.stats(**params)
 
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
-
-    def test_app_stats_04_month_level_forwards(self):
+    def test_no_arguments(self):
         params = {
-            'direction': 'forwards',
-            'start': TestRestAppStats.interval_start,
-            'end': TestRestAppStats.interval_end,
-            'by': 'month',
+            'end': self.last_interval,
         }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
+        self.stats_pages = self.ably.stats(**params)
+        self.stat = self.stats_pages.items[0]
+        self.assertEquals(self.stat.interval_granularity, 'minute')
 
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+    def test_got_1_record(self):
+        self.assertEqual(1, len(self.stats_pages.items), "Expected 1 record")
 
-    def test_app_stats_05_minute_level_backwards(self):
-        TestRestAppStats._publish(60, 'appstats_1')
-        params = {
-            'direction': 'backwards',
-            'start': TestRestAppStats.interval_start,
-            'end': TestRestAppStats.interval_end,
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
+    def test_zero_by_default(self):
+        self.assertEqual(self.stat.channels.refused, 0)
+        self.assertEqual(self.stat.outbound.webhook.all.count, 0)
 
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+    def test_return_aggregated_message_data(self):
+        # returns aggregated message data
+        self.assertEqual(self.stat.all.messages.count, 70 + 40)
+        self.assertEqual(self.stat.all.messages.data, 7000 + 4000)
 
-    def test_app_stats_06_hour_level_backwards(self):
-        params = {
-            'direction': 'backwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'by': 'hour',
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
+    def test_inbound_realtime_all_data(self):
+        # returns inbound realtime all data
+        self.assertEqual(self.stat.inbound.realtime.all.count, 70)
+        self.assertEqual(self.stat.inbound.realtime.all.data, 7000)
 
-        self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
-        if (1 == len(stats_page)):
-            self.assertEqual(110, stats_page[0].inbound.all.all.count, "Expected 110 messages")
-        else:
-            self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
-        
+    def test_inboud_realtime_message_data(self):
+        # returns inbound realtime message data
+        self.assertEqual(self.stat.inbound.realtime.messages.count, 70)
+        self.assertEqual(self.stat.inbound.realtime.messages.data, 7000)
 
-    def test_app_stats_07_day_level_backwards(self):
-        params = {
-            'direction': 'backwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'by': 'day',
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
+    def test_outbound_realtime_all_data(self):
+        # returns outboud realtime all data
+        self.assertEqual(self.stat.outbound.realtime.all.count, 40)
+        self.assertEqual(self.stat.outbound.realtime.all.data, 4000)
 
-        self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
-        if (1 == len(stats_page)):
-            self.assertEqual(110, stats_page[0].inbound.all.all.count, "Expected 110 messages")
-        else:
-            self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+    def test_persisted_data(self):
+        # returns persisted presence all data
+        self.assertEqual(self.stat.persisted.all.count, 20)
+        self.assertEqual(self.stat.persisted.all.data, 2000)
 
-    def test_app_stats_08_month_level_backwards(self):
-        params = {
-            'direction': 'backwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'by': 'month',
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
+    def test_connections_data(self):
+        # returns connections all data
+        self.assertEqual(self.stat.connections.tls.peak, 20)
+        self.assertEqual(self.stat.connections.tls.opened, 10)
 
-        self.assertTrue(1 == len(stats_page) or 2 == len(stats_page), "Expected 1 or 2 records")
-        if (1 == len(stats_page)):
-            self.assertEqual(110, stats_page[0].inbound.all.all.count, "Expected 110 messages")
-        else:
-            self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
+    def test_channels_all_data(self):
+        # returns channels all data
+        self.assertEqual(self.stat.channels.peak, 50)
+        self.assertEqual(self.stat.channels.opened, 30)
 
-    def test_app_stats_09_limit_backwards(self):
-        TestRestAppStats._publish(70, 'appstats_2')
-        params = {
-            'direction': 'backwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'limit': 1,
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
+    def test_api_requests_data(self):
+        # returns api_requests data
+        self.assertEqual(self.stat.api_requests.succeeded, 50)
+        self.assertEqual(self.stat.api_requests.failed, 10)
 
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
+    def test_token_requests(self):
+        # returns token_requests data
+        self.assertEqual(self.stat.token_requests.succeeded, 60)
+        self.assertEqual(self.stat.token_requests.failed, 20)
 
-    def test_app_stats_10_limit_forwards(self):
-        params = {
-            'direction': 'forwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'limit': 1,
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
-
-    def test_app_stats_11_pagination_backwards(self):
-        params = {
-            'direction': 'backwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'limit': 1,
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
-
-        self.assertTrue(stats_pages.has_next())
-        stats_pages = stats_pages.next()
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
-
-        self.assertTrue(stats_pages.has_next())
-        stats_pages = stats_pages.next()
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
-
-        self.assertFalse(stats_pages.has_next())
-        stats_pages = stats_pages.next()
-        self.assertIsNone(stats_pages, "Expected None")
-
-    def test_app_stats_12_pagination_forwards(self):
-        params = {
-            'direction': 'forwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'limit': 1,
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
-
-        self.assertTrue(stats_pages.has_next())
-        stats_pages = stats_pages.next()
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
-
-        self.assertTrue(stats_pages.has_next())
-        stats_pages = stats_pages.next()
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
-
-        self.assertFalse(stats_pages.has_next())
-        stats_pages = stats_pages.next()
-        self.assertIsNone(stats_pages, "Expected None")
-
-    def test_app_stats_13_pagination_backwards_first(self):
-        params = {
-            'direction': 'backwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'limit': 1,
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
-
-        self.assertTrue(stats_pages.has_next())
-        stats_pages = stats_pages.next()
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
-
-        self.assertTrue(stats_pages.has_first())
-        stats_pages = stats_pages.first()
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(70, stats_page[0].inbound.all.all.count, "Expected 70 messages")
-
-    def test_app_stats_14_pagination_forwards_first(self):
-        params = {
-            'direction': 'forwards',
-            'start': TestRestAppStats.test_start,
-            'end': TestRestAppStats.interval_end,
-            'limit': 1,
-        }
-        stats_pages = TestRestAppStats.ably.stats(**params)
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
-
-        self.assertTrue(stats_pages.has_next())
-        stats_pages = stats_pages.next()
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(60, stats_page[0].inbound.all.all.count, "Expected 60 messages")
-
-        self.assertTrue(stats_pages.has_first())
-        stats_pages = stats_pages.first()
-        stats_page = stats_pages.items
-
-        self.assertEqual(1, len(stats_page), "Expected 1 record")
-        self.assertEqual(50, stats_page[0].inbound.all.all.count, "Expected 50 messages")
+    def test_inverval(self):
+        # interval
+        self.assertEqual(self.stat.interval_granularity, 'minute')
+        self.assertEqual(self.stat.interval_id,
+                         self.last_interval.strftime('%Y-%m-%d:%H:%M'))
+        self.assertEqual(self.stat.interval_time, self.last_interval)
