@@ -327,7 +327,7 @@ class TestBinaryEncodersNoEncryption(unittest.TestCase):
         self.assertFalse(message.encoding)
 
 
-class TesBinaryEncodersEncryption(unittest.TestCase):
+class TestBinaryEncodersEncryption(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
