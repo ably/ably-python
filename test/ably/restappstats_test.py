@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 
-import json
+
 from datetime import datetime
 from datetime import timedelta
 import logging
-import time
 import unittest
 
 
@@ -89,7 +88,7 @@ class TestRestAppStatsSetup(object):
                 }
             )
 
-        cls.ably.http.post('/stats', body=json.dumps(stats + previous_stats))
+        cls.ably.http.post('/stats', native_data=stats + previous_stats)
 
         cls.stats_pages = cls.ably.stats(**cls.get_params())
 

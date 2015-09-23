@@ -125,7 +125,6 @@ class Presence(object):
                 raise ValueError("The maximum allowed limit is 1000")
             qs['limit'] = limit
         path = self._path_with_qs('%s/presence' % self.__base_path.rstrip('/'), qs)
-        headers = HttpUtils.default_get_headers(self.__binary)
 
         if self.__cipher:
             presence_handler = make_encrypted_presence_response_handler(self.__cipher, self.__binary)
@@ -135,7 +134,7 @@ class Presence(object):
         return PaginatedResult.paginated_query(
             self.__http,
             path,
-            headers,
+            {},
             presence_handler)
 
     def history(self, limit=None, direction=None, start=None, end=None):
@@ -161,7 +160,6 @@ class Presence(object):
             raise ValueError("'end' parameter has to be greater than or equal to 'start'")
 
         path = self._path_with_qs('%s/presence/history' % self.__base_path.rstrip('/'), qs)
-        headers = HttpUtils.default_get_headers(self.__binary)
 
         if self.__cipher:
             presence_handler = make_encrypted_presence_response_handler(
@@ -172,26 +170,20 @@ class Presence(object):
         return PaginatedResult.paginated_query(
             self.__http,
             path,
-            headers,
+            {},
             presence_handler
         )
 
 
 def make_presence_response_handler(binary):
     def presence_response_handler(response):
-        if binary:
-            messages = msgpack.unpackb(response.content, encoding='utf-8')
-        else:
-            messages = response.json()
+        messages = response.to_native()
         return [PresenceMessage.from_dict(message) for message in messages]
     return presence_response_handler
 
 
 def make_encrypted_presence_response_handler(cipher, binary):
     def encrypted_presence_response_handler(response):
-        if binary:
-            messages = msgpack.unpackb(response.content, encoding='utf-8')
-        else:
-            messages = response.json()
+        messages = response.to_native()
         return [PresenceMessage.from_dict(message, cipher) for message in messages]
     return encrypted_presence_response_handler

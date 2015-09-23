@@ -29,7 +29,8 @@ class TestPaginatedResult(unittest.TestCase):
                              host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+                             tls=test_vars["tls"],
+                             use_binary_protocol=False)
 
         # Mocked responses
         # without headers
@@ -57,11 +58,11 @@ class TestPaginatedResult(unittest.TestCase):
         self.paginated_result = PaginatedResult.paginated_query(
             self.ably.http,
             'http://rest.ably.io/channels/channel_name/ch1',
-            {}, lambda response: response.json())
+            {}, lambda response: response.to_native())
         self.paginated_result_with_headers = PaginatedResult.paginated_query(
             self.ably.http,
             'http://rest.ably.io/channels/channel_name/ch2',
-            {}, lambda response: response.json())
+            {}, lambda response: response.to_native())
 
     def tearDown(self):
         responses.stop()

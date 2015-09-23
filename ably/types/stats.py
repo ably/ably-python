@@ -154,11 +154,7 @@ class Stats(object):
 
 def make_stats_response_processor(binary):
     def stats_response_processor(response):
-        if binary:
-            stats_array = msgpack.unpackb(response.content, encoding='utf-8')
-        else:
-            stats_array = response.json()
-
+        stats_array = response.to_native()
         return Stats.from_array(stats_array)
     return stats_response_processor
 

@@ -111,7 +111,7 @@ class AblyRest(object):
         """Returns the current server time in ms since the unix epoch"""
         r = self.http.get('/time', skip_auth=True, timeout=timeout)
         AblyException.raise_for_response(r)
-        return r.json()[0]
+        return r.to_native()[0]
 
     @property
     def client_id(self):

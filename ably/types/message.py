@@ -196,20 +196,14 @@ class Message(EncodeDataMixin):
 
 def make_message_response_handler(binary):
     def message_response_handler(response):
-        if binary:
-            messages = msgpack.unpackb(response.content, encoding='utf-8')
-        else:
-            messages = response.json()
+        messages = response.to_native()
         return [Message.from_dict(j) for j in messages]
     return message_response_handler
 
 
 def make_encrypted_message_response_handler(cipher, binary):
     def encrypted_message_response_handler(response):
-        if binary:
-            messages = msgpack.unpackb(response.content, encoding='utf-8')
-        else:
-            messages = response.json()
+        messages = response.to_native()
         return [Message.from_dict(j, cipher) for j in messages]
     return encrypted_message_response_handler
 
