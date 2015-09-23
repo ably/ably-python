@@ -1,19 +1,16 @@
 from __future__ import absolute_import
 
-import math
-from datetime import datetime
-from datetime import timedelta
 import logging
 import time
 import unittest
 
 import responses
 import six
+import msgpack
 from six.moves import range
 
 from ably import AblyException
 from ably import AblyRest
-from ably import Options
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
@@ -126,7 +123,7 @@ class TestRestChannelHistory(unittest.TestCase):
     def test_channel_history_default_limit(self):
         channel = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         channel.history()
         self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
 
@@ -134,7 +131,7 @@ class TestRestChannelHistory(unittest.TestCase):
     def test_channel_history_with_limits(self):
         channel = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         channel.history(limit=500)
         self.assertIn('limit=500', responses.calls[0].request.url.split('?')[-1])
         channel.history(limit=1000)

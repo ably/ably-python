@@ -6,12 +6,13 @@ import json
 from collections import OrderedDict
 
 import six
+import msgpack
 from six.moves.urllib.parse import urlencode, quote
 
 from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.message import (
-    Message, message_response_handler, make_encrypted_message_response_handler,
+    Message, make_message_response_handler, make_encrypted_message_response_handler,
     MessageJSONEncoder)
 from ably.types.presence import Presence
 from ably.util.crypto import get_cipher
@@ -56,9 +57,11 @@ class Channel(object):
             path = path + '?' + urlencode(params)
 
         if self.__cipher:
-            message_handler = make_encrypted_message_response_handler(self.__cipher)
+            message_handler = make_encrypted_message_response_handler(
+                self.__cipher, self.ably.options.use_binary_protocol)
         else:
-            message_handler = message_response_handler
+            message_handler = make_message_response_handler(
+                self.ably.options.use_binary_protocol)
 
         return PaginatedResult.paginated_query(
             self.ably.http,
@@ -82,10 +85,6 @@ class Channel(object):
         if not messages:
             messages = [Message(name, data)]
 
-        # TODO: messagepack
-        if not self.ably.options.use_text_protocol:
-            raise NotImplementedError
-
         request_body_list = []
         for m in messages:
             if self.encrypted:
@@ -93,19 +92,28 @@ class Channel(object):
 
             request_body_list.append(m)
 
-        if len(request_body_list) == 1:
-            request_body = request_body_list[0].as_json()
+        if not self.ably.options.use_binary_protocol:
+            if len(request_body_list) == 1:
+                request_body = request_body_list[0].as_json()
+            else:
+                request_body = json.dumps(request_body_list, cls=MessageJSONEncoder)
         else:
-            request_body = json.dumps(request_body_list, cls=MessageJSONEncoder)
+            if len(request_body_list) == 1:
+                request_body = request_body_list[0].as_msgpack()
+            else:
+                request_body = msgpack.packb(
+                    [message.as_dict(binary=True) for message in request_body_list],
+                    use_bin_type=True)
 
         path = '/channels/%s/publish' % self.__name
-        headers = HttpUtils.default_post_headers(not self.ably.options.use_text_protocol)
+        headers = HttpUtils.default_post_headers(self.ably.options.use_binary_protocol)
+
         return self.ably.http.post(
             path,
             headers=headers,
             body=request_body,
             timeout=timeout
-        ).json()
+            )
 
     @property
     def ably(self):

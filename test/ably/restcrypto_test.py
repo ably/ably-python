@@ -31,7 +31,7 @@ class TestRestCrypto(unittest.TestCase):
             "port": test_vars["port"],
             "tls_port": test_vars["tls_port"],
             "tls": test_vars["tls"],
-            "use_text_protocol": True
+            "use_binary_protocol": False
         }
         cls.ably = AblyRest(**options)
         cls.ably2 = AblyRest(**options)
@@ -241,7 +241,7 @@ class AbstractTestCryptoWithFixture(object):
     def test_decode(self):
         for item in self.items:
             self.assertEqual(item['encoded']['name'], item['encrypted']['name'])
-            message = Message.from_json(item['encrypted'], self.cipher)
+            message = Message.from_dict(item['encrypted'], self.cipher)
             self.assertEqual(message.encoding, '')
             expected_data = self.get_encoded(item['encoded'])
             self.assertEqual(expected_data, message.data)
