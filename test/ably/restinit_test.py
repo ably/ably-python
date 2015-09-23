@@ -100,5 +100,32 @@ class TestRestInit(unittest.TestCase):
             self.assertFalse(local_time.called)
             self.assertTrue(server_time.called)
 
+    def test_requests_over_https_production(self):
+        ably = AblyRest(token='token')
+        self.assertEquals('https://rest.ably.io',
+                          '{0}://{1}'.format(
+                            ably.http.preferred_scheme,
+                            ably.http.preferred_host))
+        self.assertEqual(ably.http.preferred_port, 443)
+
+    def test_requests_over_http_production(self):
+        ably = AblyRest(token='token', tls=False)
+        self.assertEquals('http://rest.ably.io',
+                          '{0}://{1}'.format(
+                            ably.http.preferred_scheme,
+                            ably.http.preferred_host))
+        self.assertEqual(ably.http.preferred_port, 80)
+
+    def test_request_basic_auth_over_http_fails(self):
+        ably = AblyRest(key_secret='foo', key_name='bar', tls=False)
+
+        with self.assertRaises(AblyException) as cm:
+            ably.http.get('/time', skip_auth=False)
+
+        self.assertEqual(401, cm.exception.status_code)
+        self.assertEqual(40103, cm.exception.code)
+        self.assertEqual('Cannot use Basic Auth over non-TLS connections',
+                         cm.exception.message)
+
 if __name__ == "__main__":
     unittest.main()
