@@ -21,6 +21,8 @@ class EncodeDataMixin(object):
 
         while encoding_list:
             encoding = encoding_list.pop()
+            if not encoding:
+                continue
             if encoding == 'json':
                 if isinstance(data, six.binary_type):
                     data = data.decode()
@@ -28,9 +30,9 @@ class EncodeDataMixin(object):
                     continue
                 data = json.loads(data)
             elif encoding == 'base64' and isinstance(data, six.binary_type):
-                data = base64.b64decode(data)
+                data = bytearray(base64.b64decode(data))
             elif encoding == 'base64':
-                data = base64.b64decode(data.encode('utf-8'))
+                data = bytearray(base64.b64decode(data.encode('utf-8')))
             elif encoding.startswith('%s+' % CipherData.ENCODING_ID):
                 if not cipher:
                     log.error('Message cannot be decrypted as the channel is '
@@ -38,7 +40,8 @@ class EncodeDataMixin(object):
                     encoding_list.append(encoding)
                     break
                 data = cipher.decrypt(data)
-            elif encoding == 'utf-8' and isinstance(data, six.binary_type):
+            elif encoding == 'utf-8' and isinstance(data, (six.binary_type,
+                                                           bytearray)):
                 data = data.decode('utf-8')
             elif encoding == 'utf-8':
                 pass
