@@ -90,17 +90,21 @@ class CbcChannelCipher(object):
         return rndfile.read(length)
 
     def encrypt(self, plaintext):
+        if isinstance(plaintext, bytearray):
+            plaintext = six.binary_type(plaintext)
         padded_plaintext = self.__pad(plaintext)
         encrypted = self.__iv + self.__encryptor.encrypt(padded_plaintext)
         self.__iv = encrypted[-self.__block_size:]
         return encrypted
 
     def decrypt(self, ciphertext):
+        if isinstance(ciphertext, bytearray):
+            ciphertext = six.binary_type(ciphertext)
         iv = ciphertext[:self.__block_size]
         ciphertext = ciphertext[self.__block_size:]
         decryptor = AES.new(self.__secret_key, AES.MODE_CBC, iv)
         decrypted = decryptor.decrypt(ciphertext)
-        return self.__unpad(decrypted)
+        return bytearray(self.__unpad(decrypted))
 
     @property
     def secret_key(self):

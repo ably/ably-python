@@ -37,20 +37,43 @@ class TestTextEncodersNoEncryption(unittest.TestCase):
             channel.publish('event', six.u('foó'))
             _, kwargs = post_mock.call_args
             self.assertEqual(json.loads(kwargs['body'])['data'], six.u('foó'))
-            self.assertEqual(json.loads(kwargs['body']).get('encoding', '').strip('/'),
-                             'utf-8')
+            self.assertFalse(json.loads(kwargs['body']).get('encoding', ''))
+
+    def test_str(self):
+        # This test only makes sense for py2
+        channel = self.ably.channels["persisted:publish"]
+
+        with mock.patch('ably.rest.rest.Http.post') as post_mock:
+            channel.publish('event', 'foo')
+            _, kwargs = post_mock.call_args
+            self.assertEqual(json.loads(kwargs['body'])['data'], 'foo')
+            self.assertFalse(json.loads(kwargs['body']).get('encoding', ''))
 
     def test_with_binary_type(self):
         channel = self.ably.channels["persisted:publish"]
 
         with mock.patch('ably.rest.rest.Http.post') as post_mock:
-            channel.publish('event', six.b('foo'))
+            channel.publish('event', bytearray(b'foo'))
             _, kwargs = post_mock.call_args
             raw_data = json.loads(kwargs['body'])['data']
             self.assertEqual(base64.b64decode(raw_data.encode('ascii')),
-                             six.b('foo'))
+                             bytearray(b'foo'))
             self.assertEqual(json.loads(kwargs['body'])['encoding'].strip('/'),
                              'base64')
+
+    def test_with_bytes_type(self):
+        # this test is only relevant for python3
+        if six.PY3:
+            channel = self.ably.channels["persisted:publish"]
+
+            with mock.patch('ably.rest.rest.Http.post') as post_mock:
+                channel.publish('event', b'foo')
+                _, kwargs = post_mock.call_args
+                raw_data = json.loads(kwargs['body'])['data']
+                self.assertEqual(base64.b64decode(raw_data.encode('ascii')),
+                                 bytearray(b'foo'))
+                self.assertEqual(json.loads(kwargs['body'])['encoding'].strip('/'),
+                                 'base64')
 
     def test_with_json_dict_data(self):
         channel = self.ably.channels["persisted:publish"]
@@ -83,13 +106,22 @@ class TestTextEncodersNoEncryption(unittest.TestCase):
         self.assertIsInstance(message.data, six.text_type)
         self.assertFalse(message.encoding)
 
+    def test_text_str_decode(self):
+        channel = self.ably.channels["persisted:stringnonutf8decode"]
+
+        channel.publish('event', 'foo')
+        message = channel.history().items[0]
+        self.assertEqual(message.data, six.u('foo'))
+        self.assertIsInstance(message.data, six.text_type)
+        self.assertFalse(message.encoding)
+
     def test_with_binary_type_decode(self):
         channel = self.ably.channels["persisted:binarydecode"]
 
-        channel.publish('event', six.b('foob'))
+        channel.publish('event', bytearray(b'foob'))
         message = channel.history().items[0]
-        self.assertEqual(message.data, six.b('foob'))
-        self.assertIsInstance(message.data, six.binary_type)
+        self.assertEqual(message.data, bytearray(b'foob'))
+        self.assertIsInstance(message.data, bytearray)
         self.assertFalse(message.encoding)
 
     def test_with_json_dict_data_decode(self):
@@ -146,6 +178,16 @@ class TestTextEncodersEncryption(unittest.TestCase):
             data = self.decrypt(json.loads(kwargs['body'])['data']).decode('utf-8')
             self.assertEquals(data, six.u('fóo'))
 
+    def test_str(self):
+        # This test only makes sense for py2
+        channel = self.ably.channels["persisted:publish"]
+
+        with mock.patch('ably.rest.rest.Http.post') as post_mock:
+            channel.publish('event', 'foo')
+            _, kwargs = post_mock.call_args
+            self.assertEqual(json.loads(kwargs['body'])['data'], 'foo')
+            self.assertFalse(json.loads(kwargs['body']).get('encoding', ''))
+
     def test_with_binary_type(self):
         channel = self.ably.channels.get("persisted:publish_enc",
                                          options=ChannelOptions(
@@ -153,14 +195,14 @@ class TestTextEncodersEncryption(unittest.TestCase):
                                             cipher_params=self.cipher_params))
 
         with mock.patch('ably.rest.rest.Http.post') as post_mock:
-            channel.publish('event', six.b('foo'))
+            channel.publish('event', bytearray(b'foo'))
             _, kwargs = post_mock.call_args
 
             self.assertEquals(json.loads(kwargs['body'])['encoding'].strip('/'),
                               'cipher+aes-128-cbc/base64')
             data = self.decrypt(json.loads(kwargs['body'])['data'])
-            self.assertEqual(data, six.b('foo'))
-            self.assertIsInstance(data, six.binary_type)
+            self.assertEqual(data, bytearray(b'foo'))
+            self.assertIsInstance(data, bytearray)
 
     def test_with_json_dict_data(self):
         channel = self.ably.channels.get("persisted:publish_enc",
@@ -207,10 +249,10 @@ class TestTextEncodersEncryption(unittest.TestCase):
                                             encrypted=True,
                                             cipher_params=self.cipher_params))
 
-        channel.publish('event', six.b('foob'))
+        channel.publish('event', bytearray(b'foob'))
         message = channel.history().items[0]
-        self.assertEqual(message.data, six.b('foob'))
-        self.assertIsInstance(message.data, six.binary_type)
+        self.assertEqual(message.data, bytearray(b'foob'))
+        self.assertIsInstance(message.data, bytearray)
         self.assertFalse(message.encoding)
 
     def test_with_json_dict_data_decode(self):
@@ -263,9 +305,9 @@ class TestBinaryEncodersNoEncryption(unittest.TestCase):
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
-            channel.publish('event', six.b('foo'))
+            channel.publish('event', bytearray(b'foo'))
             _, kwargs = post_mock.call_args
-            self.assertEqual(self.decode(kwargs['body'])['data'], six.b('foo'))
+            self.assertEqual(self.decode(kwargs['body'])['data'], bytearray(b'foo'))
             self.assertEqual(self.decode(kwargs['body']).get('encoding', '').strip('/'), '')
 
     def test_with_json_dict_data(self):
@@ -304,10 +346,9 @@ class TestBinaryEncodersNoEncryption(unittest.TestCase):
     def test_with_binary_type_decode(self):
         channel = self.ably.channels["persisted:binarydecode-bin"]
 
-        channel.publish('event', six.b('foob'))
+        channel.publish('event', bytearray(b'foob'))
         message = channel.history().items[0]
-        self.assertEqual(message.data, six.b('foob'))
-        self.assertIsInstance(message.data, six.binary_type)
+        self.assertEqual(message.data, bytearray(b'foob'))
         self.assertFalse(message.encoding)
 
     def test_with_json_dict_data_decode(self):
@@ -367,14 +408,14 @@ class TestBinaryEncodersEncryption(unittest.TestCase):
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
-            channel.publish('event', six.b('foo'))
+            channel.publish('event', bytearray(b'foo'))
             _, kwargs = post_mock.call_args
 
             self.assertEquals(self.decode(kwargs['body'])['encoding'].strip('/'),
                               'cipher+aes-128-cbc')
             data = self.decrypt(self.decode(kwargs['body'])['data'])
-            self.assertEqual(data, six.b('foo'))
-            self.assertIsInstance(data, six.binary_type)
+            self.assertEqual(data, bytearray(b'foo'))
+            self.assertIsInstance(data, bytearray)
 
     def test_with_json_dict_data(self):
         channel = self.ably.channels.get("persisted:publish_enc",
@@ -423,10 +464,10 @@ class TestBinaryEncodersEncryption(unittest.TestCase):
                                             encrypted=True,
                                             cipher_params=self.cipher_params))
 
-        channel.publish('event', six.b('foob'))
+        channel.publish('event', bytearray(b'foob'))
         message = channel.history().items[0]
-        self.assertEqual(message.data, six.b('foob'))
-        self.assertIsInstance(message.data, six.binary_type)
+        self.assertEqual(message.data, bytearray(b'foob'))
+        self.assertIsInstance(message.data, bytearray)
         self.assertFalse(message.encoding)
 
     def test_with_json_dict_data_decode(self):
