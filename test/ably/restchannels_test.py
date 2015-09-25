@@ -16,6 +16,7 @@ from test.ably.restsetup import RestSetup
 test_vars = RestSetup.get_test_vars()
 
 
+# makes no request, no need to use different protocols
 class TestChannels(unittest.TestCase):
 
     def setUp(self):

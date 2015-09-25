@@ -6,6 +6,7 @@ from datetime import timedelta
 import logging
 import unittest
 
+import six
 
 from ably import AblyRest
 from ably.types.stats import Stats
@@ -13,7 +14,7 @@ from ably.util.exceptions import AblyException
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import assert_responses_types
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 log = logging.getLogger(__name__)
 test_vars = RestSetup.get_test_vars()
@@ -90,13 +91,14 @@ class TestRestAppStatsSetup(object):
 
         cls.ably.http.post('/stats', native_data=stats + previous_stats)
 
-        cls.stats_pages = cls.ably.stats(**cls.get_params())
-
-    def setUp(self):
+    def per_protocol_setup(self, use_binary_protocol):
+        self.ably.options.use_binary_protocol = use_binary_protocol
+        self.stats_pages = self.ably.stats(**self.get_params())
         self.stats = self.stats_pages.items
         self.stat = self.stats[0]
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestDirectionForwards(TestRestAppStatsSetup, unittest.TestCase):
 
     @classmethod
@@ -118,6 +120,7 @@ class TestDirectionForwards(TestRestAppStatsSetup, unittest.TestCase):
         self.assertEqual(page3.items[0].inbound.realtime.all.count, 70)
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestDirectionBackwards(TestRestAppStatsSetup, unittest.TestCase):
 
     @classmethod
@@ -138,6 +141,7 @@ class TestDirectionBackwards(TestRestAppStatsSetup, unittest.TestCase):
         self.assertEqual(page3.items[0].inbound.realtime.all.count, 50)
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestOnlyLastYear(TestRestAppStatsSetup, unittest.TestCase):
 
     @classmethod
@@ -153,6 +157,7 @@ class TestOnlyLastYear(TestRestAppStatsSetup, unittest.TestCase):
         self.assertEqual(self.stats[-1].inbound.realtime.messages.count, 50)
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestPreviousYear(TestRestAppStatsSetup, unittest.TestCase):
 
     @classmethod
@@ -168,9 +173,10 @@ class TestPreviousYear(TestRestAppStatsSetup, unittest.TestCase):
         self.assertEqual(len(next_page), 20)
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestAppStats(TestRestAppStatsSetup, unittest.TestCase):
 
-    @assert_responses_types(['msgpack', 'json'])
+    @dont_vary_protocol
     def test_protocols(self):
         self.stats_pages = self.ably.stats(**self.get_params())
         self.stats_pages1 = self.ably_text.stats(**self.get_params())
@@ -198,6 +204,7 @@ class TestRestAppStats(TestRestAppStatsSetup, unittest.TestCase):
             self.assertEqual(stat.all.messages.data,
                              5000 + 2000 + 6000 + 1000 + 7000 + 4000)
 
+    @dont_vary_protocol
     def test_when_argument_start_is_after_end(self):
         params = {
             'start': self.last_interval,
@@ -207,6 +214,7 @@ class TestRestAppStats(TestRestAppStatsSetup, unittest.TestCase):
         with self.assertRaisesRegexp(AblyException, "'end' parameter has to be greater than or equal to 'start'"):
             self.ably.stats(**params)
 
+    @dont_vary_protocol
     def test_when_limit_gt_1000(self):
         params = {
             'end': self.last_interval,

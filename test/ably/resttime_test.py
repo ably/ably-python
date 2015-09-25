@@ -3,22 +3,31 @@ from __future__ import absolute_import
 import time
 import unittest
 
+import six
+
 from ably import AblyException
 from ably import AblyRest
 from ably import Options
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 test_vars = RestSetup.get_test_vars()
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestTime(unittest.TestCase):
+
+    def per_protocol_setup(self, use_binary_protocol):
+        self.use_binary_protocol = use_binary_protocol
+
     def test_time_accuracy(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                         host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"])
+                        tls=test_vars["tls"],
+                        use_binary_protocol=self.use_binary_protocol)
 
         reported_time = ably.time()
         actual_time = time.time() * 1000.0
@@ -31,10 +40,16 @@ class TestRestTime(unittest.TestCase):
                         host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"])
+                        tls=test_vars["tls"],
+                        use_binary_protocol=self.use_binary_protocol)
 
-        ably.time()
+        reported_time = ably.time()
+        actual_time = time.time() * 1000.0
 
+        self.assertLess(abs(actual_time - reported_time), 2000,
+                msg="Time is not within 2 seconds")
+
+    @dont_vary_protocol
     def test_time_fails_without_valid_host(self):
         ably = AblyRest(token='foo',
                         host="this.host.does.not.exist",

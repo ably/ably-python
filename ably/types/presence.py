@@ -2,10 +2,8 @@ from __future__ import absolute_import
 
 from datetime import datetime, timedelta
 
-import msgpack
 from six.moves.urllib.parse import urlencode
 
-from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.mixins import EncodeDataMixin
 

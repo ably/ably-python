@@ -2,28 +2,27 @@
 
 from __future__ import absolute_import
 
-import json
 import unittest
 from datetime import datetime, timedelta
 
 import six
-import mock
 import msgpack
 import responses
 
 from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
-from ably.types.presence import (PresenceMessage, make_presence_response_handler,
+from ably.types.presence import (PresenceMessage,
                                  make_encrypted_presence_response_handler)
 from ably import ChannelOptions
 from ably.util.crypto import get_default_params
 
-from test.ably.utils import assert_responses_types
+from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestPresence(unittest.TestCase):
 
     def setUp(self):
@@ -31,108 +30,83 @@ class TestPresence(unittest.TestCase):
                              host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"],
-                             use_binary_protocol=False)
-        self.ably_bin = AblyRest(test_vars["keys"][0]["key_str"],
-                                 host=test_vars["host"],
-                                 port=test_vars["port"],
-                                 tls_port=test_vars["tls_port"],
-                                 tls=test_vars["tls"])
+                             tls=test_vars["tls"])
+        self.per_protocol_setup(True)
+
+    def per_protocol_setup(self, use_binary_protocol):
+        # This will be called every test that vary by protocol for each protocol
+        self.ably.options.use_binary_protocol = use_binary_protocol
         self.channel = self.ably.channels.get('persisted:presence_fixtures')
-        self.channel_bin = self.ably_bin.channels.get('persisted:presence_fixtures')
-        self.channels = [self.channel, self.channel_bin]
 
-    @assert_responses_types(['json', 'msgpack'])
     def test_channel_presence_get(self):
-        for channel in self.channels:
-            presence_page = channel.presence.get()
-            self.assertIsInstance(presence_page, PaginatedResult)
-            self.assertEqual(len(presence_page.items), 6)
-            member = presence_page.items[0]
-            self.assertIsInstance(member, PresenceMessage)
-            self.assertTrue(member.action)
-            self.assertTrue(member.id)
-            self.assertTrue(member.client_id)
-            self.assertTrue(member.data)
-            self.assertTrue(member.connection_id)
-            self.assertTrue(member.timestamp)
+        presence_page = self.channel.presence.get()
+        self.assertIsInstance(presence_page, PaginatedResult)
+        self.assertEqual(len(presence_page.items), 6)
+        member = presence_page.items[0]
+        self.assertIsInstance(member, PresenceMessage)
+        self.assertTrue(member.action)
+        self.assertTrue(member.id)
+        self.assertTrue(member.client_id)
+        self.assertTrue(member.data)
+        self.assertTrue(member.connection_id)
+        self.assertTrue(member.timestamp)
 
-    @assert_responses_types(['json', 'msgpack'])
     def test_channel_presence_history(self):
-        for channel in self.channels:
-            presence_history = channel.presence.history()
-            self.assertIsInstance(presence_history, PaginatedResult)
-            self.assertEqual(len(presence_history.items), 6)
-            member = presence_history.items[0]
-            self.assertIsInstance(member, PresenceMessage)
-            self.assertTrue(member.action)
-            self.assertTrue(member.id)
-            self.assertTrue(member.client_id)
-            self.assertTrue(member.data)
-            self.assertTrue(member.connection_id)
-            self.assertTrue(member.timestamp)
-            self.assertTrue(member.encoding)
+        presence_history = self.channel.presence.history()
+        self.assertIsInstance(presence_history, PaginatedResult)
+        self.assertEqual(len(presence_history.items), 6)
+        member = presence_history.items[0]
+        self.assertIsInstance(member, PresenceMessage)
+        self.assertTrue(member.action)
+        self.assertTrue(member.id)
+        self.assertTrue(member.client_id)
+        self.assertTrue(member.data)
+        self.assertTrue(member.connection_id)
+        self.assertTrue(member.timestamp)
+        self.assertTrue(member.encoding)
 
-    @assert_responses_types(['json', 'msgpack'])
     def test_presence_get_encoded(self):
-        for channel in self.channels:
-            presence_history = channel.presence.history()
-            self.assertEqual(presence_history.items[-1].data, six.u("true"))
-            self.assertEqual(presence_history.items[-2].data, six.u("24"))
-            self.assertEqual(presence_history.items[-3].data,
-                             six.u("This is a string clientData payload"))
-            # this one doesn't have encoding field
-            self.assertEqual(presence_history.items[-4].data,
-                             six.u('{ "test": "This is a JSONObject clientData payload"}'))
-            self.assertEqual(presence_history.items[-5].data,
-                             {"example": {"json": "Object"}})
+        presence_history = self.channel.presence.history()
+        self.assertEqual(presence_history.items[-1].data, six.u("true"))
+        self.assertEqual(presence_history.items[-2].data, six.u("24"))
+        self.assertEqual(presence_history.items[-3].data,
+                         six.u("This is a string clientData payload"))
+        # this one doesn't have encoding field
+        self.assertEqual(presence_history.items[-4].data,
+                         six.u('{ "test": "This is a JSONObject clientData payload"}'))
+        self.assertEqual(presence_history.items[-5].data,
+                         {"example": {"json": "Object"}})
 
-    @assert_responses_types(['json', 'msgpack'])
     def test_presence_history_encrypted(self):
-        for use_binary_protocol in [False, True]:
-            ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"],
-                            use_binary_protocol=use_binary_protocol)
-            params = get_default_params('0123456789abcdef')
-            self.channel = ably.channels.get('persisted:presence_fixtures',
-                                             options=ChannelOptions(
+        params = get_default_params('0123456789abcdef')
+        self.ably.channels.release('persisted:presence_fixtures')
+        self.channel = self.ably.channels.get('persisted:presence_fixtures',
+                                              options=ChannelOptions(
                                                 encrypted=True,
                                                 cipher_params=params))
-            presence_history = self.channel.presence.history()
-            self.assertEqual(presence_history.items[0].data,
-                             {'foo': 'bar'})
+        presence_history = self.channel.presence.history()
+        self.assertEqual(presence_history.items[0].data,
+                         {'foo': 'bar'})
 
-    @assert_responses_types(['json', 'msgpack'])
     def test_presence_get_encrypted(self):
-        for use_binary_protocol in [False, True]:
-            ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"],
-                            use_binary_protocol=use_binary_protocol)
-            params = get_default_params('0123456789abcdef')
-            self.channel = ably.channels.get('persisted:presence_fixtures',
-                                             options=ChannelOptions(
+        params = get_default_params('0123456789abcdef')
+        self.ably.channels.release('persisted:presence_fixtures')
+        self.channel = self.ably.channels.get('persisted:presence_fixtures',
+                                              options=ChannelOptions(
                                                 encrypted=True,
                                                 cipher_params=params))
-            presence_messages = self.channel.presence.get()
-            message = list(filter(
-                lambda message: message.client_id == 'client_encoded',
-                presence_messages.items))[0]
+        presence_messages = self.channel.presence.get()
+        message = list(filter(
+            lambda message: message.client_id == 'client_encoded',
+            presence_messages.items))[0]
 
-            self.assertEqual(message.data, {'foo': 'bar'})
+        self.assertEqual(message.data, {'foo': 'bar'})
 
-    @assert_responses_types(['json'])
     def test_timestamp_is_datetime(self):
         presence_page = self.channel.presence.get()
         member = presence_page.items[0]
         self.assertIsInstance(member.timestamp, datetime)
 
-    @assert_responses_types(['json'])
     def test_presence_message_has_correct_member_key(self):
         presence_page = self.channel.presence.get()
         member = presence_page.items[0]
@@ -166,61 +140,70 @@ class TestPresence(unittest.TestCase):
         url = '{scheme}://{host}{port_sufix}/channels/persisted%3Apresence_fixtures/presence/history'
         return url.format(**kwargs)
 
+    @dont_vary_protocol
     @responses.activate
     def test_get_presence_default_limit(self):
         url = self.presence_mock_url()
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.channel.presence.get()
         self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
 
+    @dont_vary_protocol
     @responses.activate
     def test_get_presence_with_limit(self):
         url = self.presence_mock_url()
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.channel.presence.get(300)
         self.assertIn('limit=300', responses.calls[0].request.url.split('?')[-1])
 
+    @dont_vary_protocol
     @responses.activate
     def test_get_presence_max_limit_is_1000(self):
         url = self.presence_mock_url()
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.assertRaises(ValueError, self.channel.presence.get, 5000)
 
+    @dont_vary_protocol
     @responses.activate
     def test_history_default_limit(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.channel.presence.history()
         self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
 
+    @dont_vary_protocol
     @responses.activate
     def test_history_with_limit(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.channel.presence.history(300)
         self.assertIn('limit=300', responses.calls[0].request.url.split('?')[-1])
 
+    @dont_vary_protocol
     @responses.activate
     def test_history_with_direction(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.channel.presence.history(direction='backwards')
         self.assertIn('direction=backwards', responses.calls[0].request.url.split('?')[-1])
 
+    @dont_vary_protocol
     @responses.activate
     def test_history_max_limit_is_1000(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.assertRaises(ValueError, self.channel.presence.history, 5000)
 
+    @dont_vary_protocol
     @responses.activate
     def test_with_milisecond_start_end(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.channel.presence.history(start=100000, end=100001)
         self.assertIn('start=100000', responses.calls[0].request.url.split('?')[-1])
         self.assertIn('end=100001', responses.calls[0].request.url.split('?')[-1])
 
+    @dont_vary_protocol
     @responses.activate
     def test_with_timedate_startend(self):
         url = self.history_mock_url()
@@ -228,16 +211,17 @@ class TestPresence(unittest.TestCase):
         start_ms = 1439658704706
         end = start + timedelta(hours=1)
         end_ms = start_ms + (1000 * 60 * 60)
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         self.channel.presence.history(start=start, end=end)
         self.assertIn('start=' + str(start_ms), responses.calls[0].request.url.split('?')[-1])
         self.assertIn('end=' + str(end_ms), responses.calls[0].request.url.split('?')[-1])
 
+    @dont_vary_protocol
     @responses.activate
     def test_with_start_gt_end(self):
         url = self.history_mock_url()
         end = datetime(2015, 8, 15, 17, 11, 44, 706539)
         start = end + timedelta(hours=1)
-        responses.add(responses.GET, url, body='{}')
+        responses.add(responses.GET, url, body=msgpack.packb({}))
         with self.assertRaisesRegexp(ValueError, "'end' parameter has to be greater than or equal to 'start'"):
             self.channel.presence.history(start=start, end=end)

@@ -16,6 +16,7 @@ test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
+# does not make any request, no need to vary by protocol
 class TestAuth(unittest.TestCase):
 
     def test_auth_init_key_only(self):

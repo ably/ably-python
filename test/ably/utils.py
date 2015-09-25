@@ -1,72 +1,102 @@
 
 import json
-from importlib import import_module
 from functools import wraps
+from ably.http.http import Http
 
 import msgpack
 import mock
 
 
-TO_MOCK = [
-    'ably.types.presence.make_presence_response_handler',
-    'ably.types.presence.make_encrypted_presence_response_handler',
-    'ably.rest.rest.make_stats_response_processor',
-]
-
-
-def assert_responses_types(types):
+def assert_responses_type(protocol):
     """
-    This code is a bit complicated but saves a lot of coding.
-    It is a decorator to check if we retrieved presence with the correct protocol.
+    This is a decorator to check if we retrieved responses with the correct protocol.
     usage:
 
-    @assert_responses_types(['json', 'msgpack'])
+    @assert_responses_type('json')
     def test_something(self):
         ...
 
-    this will check if we receive two responses, the first using json and the
-    second msgpack
+    this will check if all responses received during the test will be in the format
+    json.
+    supports json and msgpack
     """
     responses = []
 
-    def _get_side_effect_that_saves_response(handler_str):
-        module = import_module('.'.join(handler_str.split('.')[:-1]))
-        old_handler = getattr(module, handler_str.split('.')[-1])
+    def patch():
+        original = Http.make_request
 
-        def side_effect(*args, **kwargs):
-            def handler(response):
-                responses.append(response)
-                return old_handler(*args, **kwargs)(response)
-            return handler
-        return side_effect
+        def fake_make_request(self, *args, **kwargs):
+            response = original(self, *args, **kwargs)
+            responses.append(response)
+            return response
 
-    def patch_handlers():
-        patchers = []
-        for handler in TO_MOCK:
-            patchers.append(mock.patch(
-                            handler,
-                            _get_side_effect_that_saves_response(handler)))
-            patchers[-1].start()
-        return patchers
+        patcher = mock.patch.object(Http, 'make_request', fake_make_request)
+        patcher.start()
+        return patcher
 
-    def unpatch_handlers(patchers):
-        for patcher in patchers:
-            patcher.stop()
+    def unpatch(patcher):
+        patcher.stop()
 
     def test_decorator(fn):
         @wraps(fn)
         def test_decorated(self, *args, **kwargs):
-            patchers = patch_handlers()
+            patcher = patch()
             fn(self, *args, **kwargs)
-            unpatch_handlers(patchers)
-            self.assertEquals(len(types), len(responses))
-            for type_name, response in zip(types, responses):
-                if type_name == 'json':
+            unpatch(patcher)
+            self.assertGreaterEqual(len(responses), 1)
+            for response in responses:
+                if protocol == 'json':
                     self.assertEquals(response.headers['content-type'], 'application/json')
                     json.loads(response.text)
                 else:
                     self.assertEquals(response.headers['content-type'], 'application/x-msgpack')
-                    msgpack.unpackb(response.content, encoding='utf-8')
+                    if response.content:
+                        msgpack.unpackb(response.content, encoding='utf-8')
 
         return test_decorated
     return test_decorator
+
+
+class VaryByProtocolTestsMetaclass(type):
+    """
+    Metaclass to run tests in more than one protocol.
+    Usage:
+        * set this as metaclass of the TestCase class
+        * create the following method:
+        def per_protocol_setup(self, use_binary_protocol):
+            # do something here that will run before each test.
+        * now every test will run twice and before test is run per_protocol_setup
+          is called
+        * exclude tests with the @dont_vary_protocol decorator
+    """
+    def __new__(cls, clsname, bases, dct):
+        for key, value in tuple(dct.items()):
+            if key.startswith('test') and not getattr(value, 'dont_vary_protocol',
+                                                      False):
+
+                wrapper_bin = cls.wrap_as('bin', key, value)
+                wrapper_text = cls.wrap_as('text', key, value)
+
+                dct[key + '_bin'] = wrapper_bin
+                dct[key + '_text'] = wrapper_text
+                del dct[key]
+
+        return super(VaryByProtocolTestsMetaclass, cls).__new__(cls, clsname,
+                                                                bases, dct)
+
+    @staticmethod
+    def wrap_as(ttype, old_name, old_func):
+        expected_content = {'bin': 'msgpack', 'text': 'json'}
+
+        @assert_responses_type(expected_content[ttype])
+        def wrapper(self):
+            if hasattr(self, 'per_protocol_setup'):
+                self.per_protocol_setup(ttype == 'bin')
+            old_func(self)
+        wrapper.__name__ = old_name + '_' + ttype
+        return wrapper
+
+
+def dont_vary_protocol(func):
+    func.dont_vary_protocol = True
+    return func

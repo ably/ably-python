@@ -14,11 +14,13 @@ from ably import Capability
 from ably import Options
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestToken(unittest.TestCase):
     def server_time(self):
         return self.ably.time()
@@ -31,6 +33,10 @@ class TestRestToken(unittest.TestCase):
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
+
+    def per_protocol_setup(self, use_binary_protocol):
+        self.ably.options.use_binary_protocol = use_binary_protocol
+        self.use_binary_protocol = use_binary_protocol
 
     def test_request_token_null_params(self):
         pre_time = self.server_time()
@@ -125,6 +131,7 @@ class TestRestToken(unittest.TestCase):
                 token_details.capability,
                 msg="Unexpected capability")
 
+    @dont_vary_protocol
     def test_request_token_with_invalid_mac(self):
         self.assertRaises(AblyException, self.ably.auth.request_token,
                 token_params={"mac":"thisisnotavalidmac"})
@@ -137,11 +144,13 @@ class TestRestToken(unittest.TestCase):
         self.assertEqual(token_details.issued + 100,
                 token_details.expires, msg="Unexpected expires")
 
+    @dont_vary_protocol
     def test_token_with_excessive_ttl(self):
         excessive_ttl = 365 * 24 * 60 * 60 * 1000
         self.assertRaises(AblyException, self.ably.auth.request_token,
                 token_params={"ttl":excessive_ttl})
 
+    @dont_vary_protocol
     def test_token_generation_with_invalid_ttl(self):
         self.assertRaises(AblyException, self.ably.auth.request_token,
                 token_params={"ttl":-1})

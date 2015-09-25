@@ -14,29 +14,29 @@ from ably import AblyRest
 from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestChannelPublish(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"],
-                            use_binary_protocol=False)
+    def setUp(self):
+        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                             host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
 
-        cls.ably_binary = AblyRest(key=test_vars["keys"][0]["key_str"],
-                                   host=test_vars["host"],
-                                   port=test_vars["port"],
-                                   tls_port=test_vars["tls_port"],
-                                   tls=test_vars["tls"])
+    def per_protocol_setup(self, use_binary_protocol):
+        self.ably.options.use_binary_protocol = use_binary_protocol
+        self.use_binary_protocol = use_binary_protocol
 
     def test_publish_various_datatypes_text(self):
-        publish0 = TestRestChannelPublish.ably.channels["persisted:publish0"]
+        channel_name = 'persisted:publish0'
+        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        publish0 = self.ably.channels[channel_name]
 
         publish0.publish("publish0", six.u("This is a string message payload"))
         publish0.publish("publish1", b"This is a byte[] message payload")
@@ -66,40 +66,17 @@ class TestRestChannelPublish(unittest.TestCase):
                          message_contents["publish3"],
                          msg="Expect publish3 to be expected JSONObject")
 
+    @dont_vary_protocol
     def test_unsuporsed_payload_must_raise_exception(self):
-        channel = TestRestChannelPublish.ably.channels["persisted:publish0"]
+        channel = self.ably.channels["persisted:publish0"]
         for data in [1, 1.1, True]:
             self.assertRaises(AblyException, channel.publish, 'event', data)
 
-    def test_publish_various_datatypes_binary(self):
-        publish1 = TestRestChannelPublish.ably_binary.channels.publish1
-
-        publish1.publish("publish0", six.u("This is a string message payload"))
-        publish1.publish("publish1", six.b("This is a byte[] message payload"))
-        publish1.publish("publish2", {"test": "This is a JSONObject message payload"})
-        publish1.publish("publish3", ["This is a JSONArray message payload"])
-
-        # Get the history for this channel
-        messages = publish1.history()
-        self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(4, len(messages.items), msg="Expected 3 messages")
-
-        message_contents = dict((m.name, m.data) for m in messages.items)
-        self.assertEqual(six.u("This is a string message payload"),
-                         message_contents["publish0"],
-                         msg="Expect publish0 to be expected String)")
-        self.assertEqual(six.b("This is a byte[] message payload"),
-                         message_contents["publish1"],
-                         msg="Expect publish1 to be expected byte[]")
-        self.assertEqual({"test": "This is a JSONObject message payload"},
-                         message_contents["publish2"],
-                         msg="Expect publish2 to be expected JSONObject")
-        self.assertEqual(["This is a JSONArray message payload"],
-                         message_contents["publish3"],
-                         msg="Expect publish3 to be expected JSONObject")
-
     def test_publish_message_list(self):
-        channel = TestRestChannelPublish.ably.channels["message_list_channel"]
+        channel_name = 'persisted:message_list_channel'
+        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel = self.ably.channels[channel_name]
+
         expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
 
         channel.publish(messages=expected_messages)
@@ -115,27 +92,24 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertEqual(m.name, expected_m.name)
             self.assertEqual(m.data, expected_m.data)
 
-    def test_message_list_generate_one_request_text(self):
-        channel = TestRestChannelPublish.ably.channels["message_list_channel_one_request"]
+    def test_message_list_generate_one_request(self):
+        channel_name = 'persisted:message_list_channel_one_request'
+        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel = self.ably.channels[channel_name]
+
         expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish(messages=expected_messages)
         self.assertEqual(post_mock.call_count, 1)
-        for i, message in enumerate(json.loads(post_mock.call_args[1]['body'])):
-            self.assertEqual(message['name'], 'name-' + str(i))
-            self.assertEqual(message['data'], six.text_type(i))
 
-    def test_message_list_generate_one_request_binary(self):
-        channel = TestRestChannelPublish.ably_binary.channels["message_list_channel_one_request_bin"]
-        expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
+        if self.use_binary_protocol:
+            messages = msgpack.unpackb(post_mock.call_args[1]['body'], encoding='utf-8')
+        else:
+            messages = json.loads(post_mock.call_args[1]['body'])
 
-        with mock.patch('ably.rest.rest.Http.post',
-                        wraps=channel.ably.http.post) as post_mock:
-            channel.publish(messages=expected_messages)
-        self.assertEqual(post_mock.call_count, 1)
-        for i, message in enumerate(msgpack.unpackb(post_mock.call_args[1]['body'], encoding='utf-8')):
+        for i, message in enumerate(messages):
             self.assertEqual(message['name'], 'name-' + str(i))
             self.assertEqual(message['data'], six.text_type(i))
 
@@ -150,7 +124,8 @@ class TestRestChannelPublish(unittest.TestCase):
                         host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"])
+                        tls=test_vars["tls"],
+                        use_binary_protocol=self.use_binary_protocol)
         ably.auth.authorise(token_params=token_params)
 
         with self.assertRaises(AblyException) as cm:
@@ -160,7 +135,9 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertEqual(40160, cm.exception.code)
 
     def test_publish_message_null_name(self):
-        channel = TestRestChannelPublish.ably.channels["message_null_name_channel"]
+        channel_name = 'persisted:message_null_name_channel'
+        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel = self.ably.channels[channel_name]
 
         data = "String message"
         channel.publish(name=None, data=data)
@@ -176,7 +153,9 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertEqual(messages[0].data, data)
 
     def test_publish_message_null_data(self):
-        channel = TestRestChannelPublish.ably.channels["message_null_data_channel"]
+        channel_name = 'persisted:message_null_data_channel'
+        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel = self.ably.channels[channel_name]
 
         name = "Test name"
         channel.publish(name=name, data=None)
@@ -192,7 +171,9 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertIsNone(messages[0].data)
 
     def test_publish_message_null_name_and_data(self):
-        channel = TestRestChannelPublish.ably.channels["null_name_and_data_channel"]
+        channel_name = 'persisted:null_name_and_data_channel'
+        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel = self.ably.channels[channel_name]
 
         channel.publish(name=None, data=None)
         channel.publish()
@@ -209,8 +190,9 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertIsNone(m.data)
 
     def test_publish_message_null_name_and_data_keys_arent_sent(self):
-        channel = TestRestChannelPublish.ably.channels[
-            "null_name_and_data_keys_arent_sent_channel"]
+        channel_name = 'persisted:null_name_and_data_keys_arent_sent_channel'
+        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel = self.ably.channels[channel_name]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -224,13 +206,20 @@ class TestRestChannelPublish(unittest.TestCase):
 
             self.assertEqual(post_mock.call_count, 1)
 
-            posted_body = json.loads(post_mock.call_args[1]['body'])
+            if self.use_binary_protocol:
+                posted_body = msgpack.unpackb(post_mock.call_args[1]['body'], encoding='utf-8')
+            else:
+                posted_body = json.loads(post_mock.call_args[1]['body'])
+
             self.assertIn('timestamp', posted_body)
             self.assertNotIn('name', posted_body)
             self.assertNotIn('data', posted_body)
 
     def test_message_attr(self):
-        publish0 = TestRestChannelPublish.ably.channels["persisted:publish-message_attr"]
+        channel_name = 'persisted:publish_message_attr'
+        channel_name += '_bin' if self.use_binary_protocol else '_text'
+
+        publish0 = self.ably.channels[channel_name]
         messages = [Message('publish',
                             {"test": "This is a JSONObject message payload"},
                             client_id='client_id')]
