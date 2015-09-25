@@ -36,6 +36,8 @@ The ably-python client has one dependency,
 
 #### To run the tests
 
+    git submodule init
+    git submodule update
     pip install -r requirements-test.txt
     nosetests
 
