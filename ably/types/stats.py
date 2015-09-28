@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 
 import logging
+from datetime import datetime
+
+import msgpack
 
 log = logging.getLogger(__name__)
 
 
 class ResourceCount(object):
-    def __init__(self, opened=0.0, peak=0.0, mean=0.0, min=0.0, refused=0.0):
+    def __init__(self, opened=0, peak=0, mean=0, min=0, refused=0):
         self.opened = opened
         self.peak = peak
         self.mean = mean
@@ -16,22 +19,17 @@ class ResourceCount(object):
     @staticmethod
     def from_dict(rc_dict):
         rc_dict = rc_dict or {}
-        kwargs = {
-            "opened": rc_dict.get("opened"),
-            "peak": rc_dict.get("peak"),
-            "mean": rc_dict.get("mean"),
-            "min": rc_dict.get("min"),
-            "refused": rc_dict.get("refused"),
-        }
+        expected = ['opened', 'peak', 'mean', 'min', 'refused']
+        kwargs = {k: rc_dict[k] for k in rc_dict if (k in expected)}
 
         return ResourceCount(**kwargs)
 
 
 class ConnectionTypes(object):
     def __init__(self, all=None, plain=None, tls=None):
-        self.all = ResourceCount()
-        self.plain = ResourceCount()
-        self.tls = ResourceCount()
+        self.all = all or ResourceCount()
+        self.plain = plain or ResourceCount()
+        self.tls = tls or ResourceCount()
 
     @staticmethod
     def from_dict(ct_dict):
@@ -45,17 +43,15 @@ class ConnectionTypes(object):
 
 
 class MessageCount(object):
-    def __init__(self, count=0.0, data=0.0):
+    def __init__(self, count=0, data=0):
         self.count = count
         self.data = data
 
     @staticmethod
     def from_dict(mc_dict):
         mc_dict = mc_dict or {}
-        kwargs = {
-            "count": mc_dict.get("count"),
-            "data": mc_dict.get("data"),
-        }
+        expected = ['count', 'data']
+        kwargs = {k: mc_dict[k] for k in mc_dict if (k in expected)}
         return MessageCount(**kwargs)
 
 
@@ -77,12 +73,11 @@ class MessageTypes(object):
 
 
 class MessageTraffic(object):
-    def __init__(self, all=None, realtime=None, rest=None, push=None, http_stream=None):
+    def __init__(self, all=None, realtime=None, rest=None, webhook=None):
         self.all = all or MessageTypes()
         self.realtime = realtime or MessageTypes()
         self.rest = rest or MessageTypes()
-        self.push = push or MessageTypes()
-        self.http_stream = http_stream or MessageTypes()
+        self.webhook = webhook or MessageTypes()
 
     @staticmethod
     def from_dict(mt_dict):
@@ -91,14 +86,13 @@ class MessageTraffic(object):
             "all": MessageTypes.from_dict(mt_dict.get("all")),
             "realtime": MessageTypes.from_dict(mt_dict.get("realtime")),
             "rest": MessageTypes.from_dict(mt_dict.get("rest")),
-            "push": MessageTypes.from_dict(mt_dict.get("push")),
-            "http_stream": MessageTypes.from_dict(mt_dict.get("httpStream")),
+            "webhook": MessageTypes.from_dict(mt_dict.get("webhook")),
         }
         return MessageTraffic(**kwargs)
 
 
 class RequestCount(object):
-    def __init__(self, succeeded=0.0, failed=0.0, refused=0.0):
+    def __init__(self, succeeded=0, failed=0, refused=0):
         self.succeeded = succeeded
         self.failed = failed
         self.refused = refused
@@ -106,18 +100,17 @@ class RequestCount(object):
     @staticmethod
     def from_dict(rc_dict):
         rc_dict = rc_dict or {}
-        kwargs = {
-            "succeeded": rc_dict.get("succeeded"),
-            "failed": rc_dict.get("failed"),
-            "refused": rc_dict.get("refused"),
-        }
+        expected = ['succeeded', 'failed', 'refused']
+        kwargs = {k: rc_dict[k] for k in rc_dict if (k in expected)}
         return RequestCount(**kwargs)
 
 
 class Stats(object):
+
     def __init__(self, all=None, inbound=None, outbound=None, persisted=None,
                  connections=None, channels=None, api_requests=None,
-                 token_requests=None):
+                 token_requests=None, interval_granularity=None,
+                 interval_id=None):
         self.all = all or MessageTypes()
         self.inbound = inbound or MessageTraffic()
         self.outbound = outbound or MessageTraffic()
@@ -126,6 +119,10 @@ class Stats(object):
         self.channels = channels or ResourceCount()
         self.api_requests = api_requests or RequestCount()
         self.token_requests = token_requests or RequestCount()
+        self.interval_id = interval_id or ''
+        self.interval_granularity = (interval_granularity or
+                                     granularity_from_interval_id(self.interval_id))
+        self.interval_time = interval_from_interval_id(self.interval_id)
 
     @staticmethod
     def from_dict(stats_dict):
@@ -137,9 +134,11 @@ class Stats(object):
             "outbound": MessageTraffic.from_dict(stats_dict.get("outbound")),
             "persisted": MessageTypes.from_dict(stats_dict.get("persisted")),
             "connections": ConnectionTypes.from_dict(stats_dict.get("connections")),
-            "channels": ResourceCount.from_dict(stats_dict["channels"]),
-            "api_requests": RequestCount.from_dict(stats_dict["apiRequests"]),
-            "token_requests": RequestCount.from_dict(stats_dict["tokenRequests"]),
+            "channels": ResourceCount.from_dict(stats_dict.get("channels")),
+            "api_requests": RequestCount.from_dict(stats_dict.get("apiRequests")),
+            "token_requests": RequestCount.from_dict(stats_dict.get("tokenRequests")),
+            "interval_granularity": stats_dict.get("unit"),
+            "interval_id": stats_dict.get("intervalId")
         }
 
         return Stats(**kwargs)
@@ -148,8 +147,36 @@ class Stats(object):
     def from_array(stats_array):
         return [Stats.from_dict(d) for d in stats_array]
 
+    @staticmethod
+    def to_interval_id(date_time, granularity):
+        return date_time.strftime(INTERVALS_FMT[granularity])
 
-def stats_response_processor(response):
-    stats_array = response.json()
 
-    return Stats.from_array(stats_array)
+def make_stats_response_processor(binary):
+    def stats_response_processor(response):
+        stats_array = response.to_native()
+        return Stats.from_array(stats_array)
+    return stats_response_processor
+
+
+INTERVALS_FMT = {
+    'minute': '%Y-%m-%d:%H:%M',
+    'hour': '%Y-%m-%d:%H',
+    'day': '%Y-%m-%d',
+    'month': '%Y-%m',
+}
+
+
+def granularity_from_interval_id(interval_id):
+    for key, value in INTERVALS_FMT.items():
+        try:
+            datetime.strptime(interval_id, value)
+            return key
+        except ValueError:
+            pass
+    raise ValueError("Unsuported intervalId")
+
+
+def interval_from_interval_id(interval_id):
+    granularity = granularity_from_interval_id(interval_id)
+    return datetime.strptime(interval_id, INTERVALS_FMT[granularity])

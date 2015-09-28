@@ -106,11 +106,9 @@ class Channel(object):
                     use_bin_type=True)
 
         path = '/channels/%s/publish' % self.__name
-        headers = HttpUtils.default_post_headers(self.ably.options.use_binary_protocol)
 
         return self.ably.http.post(
             path,
-            headers=headers,
             body=request_body,
             timeout=timeout
             )

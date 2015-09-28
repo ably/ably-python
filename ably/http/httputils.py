@@ -8,29 +8,29 @@ class HttpUtils(object):
         "json": "application/json",
         "xml": "application/xml",
         "html": "text/html",
-        # "binary": "application/x-thrift",
+        "binary": "application/x-msgpack",
     }
 
     @staticmethod
     def default_get_headers(binary=False):
         if binary:
             return {
-                "Accept": "application/x-msgpack"
+                "Accept": HttpUtils.mime_types['binary']
             }
         else:
             return {
-                "Accept": "application/json",
+                "Accept": HttpUtils.mime_types['json']
             }
 
     @staticmethod
     def default_post_headers(binary=False):
         if binary:
             return {
-                "Accept": "application/x-msgpack",
-                "Content-Type": "application/x-msgpack"
+                "Accept": HttpUtils.mime_types['binary'],
+                "Content-Type": HttpUtils.mime_types['binary']
             }
         else:
             return {
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                "Accept": HttpUtils.mime_types['json'],
+                "Content-Type": HttpUtils.mime_types['json']
             }

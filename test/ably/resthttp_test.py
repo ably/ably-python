@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import unittest
 import time
 
 import mock
@@ -11,9 +10,10 @@ from ably import AblyRest
 from ably.transport.defaults import Defaults
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
+from test.ably.utils import BaseTestCase
 
 
-class TestRestHttp(unittest.TestCase):
+class TestRestHttp(BaseTestCase):
     def test_max_retry_attempts_and_timeouts(self):
         ably = AblyRest(token="foo")
         self.assertIn('single_request_connect_timeout', ably.http.CONNECTION_RETRY)

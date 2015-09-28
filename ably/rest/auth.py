@@ -101,10 +101,7 @@ class Auth(object):
         auth_token = auth_token or self.auth_options.auth_token
         auth_callback = auth_callback or self.auth_options.auth_callback
         auth_url = auth_url or self.auth_options.auth_url
-        auth_headers = auth_headers or {
-            "Content-Encoding": "utf-8",
-            "Content-Type": "application/json",
-        }
+
         auth_params = auth_params or self.auth_params
 
         token_params = token_params or {}
@@ -122,7 +119,7 @@ class Auth(object):
             response = self.ably.http.post(
                 auth_url,
                 headers=auth_headers,
-                body=json.dumps(token_params),
+                native_data=token_params,
                 skip_auth=True
             )
 
@@ -144,17 +141,18 @@ class Auth(object):
                 40000)
 
         token_path = "/keys/%s/requestToken" % key_name
+
         response = self.ably.http.post(
             token_path,
             headers=auth_headers,
-            body=signed_token_request,
+            native_data=signed_token_request,
             skip_auth=True
         )
 
         AblyException.raise_for_response(response)
-        response_json = response.json()
-        log.debug("Token: %s" % str(response_json.get("token")))
-        return TokenDetails.from_dict(response_json)
+        response_dict = response.to_native()
+        log.debug("Token: %s" % str(response_dict.get("token")))
+        return TokenDetails.from_dict(response_dict)
 
     def create_token_request(self, key_name=None, key_secret=None,
                              query_time=None, token_params=None):
@@ -231,7 +229,7 @@ class Auth(object):
 
         req["mac"] = token_params.get("mac")
 
-        signed_request = json.dumps(req)
+        signed_request = req
         log.debug("generated signed request: %s", signed_request)
 
         return signed_request

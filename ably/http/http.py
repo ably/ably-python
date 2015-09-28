@@ -4,11 +4,13 @@ import functools
 import itertools
 import logging
 import time
+import json
 
 from six.moves import range
 from six.moves.urllib.parse import urljoin
 
 import requests
+import msgpack
 
 from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
@@ -68,6 +70,27 @@ class Request(object):
         return self.__skip_auth
 
 
+class Response(object):
+    """
+    Composition for requests.Response with delegation
+    """
+
+    def __init__(self, response):
+        self.__response = response
+
+    def to_native(self):
+        content_type = self.__response.headers.get('content-type')
+        if content_type == 'application/x-msgpack':
+            return msgpack.unpackb(self.__response.content, encoding='utf-8')
+        elif content_type == 'application/json':
+            return self.json()
+        else:
+            raise ValueError("Unsuported content type")
+
+    def __getattr__(self, attr):
+        return getattr(self.__response, attr)
+
+
 class Http(object):
     CONNECTION_RETRY = {
         'single_request_connect_timeout': 4,
@@ -84,14 +107,30 @@ class Http(object):
         self.__session = requests.Session()
         self.__auth = None
 
+    def dump_body(self, body):
+        if self.options.use_binary_protocol:
+            return msgpack.packb(body, use_bin_type=False)
+        else:
+            return json.dumps(body, separators=(',', ':'))
+
     @reauth_if_expired
-    def make_request(self, method, path, headers=None, body=None, skip_auth=False, timeout=None):
+    def make_request(self, method, path, headers=None, body=None,
+                     native_data=None, skip_auth=False, timeout=None):
         fallback_hosts = Defaults.get_fallback_hosts(self.__options)
         if fallback_hosts:
             fallback_hosts.insert(0, self.preferred_host)
             fallback_hosts = itertools.cycle(fallback_hosts)
+        if native_data is not None and body is not None:
+            raise ValueError("make_request takes either body or native_data")
+        elif native_data is not None:
+            body = self.dump_body(native_data)
+        if body:
+            all_headers = HttpUtils.default_post_headers(
+                self.options.use_binary_protocol)
+        else:
+            all_headers = HttpUtils.default_get_headers(
+                self.options.use_binary_protocol)
 
-        all_headers = headers or {}
         if not skip_auth:
             if self.auth.auth_method == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
                 raise AblyException(
@@ -99,6 +138,8 @@ class Http(object):
                     401,
                     40103)
             all_headers.update(self.auth._get_auth_headers())
+        if headers:
+            all_headers.update(headers)
 
         single_request_connect_timeout = self.CONNECTION_RETRY['single_request_connect_timeout']
         single_request_read_timeout = self.CONNECTION_RETRY['single_request_read_timeout']
@@ -134,19 +175,21 @@ class Http(object):
             else:
                 try:
                     AblyException.raise_for_response(response)
-                    return response
+                    return Response(response)
                 except AblyException as e:
                     if not e.is_server_error:
                         raise e
 
     def request(self, request):
-        return self.make_request(request.method, request.url, headers=request.headers, body=request.body)
+        return self.make_request(request.method, request.url, headers=request.headers, body=request.body,
+                                 skip_auth=request.skip_auth)
 
     def get(self, url, headers=None, skip_auth=False, timeout=None):
         return self.make_request('GET', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
 
-    def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
-        return self.make_request('POST', url, headers=headers, body=body, skip_auth=skip_auth, timeout=timeout)
+    def post(self, url, headers=None, body=None, native_data=None, skip_auth=False, timeout=None):
+        return self.make_request('POST', url, headers=headers, body=body, native_data=native_data,
+                                 skip_auth=skip_auth, timeout=timeout)
 
     def delete(self, url, headers=None, skip_auth=False, timeout=None):
         return self.make_request('DELETE', url, headers=headers, skip_auth=skip_auth, timeout=timeout)

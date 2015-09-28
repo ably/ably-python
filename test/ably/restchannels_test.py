@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import collections
-import unittest
 
 from six.moves import range
 
@@ -12,11 +11,13 @@ from ably.types.capability import Capability
 from ably.util.crypto import get_default_params
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 
 
-class TestChannels(unittest.TestCase):
+# makes no request, no need to use different protocols
+class TestChannels(BaseTestCase):
 
     def setUp(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],

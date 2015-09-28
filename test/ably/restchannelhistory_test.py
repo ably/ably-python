@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import logging
 import time
-import unittest
 
 import responses
 import six
@@ -14,12 +13,14 @@ from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
-class TestRestChannelHistory(unittest.TestCase):
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
+class TestRestChannelHistory(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
@@ -29,12 +30,14 @@ class TestRestChannelHistory(unittest.TestCase):
                             tls=test_vars["tls"])
         cls.time_offset = cls.ably.time() - int(time.time())
 
-    @property
-    def ably(self):
-        return TestRestChannelHistory.ably
+    def per_protocol_setup(self, use_binary_protocol):
+        self.ably.options.use_binary_protocol = use_binary_protocol
+        self.use_binary_protocol = use_binary_protocol
 
     def test_channel_history_types(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_types']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_types')]
+
         history0.publish('history0', six.u('This is a string message payload'))
         history0.publish('history1', b'This is a byte[] message payload')
         history0.publish('history2', {'test': 'This is a JSONObject message payload'})
@@ -71,7 +74,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg="Expect messages in reverse order")
 
     def test_channel_history_multi_50_forwards(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_multi_50_f']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_multi_50_f')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -88,7 +92,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in forward order')
 
     def test_channel_history_multi_50_backwards(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_multi_50_b']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_multi_50_b')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -120,30 +125,36 @@ class TestRestChannelHistory(unittest.TestCase):
         return url.format(**kwargs)
 
     @responses.activate
+    @dont_vary_protocol
     def test_channel_history_default_limit(self):
-        channel = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit']
+        self.per_protocol_setup(True)
+        channel = self.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         channel.history()
         self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
 
     @responses.activate
+    @dont_vary_protocol
     def test_channel_history_with_limits(self):
-        channel = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit']
+        self.per_protocol_setup(True)
+        channel = self.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         channel.history(limit=500)
         self.assertIn('limit=500', responses.calls[0].request.url.split('?')[-1])
         channel.history(limit=1000)
         self.assertIn('limit=1000', responses.calls[1].request.url.split('?')[-1])
 
+    @dont_vary_protocol
     def test_channel_history_max_limit_is_1000(self):
-        channel = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit']
+        channel = self.ably.channels['persisted:channelhistory_limit']
         with self.assertRaises(AblyException):
             channel.history(limit=1001)
 
     def test_channel_history_limit_forwards(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit_f']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_limit_f')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -161,7 +172,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in forward order')
 
     def test_channel_history_limit_backwards(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_limit_f']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_limit_b')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -179,17 +191,18 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in forward order')
 
     def test_channel_history_time_forwards(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_time_f']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_time_f')]
 
         for i in range(20):
             history0.publish('history%d' % i, str(i))
 
-        interval_start = TestRestChannelHistory.ably.time()
+        interval_start = self.ably.time()
 
         for i in range(20, 40):
             history0.publish('history%d' % i, str(i))
 
-        interval_end = TestRestChannelHistory.ably.time()
+        interval_end = self.ably.time()
 
         for i in range(40, 60):
             history0.publish('history%d' % i, str(i))
@@ -207,17 +220,18 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in forward order')
 
     def test_channel_history_time_backwards(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_time_b']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_time_b')]
 
         for i in range(20):
             history0.publish('history%d' % i, str(i))
 
-        interval_start = TestRestChannelHistory.ably.time()
+        interval_start = self.ably.time()
 
         for i in range(20, 40):
             history0.publish('history%d' % i, str(i))
 
-        interval_end = TestRestChannelHistory.ably.time()
+        interval_end = self.ably.time()
 
         for i in range(40, 60):
             history0.publish('history%d' % i, str(i))
@@ -235,7 +249,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in reverse order')
 
     def test_channel_history_paginate_forwards(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_paginate_f']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_paginate_f')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -274,7 +289,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_backwards(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_paginate_b']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_paginate_b')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -313,7 +329,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_forwards_first(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_paginate_first_f']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_paginate_first_f')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -352,7 +369,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_backwards_rel_first(self):
-        history0 = TestRestChannelHistory.ably.channels['persisted:channelhistory_paginate_first_b']
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_paginate_first_b')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))

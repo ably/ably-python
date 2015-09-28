@@ -10,23 +10,21 @@ from ably.types.capability import Capability
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
 
-app_spec_text = ""
 log = logging.getLogger(__name__)
 
+app_spec_local = None
 with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
-    app_spec_text = f.read()
-
-print(app_spec_text)
+    app_spec_local = json.loads(f.read())
 
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST')
 
 
 if host is None:
-    host = "staging-rest.ably.io"
+    host = "sandbox-rest.ably.io"
 
 if host.endswith("rest.ably.io"):
-    host = "staging-rest.ably.io"
+    host = "sandbox-rest.ably.io"
     port = 80
     tls_port = 443
 else:
@@ -37,7 +35,7 @@ else:
 
 ably = AblyRest(token='not_a_real_token', host=host,
                 port=port, tls_port=tls_port,
-                tls=tls)
+                tls=tls, use_binary_protocol=False)
 
 
 class RestSetup:
@@ -46,8 +44,7 @@ class RestSetup:
     @staticmethod
     def get_test_vars(sender=None):
         if not RestSetup.__test_vars:
-            r = ably.http.post("/apps", headers=HttpUtils.default_post_headers(),
-                    body=app_spec_text, skip_auth=True)
+            r = ably.http.post("/apps", native_data=app_spec_local, skip_auth=True)
             AblyException.raise_for_response(r)
             
             app_spec = r.json()
@@ -87,7 +84,6 @@ class RestSetup:
                         tls_port = test_vars["tls_port"],
                         tls = test_vars["tls"])
 
-        headers = HttpUtils.default_get_headers()
-        ably.http.delete('/apps/' + test_vars['app_id'], headers)
+        ably.http.delete('/apps/' + test_vars['app_id'])
 
         RestSetup.__test_vars = None

@@ -11,7 +11,7 @@ from ably.rest.auth import Auth
 from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
 from ably.types.options import Options
-from ably.types.stats import stats_response_processor
+from ably.types.stats import make_stats_response_processor
 
 log = logging.getLogger(__name__)
 
@@ -75,24 +75,32 @@ class AblyRest(object):
 
     @catch_all
     def stats(self, direction=None, start=None, end=None, params=None,
-              limit=None, paginated=None, by=None, timeout=None):
+              limit=None, paginated=None, unit=None, timeout=None):
         """Returns the stats for this application"""
         params = params or {}
 
         if direction:
-            params["direction"] = "%s" % direction
+            params["direction"] = direction
         if start:
             params["start"] = self._format_time_param(start)
         if end:
             params["end"] = self._format_time_param(end)
         if limit:
-            params["limit"] = "%d" % limit
-        if by:
-            params["by"] = "%s" % by
+            if limit > 1000:
+                raise ValueError("The maximum allowed limit is 1000")
+            params["limit"] = limit
+        if unit:
+            params["unit"] = unit
+
+        if 'start' in params and 'end' in params and params['start'] > params['end']:
+            raise ValueError("'end' parameter has to be greater than or equal to 'start'")
 
         url = '/stats'
         if params:
             url += '?' + urlencode(params)
+
+        stats_response_processor = make_stats_response_processor(
+            self.options.use_binary_protocol)
 
         return PaginatedResult.paginated_query(self.http,
                                                url, None,
@@ -103,7 +111,7 @@ class AblyRest(object):
         """Returns the current server time in ms since the unix epoch"""
         r = self.http.get('/time', skip_auth=True, timeout=timeout)
         AblyException.raise_for_response(r)
-        return r.json()[0]
+        return r.to_native()[0]
 
     @property
     def client_id(self):
