@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import logging
 import time
-import unittest
 
 import responses
 import six
@@ -14,14 +13,14 @@ from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestChannelHistory(unittest.TestCase):
+class TestRestChannelHistory(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
@@ -36,9 +35,9 @@ class TestRestChannelHistory(unittest.TestCase):
         self.use_binary_protocol = use_binary_protocol
 
     def test_channel_history_types(self):
-        channel_name = 'persisted:channelhistory_types'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_types')]
+
         history0.publish('history0', six.u('This is a string message payload'))
         history0.publish('history1', b'This is a byte[] message payload')
         history0.publish('history2', {'test': 'This is a JSONObject message payload'})
@@ -75,9 +74,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg="Expect messages in reverse order")
 
     def test_channel_history_multi_50_forwards(self):
-        channel_name = 'persisted:channelhistory_multi_50_f'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_multi_50_f')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -94,9 +92,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in forward order')
 
     def test_channel_history_multi_50_backwards(self):
-        channel_name = 'persisted:channelhistory_multi_50_b'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_multi_50_b')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -133,7 +130,7 @@ class TestRestChannelHistory(unittest.TestCase):
         self.per_protocol_setup(True)
         channel = self.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         channel.history()
         self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
 
@@ -143,7 +140,7 @@ class TestRestChannelHistory(unittest.TestCase):
         self.per_protocol_setup(True)
         channel = self.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         channel.history(limit=500)
         self.assertIn('limit=500', responses.calls[0].request.url.split('?')[-1])
         channel.history(limit=1000)
@@ -156,9 +153,8 @@ class TestRestChannelHistory(unittest.TestCase):
             channel.history(limit=1001)
 
     def test_channel_history_limit_forwards(self):
-        channel_name = 'persisted:channelhistory_limit_f'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_limit_f')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -176,9 +172,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in forward order')
 
     def test_channel_history_limit_backwards(self):
-        channel_name = 'persisted:channelhistory_limit_b'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_limit_b')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -196,9 +191,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in forward order')
 
     def test_channel_history_time_forwards(self):
-        channel_name = 'persisted:channelhistory_time_f'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_time_f')]
 
         for i in range(20):
             history0.publish('history%d' % i, str(i))
@@ -226,9 +220,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in forward order')
 
     def test_channel_history_time_backwards(self):
-        channel_name = 'persisted:channelhistory_time_b'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_time_b')]
 
         for i in range(20):
             history0.publish('history%d' % i, str(i))
@@ -256,9 +249,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expect messages in reverse order')
 
     def test_channel_history_paginate_forwards(self):
-        channel_name = 'persisted:channelhistory_paginate_f'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_paginate_f')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -297,9 +289,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_backwards(self):
-        channel_name = 'persisted:channelhistory_paginate_b'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_paginate_b')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -338,9 +329,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_forwards_first(self):
-        channel_name = 'persisted:channelhistory_paginate_first_f'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_paginate_first_f')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -379,9 +369,8 @@ class TestRestChannelHistory(unittest.TestCase):
                 msg='Expected 10 messages')
         
     def test_channel_history_paginate_backwards_rel_first(self):
-        channel_name = 'persisted:channelhistory_paginate_first_b'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        history0 = self.ably.channels[channel_name]
+        history0 = self.ably.channels[
+            self.protocol_channel_name('persisted:channelhistory_paginate_first_b')]
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))

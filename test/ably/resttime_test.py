@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import time
-import unittest
 
 import six
 
@@ -10,13 +9,13 @@ from ably import AblyRest
 from ably import Options
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestTime(unittest.TestCase):
+class TestRestTime(BaseTestCase):
 
     def per_protocol_setup(self, use_binary_protocol):
         self.use_binary_protocol = use_binary_protocol

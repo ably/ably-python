@@ -75,15 +75,17 @@ class Response(object):
     Composition for requests.Response with delegation
     """
 
-    def __init__(self, response, binary=False):
+    def __init__(self, response):
         self.__response = response
-        self.__binary = binary
 
     def to_native(self):
-        if self.__binary:
+        content_type = self.__response.headers.get('content-type')
+        if content_type == 'application/x-msgpack':
             return msgpack.unpackb(self.__response.content, encoding='utf-8')
-        else:
+        elif content_type == 'application/json':
             return self.json()
+        else:
+            raise ValueError("Unsuported content type")
 
     def __getattr__(self, attr):
         return getattr(self.__response, attr)
@@ -173,13 +175,14 @@ class Http(object):
             else:
                 try:
                     AblyException.raise_for_response(response)
-                    return Response(response, self.options.use_binary_protocol)
+                    return Response(response)
                 except AblyException as e:
                     if not e.is_server_error:
                         raise e
 
     def request(self, request):
-        return self.make_request(request.method, request.url, headers=request.headers, body=request.body)
+        return self.make_request(request.method, request.url, headers=request.headers, body=request.body,
+                                 skip_auth=request.skip_auth)
 
     def get(self, url, headers=None, skip_auth=False, timeout=None):
         return self.make_request('GET', url, headers=headers, skip_auth=skip_auth, timeout=timeout)

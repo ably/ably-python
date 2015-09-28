@@ -3,7 +3,6 @@
 import base64
 import json
 import logging
-import unittest
 
 import six
 import mock
@@ -15,12 +14,13 @@ from ably.util.crypto import get_cipher, get_default_params
 from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
-class TestTextEncodersNoEncryption(unittest.TestCase):
+class TestTextEncodersNoEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
@@ -148,7 +148,7 @@ class TestTextEncodersNoEncryption(unittest.TestCase):
         self.assertEqual(decoded_data['encoding'], 'foo/bar')
 
 
-class TestTextEncodersEncryption(unittest.TestCase):
+class TestTextEncodersEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
@@ -278,7 +278,7 @@ class TestTextEncodersEncryption(unittest.TestCase):
         self.assertFalse(message.encoding)
 
 
-class TestBinaryEncodersNoEncryption(unittest.TestCase):
+class TestBinaryEncodersNoEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
@@ -368,7 +368,7 @@ class TestBinaryEncodersNoEncryption(unittest.TestCase):
         self.assertFalse(message.encoding)
 
 
-class TestBinaryEncodersEncryption(unittest.TestCase):
+class TestBinaryEncodersEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],

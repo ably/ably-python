@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import json
 import logging
-import unittest
 
 import six
 from six.moves import range
@@ -14,14 +13,14 @@ from ably import AblyRest
 from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestChannelPublish(unittest.TestCase):
+class TestRestChannelPublish(BaseTestCase):
     def setUp(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                              host=test_vars["host"],
@@ -34,9 +33,8 @@ class TestRestChannelPublish(unittest.TestCase):
         self.use_binary_protocol = use_binary_protocol
 
     def test_publish_various_datatypes_text(self):
-        channel_name = 'persisted:publish0'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        publish0 = self.ably.channels[channel_name]
+        publish0 = self.ably.channels[
+            self.protocol_channel_name('persisted:publish0')]
 
         publish0.publish("publish0", six.u("This is a string message payload"))
         publish0.publish("publish1", b"This is a byte[] message payload")
@@ -73,9 +71,8 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertRaises(AblyException, channel.publish, 'event', data)
 
     def test_publish_message_list(self):
-        channel_name = 'persisted:message_list_channel'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        channel = self.ably.channels[channel_name]
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:message_list_channel')]
 
         expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
 
@@ -93,9 +90,8 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertEqual(m.data, expected_m.data)
 
     def test_message_list_generate_one_request(self):
-        channel_name = 'persisted:message_list_channel_one_request'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        channel = self.ably.channels[channel_name]
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:message_list_channel_one_request')]
 
         expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
 
@@ -135,9 +131,8 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertEqual(40160, cm.exception.code)
 
     def test_publish_message_null_name(self):
-        channel_name = 'persisted:message_null_name_channel'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        channel = self.ably.channels[channel_name]
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:message_null_name_channel')]
 
         data = "String message"
         channel.publish(name=None, data=data)
@@ -153,9 +148,8 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertEqual(messages[0].data, data)
 
     def test_publish_message_null_data(self):
-        channel_name = 'persisted:message_null_data_channel'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        channel = self.ably.channels[channel_name]
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:message_null_data_channel')]
 
         name = "Test name"
         channel.publish(name=name, data=None)
@@ -171,9 +165,8 @@ class TestRestChannelPublish(unittest.TestCase):
         self.assertIsNone(messages[0].data)
 
     def test_publish_message_null_name_and_data(self):
-        channel_name = 'persisted:null_name_and_data_channel'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        channel = self.ably.channels[channel_name]
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:null_name_and_data_channel')]
 
         channel.publish(name=None, data=None)
         channel.publish()
@@ -190,9 +183,8 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertIsNone(m.data)
 
     def test_publish_message_null_name_and_data_keys_arent_sent(self):
-        channel_name = 'persisted:null_name_and_data_keys_arent_sent_channel'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
-        channel = self.ably.channels[channel_name]
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:null_name_and_data_keys_arent_sent_channel')]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -216,10 +208,9 @@ class TestRestChannelPublish(unittest.TestCase):
             self.assertNotIn('data', posted_body)
 
     def test_message_attr(self):
-        channel_name = 'persisted:publish_message_attr'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        publish0 = self.ably.channels[
+            self.protocol_channel_name('persisted:publish_message_attr')]
 
-        publish0 = self.ably.channels[channel_name]
         messages = [Message('publish',
                             {"test": "This is a JSONObject message payload"},
                             client_id='client_id')]

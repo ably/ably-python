@@ -45,7 +45,7 @@ class PaginatedResult(object):
     @staticmethod
     def paginated_query(http, url, headers, response_processor):
         headers = headers or {}
-        req = Request(method='GET', url=url, headers=headers, body=None, skip_auth=True)
+        req = Request(method='GET', url=url, headers=headers, body=None, skip_auth=False)
         return PaginatedResult.paginated_query_with_request(http, req, response_processor)
 
     @staticmethod

@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from datetime import datetime
 from datetime import timedelta
 import logging
-import unittest
 
 import six
 
@@ -14,7 +13,7 @@ from ably.util.exceptions import AblyException
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 log = logging.getLogger(__name__)
 test_vars = RestSetup.get_test_vars()
@@ -99,7 +98,7 @@ class TestRestAppStatsSetup(object):
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestDirectionForwards(TestRestAppStatsSetup, unittest.TestCase):
+class TestDirectionForwards(TestRestAppStatsSetup, BaseTestCase):
 
     @classmethod
     def get_params(cls):
@@ -121,7 +120,7 @@ class TestDirectionForwards(TestRestAppStatsSetup, unittest.TestCase):
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestDirectionBackwards(TestRestAppStatsSetup, unittest.TestCase):
+class TestDirectionBackwards(TestRestAppStatsSetup, BaseTestCase):
 
     @classmethod
     def get_params(cls):
@@ -142,7 +141,7 @@ class TestDirectionBackwards(TestRestAppStatsSetup, unittest.TestCase):
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestOnlyLastYear(TestRestAppStatsSetup, unittest.TestCase):
+class TestOnlyLastYear(TestRestAppStatsSetup, BaseTestCase):
 
     @classmethod
     def get_params(cls):
@@ -158,7 +157,7 @@ class TestOnlyLastYear(TestRestAppStatsSetup, unittest.TestCase):
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestPreviousYear(TestRestAppStatsSetup, unittest.TestCase):
+class TestPreviousYear(TestRestAppStatsSetup, BaseTestCase):
 
     @classmethod
     def get_params(cls):
@@ -174,7 +173,7 @@ class TestPreviousYear(TestRestAppStatsSetup, unittest.TestCase):
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestAppStats(TestRestAppStatsSetup, unittest.TestCase):
+class TestRestAppStats(TestRestAppStatsSetup, BaseTestCase):
 
     @dont_vary_protocol
     def test_protocols(self):

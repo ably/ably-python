@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import time
 import json
 import logging
-import unittest
 
 from mock import patch
 import six
@@ -14,14 +13,14 @@ from ably import Capability
 from ably import Options
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestToken(unittest.TestCase):
+class TestRestToken(BaseTestCase):
     def server_time(self):
         return self.ably.time()
 

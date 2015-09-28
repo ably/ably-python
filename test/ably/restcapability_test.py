@@ -4,7 +4,6 @@ import math
 from datetime import datetime
 from datetime import timedelta
 import json
-import unittest
 
 import six
 
@@ -14,13 +13,13 @@ from ably.types.capability import Capability
 from ably.util.exceptions import AblyException
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestCapability(unittest.TestCase):
+class TestRestCapability(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import re
-import unittest
 
 import responses
 
@@ -9,11 +8,12 @@ from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 
 
-class TestPaginatedResult(unittest.TestCase):
+class TestPaginatedResult(BaseTestCase):
 
     def get_response_callback(self, headers, body, status):
         def callback(request):

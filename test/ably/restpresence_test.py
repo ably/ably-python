@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-import unittest
 from datetime import datetime, timedelta
 
 import six
@@ -16,14 +15,14 @@ from ably.types.presence import (PresenceMessage,
 from ably import ChannelOptions
 from ably.util.crypto import get_default_params
 
-from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass
+from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase
 from test.ably.restsetup import RestSetup
 
 test_vars = RestSetup.get_test_vars()
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestPresence(unittest.TestCase):
+class TestPresence(BaseTestCase):
 
     def setUp(self):
         self.ably = AblyRest(test_vars["keys"][0]["key_str"],
@@ -144,7 +143,7 @@ class TestPresence(unittest.TestCase):
     @responses.activate
     def test_get_presence_default_limit(self):
         url = self.presence_mock_url()
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.channel.presence.get()
         self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
 
@@ -152,7 +151,7 @@ class TestPresence(unittest.TestCase):
     @responses.activate
     def test_get_presence_with_limit(self):
         url = self.presence_mock_url()
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.channel.presence.get(300)
         self.assertIn('limit=300', responses.calls[0].request.url.split('?')[-1])
 
@@ -160,14 +159,14 @@ class TestPresence(unittest.TestCase):
     @responses.activate
     def test_get_presence_max_limit_is_1000(self):
         url = self.presence_mock_url()
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.assertRaises(ValueError, self.channel.presence.get, 5000)
 
     @dont_vary_protocol
     @responses.activate
     def test_history_default_limit(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.channel.presence.history()
         self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
 
@@ -175,7 +174,7 @@ class TestPresence(unittest.TestCase):
     @responses.activate
     def test_history_with_limit(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.channel.presence.history(300)
         self.assertIn('limit=300', responses.calls[0].request.url.split('?')[-1])
 
@@ -183,7 +182,7 @@ class TestPresence(unittest.TestCase):
     @responses.activate
     def test_history_with_direction(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.channel.presence.history(direction='backwards')
         self.assertIn('direction=backwards', responses.calls[0].request.url.split('?')[-1])
 
@@ -191,14 +190,14 @@ class TestPresence(unittest.TestCase):
     @responses.activate
     def test_history_max_limit_is_1000(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.assertRaises(ValueError, self.channel.presence.history, 5000)
 
     @dont_vary_protocol
     @responses.activate
     def test_with_milisecond_start_end(self):
         url = self.history_mock_url()
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.channel.presence.history(start=100000, end=100001)
         self.assertIn('start=100000', responses.calls[0].request.url.split('?')[-1])
         self.assertIn('end=100001', responses.calls[0].request.url.split('?')[-1])
@@ -211,7 +210,7 @@ class TestPresence(unittest.TestCase):
         start_ms = 1439658704706
         end = start + timedelta(hours=1)
         end_ms = start_ms + (1000 * 60 * 60)
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         self.channel.presence.history(start=start, end=end)
         self.assertIn('start=' + str(start_ms), responses.calls[0].request.url.split('?')[-1])
         self.assertIn('end=' + str(end_ms), responses.calls[0].request.url.split('?')[-1])
@@ -222,6 +221,6 @@ class TestPresence(unittest.TestCase):
         url = self.history_mock_url()
         end = datetime(2015, 8, 15, 17, 11, 44, 706539)
         start = end + timedelta(hours=1)
-        responses.add(responses.GET, url, body=msgpack.packb({}))
+        self.responses_add_empty_msg_pack(url)
         with self.assertRaisesRegexp(ValueError, "'end' parameter has to be greater than or equal to 'start'"):
             self.channel.presence.history(start=start, end=end)

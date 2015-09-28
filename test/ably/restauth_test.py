@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import logging
-import unittest
 
 from ably import AblyRest
 from ably import Auth
@@ -9,6 +8,7 @@ from ably import Options
 
 
 from test.ably.restsetup import RestSetup
+from test.ably.utils import BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 
 # does not make any request, no need to vary by protocol
-class TestAuth(unittest.TestCase):
+class TestAuth(BaseTestCase):
 
     def test_auth_init_key_only(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"])

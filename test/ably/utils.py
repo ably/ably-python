@@ -1,10 +1,23 @@
 
+import unittest
 import json
 from functools import wraps
-from ably.http.http import Http
 
 import msgpack
 import mock
+import responses
+
+from ably.http.http import Http
+
+
+class BaseTestCase(unittest.TestCase):
+
+    def responses_add_empty_msg_pack(self, url, method=responses.GET):
+        responses.add(responses.GET, url, body=msgpack.packb({}),
+                      content_type='application/x-msgpack')
+
+    def protocol_channel_name(self, name):
+        return name + ('_bin' if self.use_binary_protocol else '_text')
 
 
 def assert_responses_type(protocol):

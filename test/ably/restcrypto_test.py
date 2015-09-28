@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import json
 import os
 import logging
-import unittest
 import base64
 
 import six
@@ -17,14 +16,14 @@ from ably.util.crypto import CipherParams, get_cipher, get_default_params
 from Crypto import Random
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass
+from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase
 
 test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestCrypto(unittest.TestCase):
+class TestRestCrypto(BaseTestCase):
 
     def setUp(self):
         options = {
@@ -72,8 +71,7 @@ class TestRestCrypto(unittest.TestCase):
         self.assertEqual(expected_ciphertext, actual_ciphertext)
 
     def test_crypto_publish(self):
-        channel_name = 'persisted:crypto_publish_text'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel_name = self.protocol_channel_name('persisted:crypto_publish_text')
         channel_options = ChannelOptions(encrypted=True,
                                          cipher_params=get_default_params())
         publish0 = self.ably.channels.get(channel_name, channel_options)
@@ -142,8 +140,8 @@ class TestRestCrypto(unittest.TestCase):
                 msg="Expect publish6 to be expected JSONObject")
 
     def test_crypto_publish_key_mismatch(self):
-        channel_name = 'persisted:crypto_publish_key_mismatch'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel_name = self.protocol_channel_name('persisted:crypto_publish_key_mismatch')
+
         channel_options = ChannelOptions(encrypted=True,
                                          cipher_params=get_default_params())
         publish0 = self.ably.channels.get(channel_name, channel_options)
@@ -170,8 +168,7 @@ class TestRestCrypto(unittest.TestCase):
         self.assertEqual('invalid-padding', the_exception.message)
 
     def test_crypto_send_unencrypted(self):
-        channel_name = 'persisted:crypto_send_unencrypted'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel_name = self.protocol_channel_name('persisted:crypto_send_unencrypted')
         publish0 = self.ably.channels[channel_name]
 
         publish0.publish("publish3", six.u("This is a string message payload"))
@@ -205,8 +202,7 @@ class TestRestCrypto(unittest.TestCase):
                 msg="Expect publish6 to be expected JSONObject")
 
     def test_crypto_encrypted_unhandled(self):
-        channel_name = 'persisted:crypto_send_encrypted_unhandled'
-        channel_name += '_bin' if self.use_binary_protocol else '_text'
+        channel_name = self.protocol_channel_name('persisted:crypto_send_encrypted_unhandled')
         key = '0123456789abcdef'
         data = six.u('foobar')
         channel_options = ChannelOptions(encrypted=True,
@@ -280,9 +276,9 @@ class AbstractTestCryptoWithFixture(object):
             self.assertEqual(as_dict['encoding'], expected['encoding'])
 
 
-class TestCryptoWithFixture128(AbstractTestCryptoWithFixture, unittest.TestCase):
+class TestCryptoWithFixture128(AbstractTestCryptoWithFixture, BaseTestCase):
     fixture_file = 'crypto-data-128.json'
 
 
-class TestCryptoWithFixture256(AbstractTestCryptoWithFixture, unittest.TestCase):
+class TestCryptoWithFixture256(AbstractTestCryptoWithFixture, BaseTestCase):
     fixture_file = 'crypto-data-256.json'
