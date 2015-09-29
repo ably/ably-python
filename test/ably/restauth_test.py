@@ -5,6 +5,8 @@ import time
 import unittest
 
 import mock
+import six
+
 from ably import AblyRest
 from ably import Auth
 from ably import Options
@@ -12,7 +14,7 @@ from ably.types.tokendetails import TokenDetails
 
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseTestCase
+from test.ably.utils import BaseTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol 
 
 test_vars = RestSetup.get_test_vars()
 
@@ -77,7 +79,8 @@ class TestAuth(BaseTestCase):
                 msg="Unexpected Auth method mismatch")
 
 
-class TestAuthAuthorize(unittest.TestCase):
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
+class TestAuthAuthorize(BaseTestCase):
 
     def setUp(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
@@ -85,6 +88,9 @@ class TestAuthAuthorize(unittest.TestCase):
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
+
+    def per_protocol_setup(self, use_binary_protocol):
+        self.ably.options.use_binary_protocol = use_binary_protocol
 
     def test_if_authorize_changes_auth_method_to_token(self):
 
@@ -133,6 +139,7 @@ class TestAuthAuthorize(unittest.TestCase):
 
         self.assertIsInstance(token, TokenDetails)
 
+    @dont_vary_protocol
     def test_authorize_adhere_to_request_token(self):
 
         token_params = {'ttl': 100}
