@@ -36,7 +36,10 @@ The ably-python client has one dependency,
 
 #### To run the tests
 
-    python setup.py test
+    git submodule init
+    git submodule update
+    pip install -r requirements-test.txt
+    nosetests
 
 ## Basic Usage
 
