@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import six
 from mock import patch
+from requests import Session
 
 from ably import AblyRest
 from ably import AblyException
@@ -67,8 +68,8 @@ class TestRestInit(BaseTestCase):
 
     @dont_vary_protocol
     def test_specified_host(self):
-        ably = AblyRest(token='foo', host="some.other.host")
-        self.assertEqual("some.other.host", ably.options.host,
+        ably = AblyRest(token='foo', rest_host="some.other.host")
+        self.assertEqual("some.other.host", ably.options.rest_host,
                          msg="Unexpected host mismatch")
 
     @dont_vary_protocol
@@ -104,7 +105,7 @@ class TestRestInit(BaseTestCase):
 
     def test_query_time_param(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        host=test_vars["host"],
+                        rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"], query_time=True,
@@ -146,6 +147,19 @@ class TestRestInit(BaseTestCase):
         self.assertEqual(40103, cm.exception.code)
         self.assertEqual('Cannot use Basic Auth over non-TLS connections',
                          cm.exception.message)
+
+    @dont_vary_protocol
+    def test_enviroment(self):
+        ably = AblyRest(token='token', environment='custom')
+        with patch.object(Session, 'prepare_request',
+                          wraps=ably.http._Http__session.prepare_request) as get_mock:
+            try:
+                ably.time()
+            except AblyException:
+                pass
+            request = get_mock.call_args_list[0][0][0]
+            self.assertEquals(request.url, 'https://custom-rest.ably.io:443/time')
+
 
 if __name__ == "__main__":
     unittest.main()

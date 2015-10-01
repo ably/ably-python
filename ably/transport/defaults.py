@@ -12,8 +12,8 @@ class Defaults(object):
         "E.ably-realtime.com",
     ]
 
-    host = "rest.ably.io"
-    ws_host = "realtime.ably.io"
+    rest_host = "rest.ably.io"
+    realtime_host = "realtime.ably.io"
 
     port = 80
     tls_port = 443
@@ -26,11 +26,11 @@ class Defaults(object):
     transports = []  # ["web_socket", "comet"]
 
     @staticmethod
-    def get_host(options):
-        if options.host:
-            return options.host
+    def get_rest_host(options):
+        if options.rest_host:
+            return options.rest_host
         else:
-            return Defaults.host
+            return Defaults.rest_host
 
     @staticmethod
     def get_port(options):
@@ -46,8 +46,8 @@ class Defaults(object):
                 return Defaults.port
 
     @staticmethod
-    def get_fallback_hosts(options):
-        if options.host:
+    def get_fallback_rest_hosts(options):
+        if options.rest_host:
             return []
         else:
             fallback_hosts_copy = list(Defaults.fallback_hosts)

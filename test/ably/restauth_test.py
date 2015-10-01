@@ -44,7 +44,7 @@ class TestAuth(BaseTestCase):
             return "this_is_not_really_a_token_request"
 
         ably = AblyRest(key_name=test_vars["keys"][0]["key_name"],
-                        host=test_vars["host"],
+                        rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
@@ -70,7 +70,7 @@ class TestAuth(BaseTestCase):
     def test_auth_init_with_token(self):
 
         ably = AblyRest(token="this_is_not_really_a_token",
-                        host=test_vars["host"],
+                        rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"])

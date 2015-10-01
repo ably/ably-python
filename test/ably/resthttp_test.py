@@ -76,7 +76,7 @@ class TestRestHttp(BaseTestCase):
                 expected_urls_set = set([
                     make_url(host)
                     for host in ([ably.http.preferred_host] +
-                                 Defaults.get_fallback_hosts(Options()))
+                                 Defaults.get_fallback_rest_hosts(Options()))
                 ])
                 for ((__, url), ___) in request_mock.call_args_list:
                     self.assertIn(url, expected_urls_set)
@@ -84,7 +84,7 @@ class TestRestHttp(BaseTestCase):
 
     def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
-        ably = AblyRest(token="foo", host=custom_host)
+        ably = AblyRest(token="foo", rest_host=custom_host)
         self.assertIn('max_retry_attempts', ably.http.CONNECTION_RETRY)
 
         custom_url = "%s://%s:%d/" % (
@@ -104,7 +104,7 @@ class TestRestHttp(BaseTestCase):
                     mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY))
 
     def test_no_retry_if_not_500_to_599_http_code(self):
-        default_host = Defaults.get_host(Options())
+        default_host = Defaults.get_rest_host(Options())
         ably = AblyRest(token="foo")
         self.assertIn('max_retry_attempts', ably.http.CONNECTION_RETRY)
 

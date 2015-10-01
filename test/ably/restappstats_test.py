@@ -35,12 +35,12 @@ class TestRestAppStatsSetup(object):
         RestSetup._RestSetup__test_vars = None
         test_vars = RestSetup.get_test_vars()
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            host=test_vars["host"],
+                            rest_host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"])
         cls.ably_text = AblyRest(key=test_vars["keys"][0]["key_str"],
-                                 host=test_vars["host"],
+                                 rest_host=test_vars["host"],
                                  port=test_vars["port"],
                                  tls_port=test_vars["tls_port"],
                                  tls=test_vars["tls"],

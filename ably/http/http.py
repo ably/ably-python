@@ -116,7 +116,7 @@ class Http(object):
     @reauth_if_expired
     def make_request(self, method, path, headers=None, body=None,
                      native_data=None, skip_auth=False, timeout=None):
-        fallback_hosts = Defaults.get_fallback_hosts(self.__options)
+        fallback_hosts = Defaults.get_fallback_rest_hosts(self.__options)
         if fallback_hosts:
             fallback_hosts.insert(0, self.preferred_host)
             fallback_hosts = itertools.cycle(fallback_hosts)
@@ -151,6 +151,8 @@ class Http(object):
         requested_at = time.time()
         for retry_count in range(max_retry_attempts):
             host = next(fallback_hosts) if fallback_hosts else self.preferred_host
+            if self.options.environment:
+                host = self.options.environment + '-' + host
 
             base_url = "%s://%s:%d" % (self.preferred_scheme,
                                        host,
@@ -208,7 +210,7 @@ class Http(object):
 
     @property
     def preferred_host(self):
-        return Defaults.get_host(self.options)
+        return Defaults.get_rest_host(self.options)
 
     @property
     def preferred_port(self):

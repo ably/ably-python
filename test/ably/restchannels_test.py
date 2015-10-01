@@ -21,7 +21,7 @@ class TestChannels(BaseTestCase):
 
     def setUp(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             host=test_vars["host"],
+                             rest_host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
@@ -108,7 +108,7 @@ class TestChannels(BaseTestCase):
     def test_without_permissions(self):
         key = test_vars["keys"][2]
         ably = AblyRest(key=key["key_str"],
-                        host=test_vars["host"],
+                        rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"])

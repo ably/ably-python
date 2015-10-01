@@ -24,7 +24,7 @@ class TestTextEncodersNoEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            host=test_vars["host"],
+                            rest_host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"],
@@ -152,7 +152,7 @@ class TestTextEncodersEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            host=test_vars["host"],
+                            rest_host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"],
@@ -282,7 +282,7 @@ class TestBinaryEncodersNoEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            host=test_vars["host"],
+                            rest_host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"])
@@ -372,7 +372,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            host=test_vars["host"],
+                            rest_host=test_vars["host"],
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"])
