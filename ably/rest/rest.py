@@ -12,13 +12,14 @@ from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
 from ably.types.options import Options
 from ably.types.stats import make_stats_response_processor
+from ably.types.tokendetails import TokenDetails
 
 log = logging.getLogger(__name__)
 
 
 class AblyRest(object):
     """Ably Rest Client"""
-    def __init__(self, key=None, token=None, **kwargs):
+    def __init__(self, key=None, token=None, token_details=None, **kwargs):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -27,6 +28,7 @@ class AblyRest(object):
 
           **Or**
           - `token`: a valid token string
+          - `token_details`: an instance of TokenDetails class
 
           **Optional Parameters**
           - `client_id`: Undocumented
@@ -47,6 +49,10 @@ class AblyRest(object):
             options = Options(key=key, **kwargs)
         elif token is not None:
             options = Options(auth_token=token, **kwargs)
+        elif token_details is not None:
+            if not isinstance(token_details, TokenDetails):
+                raise ValueError("token_details must be an instance of TokenDetails")
+            options = Options(token_details=token_details, **kwargs)
         elif ('auth_callback' not in kwargs and 'auth_url' not in kwargs and
               # and don't have both key_name and key_secret
               not ('key_name' in kwargs and 'key_secret' in kwargs)):

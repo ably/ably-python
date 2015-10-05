@@ -12,7 +12,6 @@ from ably import Auth
 from ably import Options
 from ably.types.tokendetails import TokenDetails
 
-
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol 
 
@@ -35,6 +34,13 @@ class TestAuth(BaseTestCase):
 
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                          msg="Unexpected Auth method mismatch")
+
+    def test_auth_token_details(self):
+        td = TokenDetails()
+        ably = AblyRest(token_details=td)
+
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method)
+        self.assertIs(ably.auth.token_details, td)
 
     def test_auth_init_with_token_callback(self):
         callback_called = []
@@ -84,7 +90,7 @@ class TestAuthAuthorize(BaseTestCase):
 
     def setUp(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             host=test_vars["host"],
+                             rest_host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])

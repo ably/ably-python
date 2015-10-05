@@ -7,6 +7,7 @@ from requests import Session
 from ably import AblyRest
 from ably import AblyException
 from ably.transport.defaults import Defaults
+from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
@@ -32,6 +33,13 @@ class TestRestInit(BaseTestCase):
         ably = AblyRest(token="foo")
         self.assertEqual(ably.options.auth_token, "foo",
                          "Token not set at options")
+
+    @dont_vary_protocol
+    def test_with_token(self):
+        td = TokenDetails()
+        ably = AblyRest(token_details=td)
+        self.assertIs(ably.options.token_details, td)
+
     @dont_vary_protocol
     def test_with_options_token_callback(self):
         def token_callback(**params):
@@ -75,6 +83,20 @@ class TestRestInit(BaseTestCase):
     @dont_vary_protocol
     def test_specified_port(self):
         ably = AblyRest(token='foo', port=9998, tls_port=9999)
+        self.assertEqual(9999, Defaults.get_port(ably.options),
+                         msg="Unexpected port mismatch. Expected: 9999. Actual: %d" %
+                         ably.options.tls_port)
+
+    @dont_vary_protocol
+    def test_specified_non_tls_port(self):
+        ably = AblyRest(token='foo', port=9998, tls=False)
+        self.assertEqual(9998, Defaults.get_port(ably.options),
+                         msg="Unexpected port mismatch. Expected: 9999. Actual: %d" %
+                         ably.options.tls_port)
+
+    @dont_vary_protocol
+    def test_specified_tls_port(self):
+        ably = AblyRest(token='foo', tls_port=9999, tls=True)
         self.assertEqual(9999, Defaults.get_port(ably.options),
                          msg="Unexpected port mismatch. Expected: 9999. Actual: %d" %
                          ably.options.tls_port)
