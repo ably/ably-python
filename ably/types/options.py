@@ -57,6 +57,14 @@ class Options(AuthOptions):
         self.__rest_host = value
 
     @property
+    def realtime_host(self):
+        return self.__realtime_host
+
+    @realtime_host.setter
+    def realtime_host(self, value):
+        self.__realtime_host = value
+
+    @property
     def port(self):
         return self.__port
 

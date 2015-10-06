@@ -35,7 +35,7 @@ class TestRestInit(BaseTestCase):
                          "Token not set at options")
 
     @dont_vary_protocol
-    def test_with_token(self):
+    def test_with_token_details(self):
         td = TokenDetails()
         ably = AblyRest(token_details=td)
         self.assertIs(ably.options.token_details, td)
@@ -75,10 +75,17 @@ class TestRestInit(BaseTestCase):
         AblyRest(auth_url='not_really_an_url')
 
     @dont_vary_protocol
-    def test_specified_host(self):
+    def test_specified_rest_host(self):
         ably = AblyRest(token='foo', rest_host="some.other.host")
         self.assertEqual("some.other.host", ably.options.rest_host,
                          msg="Unexpected host mismatch")
+
+    @dont_vary_protocol
+    def test_specified_realtime_host(self):
+        ably = AblyRest(token='foo', realtime_host="some.other.host")
+        self.assertEqual("some.other.host", ably.options.realtime_host,
+                         msg="Unexpected host mismatch")
+
 
     @dont_vary_protocol
     def test_specified_port(self):
