@@ -3,9 +3,11 @@ from __future__ import absolute_import
 import logging
 import time
 import unittest
+import base64
 
 import mock
 import six
+from requests import Session
 
 from ably import AblyRest
 from ably import Auth
@@ -66,8 +68,6 @@ class TestAuth(BaseTestCase):
                 msg="Unexpected Auth method mismatch")
         
     def test_auth_init_with_key_and_client_id(self):
-        options = Options(key=test_vars["keys"][0]["key_str"])
-
         ably = AblyRest(key=test_vars["keys"][0]["key_str"], client_id='testClientId')
 
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
@@ -83,6 +83,20 @@ class TestAuth(BaseTestCase):
 
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
+
+    def test_request_basic_auth_header(self):
+        ably = AblyRest(key_secret='foo', key_name='bar')
+
+        with mock.patch.object(Session, 'prepare_request') as get_mock:
+            try:
+                ably.http.get('/time', skip_auth=False)
+            except Exception:
+                pass
+        request = get_mock.call_args_list[0][0][0]
+        authorization = request.headers['Authorization']
+        self.assertEqual(base64.b64decode(
+            authorization.split()[-1].encode('ascii')).decode('utf-8'),
+            'bar:foo')
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
