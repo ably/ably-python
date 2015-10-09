@@ -66,7 +66,7 @@ class TestAuth(BaseTestCase):
         self.assertTrue(callback_called, msg="Token callback not called")
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
                 msg="Unexpected Auth method mismatch")
-        
+
     def test_auth_init_with_key_and_client_id(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"], client_id='testClientId')
 
@@ -94,9 +94,25 @@ class TestAuth(BaseTestCase):
                 pass
         request = get_mock.call_args_list[0][0][0]
         authorization = request.headers['Authorization']
-        self.assertEqual(base64.b64decode(
-            authorization.split()[-1].encode('ascii')).decode('utf-8'),
-            'bar:foo')
+        self.assertEqual(authorization,
+                         'Basic %s' %
+                         base64.b64encode('bar:foo'.encode('ascii')
+                                          ).decode('utf-8'))
+
+    def test_request_token_auth_header(self):
+        ably = AblyRest(token='not_a_real_token')
+
+        with mock.patch.object(Session, 'prepare_request') as get_mock:
+            try:
+                ably.http.get('/time', skip_auth=False)
+            except Exception:
+                pass
+        request = get_mock.call_args_list[0][0][0]
+        authorization = request.headers['Authorization']
+        self.assertEqual(authorization,
+                         'Bearer %s' %
+                         base64.b64encode('not_a_real_token'.encode('ascii')
+                                          ).decode('utf-8'))
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
