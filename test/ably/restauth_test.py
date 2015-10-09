@@ -114,6 +114,29 @@ class TestAuth(BaseTestCase):
                          base64.b64encode('not_a_real_token'.encode('ascii')
                                           ).decode('utf-8'))
 
+    def test_if_cant_authenticate_via_token(self):
+        self.assertRaises(ValueError, AblyRest, use_token_auth=True)
+
+    def test_use_auth_token(self):
+        ably = AblyRest(use_token_auth=True, key=test_vars["keys"][0]["key_str"])
+        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+
+    def test_with_client_id(self):
+        ably = AblyRest(client_id='client_id', key=test_vars["keys"][0]["key_str"])
+        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+
+    def test_with_auth_url(self):
+        ably = AblyRest(auth_url='auth_url')
+        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+
+    def test_with_auth_callback(self):
+        ably = AblyRest(auth_callback=lambda x: x)
+        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+
+    def test_with_token(self):
+        ably = AblyRest(token='a token')
+        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestAuthAuthorize(BaseTestCase):

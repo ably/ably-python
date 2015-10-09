@@ -38,7 +38,10 @@ class Auth(object):
         self.__auth_params = None
         self.__token_details = None
 
-        if options.key_secret is not None and options.client_id is None:
+        must_use_token_auth = options.use_token_auth is True
+        must_not_use_token_auth = options.use_token_auth is False
+        can_use_basic_auth = options.key_secret is not None and options.client_id is None
+        if not must_use_token_auth and can_use_basic_auth:
             # We have the key, no need to authenticate the client
             # default to using basic auth
             log.debug("anonymous, using basic auth")
@@ -47,6 +50,8 @@ class Auth(object):
             basic_key = base64.b64encode(basic_key.encode('utf-8'))
             self.__basic_credentials = basic_key.decode('ascii')
             return
+        elif must_not_use_token_auth and not can_use_basic_auth:
+            raise ValueError('If use_token_auth is False you must provide a key')
 
         # Using token auth
         self.__auth_method = Auth.Method.TOKEN
@@ -66,10 +71,11 @@ class Auth(object):
             log.debug("using token auth with client-side signing")
         elif options.auth_token:
             log.debug("using token auth with supplied token only")
+        elif options.token_details:
+            log.debug("using token auth with supplied token_details")
         else:
-            # Not a hard error, but any operation requiring authentication
-            # will fail
-            log.debug("no authentication parameters supplied")
+            raise ValueError("Can't authenticate via token, must provide "
+                             "auth_callback, auth_url, key, token or a TokenDetail")
 
     def authorise(self, force=False, **kwargs):
         self.__auth_method = Auth.Method.TOKEN
