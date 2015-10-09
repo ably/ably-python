@@ -8,7 +8,7 @@ from ably.types.capability import Capability
 
 
 class TokenDetails(object):
-    def __init__(self, token=None, expires=0, issued=0,
+    def __init__(self, token=None, expires=None, issued=0,
                  capability=None, client_id=None):
         self.__token = token
         self.__expires = expires

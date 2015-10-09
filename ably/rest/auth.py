@@ -75,12 +75,14 @@ class Auth(object):
         self.__auth_method = Auth.Method.TOKEN
 
         if self.__token_details:
-            if self.__token_details.expires > self._timestamp():
+            if (self.__token_details.expires is None or
+                    self.__token_details.expires > self._timestamp()):
                 if not force:
-                    log.debug(
-                        "using cached token; expires = %d",
-                        self.__token_details.expires
-                    )
+                    if self.__token_details.expires is not None:
+                        log.debug(
+                            "using cached token; expires = %d",
+                            self.__token_details.expires
+                        )
                     return self.__token_details
             else:
                 # token has expired

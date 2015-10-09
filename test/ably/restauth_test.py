@@ -111,6 +111,7 @@ class TestAuthAuthorize(BaseTestCase):
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
+        self.use_binary_protocol = use_binary_protocol
 
     def test_if_authorize_changes_auth_method_to_token(self):
 
@@ -171,3 +172,19 @@ class TestAuthAuthorize(BaseTestCase):
 
         request_mock.assert_called_once_with(auth_params=auth_params,
                                              token_params=token_params)
+
+    def test_with_token_str_https(self):
+        token = self.ably.auth.authorise()
+        token = token.token
+        ably = AblyRest(token=token, rest_host=test_vars["host"],
+                        port=test_vars["port"], tls_port=test_vars["tls_port"],
+                        tls=True, use_binary_protocol=self.use_binary_protocol)
+        ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
+
+    def test_with_token_str_http(self):
+        token = self.ably.auth.authorise()
+        token = token.token
+        ably = AblyRest(token=token, rest_host=test_vars["host"],
+                        port=test_vars["port"], tls_port=test_vars["tls_port"],
+                        tls=False, use_binary_protocol=self.use_binary_protocol)
+        ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
