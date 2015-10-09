@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import json
+import time
 
 import six
 
@@ -8,10 +9,16 @@ from ably.types.capability import Capability
 
 
 class TokenDetails(object):
+
+    DEFAULTS = {'ttl': 60 * 60}
+
     def __init__(self, token=None, expires=None, issued=0,
                  capability=None, client_id=None):
+        if expires is None:
+            self.__expires = (time.time() + TokenDetails.DEFAULTS['ttl']) * 1000
+        else:
+            self.__expires = expires
         self.__token = token
-        self.__expires = expires
         self.__issued = issued
         if capability and isinstance(capability, six.string_types):
             self.__capability = Capability(json.loads(capability))

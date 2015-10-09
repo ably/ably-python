@@ -137,6 +137,10 @@ class TestAuth(BaseTestCase):
         ably = AblyRest(token='a token')
         self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
 
+    def test_default_ttl_is_1hour(self):
+        one_hour_in_seconds = 60 * 60
+        self.assertEquals(TokenDetails.DEFAULTS['ttl'], one_hour_in_seconds)
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestAuthAuthorize(BaseTestCase):
