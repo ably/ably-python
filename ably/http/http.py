@@ -132,7 +132,7 @@ class Http(object):
                 self.options.use_binary_protocol)
 
         if not skip_auth:
-            if self.auth.auth_method == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
+            if self.auth.auth_mechanism == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
                 raise AblyException(
                     "Cannot use Basic Auth over non-TLS connections",
                     401,
