@@ -51,7 +51,9 @@ class Auth(object):
         # Using token auth
         self.__auth_method = Auth.Method.TOKEN
 
-        if options.auth_token:
+        if options.token_details:
+            self.__token_details = options.token_details
+        elif options.auth_token:
             self.__token_details = TokenDetails(token=options.auth_token)
         else:
             self.__token_details = None

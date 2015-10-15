@@ -28,7 +28,7 @@ class TestRestCrypto(BaseTestCase):
     def setUp(self):
         options = {
             "key": test_vars["keys"][0]["key_str"],
-            "host": test_vars["host"],
+            "rest_host": test_vars["host"],
             "port": test_vars["port"],
             "tls_port": test_vars["tls_port"],
             "tls": test_vars["tls"],

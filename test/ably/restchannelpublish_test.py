@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 class TestRestChannelPublish(BaseTestCase):
     def setUp(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             host=test_vars["host"],
+                             rest_host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
@@ -117,7 +117,7 @@ class TestRestChannelPublish(BaseTestCase):
         }
 
         ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        host=test_vars["host"],
+                        rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],

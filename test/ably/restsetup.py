@@ -33,7 +33,7 @@ else:
     tls_port = 8081
 
 
-ably = AblyRest(token='not_a_real_token', host=host,
+ably = AblyRest(token='not_a_real_token', rest_host=host,
                 port=port, tls_port=tls_port,
                 tls=tls, use_binary_protocol=False)
 
@@ -74,12 +74,12 @@ class RestSetup:
     def clear_test_vars():
         test_vars = RestSetup.__test_vars
         options = Options(key=test_vars["keys"][0]["key_str"])
-        options.host = test_vars["host"]
+        options.rest_host = test_vars["host"]
         options.port = test_vars["port"]
         options.tls_port = test_vars["tls_port"]
         options.tls = test_vars["tls"]
         ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        host = test_vars["host"],
+                        rest_host = test_vars["host"],
                         port = test_vars["port"],
                         tls_port = test_vars["tls_port"],
                         tls = test_vars["tls"])

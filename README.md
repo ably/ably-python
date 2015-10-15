@@ -77,5 +77,5 @@ AblyRest(token="token.string")
 ```
 
 ```python
-AblyRest(key="api:key", host="custom.host", port=8080)
+AblyRest(key="api:key", rest_host="custom.host", port=8080)
 ```

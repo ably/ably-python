@@ -22,7 +22,7 @@ class TestRestTime(BaseTestCase):
 
     def test_time_accuracy(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        host=test_vars["host"],
+                        rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
@@ -36,7 +36,7 @@ class TestRestTime(BaseTestCase):
 
     def test_time_without_key_or_token(self):
         ably = AblyRest(token='foo',
-                        host=test_vars["host"],
+                        rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
@@ -51,7 +51,7 @@ class TestRestTime(BaseTestCase):
     @dont_vary_protocol
     def test_time_fails_without_valid_host(self):
         ably = AblyRest(token='foo',
-                        host="this.host.does.not.exist",
+                        rest_host="this.host.does.not.exist",
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"])
 

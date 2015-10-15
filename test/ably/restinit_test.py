@@ -2,10 +2,12 @@ from __future__ import absolute_import
 
 import six
 from mock import patch
+from requests import Session
 
 from ably import AblyRest
 from ably import AblyException
 from ably.transport.defaults import Defaults
+from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
@@ -31,6 +33,13 @@ class TestRestInit(BaseTestCase):
         ably = AblyRest(token="foo")
         self.assertEqual(ably.options.auth_token, "foo",
                          "Token not set at options")
+
+    @dont_vary_protocol
+    def test_with_token_details(self):
+        td = TokenDetails()
+        ably = AblyRest(token_details=td)
+        self.assertIs(ably.options.token_details, td)
+
     @dont_vary_protocol
     def test_with_options_token_callback(self):
         def token_callback(**params):
@@ -66,14 +75,35 @@ class TestRestInit(BaseTestCase):
         AblyRest(auth_url='not_really_an_url')
 
     @dont_vary_protocol
-    def test_specified_host(self):
-        ably = AblyRest(token='foo', host="some.other.host")
-        self.assertEqual("some.other.host", ably.options.host,
+    def test_specified_rest_host(self):
+        ably = AblyRest(token='foo', rest_host="some.other.host")
+        self.assertEqual("some.other.host", ably.options.rest_host,
                          msg="Unexpected host mismatch")
+
+    @dont_vary_protocol
+    def test_specified_realtime_host(self):
+        ably = AblyRest(token='foo', realtime_host="some.other.host")
+        self.assertEqual("some.other.host", ably.options.realtime_host,
+                         msg="Unexpected host mismatch")
+
 
     @dont_vary_protocol
     def test_specified_port(self):
         ably = AblyRest(token='foo', port=9998, tls_port=9999)
+        self.assertEqual(9999, Defaults.get_port(ably.options),
+                         msg="Unexpected port mismatch. Expected: 9999. Actual: %d" %
+                         ably.options.tls_port)
+
+    @dont_vary_protocol
+    def test_specified_non_tls_port(self):
+        ably = AblyRest(token='foo', port=9998, tls=False)
+        self.assertEqual(9998, Defaults.get_port(ably.options),
+                         msg="Unexpected port mismatch. Expected: 9999. Actual: %d" %
+                         ably.options.tls_port)
+
+    @dont_vary_protocol
+    def test_specified_tls_port(self):
+        ably = AblyRest(token='foo', tls_port=9999, tls=True)
         self.assertEqual(9999, Defaults.get_port(ably.options),
                          msg="Unexpected port mismatch. Expected: 9999. Actual: %d" %
                          ably.options.tls_port)
@@ -104,7 +134,7 @@ class TestRestInit(BaseTestCase):
 
     def test_query_time_param(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        host=test_vars["host"],
+                        rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"], query_time=True,
@@ -146,6 +176,19 @@ class TestRestInit(BaseTestCase):
         self.assertEqual(40103, cm.exception.code)
         self.assertEqual('Cannot use Basic Auth over non-TLS connections',
                          cm.exception.message)
+
+    @dont_vary_protocol
+    def test_enviroment(self):
+        ably = AblyRest(token='token', environment='custom')
+        with patch.object(Session, 'prepare_request',
+                          wraps=ably.http._Http__session.prepare_request) as get_mock:
+            try:
+                ably.time()
+            except AblyException:
+                pass
+            request = get_mock.call_args_list[0][0][0]
+            self.assertEquals(request.url, 'https://custom-rest.ably.io:443/time')
+
 
 if __name__ == "__main__":
     unittest.main()
