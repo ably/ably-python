@@ -45,7 +45,7 @@ class Auth(object):
             # We have the key, no need to authenticate the client
             # default to using basic auth
             log.debug("anonymous, using basic auth")
-            self.__auth_method = Auth.Method.BASIC
+            self.__auth_mechanism = Auth.Method.BASIC
             basic_key = "%s:%s" % (options.key_name, options.key_secret)
             basic_key = base64.b64encode(basic_key.encode('utf-8'))
             self.__basic_credentials = basic_key.decode('ascii')
@@ -54,7 +54,7 @@ class Auth(object):
             raise ValueError('If use_token_auth is False you must provide a key')
 
         # Using token auth
-        self.__auth_method = Auth.Method.TOKEN
+        self.__auth_mechanism = Auth.Method.TOKEN
 
         if options.token_details:
             self.__token_details = options.token_details
@@ -78,7 +78,7 @@ class Auth(object):
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
     def authorise(self, force=False, **kwargs):
-        self.__auth_method = Auth.Method.TOKEN
+        self.__auth_mechanism = Auth.Method.TOKEN
 
         if self.__token_details:
             if self.__token_details.expires > self._timestamp():
@@ -247,8 +247,8 @@ class Auth(object):
         return self.__ably
 
     @property
-    def auth_method(self):
-        return self.__auth_method
+    def auth_mechanism(self):
+        return self.__auth_mechanism
 
     @property
     def auth_options(self):
@@ -274,7 +274,7 @@ class Auth(object):
         return self.__token_details
 
     def _get_auth_headers(self):
-        if self.__auth_method == Auth.Method.BASIC:
+        if self.__auth_mechanism == Auth.Method.BASIC:
             return {
                 'Authorization': 'Basic %s' % self.basic_credentials,
             }

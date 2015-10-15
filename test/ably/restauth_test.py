@@ -28,20 +28,20 @@ class TestAuth(BaseTestCase):
 
     def test_auth_init_key_only(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"])
-        self.assertEqual(Auth.Method.BASIC, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.BASIC, ably.auth.auth_mechanism,
                          msg="Unexpected Auth method mismatch")
 
     def test_auth_init_token_only(self):
         ably = AblyRest(token="this_is_not_really_a_token")
 
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                          msg="Unexpected Auth method mismatch")
 
     def test_auth_token_details(self):
         td = TokenDetails()
         ably = AblyRest(token_details=td)
 
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method)
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism)
         self.assertIs(ably.auth.token_details, td)
 
     def test_auth_init_with_token_callback(self):
@@ -64,13 +64,13 @@ class TestAuth(BaseTestCase):
             pass
 
         self.assertTrue(callback_called, msg="Token callback not called")
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
 
     def test_auth_init_with_key_and_client_id(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"], client_id='testClientId')
 
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
 
     def test_auth_init_with_token(self):
@@ -81,7 +81,7 @@ class TestAuth(BaseTestCase):
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"])
 
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
 
     def test_request_basic_auth_header(self):
@@ -119,23 +119,23 @@ class TestAuth(BaseTestCase):
 
     def test_use_auth_token(self):
         ably = AblyRest(use_token_auth=True, key=test_vars["keys"][0]["key_str"])
-        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
 
     def test_with_client_id(self):
         ably = AblyRest(client_id='client_id', key=test_vars["keys"][0]["key_str"])
-        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
 
     def test_with_auth_url(self):
         ably = AblyRest(auth_url='auth_url')
-        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
 
     def test_with_auth_callback(self):
         ably = AblyRest(auth_callback=lambda x: x)
-        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
 
     def test_with_token(self):
         ably = AblyRest(token='a token')
-        self.assertEquals(ably.auth.auth_method, Auth.Method.TOKEN)
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
 
     def test_default_ttl_is_1hour(self):
         one_hour_in_seconds = 60 * 60
@@ -156,14 +156,14 @@ class TestAuthAuthorize(BaseTestCase):
         self.ably.options.use_binary_protocol = use_binary_protocol
         self.use_binary_protocol = use_binary_protocol
 
-    def test_if_authorize_changes_auth_method_to_token(self):
+    def test_if_authorize_changes_auth_mechanism_to_token(self):
 
-        self.assertEqual(Auth.Method.BASIC, self.ably.auth.auth_method,
+        self.assertEqual(Auth.Method.BASIC, self.ably.auth.auth_mechanism,
                          msg="Unexpected Auth method mismatch")
 
         self.ably.auth.authorise()
 
-        self.assertEqual(Auth.Method.TOKEN, self.ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, self.ably.auth.auth_mechanism,
                          msg="Authorise should change the Auth method")
 
     def test_authorize_shouldnt_create_token_if_not_expired(self):
