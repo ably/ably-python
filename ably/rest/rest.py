@@ -53,9 +53,9 @@ class AblyRest(object):
             if not isinstance(token_details, TokenDetails):
                 raise ValueError("token_details must be an instance of TokenDetails")
             options = Options(token_details=token_details, **kwargs)
-        elif ('auth_callback' not in kwargs and 'auth_url' not in kwargs and
-              # and don't have both key_name and key_secret
-              not ('key_name' in kwargs and 'key_secret' in kwargs)):
+        elif not ('auth_callback' in kwargs or 'auth_url' in kwargs or
+                  # and don't have both key_name and key_secret
+                  ('key_name' in kwargs and 'key_secret' in kwargs)):
             raise ValueError("key is missing. Either an API key, token, or token auth method must be provided")
         else:
             options = Options(**kwargs)

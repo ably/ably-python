@@ -110,19 +110,13 @@ class TestRestChannelPublish(BaseTestCase):
             self.assertEqual(message['data'], six.text_type(i))
 
     def test_publish_error(self):
-        token_params = {
-            "capability": {
-                "only_subscribe": ["subscribe"],
-            }
-        }
-
         ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                         rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
-        ably.auth.authorise(token_params=token_params)
+        ably.auth.authorise(capability={"only_subscribe": ["subscribe"]})
 
         with self.assertRaises(AblyException) as cm:
             ably.channels["only_subscribe"].publish()

@@ -6,15 +6,19 @@ from ably.util.exceptions import AblyException
 
 
 class AuthOptions(object):
-    def __init__(self, auth_callback=None, auth_url=None, auth_token=None,
-                 auth_headers=None, auth_params=None, key_name=None, key_secret=None,
-                 key=None, query_time=False, token_details=None):
+    def __init__(self, auth_callback=None, auth_url=None, auth_method='GET',
+                 auth_token=None, auth_headers=None, auth_params=None,
+                 key_name=None, key_secret=None, key=None, query_time=False,
+                 token_details=None, use_token_auth=None):
         self.__auth_callback = auth_callback
         self.__auth_url = auth_url
+        # use setter
+        self.auth_method = auth_method
         self.__auth_token = auth_token
         self.__auth_headers = auth_headers
         self.__auth_params = auth_params
         self.__token_details = token_details
+        self.__use_token_auth = use_token_auth
         if key is not None:
             self.__key_name, self.__key_secret = self.parse_key(key)
         else:
@@ -31,30 +35,6 @@ class AuthOptions(object):
                                 .format(key.split(':')),
                                 401, 40101)
 
-    def merge(self, other):
-        if self.__auth_callback is None:
-            self.__auth_callback = other.auth_callback
-
-        if self.__auth_url is None:
-            self.__auth_url = other.auth_url
-
-        if self.__key_name is None:
-            self.__key_name = other.key_name
-
-        if self.__key_secret is None:
-            self.__key_secret = other.key_secret
-
-        if self.__auth_token is None:
-            self.__auth_token = other.auth_token
-
-        if self.__auth_headers is None:
-            self.__auth_headers = other.auth_headers
-
-        if self.__auth_params is None:
-            self.__auth_params = other.auth_params
-
-        self.__query_time == self.__query_time and other.query_time
-
     @property
     def auth_callback(self):
         return self.__auth_callback
@@ -70,6 +50,14 @@ class AuthOptions(object):
     @auth_url.setter
     def auth_url(self, value):
         self.__auth_url = value
+
+    @property
+    def auth_method(self):
+        return self.__auth_method
+
+    @auth_method.setter
+    def auth_method(self, value):
+        self.__auth_method = value.upper()
 
     @property
     def key_name(self):
@@ -126,6 +114,14 @@ class AuthOptions(object):
     @token_details.setter
     def token_details(self, value):
         self.__token_details = value
+
+    @property
+    def use_token_auth(self):
+        return self.__use_token_auth
+
+    @use_token_auth.setter
+    def use_token_auth(self, value):
+        self.__use_token_auth = value
 
     def __unicode__(self):
         return six.text_type(self.__dict__)

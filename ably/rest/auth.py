@@ -1,23 +1,21 @@
 from __future__ import absolute_import
 
 import base64
-import hashlib
-import hmac
-import json
 import logging
 import random
 import time
 
 import six
+import requests
 
 from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
+from ably.types.tokenrequest import TokenRequest
+from ably.util.exceptions import AblyException
 
 # initialise and seed our own instance of random
 rnd = random.Random()
 rnd.seed()
-
-from ably.util.exceptions import AblyException
 
 __all__ = ["Auth"]
 
@@ -38,18 +36,23 @@ class Auth(object):
         self.__auth_params = None
         self.__token_details = None
 
-        if options.key_secret is not None and options.client_id is None:
+        must_use_token_auth = options.use_token_auth is True
+        must_not_use_token_auth = options.use_token_auth is False
+        can_use_basic_auth = options.key_secret is not None and options.client_id is None
+        if not must_use_token_auth and can_use_basic_auth:
             # We have the key, no need to authenticate the client
             # default to using basic auth
             log.debug("anonymous, using basic auth")
-            self.__auth_method = Auth.Method.BASIC
+            self.__auth_mechanism = Auth.Method.BASIC
             basic_key = "%s:%s" % (options.key_name, options.key_secret)
             basic_key = base64.b64encode(basic_key.encode('utf-8'))
             self.__basic_credentials = basic_key.decode('ascii')
             return
+        elif must_not_use_token_auth and not can_use_basic_auth:
+            raise ValueError('If use_token_auth is False you must provide a key')
 
         # Using token auth
-        self.__auth_method = Auth.Method.TOKEN
+        self.__auth_mechanism = Auth.Method.TOKEN
 
         if options.token_details:
             self.__token_details = options.token_details
@@ -66,13 +69,14 @@ class Auth(object):
             log.debug("using token auth with client-side signing")
         elif options.auth_token:
             log.debug("using token auth with supplied token only")
+        elif options.token_details:
+            log.debug("using token auth with supplied token_details")
         else:
-            # Not a hard error, but any operation requiring authentication
-            # will fail
-            log.debug("no authentication parameters supplied")
+            raise ValueError("Can't authenticate via token, must provide "
+                             "auth_callback, auth_url, key, token or a TokenDetail")
 
     def authorise(self, force=False, **kwargs):
-        self.__auth_method = Auth.Method.TOKEN
+        self.__auth_mechanism = Auth.Method.TOKEN
 
         if self.__token_details:
             if self.__token_details.expires > self._timestamp():
@@ -89,9 +93,11 @@ class Auth(object):
         self.__token_details = self.request_token(**kwargs)
         return self.__token_details
 
-    def request_token(self, key_name=None, key_secret=None, query_time=None,
-                      auth_token=None, auth_callback=None, auth_url=None,
-                      auth_headers=None, auth_params=None, token_params=None):
+    def request_token(self, ttl=None, capability=None, client_id=None,
+                      timestamp=None, nonce=None, mac=None, key_name=None,
+                      key_secret=None, auth_callback=None, auth_url=None,
+                      auth_method=None, auth_headers=None,  auth_params=None,
+                      query_time=None):
         key_name = key_name or self.auth_options.key_name
         key_secret = key_secret or self.auth_options.key_secret
 
@@ -100,54 +106,70 @@ class Auth(object):
         if query_time is None:
             query_time = self.auth_options.query_time
         query_time = bool(query_time)
-        auth_token = auth_token or self.auth_options.auth_token
         auth_callback = auth_callback or self.auth_options.auth_callback
         auth_url = auth_url or self.auth_options.auth_url
 
-        auth_params = auth_params or self.auth_params
+        auth_params = auth_params or self.auth_options.auth_params or {}
 
-        token_params = token_params or {}
+        auth_method = (auth_method or self.auth_options.auth_method).upper()
 
-        token_params.setdefault("client_id", self.ably.client_id)
-
-        signed_token_request = ""
-
-        log.debug("Token Params: %s" % token_params)
+        log.debug("Token Params:\n\tttl: %s\n\tcapability: %s\n\t"
+                  "client_id: %s\n\ttimestamp: %s" %
+                  (ttl, capability, client_id, timestamp))
         if auth_callback:
             log.debug("using token auth with authCallback")
-            signed_token_request = auth_callback(**token_params)
+            token_request = auth_callback(
+                ttl=ttl, capability=capability, client_id=client_id,
+                timestamp=timestamp)
         elif auth_url:
             log.debug("using token auth with authUrl")
-            response = self.ably.http.post(
-                auth_url,
-                headers=auth_headers,
-                native_data=token_params,
-                skip_auth=True
-            )
+
+            # circular dependency
+            from ably.http.http import Response
+            response = Response(requests.request(auth_method, auth_url,
+                                                 headers=auth_headers,
+                                                 params=auth_params))
 
             AblyException.raise_for_response(response)
-
-            signed_token_request = response.text
-        elif key_secret:
-            log.debug("using token auth with client-side signing")
-            signed_token_request = self.create_token_request(
-                key_name=key_name,
-                key_secret=key_secret,
-                query_time=query_time,
-                token_params=token_params)
+            try:
+                token_request = response.to_native()
+            except ValueError:
+                token_request = response.text
         else:
-            log.debug('No auth_callback, auth_url or key_secret specified')
-            raise AblyException(
-                "Auth.request_token() must include valid auth parameters",
-                400,
-                40000)
+            token_request = self.create_token_request(
+                ttl=ttl, capability=capability, client_id=client_id,
+                timestamp=timestamp, key_name=key_name, key_secret=key_secret,
+                query_time=query_time, nonce=nonce, mac=mac)
+
+        if isinstance(token_request, TokenDetails):
+            return token_request
+        elif isinstance(token_request, dict) and 'issued' in token_request:
+            return TokenDetails.from_dict(token_request)
+        elif isinstance(token_request, dict):
+            token_request = TokenRequest(**token_request)
+        elif isinstance(token_request, six.text_type):
+            return TokenDetails(token=token_request)
+
+        # elif key_secret:
+        #     log.debug("using token auth with client-side signing")
+        #     signed_token_request = self.create_token_request(
+        #         key_name=key_name,
+        #         key_secret=key_secret,
+        #         query_time=query_time,
+        #         token_params=token_params)
+        # else:
+        #     log.debug('No auth_callback, auth_url or key_secret specified')
+        #     raise AblyException(
+        #         "Auth.request_token() must include valid auth parameters",
+        #         400,
+        #         40000)
 
         token_path = "/keys/%s/requestToken" % key_name
 
         response = self.ably.http.post(
             token_path,
             headers=auth_headers,
-            native_data=signed_token_request,
+            native_data=token_request.to_dict(),
             skip_auth=True
         )
 
@@ -156,12 +178,12 @@ class Auth(object):
         log.debug("Token: %s" % str(response_dict.get("token")))
         return TokenDetails.from_dict(response_dict)
 
-    def create_token_request(self, key_name=None, key_secret=None,
-                             query_time=None, token_params=None):
-        token_params = token_params or {}
+    def create_token_request(self, ttl=None, capability=None, client_id=None,
+                             timestamp=None, nonce=None, mac=None,
+                             key_name=None, key_secret=None, query_time=None):
+        token_request = {}
 
-        if token_params.setdefault("id", key_name) != key_name:
-            raise AblyException("Incompatible key specified", 401, 40102)
+        token_request['key_name'] = key_name
 
         if not key_name or not key_secret:
             log.debug('key_name or key_secret blank')
@@ -170,79 +192,55 @@ class Auth(object):
         if query_time is None:
             query_time = self.auth_options.query_time
 
-        if not token_params.get("timestamp"):
+        if not timestamp:
             if query_time:
-                token_params["timestamp"] = self.ably.time()
+                timestamp = self.ably.time()
             else:
-                token_params["timestamp"] = self._timestamp()
+                timestamp = self._timestamp()
 
-        token_params["timestamp"] = int(token_params["timestamp"])
+        token_request["timestamp"] = int(timestamp)
 
-        if token_params.get("capability") is None:
-            token_params["capability"] = ""
+        token_request['ttl'] = ttl or TokenDetails.DEFAULTS['ttl']
+
+        if capability is None:
+            token_request["capability"] = ""
         else:
-            token_params['capability'] = six.text_type(
-                Capability(token_params["capability"])
+            token_request['capability'] = six.text_type(
+                Capability(capability)
             )
 
-        if token_params.get("client_id") is None:
-            token_params["client_id"] = ""
+        if client_id is None:
+            token_request["client_id"] = ""
 
-        if not token_params.get("nonce"):
+        if nonce is None:
             # Note: There is no expectation that the client
             # specifies the nonce; this is done by the library
             # However, this can be overridden by the client
             # simply for testing purposes
-            token_params["nonce"] = self._random()
+            nonce = self._random()
 
-        req = {
-            "keyName": key_name,
-            "capability": token_params["capability"],
-            "client_id": token_params["client_id"],
-            "timestamp": token_params["timestamp"],
-            "nonce": token_params["nonce"]
-        }
+        token_request["nonce"] = nonce
 
-        if token_params.get("ttl"):
-            req["ttl"] = token_params["ttl"]
+        token_request = TokenRequest(**token_request)
 
-        if not token_params.get("mac"):
+        if not mac:
             # Note: There is no expectation that the client
             # specifies the mac; this is done by the library
             # However, this can be overridden by the client
             # simply for testing purposes.
-            sign_text = six.u("\n").join([six.text_type(x) for x in [
-                token_params["id"],
-                token_params.get("ttl", ""),
-                token_params["capability"],
-                token_params["client_id"],
-                "%d" % token_params["timestamp"],
-                token_params.get("nonce", ""),
-                "",  # to get the trailing new line
-            ]])
-            key_secret = key_secret.encode('utf8')
-            sign_text = sign_text.encode('utf8')
-            log.debug("Key value: %s" % key_secret)
-            log.debug("Sign text: %s" % sign_text)
+            token_request.sign_request(key_secret.encode('utf8'))
+        else:
+            token_request.mac = mac
 
-            mac = hmac.new(key_secret, sign_text, hashlib.sha256).digest()
-            mac = base64.b64encode(mac).decode('utf8')
-            token_params["mac"] = mac
-
-        req["mac"] = token_params.get("mac")
-
-        signed_request = req
-        log.debug("generated signed request: %s", signed_request)
-
-        return signed_request
+        return token_request
 
     @property
     def ably(self):
         return self.__ably
 
     @property
-    def auth_method(self):
-        return self.__auth_method
+    def auth_mechanism(self):
+        return self.__auth_mechanism
 
     @property
     def auth_options(self):
@@ -268,7 +266,7 @@ class Auth(object):
         return self.__token_details
 
     def _get_auth_headers(self):
-        if self.__auth_method == Auth.Method.BASIC:
+        if self.__auth_mechanism == Auth.Method.BASIC:
             return {
                 'Authorization': 'Basic %s' % self.basic_credentials,
             }

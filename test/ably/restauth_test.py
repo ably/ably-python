@@ -3,9 +3,12 @@ from __future__ import absolute_import
 import logging
 import time
 import unittest
+import base64
+import responses
 
 import mock
 import six
+from requests import Session
 
 from ably import AblyRest
 from ably import Auth
@@ -26,20 +29,20 @@ class TestAuth(BaseTestCase):
 
     def test_auth_init_key_only(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"])
-        self.assertEqual(Auth.Method.BASIC, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.BASIC, ably.auth.auth_mechanism,
                          msg="Unexpected Auth method mismatch")
 
     def test_auth_init_token_only(self):
         ably = AblyRest(token="this_is_not_really_a_token")
 
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                          msg="Unexpected Auth method mismatch")
 
     def test_auth_token_details(self):
         td = TokenDetails()
         ably = AblyRest(token_details=td)
 
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method)
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism)
         self.assertIs(ably.auth.token_details, td)
 
     def test_auth_init_with_token_callback(self):
@@ -62,15 +65,13 @@ class TestAuth(BaseTestCase):
             pass
 
         self.assertTrue(callback_called, msg="Token callback not called")
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
-        
-    def test_auth_init_with_key_and_client_id(self):
-        options = Options(key=test_vars["keys"][0]["key_str"])
 
+    def test_auth_init_with_key_and_client_id(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"], client_id='testClientId')
 
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
 
     def test_auth_init_with_token(self):
@@ -81,8 +82,65 @@ class TestAuth(BaseTestCase):
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"])
 
-        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
+
+    def test_request_basic_auth_header(self):
+        ably = AblyRest(key_secret='foo', key_name='bar')
+
+        with mock.patch.object(Session, 'prepare_request') as get_mock:
+            try:
+                ably.http.get('/time', skip_auth=False)
+            except Exception:
+                pass
+        request = get_mock.call_args_list[0][0][0]
+        authorization = request.headers['Authorization']
+        self.assertEqual(authorization,
+                         'Basic %s' %
+                         base64.b64encode('bar:foo'.encode('ascii')
+                                          ).decode('utf-8'))
+
+    def test_request_token_auth_header(self):
+        ably = AblyRest(token='not_a_real_token')
+
+        with mock.patch.object(Session, 'prepare_request') as get_mock:
+            try:
+                ably.http.get('/time', skip_auth=False)
+            except Exception:
+                pass
+        request = get_mock.call_args_list[0][0][0]
+        authorization = request.headers['Authorization']
+        self.assertEqual(authorization,
+                         'Bearer %s' %
+                         base64.b64encode('not_a_real_token'.encode('ascii')
+                                          ).decode('utf-8'))
+
+    def test_if_cant_authenticate_via_token(self):
+        self.assertRaises(ValueError, AblyRest, use_token_auth=True)
+
+    def test_use_auth_token(self):
+        ably = AblyRest(use_token_auth=True, key=test_vars["keys"][0]["key_str"])
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
+
+    def test_with_client_id(self):
+        ably = AblyRest(client_id='client_id', key=test_vars["keys"][0]["key_str"])
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
+
+    def test_with_auth_url(self):
+        ably = AblyRest(auth_url='auth_url')
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
+
+    def test_with_auth_callback(self):
+        ably = AblyRest(auth_callback=lambda x: x)
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
+
+    def test_with_token(self):
+        ably = AblyRest(token='a token')
+        self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
+
+    def test_default_ttl_is_1hour(self):
+        one_hour_in_seconds = 60 * 60
+        self.assertEquals(TokenDetails.DEFAULTS['ttl'], one_hour_in_seconds)
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
@@ -97,15 +155,16 @@ class TestAuthAuthorize(BaseTestCase):
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
+        self.use_binary_protocol = use_binary_protocol
 
-    def test_if_authorize_changes_auth_method_to_token(self):
+    def test_if_authorize_changes_auth_mechanism_to_token(self):
 
-        self.assertEqual(Auth.Method.BASIC, self.ably.auth.auth_method,
+        self.assertEqual(Auth.Method.BASIC, self.ably.auth.auth_mechanism,
                          msg="Unexpected Auth method mismatch")
 
         self.ably.auth.authorise()
 
-        self.assertEqual(Auth.Method.TOKEN, self.ably.auth.auth_method,
+        self.assertEqual(Auth.Method.TOKEN, self.ably.auth.auth_mechanism,
                          msg="Authorise should change the Auth method")
 
     def test_authorize_shouldnt_create_token_if_not_expired(self):
@@ -147,13 +206,85 @@ class TestAuthAuthorize(BaseTestCase):
 
     @dont_vary_protocol
     def test_authorize_adhere_to_request_token(self):
-
-        token_params = {'ttl': 100}
-        auth_params = {'auth_url': 'http://somewhere.com'}
-
         with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
-            self.ably.auth.authorise(auth_params=auth_params,
-                                     token_params=token_params)
+            self.ably.auth.authorise(force=True, ttl=10, client_id='client_id',
+                                     auth_url='somewhere.com', query_time=True)
 
-        request_mock.assert_called_once_with(auth_params=auth_params,
-                                             token_params=token_params)
+        request_mock.assert_called_once_with(ttl=10, client_id='client_id',
+                                             auth_url='somewhere.com',
+                                             query_time=True)
+
+    def test_with_token_str_https(self):
+        token = self.ably.auth.authorise()
+        token = token.token
+        ably = AblyRest(token=token, rest_host=test_vars["host"],
+                        port=test_vars["port"], tls_port=test_vars["tls_port"],
+                        tls=True, use_binary_protocol=self.use_binary_protocol)
+        ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
+
+    def test_with_token_str_http(self):
+        token = self.ably.auth.authorise()
+        token = token.token
+        ably = AblyRest(token=token, rest_host=test_vars["host"],
+                        port=test_vars["port"], tls_port=test_vars["tls_port"],
+                        tls=False, use_binary_protocol=self.use_binary_protocol)
+        ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
+
+
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
+class TestRequestToken(BaseTestCase):
+
+    def per_protocol_setup(self, use_binary_protocol):
+        self.use_binary_protocol = use_binary_protocol
+
+    def test_with_key(self):
+        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"],
+                             use_binary_protocol=self.use_binary_protocol)
+
+        token_details = self.ably.auth.request_token()
+
+        ably = AblyRest(token_details=token_details,
+                        rest_host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        use_binary_protocol=self.use_binary_protocol)
+        channel = self.protocol_channel_name('test_request_token_with_key')
+
+        ably.channels[channel].publish('event', 'foo')
+
+        self.assertEqual(ably.channels[channel].history().items[0].data, 'foo')
+
+    @dont_vary_protocol
+    @responses.activate
+    def test_with_url(self):
+
+        url = 'http://www.example.com'
+        headers = {'foo': 'bar'}
+        self.ably = AblyRest(auth_url=url,
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
+
+        responses.add(responses.POST, url, body='token_string')
+        token_details = self.ably.auth.request_token(auth_url=url,
+                                                     auth_headers=headers,
+                                                     auth_method='POST',
+                                                     auth_params={'spam':
+                                                                  'eggs'})
+        self.assertEquals(len(responses.calls), 1)
+        self.assertEquals(headers['foo'],
+                          responses.calls[0].request.headers['foo'])
+        self.assertTrue(responses.calls[0].request.url.endswith('?spam=eggs'))
+        self.assertEquals('token_string', token_details.token)
+
+        responses.reset()
+        responses.add(responses.GET, url, json={'issued': 1, 'token':
+                                                'another_token_string'})
+        token_details = self.ably.auth.request_token(auth_url=url)
+        self.assertEquals('another_token_string', token_details.token)
