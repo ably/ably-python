@@ -1,3 +1,12 @@
+
+import base64
+
+import six
+
+import hashlib
+import hmac
+
+
 class TokenRequest(object):
 
     def __init__(self, key_name=None, client_id=None, nonce=None, mac=None,
@@ -9,6 +18,38 @@ class TokenRequest(object):
         self.__capability = capability
         self.__ttl = ttl
         self.__timestamp = timestamp
+
+    def sign_request(self, key_secret):
+        sign_text = six.u("\n").join([six.text_type(x) for x in [
+            self.key_name or "",
+            self.ttl or "",
+            self.capability or "",
+            self.client_id or "",
+            "%d" % (self.timestamp or 0),
+            self.nonce or "",
+            "",  # to get the trailing new line
+        ]])
+        try:
+            key_secret = key_secret.encode('utf8')
+        except AttributeError:
+            pass
+        try:
+            sign_text = sign_text.encode('utf8')
+        except AttributeError:
+            pass
+        mac = hmac.new(key_secret, sign_text, hashlib.sha256).digest()
+        self.mac = base64.b64encode(mac).decode('utf8')
+
+    def to_dict(self):
+        return {
+            'keyName': self.key_name,
+            'clientId': self.client_id,
+            'ttl': self.ttl,
+            'nonce': self.nonce,
+            'capability': self.capability,
+            'timestamp': self.timestamp,
+            'mac': self.mac
+        }
 
     @property
     def key_name(self):
@@ -25,6 +66,10 @@ class TokenRequest(object):
     @property
     def mac(self):
         return self.__mac
+
+    @mac.setter
+    def mac(self, mac):
+        self.__mac = mac
 
     @property
     def capability(self):
