@@ -93,11 +93,11 @@ class Auth(object):
         self.__token_details = self.request_token(**kwargs)
         return self.__token_details
 
-    def request_token(self, key_name=None, key_secret=None, query_time=None,
-                      auth_token=None, auth_callback=None, auth_url=None,
-                      auth_headers=None, auth_method=None, auth_params=None,
-                      token_params=None, ttl=None, capability=None,
-                      client_id=None, timestamp=None):
+    def request_token(self, ttl=None, capability=None, client_id=None,
+                      timestamp=None, nonce=None, mac=None, key_name=None,
+                      key_secret=None, auth_callback=None, auth_url=None,
+                      auth_method=None, auth_headers=None,  auth_params=None,
+                      query_time=None):
         key_name = key_name or self.auth_options.key_name
         key_secret = key_secret or self.auth_options.key_secret
 
@@ -106,7 +106,6 @@ class Auth(object):
         if query_time is None:
             query_time = self.auth_options.query_time
         query_time = bool(query_time)
-        auth_token = auth_token or self.auth_options.auth_token
         auth_callback = auth_callback or self.auth_options.auth_callback
         auth_url = auth_url or self.auth_options.auth_url
 
@@ -114,14 +113,14 @@ class Auth(object):
 
         auth_method = (auth_method or self.auth_options.auth_method).upper()
 
-        token_params = token_params or {}
-
-        token_params.setdefault("client_id", self.ably.client_id)
-
-        log.debug("Token Params: %s" % token_params)
+        log.debug("Token Params:\n\tttl: %s\n\tcapability: %s\n\t"
+                  "client_id: %s\n\ttimestamp: %s" %
+                  (ttl, capability, client_id, timestamp))
         if auth_callback:
             log.debug("using token auth with authCallback")
-            token_request = auth_callback(**token_params)
+            token_request = auth_callback(
+                ttl=ttl, capability=capability, client_id=client_id,
+                timestamp=timestamp)
         elif auth_url:
             log.debug("using token auth with authUrl")
 
@@ -138,11 +137,9 @@ class Auth(object):
                 token_request = response.text
         else:
             token_request = self.create_token_request(
-                key_name=key_name,
-                key_secret=key_secret,
-                query_time=query_time,
-                token_params=token_params
-                )
+                ttl=ttl, capability=capability, client_id=client_id,
+                timestamp=timestamp, key_name=key_name, key_secret=key_secret,
+                query_time=query_time, nonce=nonce, mac=mac)
 
         if isinstance(token_request, TokenDetails):
             return token_request
@@ -181,13 +178,11 @@ class Auth(object):
         log.debug("Token: %s" % str(response_dict.get("token")))
         return TokenDetails.from_dict(response_dict)
 
-    def create_token_request(self, key_name, key_secret,
-                             query_time=None, token_params=None):
-        token_params = token_params or {}
+    def create_token_request(self, ttl=None, capability=None, client_id=None,
+                             timestamp=None, nonce=None, mac=None,
+                             key_name=None, key_secret=None, query_time=None):
         token_request = {}
 
-        if token_params.setdefault("id", key_name) != key_name:
-            raise AblyException("Incompatible key specified", 401, 40102)
         token_request['key_name'] = key_name
 
         if not key_name or not key_secret:
@@ -197,44 +192,45 @@ class Auth(object):
         if query_time is None:
             query_time = self.auth_options.query_time
 
-        if not token_params.get("timestamp"):
+        if not timestamp:
             if query_time:
                 timestamp = self.ably.time()
             else:
                 timestamp = self._timestamp()
-        else:
-            timestamp = token_params["timestamp"]
 
         token_request["timestamp"] = int(timestamp)
 
-        token_request['ttl'] = token_params.get('ttl',
-                                                TokenDetails.DEFAULTS['ttl'])
+        token_request['ttl'] = ttl or TokenDetails.DEFAULTS['ttl']
 
-        if token_params.get("capability") is None:
+        if capability is None:
             token_request["capability"] = ""
         else:
             token_request['capability'] = six.text_type(
-                Capability(token_params["capability"])
+                Capability(capability)
             )
 
-        if token_params.get("client_id") is None:
+        if client_id is None:
             token_request["client_id"] = ""
 
-        if not token_params.get("nonce"):
+        if nonce is None:
             # Note: There is no expectation that the client
             # specifies the nonce; this is done by the library
             # However, this can be overridden by the client
             # simply for testing purposes
-            token_request["nonce"] = self._random()
-        else:
-            token_request["nonce"] = token_params["nonce"]
+            nonce = self._random()
+
+        token_request["nonce"] = nonce
 
         token_request = TokenRequest(**token_request)
 
-        if not token_params.get('mac'):
+        if not mac:
+            # Note: There is no expectation that the client
+            # specifies the mac; this is done by the library
+            # However, this can be overridden by the client
+            # simply for testing purposes.
             token_request.sign_request(key_secret.encode('utf8'))
         else:
-            token_request.mac = token_params["mac"]
+            token_request.mac = mac
 
         return token_request
 

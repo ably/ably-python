@@ -54,27 +54,25 @@ class TestRestToken(BaseTestCase):
 
     def test_request_token_explicit_timestamp(self):
         pre_time = self.server_time()
-        token_details = self.ably.auth.request_token(token_params={
-            "timestamp":pre_time
-            })
+        token_details = self.ably.auth.request_token(timestamp=pre_time)
         post_time = self.server_time()
         self.assertIsNotNone(token_details.token, msg="Expected token")
         self.assertGreaterEqual(token_details.issued,
-                pre_time,
-                msg="Unexpected issued time")
+                                pre_time,
+                                msg="Unexpected issued time")
         self.assertLessEqual(token_details.issued,
-                post_time,
-                msg="Unexpected issued time")
+                             post_time,
+                             msg="Unexpected issued time")
         self.assertEqual(self.permit_all,
-                six.text_type(Capability(token_details.capability)),
-                msg="Unexpected Capability")
+                         six.text_type(Capability(token_details.capability)),
+                         msg="Unexpected Capability")
 
     def test_request_token_explicit_invalid_timestamp(self):
         request_time = self.server_time()
         explicit_timestamp = request_time - 30 * 60 * 1000
 
         self.assertRaises(AblyException, self.ably.auth.request_token,
-                token_params={"timestamp":explicit_timestamp})
+                          timestamp=explicit_timestamp)
 
     def test_request_token_with_system_timestamp(self):
         pre_time = self.server_time()
@@ -93,66 +91,58 @@ class TestRestToken(BaseTestCase):
 
     def test_request_token_with_duplicate_nonce(self):
         request_time = self.server_time()
-        token_details = self.ably.auth.request_token(token_params={
-            "timestamp":request_time,
-            "nonce":'1234567890123456'
-        })
+        token_details = self.ably.auth.request_token(
+            timestamp=request_time,
+            nonce='1234567890123456'
+        )
         self.assertIsNotNone(token_details.token, msg="Expected token")
 
         self.assertRaises(AblyException, self.ably.auth.request_token,
-                token_params={
-                    "timestamp":request_time,
-                    "nonce":'1234567890123456'
-                })
+                          timestamp=request_time,
+                          nonce='1234567890123456')
 
     def test_request_token_with_capability_that_subsets_key_capability(self):
         capability = Capability({
             "onlythischannel": ["subscribe"]
         })
 
-        token_params = {
-            "capability": capability,
-        }
-
-        token_details = self.ably.auth.request_token(token_params=token_params)
+        token_details = self.ably.auth.request_token(capability=capability)
 
         self.assertIsNotNone(token_details)
         self.assertIsNotNone(token_details.token)
         self.assertEqual(capability, token_details.capability,
-                msg="Unexpected capability")
+                         msg="Unexpected capability")
 
     def test_request_token_with_specified_key(self):
         key = RestSetup.get_test_vars()["keys"][1]
-        token_details = self.ably.auth.request_token(key_name=key["key_name"],
-                key_secret=key["key_secret"])
+        token_details = self.ably.auth.request_token(
+            key_name=key["key_name"], key_secret=key["key_secret"])
         self.assertIsNotNone(token_details.token, msg="Expected token")
         self.assertEqual(key.get("capability"),
-                token_details.capability,
-                msg="Unexpected capability")
+                         token_details.capability,
+                         msg="Unexpected capability")
 
     @dont_vary_protocol
     def test_request_token_with_invalid_mac(self):
         self.assertRaises(AblyException, self.ably.auth.request_token,
-                token_params={"mac":"thisisnotavalidmac"})
+                          mac="thisisnotavalidmac")
 
     def test_request_token_with_specified_ttl(self):
-        token_details = self.ably.auth.request_token(token_params={
-            "ttl":100
-        })
+        token_details = self.ably.auth.request_token(ttl=100)
         self.assertIsNotNone(token_details.token, msg="Expected token")
         self.assertEqual(token_details.issued + 100,
-                token_details.expires, msg="Unexpected expires")
+                         token_details.expires, msg="Unexpected expires")
 
     @dont_vary_protocol
     def test_token_with_excessive_ttl(self):
         excessive_ttl = 365 * 24 * 60 * 60 * 1000
         self.assertRaises(AblyException, self.ably.auth.request_token,
-                token_params={"ttl":excessive_ttl})
+                          ttl=excessive_ttl)
 
     @dont_vary_protocol
     def test_token_generation_with_invalid_ttl(self):
         self.assertRaises(AblyException, self.ably.auth.request_token,
-                token_params={"ttl":-1})
+                          ttl=-1)
 
     def test_token_generation_with_local_time(self):
         timestamp = self.ably.auth._timestamp
