@@ -262,7 +262,6 @@ class TestRequestToken(BaseTestCase):
     @dont_vary_protocol
     @responses.activate
     def test_with_url(self):
-
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
         self.ably = AblyRest(auth_url=url,
@@ -287,4 +286,24 @@ class TestRequestToken(BaseTestCase):
         responses.add(responses.GET, url, json={'issued': 1, 'token':
                                                 'another_token_string'})
         token_details = self.ably.auth.request_token(auth_url=url)
+        self.assertEquals('another_token_string', token_details.token)
+
+    @dont_vary_protocol
+    def test_with_callback(self):
+        def callback(ttl, capability, client_id, timestamp):
+            return 'token_string'
+
+        self.ably = AblyRest(auth_callback=callback,
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
+
+        token_details = self.ably.auth.request_token(auth_callback=callback)
+        self.assertEquals('token_string', token_details.token)
+
+        def callback(ttl, capability, client_id, timestamp):
+            return TokenDetails(token='another_token_string')
+
+        token_details = self.ably.auth.request_token(auth_callback=callback)
         self.assertEquals('another_token_string', token_details.token)

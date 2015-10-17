@@ -94,10 +94,11 @@ class Auth(object):
         return self.__token_details
 
     def request_token(self, ttl=None, capability=None, client_id=None,
-                      timestamp=None, nonce=None, mac=None, key_name=None,
-                      key_secret=None, auth_callback=None, auth_url=None,
-                      auth_method=None, auth_headers=None,  auth_params=None,
-                      query_time=None):
+                      timestamp=None, nonce=None, mac=None,
+                      # auth_options
+                      key_name=None, key_secret=None, auth_callback=None,
+                      auth_url=None, auth_method=None, auth_headers=None,
+                      auth_params=None, query_time=None):
         key_name = key_name or self.auth_options.key_name
         key_secret = key_secret or self.auth_options.key_secret
 
@@ -140,7 +141,6 @@ class Auth(object):
                 ttl=ttl, capability=capability, client_id=client_id,
                 timestamp=timestamp, key_name=key_name, key_secret=key_secret,
                 query_time=query_time, nonce=nonce, mac=mac)
-
         if isinstance(token_request, TokenDetails):
             return token_request
         elif isinstance(token_request, dict) and 'issued' in token_request:
@@ -148,6 +148,9 @@ class Auth(object):
         elif isinstance(token_request, dict):
             token_request = TokenRequest(**token_request)
         elif isinstance(token_request, six.text_type):
+            return TokenDetails(token=token_request)
+        # python2
+        elif isinstance(token_request, six.binary_type) and six.binary_type == str:
             return TokenDetails(token=token_request)
 
         # elif key_secret:
