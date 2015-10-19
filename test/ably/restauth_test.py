@@ -2,7 +2,8 @@ from __future__ import absolute_import
 
 import logging
 import time
-import unittest
+import json
+import uuid
 import base64
 import responses
 
@@ -12,7 +13,7 @@ from requests import Session
 
 from ably import AblyRest
 from ably import Auth
-from ably import Options
+from ably import AblyException
 from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
@@ -307,3 +308,84 @@ class TestRequestToken(BaseTestCase):
 
         token_details = self.ably.auth.request_token(auth_callback=callback)
         self.assertEquals('another_token_string', token_details.token)
+
+
+class TestRenewToken(BaseTestCase):
+
+    def setUp(self):
+        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"],
+                             use_binary_protocol=False)
+        # with headers
+        self.token_requests = 0
+        self.publish_attempts = 0
+        self.tokens = ['a_token', 'another_token']
+        self.channel = uuid.uuid4().hex
+
+        def call_back(request):
+            headers = {'Content-Type': 'application/json'}
+            body = {}
+            self.token_requests += 1
+            body['token'] = self.tokens[self.token_requests - 1]
+            body['expires'] = (time.time() + 60) * 1000
+            return (200, headers, json.dumps(body))
+
+        responses.add_callback(
+            responses.POST,
+            'https://sandbox-rest.ably.io:443/keys/{}/requestToken'.format(
+                test_vars["keys"][0]['key_name']),
+            call_back)
+
+        def call_back(request):
+            headers = {'Content-Type': 'application/json'}
+            self.publish_attempts += 1
+            if self.publish_attempts in [1, 3]:
+                body = '[]'
+                status = 201
+            else:
+                body = {'error': {'message': 'Authentication failure', 'statusCode': 401, 'code': 40140}}
+                status = 401
+
+            return (status, headers, json.dumps(body))
+
+        responses.add_callback(
+            responses.POST,
+            'https://sandbox-rest.ably.io:443/channels/{}/publish'.format(
+                self.channel),
+            call_back)
+        responses.start()
+
+    def tearDown(self):
+        responses.stop()
+        responses.reset()
+
+    def test_when_renewable(self):
+        self.ably.auth.authorise()
+        self.ably.channels[self.channel].publish('evt', 'msg')
+        self.assertEquals(1, self.token_requests)
+        self.assertEquals(1, self.publish_attempts)
+
+        # Triggers an authentication 401 failure which should automatically request a new token
+        self.ably.channels[self.channel].publish('evt', 'msg')
+        self.assertEquals(2, self.token_requests)
+        self.assertEquals(3, self.publish_attempts)
+
+    def test_when_not_renewable(self):
+        self.ably = AblyRest(token='token ID cannot be used to create a new token',
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"],
+                             use_binary_protocol=False)
+        self.ably.auth.authorise()
+        self.ably.channels[self.channel].publish('evt', 'msg')
+        self.assertEquals(1, self.publish_attempts)
+
+        publish = self.ably.channels[self.channel].publish
+
+        self.assertRaisesRegexp(AblyException, "No key specified", publish,
+                                'evt', 'msg')
+        self.assertEquals(0, self.token_requests)
