@@ -113,6 +113,9 @@ class Http(object):
         else:
             return json.dumps(body, separators=(',', ':'))
 
+    def reauth(self):
+        self.auth.authorise(force=True)
+
     @reauth_if_expired
     def make_request(self, method, path, headers=None, body=None,
                      native_data=None, skip_auth=False, timeout=None):
