@@ -151,20 +151,6 @@ class Auth(object):
         elif isinstance(token_request, six.binary_type) and six.binary_type == str:
             return TokenDetails(token=token_request)
 
-        # elif key_secret:
-        #     log.debug("using token auth with client-side signing")
-        #     signed_token_request = self.create_token_request(
-        #         key_name=key_name,
-        #         key_secret=key_secret,
-        #         query_time=query_time,
-        #         token_params=token_params)
-        # else:
-        #     log.debug('No auth_callback, auth_url or key_secret specified')
-        #     raise AblyException(
-        #         "Auth.request_token() must include valid auth parameters",
-        #         400,
-        #         40000)
-
         token_path = "/keys/%s/requestToken" % token_request.key_name
 
         response = self.ably.http.post(
