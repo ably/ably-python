@@ -114,6 +114,8 @@ class Auth(object):
 
         auth_method = (auth_method or self.auth_options.auth_method).upper()
 
+        auth_headers = auth_headers or self.auth_options.auth_headers
+
         log.debug("Token Params:\n\tttl: %s\n\tcapability: %s\n\t"
                   "client_id: %s\n\ttimestamp: %s" %
                   (ttl, capability, client_id, timestamp))
