@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import base64
 import logging
-import random
 import time
+import uuid
 
 import six
 import requests
@@ -12,10 +12,6 @@ from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
 from ably.util.exceptions import AblyException
-
-# initialise and seed our own instance of random
-rnd = random.Random()
-rnd.seed()
 
 __all__ = ["Auth"]
 
@@ -167,7 +163,7 @@ class Auth(object):
         #         400,
         #         40000)
 
-        token_path = "/keys/%s/requestToken" % key_name
+        token_path = "/keys/%s/requestToken" % token_request.key_name
 
         response = self.ably.http.post(
             token_path,
@@ -203,7 +199,7 @@ class Auth(object):
 
         token_request["timestamp"] = int(timestamp)
 
-        token_request['ttl'] = ttl or TokenDetails.DEFAULTS['ttl']
+        token_request['ttl'] = ttl or TokenDetails.DEFAULTS['ttl'] * 1000
 
         if capability is None:
             token_request["capability"] = ""
@@ -212,15 +208,14 @@ class Auth(object):
                 Capability(capability)
             )
 
-        if client_id is None:
-            token_request["client_id"] = None
+        token_request["client_id"] = client_id
 
         if nonce is None:
             # Note: There is no expectation that the client
             # specifies the nonce; this is done by the library
             # However, this can be overridden by the client
             # simply for testing purposes
-            nonce = self._random()
+            nonce = self._random_nonce()
 
         token_request["nonce"] = nonce
 
@@ -283,5 +278,5 @@ class Auth(object):
         """Returns the local time in milliseconds since the unix epoch"""
         return int(time.time() * 1000)
 
-    def _random(self):
-        return "%016d" % rnd.randint(0, 9999999999999999)
+    def _random_nonce(self):
+        return uuid.uuid4().hex[:16]
