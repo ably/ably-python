@@ -213,7 +213,7 @@ class Auth(object):
             )
 
         if client_id is None:
-            token_request["client_id"] = ""
+            token_request["client_id"] = None
 
         if nonce is None:
             # Note: There is no expectation that the client
