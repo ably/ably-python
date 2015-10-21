@@ -17,7 +17,7 @@ from ably import AblyException
 from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol 
+from test.ably.utils import BaseTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 test_vars = RestSetup.get_test_vars()
 
@@ -32,6 +32,10 @@ class TestAuth(BaseTestCase):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"])
         self.assertEqual(Auth.Method.BASIC, ably.auth.auth_mechanism,
                          msg="Unexpected Auth method mismatch")
+        self.assertEqual(ably.auth.auth_options.key_name,
+                         test_vars["keys"][0]['key_name'])
+        self.assertEqual(ably.auth.auth_options.key_secret,
+                         test_vars["keys"][0]['key_secret'])
 
     def test_auth_init_token_only(self):
         ably = AblyRest(token="this_is_not_really_a_token")
@@ -58,7 +62,7 @@ class TestAuth(BaseTestCase):
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
-                        auth_callback= token_callback)
+                        auth_callback=token_callback)
 
         try:
             ably.stats(None)
@@ -380,7 +384,24 @@ class TestRenewToken(BaseTestCase):
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"],
                              use_binary_protocol=False)
-        self.ably.auth.authorise()
+        self.ably.channels[self.channel].publish('evt', 'msg')
+        self.assertEquals(1, self.publish_attempts)
+
+        publish = self.ably.channels[self.channel].publish
+
+        self.assertRaisesRegexp(AblyException, "No key specified", publish,
+                                'evt', 'msg')
+        self.assertEquals(0, self.token_requests)
+
+    def test_when_not_renewable_with_token_details(self):
+        token_details = TokenDetails(token='a_dummy_token')
+        self.ably = AblyRest(
+            token_details=token_details,
+            rest_host=test_vars["host"],
+            port=test_vars["port"],
+            tls_port=test_vars["tls_port"],
+            tls=test_vars["tls"],
+            use_binary_protocol=False)
         self.ably.channels[self.channel].publish('evt', 'msg')
         self.assertEquals(1, self.publish_attempts)
 
