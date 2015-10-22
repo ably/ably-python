@@ -86,7 +86,6 @@ class TestRestInit(BaseTestCase):
         self.assertEqual("some.other.host", ably.options.realtime_host,
                          msg="Unexpected host mismatch")
 
-
     @dont_vary_protocol
     def test_specified_port(self):
         ably = AblyRest(token='foo', port=9998, tls_port=9999)

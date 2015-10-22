@@ -165,7 +165,9 @@ class TestRestCrypto(BaseTestCase):
             raise(e)
 
         the_exception = cm.exception
-        self.assertEqual('invalid-padding', the_exception.message)
+        self.assertTrue(
+            'invalid-padding' == the_exception.message or
+            the_exception.message.starswith("UnicodeDecodeError: 'utf8'"))
 
     def test_crypto_send_unencrypted(self):
         channel_name = self.protocol_channel_name('persisted:crypto_send_unencrypted')
