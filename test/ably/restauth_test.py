@@ -313,6 +313,27 @@ class TestRequestToken(BaseTestCase):
         token_details = self.ably.auth.request_token(auth_callback=callback)
         self.assertEquals('another_token_string', token_details.token)
 
+    @dont_vary_protocol
+    @responses.activate
+    def test_when_auth_url_has_query_string(self):
+        url = 'http://www.example.com?with=query'
+        headers = {'foo': 'bar'}
+        self.ably = AblyRest(auth_url=url,
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
+
+        responses.add(responses.POST, 'http://www.example.com',
+                      body='token_string')
+        self.ably.auth.request_token(auth_url=url,
+                                     auth_headers=headers,
+                                     auth_method='POST',
+                                     auth_params={'spam':
+                                                  'eggs'})
+        self.assertTrue(responses.calls[0].request.url.endswith(
+                            '?with=query&spam=eggs'))
+
 
 class TestRenewToken(BaseTestCase):
 
