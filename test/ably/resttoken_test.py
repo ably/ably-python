@@ -177,6 +177,37 @@ class TestCreateTokenRequest(BaseTestCase):
         self.ably.options.use_binary_protocol = use_binary_protocol
         self.use_binary_protocol = use_binary_protocol
 
+    @dont_vary_protocol
+    def test_key_name_and_secret_are_required(self):
+        self.assertRaisesRegexp(AblyException, "40101 401 No key specified",
+                                self.ably.auth.create_token_request)
+        self.assertRaisesRegexp(AblyException, "40101 401 No key specified",
+                                self.ably.auth.create_token_request,
+                                key_name=self.key_name)
+        self.assertRaisesRegexp(AblyException, "40101 401 No key specified",
+                                self.ably.auth.create_token_request,
+                                key_secret=self.key_secret)
+
+    @dont_vary_protocol
+    def test_with_local_time(self):
+        timestamp = self.ably.auth._timestamp
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+            self.ably.auth.create_token_request(
+                key_name=self.key_name, key_secret=self.key_secret, query_time=False)
+            self.assertTrue(local_time.called)
+            self.assertFalse(server_time.called)
+
+    @dont_vary_protocol
+    def test_with_server_time(self):
+        timestamp = self.ably.auth._timestamp
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+            self.ably.auth.create_token_request(
+                key_name=self.key_name, key_secret=self.key_secret, query_time=True)
+            self.assertTrue(server_time.called)
+            self.assertFalse(local_time.called)
+
     def test_token_request_can_be_used_to_get_a_token(self):
         token_request = self.ably.auth.create_token_request(
             key_name=self.key_name, key_secret=self.key_secret)

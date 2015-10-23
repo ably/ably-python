@@ -251,6 +251,7 @@ class TestRequestToken(BaseTestCase):
                              use_binary_protocol=self.use_binary_protocol)
 
         token_details = self.ably.auth.request_token()
+        self.assertIsInstance(token_details, TokenDetails)
 
         ably = AblyRest(token_details=token_details,
                         rest_host=test_vars["host"],
@@ -281,6 +282,7 @@ class TestRequestToken(BaseTestCase):
                                                      auth_method='POST',
                                                      auth_params={'spam':
                                                                   'eggs'})
+        self.assertIsInstance(token_details, TokenDetails)
         self.assertEquals(len(responses.calls), 1)
         self.assertEquals(headers['foo'],
                           responses.calls[0].request.headers['foo'])
@@ -305,6 +307,7 @@ class TestRequestToken(BaseTestCase):
                              tls=test_vars["tls"])
 
         token_details = self.ably.auth.request_token(auth_callback=callback)
+        self.assertIsInstance(token_details, TokenDetails)
         self.assertEquals('token_string', token_details.token)
 
         def callback(ttl, capability, client_id, timestamp):
