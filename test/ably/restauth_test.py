@@ -90,6 +90,27 @@ class TestAuth(BaseTestCase):
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
 
+    @responses.activate
+    def test_auth_with_url_method_headers_and_params(self):
+        url = 'http://www.example.com'
+        headers = {'foo': 'bar'}
+        self.ably = AblyRest(auth_url=url,
+                             auth_method='POST',
+                             auth_headers=headers,
+                             auth_params={'spam': 'eggs'},
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
+
+        responses.add(responses.POST, url, body='token_string')
+        token_details = self.ably.auth.request_token()
+        self.assertIsInstance(token_details, TokenDetails)
+        self.assertEquals(len(responses.calls), 1)
+        self.assertEquals(headers['foo'],
+                          responses.calls[0].request.headers['foo'])
+        self.assertTrue(responses.calls[0].request.url.endswith('?spam=eggs'))
+
     def test_request_basic_auth_header(self):
         ably = AblyRest(key_secret='foo', key_name='bar')
 
