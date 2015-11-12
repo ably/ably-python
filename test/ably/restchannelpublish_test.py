@@ -116,7 +116,8 @@ class TestRestChannelPublish(BaseTestCase):
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
-        ably.auth.authorise(capability={"only_subscribe": ["subscribe"]})
+        ably.auth.authorise(
+            token_params={'capability': {"only_subscribe": ["subscribe"]}})
 
         with self.assertRaises(AblyException) as cm:
             ably.channels["only_subscribe"].publish()

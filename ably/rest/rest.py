@@ -67,7 +67,7 @@ class AblyRest(object):
         #     self.__session = None
 
         self.__http = Http(self, options)
-        self.__auth = Auth(self, options)
+        self.__auth = Auth(self, options, kwargs.get('token_params', {}))
         self.__http.auth = self.__auth
 
         self.__channels = Channels(self)

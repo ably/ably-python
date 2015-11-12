@@ -53,7 +53,7 @@ class TestAuth(BaseTestCase):
     def test_auth_init_with_token_callback(self):
         callback_called = []
 
-        def token_callback(**params):
+        def token_callback(token_params):
             callback_called.append(True)
             return "this_is_not_really_a_token_request"
 
@@ -232,11 +232,12 @@ class TestAuthAuthorize(BaseTestCase):
 
     @dont_vary_protocol
     def test_authorize_adhere_to_request_token(self):
+        token_params = {'ttl': 10, 'client_id': 'client_id'}
         with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
-            self.ably.auth.authorise(force=True, ttl=10, client_id='client_id',
+            self.ably.auth.authorise(token_params, force=True,
                                      auth_url='somewhere.com', query_time=True)
 
-        request_mock.assert_called_once_with(ttl=10, client_id='client_id',
+        request_mock.assert_called_once_with(token_params,
                                              auth_url='somewhere.com',
                                              query_time=True)
 
@@ -318,7 +319,7 @@ class TestRequestToken(BaseTestCase):
 
     @dont_vary_protocol
     def test_with_callback(self):
-        def callback(ttl, capability, client_id, timestamp):
+        def callback(token_params):
             return 'token_string'
 
         self.ably = AblyRest(auth_callback=callback,
@@ -331,7 +332,7 @@ class TestRequestToken(BaseTestCase):
         self.assertIsInstance(token_details, TokenDetails)
         self.assertEquals('token_string', token_details.token)
 
-        def callback(ttl, capability, client_id, timestamp):
+        def callback(token_params):
             return TokenDetails(token='another_token_string')
 
         token_details = self.ably.auth.request_token(auth_callback=callback)
