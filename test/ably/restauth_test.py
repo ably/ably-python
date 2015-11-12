@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import logging
 import time
 import json
+from urlparse import parse_qs, urlparse
 import uuid
 import base64
 import responses
@@ -89,27 +90,6 @@ class TestAuth(BaseTestCase):
 
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
-
-    @responses.activate
-    def test_auth_with_url_method_headers_and_params(self):
-        url = 'http://www.example.com'
-        headers = {'foo': 'bar'}
-        self.ably = AblyRest(auth_url=url,
-                             auth_method='POST',
-                             auth_headers=headers,
-                             auth_params={'spam': 'eggs'},
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
-
-        responses.add(responses.POST, url, body='token_string')
-        token_details = self.ably.auth.request_token()
-        self.assertIsInstance(token_details, TokenDetails)
-        self.assertEquals(len(responses.calls), 1)
-        self.assertEquals(headers['foo'],
-                          responses.calls[0].request.headers['foo'])
-        self.assertTrue(responses.calls[0].request.url.endswith('?spam=eggs'))
 
     def test_request_basic_auth_header(self):
         ably = AblyRest(key_secret='foo', key_name='bar')
@@ -289,7 +269,7 @@ class TestRequestToken(BaseTestCase):
 
     @dont_vary_protocol
     @responses.activate
-    def test_with_url(self):
+    def test_with_auth_url_headers_and_params_POST(self):
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
         self.ably = AblyRest(auth_url=url,
@@ -298,24 +278,50 @@ class TestRequestToken(BaseTestCase):
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
 
+        auth_params = {'foo': 'auth', 'spam': 'eggs'}
+        token_params = {'foo': 'token'}
+
         responses.add(responses.POST, url, body='token_string')
-        token_details = self.ably.auth.request_token(auth_url=url,
-                                                     auth_headers=headers,
-                                                     auth_method='POST',
-                                                     auth_params={'spam':
-                                                                  'eggs'})
+        token_details = self.ably.auth.request_token(
+            token_params=token_params, auth_url=url, auth_headers=headers,
+            auth_method='POST', auth_params=auth_params)
+
         self.assertIsInstance(token_details, TokenDetails)
         self.assertEquals(len(responses.calls), 1)
-        self.assertEquals(headers['foo'],
-                          responses.calls[0].request.headers['foo'])
-        self.assertTrue(responses.calls[0].request.url.endswith('?spam=eggs'))
+        request = responses.calls[0].request
+        self.assertEquals(request.headers['content-type'],
+                          'application/x-www-form-urlencoded')
+        self.assertEquals(headers['foo'], request.headers['foo'])
+        self.assertEquals(urlparse(request.url).query, '')  # No querystring!
+        self.assertEquals(parse_qs(request.body),  # TokenParams has precedence
+                          {'foo': ['token'], 'spam': ['eggs']})
         self.assertEquals('token_string', token_details.token)
 
-        responses.reset()
+    @dont_vary_protocol
+    @responses.activate
+    def test_with_auth_url_headers_and_params_GET(self):
+
+        url = 'http://www.example.com'
+        headers = {'foo': 'bar'}
+        self.ably = AblyRest(auth_url=url,
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
+
+        auth_params = {'foo': 'auth', 'spam': 'eggs'}
+        token_params = {'foo': 'token'}
+
         responses.add(responses.GET, url, json={'issued': 1, 'token':
                                                 'another_token_string'})
-        token_details = self.ably.auth.request_token(auth_url=url)
+        token_details = self.ably.auth.request_token(
+            token_params=token_params, auth_url=url, auth_headers=headers,
+            auth_params=auth_params)
         self.assertEquals('another_token_string', token_details.token)
+        request = responses.calls[0].request
+        self.assertEquals(parse_qs(urlparse(request.url).query),
+                          {'foo': ['token'], 'spam': ['eggs']})
+        self.assertFalse(request.body)
 
     @dont_vary_protocol
     def test_with_callback(self):
@@ -349,15 +355,14 @@ class TestRequestToken(BaseTestCase):
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
 
-        responses.add(responses.POST, 'http://www.example.com',
+        responses.add(responses.GET, 'http://www.example.com',
                       body='token_string')
         self.ably.auth.request_token(auth_url=url,
                                      auth_headers=headers,
-                                     auth_method='POST',
                                      auth_params={'spam':
                                                   'eggs'})
         self.assertTrue(responses.calls[0].request.url.endswith(
-                            '?with=query&spam=eggs'))
+                        '?with=query&spam=eggs'))
 
 
 class TestRenewToken(BaseTestCase):

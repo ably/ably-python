@@ -123,17 +123,8 @@ class Auth(object):
         elif auth_url:
             log.debug("using token auth with authUrl")
 
-            # circular dependency
-            from ably.http.http import Response
-            response = Response(requests.request(auth_method, auth_url,
-                                                 headers=auth_headers,
-                                                 params=auth_params))
-
-            AblyException.raise_for_response(response)
-            try:
-                token_request = response.to_native()
-            except ValueError:
-                token_request = response.text
+            token_request = self.token_request_from_auth_url(
+                auth_method, auth_url, token_params, auth_headers, auth_params)
         else:
             token_request = self.create_token_request(
                 token_params, key_name=key_name, key_secret=key_secret,
@@ -266,3 +257,23 @@ class Auth(object):
 
     def _random_nonce(self):
         return uuid.uuid4().hex[:16]
+
+    def token_request_from_auth_url(self, method, url, token_params,
+                                    headers, auth_params):
+        if method == 'GET':
+            body = {}
+            params = dict(auth_params, **token_params)
+        elif method == 'POST':
+            params = {}
+            body = dict(auth_params, **token_params)
+
+        from ably.http.http import Response
+        response = Response(requests.request(
+            method, url, headers=headers, params=params, data=body))
+
+        AblyException.raise_for_response(response)
+        try:
+            token_request = response.to_native()
+        except ValueError:
+            token_request = response.text
+        return token_request
