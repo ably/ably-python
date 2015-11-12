@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import logging
 import time
 import json
-from urlparse import parse_qs, urlparse
+from six.moves.urllib.parse import parse_qs, urlparse
 import uuid
 import base64
 import responses
