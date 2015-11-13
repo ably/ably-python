@@ -195,6 +195,9 @@ class TestAuthAuthorize(BaseTestCase):
         self.assertIsNot(new_token, token)
         self.assertGreater(new_token.expires, token.expires)
 
+        another_token = self.ably.auth.authorise(auth_options={'force': True})
+        self.assertIsNot(new_token, another_token)
+
     def test_authorize_create_new_token_if_expired(self):
 
         token = self.ably.auth.authorise()
@@ -212,15 +215,19 @@ class TestAuthAuthorize(BaseTestCase):
         self.assertIsInstance(token, TokenDetails)
 
     @dont_vary_protocol
-    def test_authorize_adhere_to_request_token(self):
+    def test_authorize_adheres_to_request_token(self):
         token_params = {'ttl': 10, 'client_id': 'client_id'}
+        auth_params = {'auth_url': 'somewhere.com', 'query_time': True}
         with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
-            self.ably.auth.authorise(token_params, force=True,
-                                     auth_url='somewhere.com', query_time=True)
+            self.ably.auth.authorise(token_params, auth_params, force=True)
 
-        request_mock.assert_called_once_with(token_params,
-                                             auth_url='somewhere.com',
-                                             query_time=True)
+        token_called, auth_called = request_mock.call_args
+        self.assertEqual(token_called[0], token_params)
+
+        # Authorise may call request_token with some default auth_options.
+        for arg, value in six.iteritems(auth_params):
+            self.assertEqual(auth_called[arg], value,
+                             "%s called with wrong value: %s" % (arg, value))
 
     def test_with_token_str_https(self):
         token = self.ably.auth.authorise()

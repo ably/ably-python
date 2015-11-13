@@ -73,15 +73,19 @@ class Auth(object):
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    def authorise(self, token_params=None, force=False, **kwargs):
+    def authorise(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
 
         if token_params is None:
             token_params = dict(self.token_params)
         else:
             token_params = dict(self.token_params, **token_params)
-            self.token_params.update(token_params)
+            self.token_params = dict(token_params)
 
+        if auth_options is not None:
+            force = auth_options.pop('force', None) or force
+            self.auth_options.merge(auth_options)
+        auth_options = dict(self.auth_options.auth_options)
         token_params.setdefault('client_id', self.client_id)
 
         if self.__token_details:
@@ -96,7 +100,7 @@ class Auth(object):
                 # token has expired
                 self.__token_details = None
 
-        self.__token_details = self.request_token(token_params, **kwargs)
+        self.__token_details = self.request_token(token_params, **auth_options)
         return self.__token_details
 
     def request_token(self, token_params=None,

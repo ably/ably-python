@@ -10,21 +10,22 @@ class AuthOptions(object):
                  auth_token=None, auth_headers=None, auth_params=None,
                  key_name=None, key_secret=None, key=None, query_time=False,
                  token_details=None, use_token_auth=None):
-        self.__auth_callback = auth_callback
-        self.__auth_url = auth_url
-        # use setter
-        self.auth_method = auth_method
+        self.__auth_options = {}
+        self.auth_options['auth_callback'] = auth_callback
+        self.auth_options['auth_url'] = auth_url
+        self.auth_options['auth_method'] = auth_method
         self.__auth_token = auth_token
-        self.__auth_headers = auth_headers
-        self.__auth_params = auth_params
+        self.auth_options['auth_headers'] = auth_headers
+        self.auth_options['auth_params'] = auth_params
         self.__token_details = token_details
         self.__use_token_auth = use_token_auth
         if key is not None:
-            self.__key_name, self.__key_secret = self.parse_key(key)
+            self.auth_options['key_name'], self.auth_options['key_secret'] = (
+                self.parse_key(key))
         else:
-            self.__key_name = key_name
-            self.__key_secret = key_secret
-        self.__query_time = query_time
+            self.auth_options['key_name'] = key_name
+            self.auth_options['key_secret'] = key_secret
+        self.auth_options['query_time'] = query_time
 
     def parse_key(self, key):
         try:
@@ -35,45 +36,61 @@ class AuthOptions(object):
                                 .format(key.split(':')),
                                 401, 40101)
 
+    def merge(self, auth_options):
+        if type(auth_options) is dict:
+            self.auth_options.update(auth_options)
+        elif type(auth_options) is AuthOptions:
+            self.auth_options.update(auth_options.auth_options)
+        else:
+            raise KeyError('Expected dict or AuthOptions')
+
+    @property
+    def auth_options(self):
+        return self.__auth_options
+
+    @auth_options.setter
+    def auth_options(self, value):
+        self.__auth_options = value
+
     @property
     def auth_callback(self):
-        return self.__auth_callback
+        return self.auth_options['auth_callback']
 
     @auth_callback.setter
     def auth_callback(self, value):
-        self.__auth_callback = value
+        self.auth_options['auth_callback'] = value
 
     @property
     def auth_url(self):
-        return self.__auth_url
+        return self.auth_options['auth_url']
 
     @auth_url.setter
     def auth_url(self, value):
-        self.__auth_url = value
+        self.auth_options['auth_url'] = value
 
     @property
     def auth_method(self):
-        return self.__auth_method
+        return self.auth_options['auth_method']
 
     @auth_method.setter
     def auth_method(self, value):
-        self.__auth_method = value.upper()
+        self.auth_options['auth_method'] = value.upper()
 
     @property
     def key_name(self):
-        return self.__key_name
+        return self.auth_options['key_name']
 
     @key_name.setter
     def key_name(self, value):
-        self.__key_name = value
+        self.auth_options['key_name'] = value
 
     @property
     def key_secret(self):
-        return self.__key_secret
+        return self.auth_options['key_secret']
 
     @key_secret.setter
     def key_secret(self, value):
-        self.__key_secret = value
+        self.auth_options['key_secret'] = value
 
     @property
     def auth_token(self):
@@ -85,27 +102,27 @@ class AuthOptions(object):
 
     @property
     def auth_headers(self):
-        return self.__auth_headers
+        return self.auth_options['auth_headers']
 
     @auth_headers.setter
     def auth_headers(self, value):
-        self.__auth_headers = value
+        self.auth_options['auth_headers'] = value
 
     @property
     def auth_params(self):
-        return self.__auth_params
+        return self.auth_options['auth_params']
 
     @auth_params.setter
     def auth_params(self, value):
-        self.__auth_params = value
+        self.auth_options['auth_params'] = value
 
     @property
     def query_time(self):
-        return self.__query_time
+        return self.auth_options['query_time']
 
     @query_time.setter
     def query_time(self, value):
-        self.__query_time = value
+        self.auth_options['query_time'] = value
 
     @property
     def token_details(self):
