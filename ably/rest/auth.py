@@ -48,6 +48,7 @@ class Auth(object):
         elif must_not_use_token_auth and not can_use_basic_auth:
             raise ValueError('If use_token_auth is False you must provide a key')
 
+        self.__client_id = options.client_id
         # Using token auth
         self.__auth_mechanism = Auth.Method.TOKEN
 
@@ -239,6 +240,10 @@ class Auth(object):
     @property
     def token_details(self):
         return self.__token_details
+
+    @property
+    def client_id(self):
+        return self.__client_id
 
     def _get_auth_headers(self):
         if self.__auth_mechanism == Auth.Method.BASIC:

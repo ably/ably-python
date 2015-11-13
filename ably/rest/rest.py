@@ -59,7 +59,6 @@ class AblyRest(object):
             raise ValueError("key is missing. Either an API key, token, or token auth method must be provided")
         else:
             options = Options(**kwargs)
-        self.__client_id = options.client_id
 
         # if self.__keep_alive:
         #     self.__session = requests.Session()

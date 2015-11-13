@@ -79,6 +79,7 @@ class TestAuth(BaseTestCase):
 
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
+        self.assertEqual(ably.auth.client_id, 'testClientId')
 
     def test_auth_init_with_token(self):
 
