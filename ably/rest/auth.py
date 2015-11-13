@@ -27,7 +27,8 @@ class Auth(object):
     def __init__(self, ably, options, token_params):
         self.__ably = ably
         self.__auth_options = options
-        self.token_params = token_params
+        self.__token_params = token_params
+        self.__client_id = options.client_id
 
         self.__basic_credentials = None
         self.__auth_params = None
@@ -48,7 +49,6 @@ class Auth(object):
         elif must_not_use_token_auth and not can_use_basic_auth:
             raise ValueError('If use_token_auth is False you must provide a key')
 
-        self.__client_id = options.client_id
         # Using token auth
         self.__auth_mechanism = Auth.Method.TOKEN
 
@@ -75,6 +75,14 @@ class Auth(object):
 
     def authorise(self, token_params=None, force=False, **kwargs):
         self.__auth_mechanism = Auth.Method.TOKEN
+
+        if token_params is None:
+            token_params = dict(self.token_params)
+        else:
+            token_params = dict(self.token_params, **token_params)
+            self.token_params.update(token_params)
+
+        token_params.setdefault('client_id', self.client_id)
 
         if self.__token_details:
             if self.__token_details.expires > self._timestamp():
@@ -244,6 +252,14 @@ class Auth(object):
     @property
     def client_id(self):
         return self.__client_id
+
+    @property
+    def token_params(self):
+        return self.__token_params
+
+    @token_params.setter
+    def token_params(self, value):
+        self.__token_params = value
 
     def _get_auth_headers(self):
         if self.__auth_mechanism == Auth.Method.BASIC:

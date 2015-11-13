@@ -238,6 +238,17 @@ class TestAuthAuthorize(BaseTestCase):
                         tls=False, use_binary_protocol=self.use_binary_protocol)
         ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
 
+    def test_if_default_client_id_is_used(self):
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        rest_host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        client_id='my_client_id',
+                        use_binary_protocol=self.use_binary_protocol)
+        token = ably.auth.authorise()
+        self.assertEqual(token.client_id, 'my_client_id')
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRequestToken(BaseTestCase):
