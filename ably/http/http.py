@@ -114,7 +114,14 @@ class Http(object):
             return json.dumps(body, separators=(',', ':'))
 
     def reauth(self):
-        self.auth.authorise(force=True)
+        try:
+            self.auth.authorise(force=True)
+        except AblyException as e:
+            if e.code == 40101:
+                e.message = ("The provided token is not renewable and there is"
+                             " no means to generate a new token")
+            raise e
+
 
     @reauth_if_expired
     def make_request(self, method, path, headers=None, body=None,

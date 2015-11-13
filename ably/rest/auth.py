@@ -173,12 +173,13 @@ class Auth(object):
         token_params = token_params or {}
         token_request = {}
 
-        token_request['key_name'] = key_name
-
+        key_name = key_name or self.auth_options.key_name
+        key_secret = key_secret or self.auth_options.key_secret
         if not key_name or not key_secret:
             log.debug('key_name or key_secret blank')
-            raise AblyException("No key specified", 401, 40101)
+            raise AblyException("No key specified: no means to generate a token", 401, 40101)
 
+        token_request['key_name'] = key_name
         if token_params.get('timestamp'):
             token_request['timestamp'] = token_params['timestamp']
         else:

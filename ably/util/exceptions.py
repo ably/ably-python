@@ -10,6 +10,11 @@ log = logging.getLogger(__name__)
 
 
 class AblyException(Exception, UnicodeMixin):
+    def __new__(cls, message, status_code, code):
+        if cls == AblyException and status_code == 401:
+            return AblyAuthException(message, status_code, code)
+        return super(AblyException, cls).__new__(cls, message, status_code, code)
+
     def __init__(self, message, status_code, code):
         super(AblyException, self).__init__()
         self.message = message
@@ -75,3 +80,7 @@ def catch_all(func):
             raise AblyException.from_exception(e)
 
     return wrapper
+
+
+class AblyAuthException(AblyException):
+    pass

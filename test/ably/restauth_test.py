@@ -14,7 +14,7 @@ from requests import Session
 
 from ably import AblyRest
 from ably import Auth
-from ably import AblyException
+from ably import AblyAuthException
 from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
@@ -459,8 +459,10 @@ class TestRenewToken(BaseTestCase):
 
         publish = self.ably.channels[self.channel].publish
 
-        self.assertRaisesRegexp(AblyException, "No key specified", publish,
-                                'evt', 'msg')
+        self.assertRaisesRegexp(
+            AblyAuthException, "The provided token is not renewable and there is"
+            " no means to generate a new token", publish,
+            'evt', 'msg')
         self.assertEquals(0, self.token_requests)
 
     def test_when_not_renewable_with_token_details(self):
@@ -477,6 +479,8 @@ class TestRenewToken(BaseTestCase):
 
         publish = self.ably.channels[self.channel].publish
 
-        self.assertRaisesRegexp(AblyException, "No key specified", publish,
-                                'evt', 'msg')
+        self.assertRaisesRegexp(
+            AblyAuthException, "The provided token is not renewable and there is"
+            " no means to generate a new token", publish,
+            'evt', 'msg')
         self.assertEquals(0, self.token_requests)
