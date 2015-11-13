@@ -181,13 +181,18 @@ class TestCreateTokenRequest(BaseTestCase):
 
     @dont_vary_protocol
     def test_key_name_and_secret_are_required(self):
+        ably = AblyRest(token='not a real token',
+                             rest_host=test_vars["host"],
+                             port=test_vars["port"],
+                             tls_port=test_vars["tls_port"],
+                             tls=test_vars["tls"])
         self.assertRaisesRegexp(AblyException, "40101 401 No key specified",
-                                self.ably.auth.create_token_request)
+                                ably.auth.create_token_request)
         self.assertRaisesRegexp(AblyException, "40101 401 No key specified",
-                                self.ably.auth.create_token_request,
+                                ably.auth.create_token_request,
                                 key_name=self.key_name)
         self.assertRaisesRegexp(AblyException, "40101 401 No key specified",
-                                self.ably.auth.create_token_request,
+                                ably.auth.create_token_request,
                                 key_secret=self.key_secret)
 
     @dont_vary_protocol
