@@ -125,9 +125,7 @@ class Auth(object):
 
         auth_method = (auth_method or self.auth_options.auth_method).upper()
 
-        default_auth_headers = dict(self.auth_options.auth_headers or {})
-        default_auth_headers.update(auth_headers or {})
-        auth_headers = default_auth_headers
+        auth_headers = auth_headers or self.auth_options.auth_headers or {}
 
         log.debug("Token Params: %s" % token_params)
         if auth_callback:
