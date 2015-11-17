@@ -15,7 +15,7 @@ import msgpack
 from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
-from ably.util.exceptions import AblyException
+from ably.util.exceptions import AblyException, AblyAuthException
 
 log = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class Http(object):
     def reauth(self):
         try:
             self.auth.authorise(force=True)
-        except AblyException as e:
+        except AblyAuthException as e:
             if e.code == 40101:
                 e.message = ("The provided token is not renewable and there is"
                              " no means to generate a new token")
