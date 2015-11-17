@@ -92,11 +92,11 @@ class Response(object):
 
 
 class Http(object):
-    CONNECTION_RETRY = {
-        'single_request_connect_timeout': 4,
-        'single_request_read_timeout': 15,
-        'max_retry_attempts': 3,
-        'cumulative_timeout': 10,
+    CONNECTION_RETRY_DEFAULTS = {
+        'http_open_timeout': 4,
+        'http_request_timeout': 15,
+        'http_max_retry_count': 3,
+        'http_max_retry_duration': 10,
     }
 
     def __init__(self, ably, options):
@@ -121,7 +121,6 @@ class Http(object):
                 e.message = ("The provided token is not renewable and there is"
                              " no means to generate a new token")
             raise e
-
 
     @reauth_if_expired
     def make_request(self, method, path, headers=None, body=None,
@@ -151,15 +150,15 @@ class Http(object):
         if headers:
             all_headers.update(headers)
 
-        single_request_connect_timeout = self.CONNECTION_RETRY['single_request_connect_timeout']
-        single_request_read_timeout = self.CONNECTION_RETRY['single_request_read_timeout']
+        http_open_timeout = self.http_open_timeout
+        http_request_timeout = self.http_request_timeout
         if fallback_hosts:
-            max_retry_attempts = self.CONNECTION_RETRY['max_retry_attempts']
+            http_max_retry_count = self.http_max_retry_count
         else:
-            max_retry_attempts = 1
-        cumulative_timeout = self.CONNECTION_RETRY['cumulative_timeout']
+            http_max_retry_count = 1
+        http_max_retry_duration = self.http_max_retry_duration
         requested_at = time.time()
-        for retry_count in range(max_retry_attempts):
+        for retry_count in range(http_max_retry_count):
             host = next(fallback_hosts) if fallback_hosts else self.preferred_host
             if self.options.environment:
                 host = self.options.environment + '-' + host
@@ -173,16 +172,16 @@ class Http(object):
             try:
                 response = self.__session.send(
                     prepped,
-                    timeout=(single_request_connect_timeout,
-                             single_request_read_timeout))
+                    timeout=(http_open_timeout,
+                             http_request_timeout))
             except Exception as e:
                 # Need to catch `Exception`, see:
                 # https://github.com/kennethreitz/requests/issues/1236#issuecomment-133312626
 
                 # if last try or cumulative timeout is done, throw exception up
                 time_passed = time.time() - requested_at
-                if retry_count == max_retry_attempts - 1 or \
-                   time_passed > cumulative_timeout:
+                if retry_count == http_max_retry_count - 1 or \
+                   time_passed > http_max_retry_duration:
                     raise e
             else:
                 try:
@@ -229,3 +228,27 @@ class Http(object):
     @property
     def preferred_scheme(self):
         return Defaults.get_scheme(self.options)
+
+    @property
+    def http_open_timeout(self):
+        if self.options.http_open_timeout is not None:
+            return self.options.http_open_timeout
+        return self.CONNECTION_RETRY_DEFAULTS['http_open_timeout']
+
+    @property
+    def http_request_timeout(self):
+        if self.options.http_request_timeout is not None:
+            return self.options.http_request_timeout
+        return self.CONNECTION_RETRY_DEFAULTS['http_request_timeout']
+
+    @property
+    def http_max_retry_count(self):
+        if self.options.http_max_retry_count is not None:
+            return self.options.http_max_retry_count
+        return self.CONNECTION_RETRY_DEFAULTS['http_max_retry_count']
+
+    @property
+    def http_max_retry_duration(self):
+        if self.options.http_max_retry_duration is not None:
+            return self.options.http_max_retry_duration
+        return self.CONNECTION_RETRY_DEFAULTS['http_max_retry_duration']
