@@ -56,7 +56,9 @@ def assert_responses_type(protocol):
             patcher = patch()
             fn(self, *args, **kwargs)
             unpatch(patcher)
-            self.assertGreaterEqual(len(responses), 1)
+            self.assertGreaterEqual(len(responses), 1,
+                                    "If your test doesn't make any requests,"
+                                    " use the @dont_vary_protocol decorator")
             for response in responses:
                 if protocol == 'json':
                     self.assertEquals(response.headers['content-type'], 'application/json')

@@ -188,6 +188,13 @@ class TestRestInit(BaseTestCase):
             request = get_mock.call_args_list[0][0][0]
             self.assertEquals(request.url, 'https://custom-rest.ably.io:443/time')
 
+    @dont_vary_protocol
+    def test_accepts_custom_http_timeouts(self):
+        ably = AblyRest(
+            token="foo", http_request_timeout=30, http_open_timeout=8,
+            http_max_retry_count=6, http_max_retry_duration=20)
 
-if __name__ == "__main__":
-    unittest.main()
+        self.assertEqual(ably.options.http_request_timeout, 30)
+        self.assertEqual(ably.options.http_open_timeout, 8)
+        self.assertEqual(ably.options.http_max_retry_count, 6)
+        self.assertEqual(ably.options.http_max_retry_duration, 20)

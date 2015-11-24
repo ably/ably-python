@@ -7,7 +7,10 @@ from ably.util.exceptions import AblyException
 class Options(AuthOptions):
     def __init__(self, client_id=None, log_level=0, tls=True, rest_host=None,
                  realtime_host=None, port=0, tls_port=0, use_binary_protocol=True,
-                 queue_messages=False, recover=False, environment=None, **kwargs):
+                 queue_messages=False, recover=False, environment=None,
+                 http_open_timeout=None, http_request_timeout=None,
+                 http_max_retry_count=None, http_max_retry_duration=None,
+                 **kwargs):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
@@ -23,6 +26,10 @@ class Options(AuthOptions):
         self.__queue_messages = queue_messages
         self.__recover = recover
         self.__environment = environment
+        self.__http_open_timeout = http_open_timeout
+        self.__http_request_timeout = http_request_timeout
+        self.__http_max_retry_count = http_max_retry_count
+        self.__http_max_retry_duration = http_max_retry_duration
 
     @property
     def client_id(self):
@@ -107,3 +114,36 @@ class Options(AuthOptions):
     @property
     def environment(self):
         return self.__environment
+
+    @property
+    def http_open_timeout(self):
+            return self.__http_open_timeout
+
+    @http_open_timeout.setter
+    def http_open_timeout(self, value):
+        self.__http_open_timeout = value
+
+    @property
+    def http_request_timeout(self):
+            return self.__http_request_timeout
+
+    @http_request_timeout.setter
+    def http_request_timeout(self, value):
+        self.__http_request_timeout = value
+
+    @property
+    def http_max_retry_count(self):
+            return self.__http_max_retry_count
+
+    @http_max_retry_count.setter
+    def http_max_retry_count(self, value):
+        self.__http_max_retry_count = value
+
+    @property
+    def http_max_retry_duration(self):
+            return self.__http_max_retry_duration
+
+    @http_max_retry_duration.setter
+    def http_max_retry_duration(self, value):
+
+        self.__http_max_retry_duration = value
