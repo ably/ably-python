@@ -256,6 +256,15 @@ class TestAuthAuthorize(BaseTestCase):
         token = ably.auth.authorise()
         self.assertEqual(token.client_id, 'my_client_id')
 
+    def test_if_parameters_are_stored_and_used_as_defaults(self):
+        self.ably.auth.authorise({'ttl': 555, 'client_id': 'new_id'},
+                                 {'auth_headers': {'a_headers': 'a_value'}})
+        with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
+            self.ably.auth.authorise(force=True)
+
+        token_called, auth_called = request_mock.call_args
+        self.assertEqual(token_called[0], {'ttl': 555, 'client_id': 'new_id'})
+        self.assertEqual(auth_called['auth_headers'], {'a_headers': 'a_value'})
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRequestToken(BaseTestCase):
