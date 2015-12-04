@@ -335,7 +335,9 @@ class TestRequestToken(BaseTestCase):
                              rest_host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+                             tls=test_vars["tls"],
+                             auth_headers={'this': 'will_not_be_used'},
+                             auth_params={'this': 'will_not_be_used'})
 
         auth_params = {'foo': 'auth', 'spam': 'eggs'}
         token_params = {'foo': 'token'}
