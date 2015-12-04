@@ -355,7 +355,9 @@ class TestRequestToken(BaseTestCase):
 
     @dont_vary_protocol
     def test_with_callback(self):
+        called_token_params = {'ttl': '3600'}
         def callback(token_params):
+            self.assertEquals(token_params, called_token_params)
             return 'token_string'
 
         self.ably = AblyRest(auth_callback=callback,
@@ -364,14 +366,17 @@ class TestRequestToken(BaseTestCase):
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
 
-        token_details = self.ably.auth.request_token(auth_callback=callback)
+        token_details = self.ably.auth.request_token(
+            token_params=called_token_params, auth_callback=callback)
         self.assertIsInstance(token_details, TokenDetails)
         self.assertEquals('token_string', token_details.token)
 
         def callback(token_params):
+            self.assertEquals(token_params, called_token_params)
             return TokenDetails(token='another_token_string')
 
-        token_details = self.ably.auth.request_token(auth_callback=callback)
+        token_details = self.ably.auth.request_token(
+            token_params=called_token_params, auth_callback=callback)
         self.assertEquals('another_token_string', token_details.token)
 
     @dont_vary_protocol
