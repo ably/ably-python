@@ -149,6 +149,18 @@ class TestAuth(BaseTestCase):
         one_hour_in_seconds = 60 * 60
         self.assertEquals(TokenDetails.DEFAULTS['ttl'], one_hour_in_seconds)
 
+    def test_with_auth_method(self):
+        ably = AblyRest(token='a token', auth_method='POST')
+        self.assertEquals(ably.auth.auth_options.auth_method, 'POST')
+
+    def test_with_auth_headers(self):
+        ably = AblyRest(token='a token', auth_headers={'h1': 'v1'})
+        self.assertEquals(ably.auth.auth_options.auth_headers, {'h1': 'v1'})
+
+    def test_with_auth_params(self):
+        ably = AblyRest(token='a token', auth_params={'p': 'v'})
+        self.assertEquals(ably.auth.auth_options.auth_params, {'p': 'v'})
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestAuthAuthorize(BaseTestCase):
