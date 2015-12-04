@@ -24,10 +24,9 @@ class Auth(object):
         BASIC = "BASIC"
         TOKEN = "TOKEN"
 
-    def __init__(self, ably, options, token_params):
+    def __init__(self, ably, options):
         self.__ably = ably
         self.__auth_options = options
-        self.__token_params = token_params
         self.__client_id = options.client_id
 
         self.__basic_credentials = None
@@ -77,10 +76,11 @@ class Auth(object):
         self.__auth_mechanism = Auth.Method.TOKEN
 
         if token_params is None:
-            token_params = dict(self.token_params)
+            token_params = dict(self.auth_options.default_token_params)
         else:
-            token_params = dict(self.token_params, **token_params)
-            self.token_params = dict(token_params)
+            token_params = dict(self.auth_options.default_token_params,
+                                **token_params)
+            self.auth_options.default_token_params = dict(token_params)
 
         if auth_options is not None:
             force = auth_options.pop('force', None) or force
@@ -109,7 +109,8 @@ class Auth(object):
                       auth_url=None, auth_method=None, auth_headers=None,
                       auth_params=None, query_time=None):
         token_params = token_params or {}
-        token_params = dict(self.token_params, **token_params)
+        token_params = dict(self.auth_options.default_token_params,
+                            **token_params)
         key_name = key_name or self.auth_options.key_name
         key_secret = key_secret or self.auth_options.key_secret
 
@@ -255,14 +256,6 @@ class Auth(object):
     @property
     def client_id(self):
         return self.__client_id
-
-    @property
-    def token_params(self):
-        return self.__token_params
-
-    @token_params.setter
-    def token_params(self, value):
-        self.__token_params = value
 
     def _get_auth_headers(self):
         if self.__auth_mechanism == Auth.Method.BASIC:
