@@ -161,6 +161,12 @@ class TestAuth(BaseTestCase):
         ably = AblyRest(token='a token', auth_params={'p': 'v'})
         self.assertEquals(ably.auth.auth_options.auth_params, {'p': 'v'})
 
+    def test_with_default_token_params(self):
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        default_token_params={'ttl': 12345})
+        self.assertEquals(ably.auth.auth_options.default_token_params,
+                          {'ttl': 12345})
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestAuthAuthorize(BaseTestCase):
