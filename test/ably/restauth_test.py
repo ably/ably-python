@@ -367,6 +367,8 @@ class TestRequestToken(BaseTestCase):
             auth_params=auth_params)
         self.assertEquals('another_token_string', token_details.token)
         request = responses.calls[0].request
+        self.assertEquals(request.headers['foo'], 'bar')
+        self.assertNotIn('this', request.headers)
         self.assertEquals(parse_qs(urlparse(request.url).query),
                           {'foo': ['token'], 'spam': ['eggs']})
         self.assertFalse(request.body)
