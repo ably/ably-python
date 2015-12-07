@@ -9,7 +9,8 @@ class AuthOptions(object):
     def __init__(self, auth_callback=None, auth_url=None, auth_method='GET',
                  auth_token=None, auth_headers=None, auth_params=None,
                  key_name=None, key_secret=None, key=None, query_time=False,
-                 token_details=None, use_token_auth=None):
+                 token_details=None, use_token_auth=None,
+                 default_token_params=None):
         self.__auth_options = {}
         self.auth_options['auth_callback'] = auth_callback
         self.auth_options['auth_url'] = auth_url
@@ -19,6 +20,7 @@ class AuthOptions(object):
         self.auth_options['auth_params'] = auth_params
         self.__token_details = token_details
         self.__use_token_auth = use_token_auth
+        self.default_token_params = default_token_params or {}
         if key is not None:
             self.auth_options['key_name'], self.auth_options['key_secret'] = (
                 self.parse_key(key))
@@ -139,6 +141,14 @@ class AuthOptions(object):
     @use_token_auth.setter
     def use_token_auth(self, value):
         self.__use_token_auth = value
+
+    @property
+    def default_token_params(self):
+        return self.__default_token_params
+
+    @default_token_params.setter
+    def default_token_params(self, value):
+        self.__default_token_params = value
 
     def __unicode__(self):
         return six.text_type(self.__dict__)

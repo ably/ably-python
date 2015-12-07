@@ -149,6 +149,24 @@ class TestAuth(BaseTestCase):
         one_hour_in_seconds = 60 * 60
         self.assertEquals(TokenDetails.DEFAULTS['ttl'], one_hour_in_seconds)
 
+    def test_with_auth_method(self):
+        ably = AblyRest(token='a token', auth_method='POST')
+        self.assertEquals(ably.auth.auth_options.auth_method, 'POST')
+
+    def test_with_auth_headers(self):
+        ably = AblyRest(token='a token', auth_headers={'h1': 'v1'})
+        self.assertEquals(ably.auth.auth_options.auth_headers, {'h1': 'v1'})
+
+    def test_with_auth_params(self):
+        ably = AblyRest(token='a token', auth_params={'p': 'v'})
+        self.assertEquals(ably.auth.auth_options.auth_params, {'p': 'v'})
+
+    def test_with_default_token_params(self):
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        default_token_params={'ttl': 12345})
+        self.assertEquals(ably.auth.auth_options.default_token_params,
+                          {'ttl': 12345})
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestAuthAuthorize(BaseTestCase):
@@ -256,6 +274,15 @@ class TestAuthAuthorize(BaseTestCase):
         token = ably.auth.authorise()
         self.assertEqual(token.client_id, 'my_client_id')
 
+    def test_if_parameters_are_stored_and_used_as_defaults(self):
+        self.ably.auth.authorise({'ttl': 555, 'client_id': 'new_id'},
+                                 {'auth_headers': {'a_headers': 'a_value'}})
+        with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
+            self.ably.auth.authorise(force=True)
+
+        token_called, auth_called = request_mock.call_args
+        self.assertEqual(token_called[0], {'ttl': 555, 'client_id': 'new_id'})
+        self.assertEqual(auth_called['auth_headers'], {'a_headers': 'a_value'})
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRequestToken(BaseTestCase):
@@ -326,7 +353,9 @@ class TestRequestToken(BaseTestCase):
                              rest_host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+                             tls=test_vars["tls"],
+                             auth_headers={'this': 'will_not_be_used'},
+                             auth_params={'this': 'will_not_be_used'})
 
         auth_params = {'foo': 'auth', 'spam': 'eggs'}
         token_params = {'foo': 'token'}
@@ -338,13 +367,17 @@ class TestRequestToken(BaseTestCase):
             auth_params=auth_params)
         self.assertEquals('another_token_string', token_details.token)
         request = responses.calls[0].request
+        self.assertEquals(request.headers['foo'], 'bar')
+        self.assertNotIn('this', request.headers)
         self.assertEquals(parse_qs(urlparse(request.url).query),
                           {'foo': ['token'], 'spam': ['eggs']})
         self.assertFalse(request.body)
 
     @dont_vary_protocol
     def test_with_callback(self):
+        called_token_params = {'ttl': '3600'}
         def callback(token_params):
+            self.assertEquals(token_params, called_token_params)
             return 'token_string'
 
         self.ably = AblyRest(auth_callback=callback,
@@ -353,14 +386,17 @@ class TestRequestToken(BaseTestCase):
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
 
-        token_details = self.ably.auth.request_token(auth_callback=callback)
+        token_details = self.ably.auth.request_token(
+            token_params=called_token_params, auth_callback=callback)
         self.assertIsInstance(token_details, TokenDetails)
         self.assertEquals('token_string', token_details.token)
 
         def callback(token_params):
+            self.assertEquals(token_params, called_token_params)
             return TokenDetails(token='another_token_string')
 
-        token_details = self.ably.auth.request_token(auth_callback=callback)
+        token_details = self.ably.auth.request_token(
+            token_params=called_token_params, auth_callback=callback)
         self.assertEquals('another_token_string', token_details.token)
 
     @dont_vary_protocol
