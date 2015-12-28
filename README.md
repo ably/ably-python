@@ -15,8 +15,8 @@ The ably-python client has one dependency,
 
 - Connection Pooling
 - HTTP Keep-Alive
-- Python 2.6-3.3
 - Compatible with gevent
+- Python 2.7-3.5
 
 ## Installation
 
