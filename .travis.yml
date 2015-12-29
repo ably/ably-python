@@ -1,8 +1,8 @@
 language: python
+python:
+  - "3.5"
 sudo: false
 install:
   - pip install tox
 script:
   - tox
-python:
--3.5
