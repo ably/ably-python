@@ -6,21 +6,13 @@ ably-python
 
 Ably.io python client library - REST interface
 
-## Dependencies
+## Documentation
 
-The ably-python client has one dependency, 
-[requests>=1.0.0](https://github.com/kennethreitz/requests)
-
-## Features
-
-- Connection Pooling
-- HTTP Keep-Alive
-- Compatible with gevent
-- Python 2.7-3.5
+Visit https://www.ably.io/documentation for a complete API reference and more examples.
 
 ## Installation
 
-### From PyPi
+### From PyPi (soon)
 
     pip install ably-python
 
@@ -79,3 +71,22 @@ AblyRest(token="token.string")
 ```python
 AblyRest(key="api:key", rest_host="custom.host", port=8080)
 ```
+
+## Support, feedback and troubleshooting
+
+Please visit http://support.ably.io/ for access to our knowledgebase and to ask for any assistance.
+
+You can also view the [community reported Github issues](https://github.com/ably/ably-python/issues).
+
+## Contributing
+
+1. Fork it
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Ensure you have added suitable tests and the test suite is passing(`nosetests`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create a new Pull Request
+
+## License
+
+Copyright (c) 2015 Ably Real-time Ltd, Licensed under the Apache License, Version 2.0.  Refer to [LICENSE](LICENSE) for the license terms.
