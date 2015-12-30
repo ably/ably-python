@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='ably-python',
+    name='ably',
     version='0.1.dev',
     classifiers=[
         'Programming Language :: Python',

@@ -12,9 +12,9 @@ Visit https://www.ably.io/documentation for a complete API reference and more ex
 
 ## Installation
 
-### From PyPi (soon)
+### From PyPI (soon)
 
-    pip install ably-python
+    pip install ably
 
 ### From a git url
 
