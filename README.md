@@ -33,43 +33,77 @@ Visit https://www.ably.io/documentation for a complete API reference and more ex
     pip install -r requirements-test.txt
     nosetests
 
-## Basic Usage
+## Using the REST API
+
+All examples assume a client and/or channel has been created as follows:
 
 ```python
-from ably.rest import AblyRest
-
-ably = AblyRest("key_str")
-ably.time() # returns the server time in ms since the unix epoch
-ably.stats() # returns an array of stats
-
-# Channels:
-# Publish a message to channel 'foo'
-ably.channels.foo.publish('msg_name', 'msg_data')
-
-# Get the history for channel 'foo'
-ably.channels.foo.history()
-
-# Get presence for channel 'foo'
-ably.channels.foo.presence()
-```
-## Options
-
-### Credentials
-
-You can provide either a `key`, a `token` or, attributes to the `Options` object.
-
-```python
-ably = AblyRest("api:key")
+from ably import AblyRest
+client = AblyRest('api:key')
+channel = client.channels.channel_name
 ```
 
-or
+### Publishing a message to a channel
 
 ```python
-AblyRest(token="token.string")
+channel.publish('event', 'message')
 ```
 
+### Querying the History
+
 ```python
-AblyRest(key="api:key", rest_host="custom.host", port=8080)
+mesage_page = channel.history() # Returns a PaginatedResult
+message_page.items # List with messages from this page
+message_page.has_next() # => True, indicates there is another page
+message_page.next().items # List with messages from the second page
+```
+
+### Presence on a channel
+
+```python
+members_page = channel.presence.get() # Returns a PaginatedResult
+members_page.items
+members_page.items[0].client_id # client_id of first member present
+```
+
+### Querying the Presence History
+
+```python
+presence_page = channel.presence.history() # Returns a PaginatedResult
+presence_page.items
+presence_page.items[0].client_id # client_id of first member
+```
+
+### Generate Token and Token Request
+
+```python
+token_details = client.auth.request_token()
+token_details.token # => "xVLyHw.CLchevH3hF....MDh9ZC_Q"
+new_client = AblyRest.(token=token_details.token)
+
+token_request = client.auth.create_token_request(
+    {
+        'id': 'id',
+        'client_id': None,
+        'capability': {'channel1': '"*"'},
+        'ttl': 60000,
+    }
+)
+
+
+```
+
+### Fetching your application's stats
+
+```python
+stats = client.stats() # Returns a PaginatedResult
+stats.items
+```
+
+### Fetching the Ably service time
+
+```python
+client.time()
 ```
 
 ## Support, feedback and troubleshooting
