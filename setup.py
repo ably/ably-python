@@ -1,13 +1,13 @@
 from setuptools import setup
 
 setup(
-    name='ably-python',
+    name='ably',
     version='0.1.dev',
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
     ],
-    packages=['ably',],
+    packages=['ably', 'ably.http', 'ably.rest', 'ably.transport', 'ably.types', 'ably.util'],
     install_requires=['msgpack-python>=0.4.6',
                       'pycrypto>=2.6.1',
                       'requests>=2.7.0,<2.8',
