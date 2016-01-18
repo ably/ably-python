@@ -79,7 +79,7 @@ presence_page.items[0].client_id # client_id of first member
 ```python
 token_details = client.auth.request_token()
 token_details.token # => "xVLyHw.CLchevH3hF....MDh9ZC_Q"
-new_client = AblyRest.(token=token_details.token)
+new_client = AblyRest(token=token_details.token)
 
 token_request = client.auth.create_token_request(
     {

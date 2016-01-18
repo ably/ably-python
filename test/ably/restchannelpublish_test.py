@@ -2,13 +2,14 @@ from __future__ import absolute_import
 
 import json
 import logging
+import uuid
 
 import six
 from six.moves import range
 import mock
 import msgpack
 
-from ably import AblyException
+from ably import AblyException, IncompatibleClientIdException
 from ably import AblyRest
 from ably.types.message import Message
 
@@ -27,9 +28,16 @@ class TestRestChannelPublish(BaseTestCase):
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
+        self.ably_with_client_id = AblyRest(key=test_vars["keys"][0]["key_str"],
+                                            rest_host=test_vars["host"],
+                                            port=test_vars["port"],
+                                            tls_port=test_vars["tls_port"],
+                                            tls=test_vars["tls"],
+                                            client_id=uuid.uuid4().hex)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
+        self.ably_with_client_id.options.use_binary_protocol = use_binary_protocol
         self.use_binary_protocol = use_binary_protocol
 
     def test_publish_various_datatypes_text(self):
@@ -222,3 +230,77 @@ class TestRestChannelPublish(BaseTestCase):
         self.assertEqual(message.encoding, '')
         self.assertEqual(message.client_id, 'client_id')
         self.assertIsInstance(message.timestamp, int)
+
+    def test_publish_message_without_client_id_on_identified_client(self):
+        channel = self.ably_with_client_id.channels[
+            self.protocol_channel_name('persisted:no_client_id_identified_client')]
+
+        with mock.patch('ably.rest.rest.Http.post',
+                        wraps=channel.ably.http.post) as post_mock:
+            channel.publish(name='publish', data='test')
+
+            history = channel.history()
+            messages = history.items
+
+            self.assertIsNotNone(messages, msg="Expected non-None messages")
+            self.assertEqual(len(messages), 1, msg="Expected 1 message")
+
+            self.assertEqual(post_mock.call_count, 2)
+
+            if self.use_binary_protocol:
+                posted_body = msgpack.unpackb(
+                    post_mock.mock_calls[0][2]['body'], encoding='utf-8')
+            else:
+                posted_body = json.loads(
+                    post_mock.mock_calls[0][2]['body'])
+
+            self.assertNotIn('client_id', posted_body)
+
+            # Get the history for this channel
+            history = channel.history()
+            messages = history.items
+
+            self.assertIsNotNone(messages, msg="Expected non-None messages")
+            self.assertEqual(len(messages), 1, msg="Expected 1 message")
+
+            self.assertEqual(messages[0].client_id, self.ably_with_client_id.client_id)
+
+    def test_publish_message_with_client_id_on_identified_client(self):
+        # works if same
+        channel = self.ably_with_client_id.channels[
+            self.protocol_channel_name('persisted:with_client_id_identified_client')]
+        channel.publish(name='publish', data='test',
+                        client_id=self.ably_with_client_id.client_id)
+
+        history = channel.history()
+        messages = history.items
+
+        self.assertIsNotNone(messages, msg="Expected non-None messages")
+        self.assertEqual(len(messages), 1, msg="Expected 1 message")
+
+        self.assertEqual(messages[0].client_id, self.ably_with_client_id.client_id)
+
+        # fails if different
+        with self.assertRaises(IncompatibleClientIdException):
+            channel.publish(name='publish', data='test',
+                            client_id='invalid')
+
+    def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
+        new_token = self.ably.auth.authorise(
+            token_params={'client_id': uuid.uuid4().hex}, force=True)
+        new_ably = AblyRest(token=new_token.token,
+                            rest_host=test_vars["host"],
+                            port=test_vars["port"],
+                            tls_port=test_vars["tls_port"],
+                            tls=test_vars["tls"],
+                            use_binary_protocol=self.use_binary_protocol)
+        channel = new_ably.channels[
+            self.protocol_channel_name('persisted:wrong_client_id_implicit_client')]
+
+        with self.assertRaises(AblyException) as cm:
+            channel.publish(name='publish', data='test',
+                            client_id='invalid')
+
+        the_exception = cm.exception
+        self.assertEqual(400, the_exception.status_code)
+        self.assertEqual(40012, the_exception.code)

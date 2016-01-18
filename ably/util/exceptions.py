@@ -84,3 +84,7 @@ def catch_all(func):
 
 class AblyAuthException(AblyException):
     pass
+
+
+class IncompatibleClientIdException(AblyException):
+    pass
