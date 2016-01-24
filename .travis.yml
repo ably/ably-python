@@ -3,6 +3,8 @@ python:
   - "3.5"
 sudo: false
 install:
-  - pip install tox
+  # virtualenv>=14.0.0 has dropped Python 3.2 support
+  - travis_retry pip install "virtualenv<14.0.0"
+  - travis_retry pip install tox
 script:
   - tox
