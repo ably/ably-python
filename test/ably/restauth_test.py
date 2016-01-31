@@ -285,6 +285,18 @@ class TestAuthAuthorize(BaseTestCase):
         self.assertEqual(token_called[0], {'ttl': 555 * 1000, 'client_id': 'new_id'})
         self.assertEqual(auth_called['auth_headers'], {'a_headers': 'a_value'})
 
+    def test_force_and_timestamp_are_not_stored(self):
+        time = self.ably.time()
+        self.ably.auth.authorise(
+            {'ttl': 555, 'client_id': 'new_id', 'timestamp': time},
+            {'auth_headers': {'a_headers': 'a_value'}, 'force': True})
+        with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
+            self.ably.auth.authorise(force=True)
+
+        token_called, auth_called = request_mock.call_args
+        self.assertEqual(token_called[0], {'ttl': 555, 'client_id': 'new_id'})
+        self.assertEqual(auth_called['auth_headers'], {'a_headers': 'a_value'})
+
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRequestToken(BaseTestCase):
 

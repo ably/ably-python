@@ -20,7 +20,9 @@ class AuthOptions(object):
         self.auth_options['auth_params'] = auth_params
         self.__token_details = token_details
         self.__use_token_auth = use_token_auth
-        self.default_token_params = default_token_params or {}
+        default_token_params = default_token_params or {}
+        default_token_params.pop('timestamp', None)
+        self.default_token_params = default_token_params
         if key is not None:
             self.auth_options['key_name'], self.auth_options['key_secret'] = (
                 self.parse_key(key))

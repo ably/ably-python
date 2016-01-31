@@ -82,6 +82,7 @@ class Auth(object):
             token_params = dict(self.auth_options.default_token_params,
                                 **token_params)
             self.auth_options.default_token_params = dict(token_params)
+            self.auth_options.default_token_params.pop('timestamp', None)
 
         if auth_options is not None:
             force = auth_options.pop('force', None) or force
