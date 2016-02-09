@@ -147,8 +147,8 @@ class TestAuth(BaseTestCase):
         self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
 
     def test_default_ttl_is_1hour(self):
-        one_hour_in_seconds = 60 * 60
-        self.assertEquals(TokenDetails.DEFAULTS['ttl'], one_hour_in_seconds)
+        one_hour_in_ms = 60 * 60 * 1000
+        self.assertEquals(TokenDetails.DEFAULTS['ttl'], one_hour_in_ms)
 
     def test_with_auth_method(self):
         ably = AblyRest(token='a token', auth_method='POST')
@@ -289,7 +289,7 @@ class TestAuthAuthorize(BaseTestCase):
     def test_force_and_timestamp_are_not_stored(self):
         # authorise once with arbitrary defaults
         token_1 = self.ably.auth.authorise(
-            {'ttl': 555, 'client_id': 'new_id'},
+            {'ttl': 60 * 1000, 'client_id': 'new_id'},
             {'auth_headers': {'a_headers': 'a_value'}})
         self.assertIsInstance(token_1, TokenDetails)
 
@@ -298,7 +298,7 @@ class TestAuthAuthorize(BaseTestCase):
         with mock.patch('ably.rest.auth.TokenRequest',
                         wraps=ably.types.tokenrequest.TokenRequest) as tr_mock:
             token_2 = self.ably.auth.authorise(
-                {'ttl': 555, 'client_id': 'new_id', 'timestamp': timestamp},
+                {'ttl': 60 * 1000, 'client_id': 'new_id', 'timestamp': timestamp},
                 {'auth_headers': {'a_headers': 'a_value'}, 'force': True})
         self.assertIsInstance(token_2, TokenDetails)
         self.assertNotEqual(token_1, token_2)

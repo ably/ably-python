@@ -194,7 +194,7 @@ class Auth(object):
 
         token_request['timestamp'] = int(token_request['timestamp'])
 
-        token_request['ttl'] = (token_params.get('ttl') or TokenDetails.DEFAULTS['ttl']) * 1000
+        token_request['ttl'] = token_params.get('ttl') or TokenDetails.DEFAULTS['ttl']
 
         if token_params.get('capability') is None:
             token_request["capability"] = ""

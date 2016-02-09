@@ -10,7 +10,7 @@ from ably.types.capability import Capability
 
 class TokenDetails(object):
 
-    DEFAULTS = {'ttl': 60 * 60}
+    DEFAULTS = {'ttl': 60 * 60 * 1000}
     # Buffer in milliseconds before a token is considered unusable
     # For example, if buffer is 10000ms, the token can no longer be used for
     # new requests 9000ms before it expires
@@ -19,7 +19,7 @@ class TokenDetails(object):
     def __init__(self, token=None, expires=None, issued=0,
                  capability=None, client_id=None):
         if expires is None:
-            self.__expires = (time.time() + TokenDetails.DEFAULTS['ttl']) * 1000
+            self.__expires = time.time() * 1000 + TokenDetails.DEFAULTS['ttl']
         else:
             self.__expires = expires
         self.__token = token
