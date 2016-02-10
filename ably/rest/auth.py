@@ -11,7 +11,7 @@ import requests
 from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
-from ably.util.exceptions import AblyException
+from ably.util.exceptions import AblyException, IncompatibleClientIdException
 
 __all__ = ["Auth"]
 
@@ -28,6 +28,7 @@ class Auth(object):
         self.__ably = ably
         self.__auth_options = options
         self.__client_id = options.client_id
+        self.__client_id_validated = False
 
         self.__basic_credentials = None
         self.__auth_params = None
@@ -90,7 +91,7 @@ class Auth(object):
         token_params.setdefault('client_id', self.client_id)
 
         if self.__token_details:
-            if self.__token_details.expires > self._timestamp():
+            if not self.__token_details.is_expired(self._timestamp()):
                 if not force:
                     log.debug(
                         "using cached token; expires = %d",
@@ -102,6 +103,7 @@ class Auth(object):
                 self.__token_details = None
 
         self.__token_details = self.request_token(token_params, **auth_options)
+        self._configure_client_id(self.__token_details.client_id)
         return self.__token_details
 
     def request_token(self, token_params=None,
@@ -192,7 +194,7 @@ class Auth(object):
 
         token_request['timestamp'] = int(token_request['timestamp'])
 
-        token_request['ttl'] = token_params.get('ttl') or TokenDetails.DEFAULTS['ttl'] * 1000
+        token_request['ttl'] = token_params.get('ttl') or TokenDetails.DEFAULTS['ttl']
 
         if token_params.get('capability') is None:
             token_request["capability"] = ""
@@ -202,7 +204,7 @@ class Auth(object):
             )
 
         token_request["client_id"] = (
-            token_params.get('client_id') or self.auth_options.client_id)
+            token_params.get('client_id') or self.client_id)
 
         # Note: There is no expectation that the client
         # specifies the nonce; this is done by the library
@@ -257,6 +259,30 @@ class Auth(object):
     @property
     def client_id(self):
         return self.__client_id
+
+    def _configure_client_id(self, new_client_id):
+        # If new client ID from Ably is a wildcard, but preconfigured clientId is set,
+        # then keep the existing clientId
+        if self.client_id != '*' and new_client_id == '*':
+            self.__client_id_validated = True
+            return
+
+        # If client_id is defined and not a wildcard, prevent it changing, this is not supported
+        if self.client_id is not None and self.client_id != '*' and new_client_id != self.client_id:
+            raise IncompatibleClientIdException(
+                "Client ID is immutable once configured for a client. "
+                "Client ID cannot be changed to '{}'".format(new_client_id), 400, 40012)
+
+        self.__client_id_validated = True
+        self.__client_id = new_client_id
+
+    def can_assume_client_id(self, assumed_client_id):
+        if self.__client_id_validated:
+            return self.client_id == '*' or self.client_id == assumed_client_id
+        elif self.client_id is None or self.client_id == '*':
+            return True  # client ID is unknown
+        else:
+            return self.client_id == assumed_client_id
 
     def _get_auth_headers(self):
         if self.__auth_mechanism == Auth.Method.BASIC:

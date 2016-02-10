@@ -12,6 +12,7 @@ import mock
 import six
 from requests import Session
 
+import ably
 from ably import AblyRest
 from ably import Auth
 from ably import AblyAuthException
@@ -146,8 +147,8 @@ class TestAuth(BaseTestCase):
         self.assertEquals(ably.auth.auth_mechanism, Auth.Method.TOKEN)
 
     def test_default_ttl_is_1hour(self):
-        one_hour_in_seconds = 60 * 60
-        self.assertEquals(TokenDetails.DEFAULTS['ttl'], one_hour_in_seconds)
+        one_hour_in_ms = 60 * 60 * 1000
+        self.assertEquals(TokenDetails.DEFAULTS['ttl'], one_hour_in_ms)
 
     def test_with_auth_method(self):
         ably = AblyRest(token='a token', auth_method='POST')
@@ -220,8 +221,8 @@ class TestAuthAuthorize(BaseTestCase):
 
         token = self.ably.auth.authorise()
 
-        with mock.patch('ably.types.tokendetails.TokenDetails.expires',
-                        new_callable=mock.PropertyMock(return_value=42)):
+        with mock.patch('ably.types.tokendetails.TokenDetails.is_expired',
+                        return_value=True):
             new_token = self.ably.auth.authorise()
 
         self.assertIsNot(token, new_token)
@@ -277,7 +278,8 @@ class TestAuthAuthorize(BaseTestCase):
     def test_if_parameters_are_stored_and_used_as_defaults(self):
         self.ably.auth.authorise({'ttl': 555, 'client_id': 'new_id'},
                                  {'auth_headers': {'a_headers': 'a_value'}})
-        with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
+        with mock.patch('ably.rest.auth.Auth.request_token',
+                        wraps=self.ably.auth.request_token) as request_mock:
             self.ably.auth.authorise(force=True)
 
         token_called, auth_called = request_mock.call_args
@@ -285,16 +287,36 @@ class TestAuthAuthorize(BaseTestCase):
         self.assertEqual(auth_called['auth_headers'], {'a_headers': 'a_value'})
 
     def test_force_and_timestamp_are_not_stored(self):
-        time = self.ably.time()
-        self.ably.auth.authorise(
-            {'ttl': 555, 'client_id': 'new_id', 'timestamp': time},
-            {'auth_headers': {'a_headers': 'a_value'}, 'force': True})
-        with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
-            self.ably.auth.authorise(force=True)
+        # authorise once with arbitrary defaults
+        token_1 = self.ably.auth.authorise(
+            {'ttl': 60 * 1000, 'client_id': 'new_id'},
+            {'auth_headers': {'a_headers': 'a_value'}})
+        self.assertIsInstance(token_1, TokenDetails)
 
-        token_called, auth_called = request_mock.call_args
-        self.assertEqual(token_called[0], {'ttl': 555, 'client_id': 'new_id'})
-        self.assertEqual(auth_called['auth_headers'], {'a_headers': 'a_value'})
+        # call authorise again with force and timestamp set
+        timestamp = self.ably.time()
+        with mock.patch('ably.rest.auth.TokenRequest',
+                        wraps=ably.types.tokenrequest.TokenRequest) as tr_mock:
+            token_2 = self.ably.auth.authorise(
+                {'ttl': 60 * 1000, 'client_id': 'new_id', 'timestamp': timestamp},
+                {'auth_headers': {'a_headers': 'a_value'}, 'force': True})
+        self.assertIsInstance(token_2, TokenDetails)
+        self.assertNotEqual(token_1, token_2)
+        self.assertEqual(tr_mock.call_args[1]['timestamp'], timestamp)
+
+        # call authorise again with no params
+        token_3 = self.ably.auth.authorise()
+        self.assertIsInstance(token_3, TokenDetails)
+        self.assertEqual(token_2, token_3)
+
+        # call authorise again with force
+        with mock.patch('ably.rest.auth.TokenRequest',
+                        wraps=ably.types.tokenrequest.TokenRequest) as tr_mock:
+            token_4 = self.ably.auth.authorise(force=True)
+        self.assertIsInstance(token_4, TokenDetails)
+        self.assertNotEqual(token_2, token_4)
+        self.assertNotEqual(tr_mock.call_args[1]['timestamp'], timestamp)
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRequestToken(BaseTestCase):

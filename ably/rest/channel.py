@@ -9,14 +9,13 @@ import six
 import msgpack
 from six.moves.urllib.parse import urlencode, quote
 
-from ably.http.httputils import HttpUtils
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.message import (
     Message, make_message_response_handler, make_encrypted_message_response_handler,
     MessageJSONEncoder)
 from ably.types.presence import Presence
 from ably.util.crypto import get_cipher
-from ably.util.exceptions import catch_all
+from ably.util.exceptions import catch_all, IncompatibleClientIdException
 
 log = logging.getLogger(__name__)
 
@@ -71,7 +70,8 @@ class Channel(object):
         )
 
     @catch_all
-    def publish(self, name=None, data=None, messages=None, timeout=None):
+    def publish(self, name=None, data=None, client_id=None,
+                messages=None, timeout=None):
         """Publishes a message on this channel.
 
         :Parameters:
@@ -83,10 +83,20 @@ class Channel(object):
         :attention: You can publish using `name` and `data` OR `messages`, never all three.
         """
         if not messages:
-            messages = [Message(name, data)]
+            messages = [Message(name, data, client_id)]
 
         request_body_list = []
         for m in messages:
+            if m.client_id == '*':
+                raise IncompatibleClientIdException(
+                    'Wildcard client_id is reserved and cannot be used when publishing messages',
+                    400, 40012)
+            elif m.client_id is not None and not self.ably.auth.can_assume_client_id(m.client_id):
+                raise IncompatibleClientIdException(
+                    'Cannot publish with client_id \'{}\' as it is incompatible with the '
+                    'current configured client_id \'{}\''.format(m.client_id, self.ably.auth.client_id),
+                    400, 40012)
+
             if self.encrypted:
                 m.encrypt(self.__cipher)
 

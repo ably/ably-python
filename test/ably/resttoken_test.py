@@ -251,7 +251,7 @@ class TestCreateTokenRequest(BaseTestCase):
         token_request = self.ably.auth.create_token_request(
             key_name=self.key_name, key_secret=self.key_secret)
         self.assertEquals(
-            token_request.ttl, TokenDetails.DEFAULTS['ttl'] * 1000)
+            token_request.ttl, TokenDetails.DEFAULTS['ttl'])
 
     @dont_vary_protocol
     def test_accept_all_token_params(self):
