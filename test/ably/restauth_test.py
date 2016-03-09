@@ -467,6 +467,25 @@ class TestRequestToken(BaseTestCase):
         self.assertIsInstance(token, TokenDetails)
         self.assertIsNone(ably.auth.client_id)
 
+    @dont_vary_protocol
+    def test_client_id_null_until_auth(self):
+        client_id = uuid.uuid4().hex
+        token_ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                              rest_host=test_vars["host"],
+                              port=test_vars["port"],
+                              tls_port=test_vars["tls_port"],
+                              tls=test_vars["tls"],
+                              default_token_params={'client_id': client_id})
+        # before auth, client_id is None
+        self.assertIsNone(token_ably.auth.client_id)
+
+        token = token_ably.auth.authorise()
+
+        self.assertIsInstance(token, TokenDetails)
+        # after auth, client_id is defined
+        self.assertEquals(token.client_id, client_id)
+        self.assertEquals(token_ably.auth.client_id, client_id)
+
 
 class TestRenewToken(BaseTestCase):
 
