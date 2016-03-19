@@ -11,7 +11,9 @@ import msgpack
 
 from ably import AblyException, IncompatibleClientIdException
 from ably import AblyRest
+from ably.rest.auth import Auth
 from ably.types.message import Message
+from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
@@ -28,12 +30,13 @@ class TestRestChannelPublish(BaseTestCase):
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
+        self.client_id = uuid.uuid4().hex
         self.ably_with_client_id = AblyRest(key=test_vars["keys"][0]["key_str"],
                                             rest_host=test_vars["host"],
                                             port=test_vars["port"],
                                             tls_port=test_vars["tls_port"],
                                             tls=test_vars["tls"],
-                                            client_id=uuid.uuid4().hex)
+                                            client_id=self.client_id)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -230,6 +233,20 @@ class TestRestChannelPublish(BaseTestCase):
         self.assertEqual(message.encoding, '')
         self.assertEqual(message.client_id, 'client_id')
         self.assertIsInstance(message.timestamp, int)
+
+    def test_token_is_bound_to_options_client_id_after_publish(self):
+        # null before publish
+        self.assertIsNone(self.ably_with_client_id.auth.token_details)
+
+        # created after message publish and will have client_id
+        channel = self.ably_with_client_id.channels[
+            self.protocol_channel_name('persisted:restricted_to_client_id')]
+        channel.publish(name='publish', data='test')
+
+        # defined after publish
+        self.assertIsInstance(self.ably_with_client_id.auth.token_details, TokenDetails)
+        self.assertEqual(self.ably_with_client_id.auth.token_details.client_id, self.client_id)
+        self.assertEqual(self.ably_with_client_id.auth.auth_mechanism, Auth.Method.TOKEN)
 
     def test_publish_message_without_client_id_on_identified_client(self):
         channel = self.ably_with_client_id.channels[
