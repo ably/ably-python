@@ -12,13 +12,9 @@ Visit https://www.ably.io/documentation for a complete API reference and more ex
 
 ## Installation
 
-### From PyPI (soon)
+### From PyPI
 
     pip install ably
-
-### From a git url
-
-    pip install -e git+https://github.com/ably/ably-python#egg=AblyPython
 
 ### Locally
 
@@ -26,7 +22,7 @@ Visit https://www.ably.io/documentation for a complete API reference and more ex
     cd ably-python
     python setup.py install
 
-#### To run the tests
+#### To run the tests after local install
 
     git submodule init
     git submodule update
@@ -52,7 +48,7 @@ channel.publish('event', 'message')
 ### Querying the History
 
 ```python
-mesage_page = channel.history() # Returns a PaginatedResult
+message_page = channel.history() # Returns a PaginatedResult
 message_page.items # List with messages from this page
 message_page.has_next() # => True, indicates there is another page
 message_page.next().items # List with messages from the second page
