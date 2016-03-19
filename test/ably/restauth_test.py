@@ -465,6 +465,7 @@ class TestRequestToken(BaseTestCase):
         token = ably.auth.authorise()
 
         self.assertIsInstance(token, TokenDetails)
+        self.assertIsNone(token.client_id)
         self.assertIsNone(ably.auth.client_id)
 
     @dont_vary_protocol
