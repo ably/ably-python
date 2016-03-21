@@ -22,7 +22,7 @@ class Message(EncodeDataMixin):
                  encoding=''):
         if name is None:
             self.__name = None
-        elif isinstance(name, six.string_types):
+        elif isinstance(name, six.text_type):
             self.__name = name
         elif isinstance(name, six.binary_type):
             self.__name = name.decode('ascii')
@@ -113,16 +113,26 @@ class Message(EncodeDataMixin):
         data_type = None
         encoding = self._encoding_array[:]
 
+        if isinstance(data, six.binary_type) and six.binary_type == str:
+            # If using python 2, assume str payloads are intended as strings
+            # if they decode to unicode. If it doesn't, treat as a binary
+            try:
+                data = six.text_type(data)
+            except UnicodeDecodeError:
+                pass
+
         if isinstance(data, dict) or isinstance(data, list):
             encoding.append('json')
             data = json.dumps(data)
         elif isinstance(data, six.text_type) and not binary:
             # text_type is always a unicode string
             pass
-        elif (not binary and isinstance(data, bytearray) or
-              # bytearray is always bytes
-              isinstance(data, six.binary_type) and six.binary_type != str):
-                # in py3k we will understand <class 'bytes'> as bytes
+        elif (not binary and
+                (isinstance(data, bytearray) or
+                 # bytearray is always bytes
+                 isinstance(data, six.binary_type))):
+                 # at this point binary_type is either a py3k bytes or a py2
+                 # str that failed to decode to unicode
             data = base64.b64encode(data).decode('ascii')
             encoding.append('base64')
         elif isinstance(data, CipherData):
