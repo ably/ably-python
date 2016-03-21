@@ -247,6 +247,7 @@ class TestRestChannelPublish(BaseTestCase):
         self.assertIsInstance(self.ably_with_client_id.auth.token_details, TokenDetails)
         self.assertEqual(self.ably_with_client_id.auth.token_details.client_id, self.client_id)
         self.assertEqual(self.ably_with_client_id.auth.auth_mechanism, Auth.Method.TOKEN)
+        self.assertEqual(channel.history().items[0].client_id, self.client_id)
 
     def test_publish_message_without_client_id_on_identified_client(self):
         channel = self.ably_with_client_id.channels[
