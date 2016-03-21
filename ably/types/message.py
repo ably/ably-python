@@ -119,10 +119,11 @@ class Message(EncodeDataMixin):
         elif isinstance(data, six.text_type) and not binary:
             # text_type is always a unicode string
             pass
-        elif (not binary and isinstance(data, bytearray) or
-              # bytearray is always bytes
-              isinstance(data, six.binary_type) and six.binary_type != str):
-                # in py3k we will understand <class 'bytes'> as bytes
+        elif (not binary and
+                (isinstance(data, bytearray) or
+                 # bytearray is always bytes
+                 (isinstance(data, six.binary_type) and six.binary_type != str))):
+                 # in py3k we will understand <class 'bytes'> as bytes
             data = base64.b64encode(data).decode('ascii')
             encoding.append('base64')
         elif isinstance(data, CipherData):
