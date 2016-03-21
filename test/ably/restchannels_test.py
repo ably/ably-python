@@ -5,10 +5,9 @@ import collections
 from six.moves import range
 
 from ably import AblyRest, AblyException
-from ably import ChannelOptions
 from ably.rest.channel import Channel, Channels, Presence
 from ably.types.capability import Capability
-from ably.util.crypto import get_default_params
+from ably.util.crypto import generate_random_key
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
@@ -37,34 +36,28 @@ class TestChannels(BaseTestCase):
         self.assertIs(channel, channel_same)
 
     def test_channels_get_returns_new_with_options(self):
-        options = ChannelOptions(encrypted=False)
-        channel = self.ably.channels.get('new_channel', options=options)
+        key = generate_random_key()
+        channel = self.ably.channels.get('new_channel', cipher={'key': key})
         self.assertIsInstance(channel, Channel)
-        self.assertIs(channel.options, options)
+        self.assertIs(channel.cipher.secret_key, key)
 
     def test_channels_get_updates_existing_with_options(self):
-        options = ChannelOptions(encrypted=True,
-                                 cipher_params=get_default_params())
-        options_new = ChannelOptions(encrypted=False)
+        key = generate_random_key()
+        channel = self.ably.channels.get('new_channel', cipher={'key': key})
+        self.assertIsNot(channel.cipher, None)
 
-        channel = self.ably.channels.get('new_channel', options=options)
-        self.assertIs(channel.options, options)
-
-        channel_same = self.ably.channels.get('new_channel', options=options_new)
+        channel_same = self.ably.channels.get('new_channel', cipher=None)
         self.assertIs(channel, channel_same)
-        self.assertIs(channel.options, options_new)
+        self.assertIs(channel.cipher, None)
 
     def test_channels_get_doesnt_updates_existing_with_none_options(self):
-        options = ChannelOptions(encrypted=True,
-                                 cipher_params=get_default_params())
-
-        channel = self.ably.channels.get('new_channel', options=options)
-        self.assertIs(channel.options, options)
+        key = generate_random_key()
+        channel = self.ably.channels.get('new_channel', cipher={'key': key})
+        self.assertIsNot(channel.cipher, None)
 
         channel_same = self.ably.channels.get('new_channel')
         self.assertIs(channel, channel_same)
-        self.assertIsNot(channel.options, None)
-        self.assertIs(channel.options, options)
+        self.assertIsNot(channel.cipher, None)
 
     def test_channels_in(self):
         self.assertTrue('new_channel' not in self.ably.channels)
@@ -100,10 +93,6 @@ class TestChannels(BaseTestCase):
         channel = self.ably.channels.get('new_channnel')
         self.assertTrue(channel.presence)
         self.assertTrue(isinstance(channel.presence, Presence))
-
-    def test_channel_options_encrypted_without_params(self):
-        with self.assertRaises(ValueError):
-            ChannelOptions(encrypted=True)
 
     def test_without_permissions(self):
         key = test_vars["keys"][2]

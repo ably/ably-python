@@ -9,9 +9,8 @@ import six
 
 from ably import AblyException
 from ably import AblyRest
-from ably import ChannelOptions
 from ably.types.message import Message
-from ably.util.crypto import CipherParams, get_cipher, get_default_params
+from ably.util.crypto import CipherParams, get_cipher, generate_random_key, get_default_params
 
 from Crypto import Random
 
@@ -54,7 +53,7 @@ class TestRestCrypto(BaseTestCase):
         )
         log.debug("KEY_LEN: %d" % len(key))
         log.debug("IV_LEN: %d" % len(iv))
-        cipher = get_cipher(CipherParams(secret_key=key, iv=iv))
+        cipher = get_cipher({'key': key, 'iv': iv})
 
         plaintext = six.b("The quick brown fox")
         expected_ciphertext = six.b(
@@ -72,9 +71,7 @@ class TestRestCrypto(BaseTestCase):
 
     def test_crypto_publish(self):
         channel_name = self.protocol_channel_name('persisted:crypto_publish_text')
-        channel_options = ChannelOptions(encrypted=True,
-                                         cipher_params=get_default_params())
-        publish0 = self.ably.channels.get(channel_name, channel_options)
+        publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
         publish0.publish("publish3", six.u("This is a string message payload"))
         publish0.publish("publish4", six.b("This is a byte[] message payload"))
@@ -107,11 +104,8 @@ class TestRestCrypto(BaseTestCase):
         key = rndfile.read(32)
         channel_name = 'persisted:crypto_publish_text_256'
         channel_name += '_bin' if self.use_binary_protocol else '_text'
-        cipher_params = get_default_params(key=key)
-        channel_options = ChannelOptions(encrypted=True,
-                                         cipher_params=cipher_params)
 
-        publish0 = self.ably.channels.get(channel_name, channel_options)
+        publish0 = self.ably.channels.get(channel_name, cipher={'key': key})
 
         publish0.publish("publish3", six.u("This is a string message payload"))
         publish0.publish("publish4", six.b("This is a byte[] message payload"))
@@ -142,18 +136,14 @@ class TestRestCrypto(BaseTestCase):
     def test_crypto_publish_key_mismatch(self):
         channel_name = self.protocol_channel_name('persisted:crypto_publish_key_mismatch')
 
-        channel_options = ChannelOptions(encrypted=True,
-                                         cipher_params=get_default_params())
-        publish0 = self.ably.channels.get(channel_name, channel_options)
+        publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
         publish0.publish("publish3", six.u("This is a string message payload"))
         publish0.publish("publish4", six.b("This is a byte[] message payload"))
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
-        channel_options = ChannelOptions(encrypted=True,
-                                         cipher_params=get_default_params())
-        rx_channel = self.ably2.channels.get(channel_name, channel_options)
+        rx_channel = self.ably2.channels.get(channel_name, cipher={'key': generate_random_key()})
 
         try:
             with self.assertRaises(AblyException) as cm:
@@ -167,7 +157,8 @@ class TestRestCrypto(BaseTestCase):
         the_exception = cm.exception
         self.assertTrue(
             'invalid-padding' == the_exception.message or
-            the_exception.message.startswith("UnicodeDecodeError: 'utf8'"))
+            the_exception.message.startswith("UnicodeDecodeError: 'utf8'") or
+            the_exception.message.startswith("UnicodeDecodeError: 'utf-8'"))
 
     def test_crypto_send_unencrypted(self):
         channel_name = self.protocol_channel_name('persisted:crypto_send_unencrypted')
@@ -178,9 +169,7 @@ class TestRestCrypto(BaseTestCase):
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
-        rx_options = ChannelOptions(encrypted=True,
-                                    cipher_params=get_default_params())
-        rx_channel = self.ably2.channels.get(channel_name, rx_options)
+        rx_channel = self.ably2.channels.get(channel_name, cipher={'key': generate_random_key()})
 
         history = rx_channel.history()
         messages = history.items
@@ -205,18 +194,16 @@ class TestRestCrypto(BaseTestCase):
 
     def test_crypto_encrypted_unhandled(self):
         channel_name = self.protocol_channel_name('persisted:crypto_send_encrypted_unhandled')
-        key = '0123456789abcdef'
+        key = six.b('0123456789abcdef')
         data = six.u('foobar')
-        channel_options = ChannelOptions(encrypted=True,
-                                         cipher_params=get_default_params(key))
-        publish0 = self.ably.channels.get(channel_name, channel_options)
+        publish0 = self.ably.channels.get(channel_name, cipher={'key': key})
 
         publish0.publish("publish0", data)
 
         rx_channel = self.ably2.channels[channel_name]
         history = rx_channel.history()
         message = history.items[0]
-        cipher = get_cipher(get_default_params(key))
+        cipher = get_cipher(get_default_params({'key': key}))
         self.assertEqual(cipher.decrypt(message.data).decode(), data)
         self.assertEqual(message.encoding, 'utf-8/cipher+aes-128-cbc')
 

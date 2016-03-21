@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import logging
 
+import base64
+
 import six
 from six.moves import range
 
@@ -17,10 +19,10 @@ log = logging.getLogger(__name__)
 class CipherParams(object):
     def __init__(self, algorithm='AES', mode='CBC', secret_key=None,
                  iv=None):
-        self.__algorithm = algorithm
+        self.__algorithm = algorithm.upper()
         self.__secret_key = secret_key
         self.__key_length = len(secret_key) * 8 if secret_key is not None else 128
-        self.__mode = mode
+        self.__mode = mode.upper()
         self.__iv = iv
 
     @property
@@ -50,10 +52,10 @@ class CbcChannelCipher(object):
                              self.__random(cipher_params.key_length / 8))
         self.__iv = cipher_params.iv or self.__random(16)
         self.__block_size = len(self.__iv)
-        if cipher_params.algorithm.lower() != 'aes':
+        if cipher_params.algorithm != 'AES':
             raise NotImplementedError('Only AES algorithm is supported')
         self.__algorithm = cipher_params.algorithm
-        if cipher_params.mode.lower() != 'cbc':
+        if cipher_params.mode != 'CBC':
             raise NotImplementedError('Only CBC mode is supported')
         self.__mode = cipher_params.mode
         self.__key_length = cipher_params.key_length
@@ -131,22 +133,43 @@ class CipherData(TypedBuffer):
     def encoding_str(self):
         return self.ENCODING_ID + '+' + self.__cipher_type
 
-DEFAULT_KEYLENGTH = 16
+DEFAULT_KEYLENGTH = 32
 DEFAULT_BLOCKLENGTH = 16
 
-
-def get_default_params(key=None):
+def generate_random_key(length=DEFAULT_KEYLENGTH):
     rndfile = Random.new()
-    key = key or rndfile.read(DEFAULT_KEYLENGTH)
-    iv = rndfile.read(DEFAULT_BLOCKLENGTH)
-    return CipherParams(algorithm='AES', secret_key=key, iv=iv)
+    return rndfile.read(length)
 
+def get_default_params(params=None):
+    # Backwards compatibility
+    if type(params) in [six.text_type, six.binary_type]:
+        log.warn("Calling get_default_params with a key directly is deprecated, it expects a params dict")
+        return get_default_params({'key': params})
 
-def get_cipher(cipher_params):
-    if cipher_params is None:
-        params = get_default_params()
-    elif isinstance(cipher_params, CipherParams):
-        params = cipher_params
+    key = params.get('key')
+    algorithm = params.get('algorithm') or 'AES'
+    iv = params.get('iv') or generate_random_key(DEFAULT_BLOCKLENGTH)
+    mode = params.get('mode') or 'CBC'
+
+    if not key:
+        raise ValueError("Crypto.get_default_params: a key is required")
+
+    if type(key) == six.text_type:
+        key = base64.b64decode(key)
+
+    cipher_params = CipherParams(algorithm=algorithm, secret_key=key, iv=iv, mode=mode)
+    validate_cipher_params(cipher_params)
+    return cipher_params
+
+def get_cipher(params):
+    if isinstance(params, CipherParams):
+        cipher_params = params
     else:
-        raise AblyException("ChannelOptions not supported", 400, 40000)
-    return CbcChannelCipher(params)
+        cipher_params = get_default_params(params)
+    return CbcChannelCipher(cipher_params)
+
+def validate_cipher_params(cipher_params):
+    if cipher_params.algorithm == 'AES' and cipher_params.mode == 'CBC':
+        if cipher_params.key_length == 128 or cipher_params.key_length == 256:
+            return
+        raise ValueError('Unsupported key length ' + str(params.keyLength) + ' for aes-cbc encryption. Encryption key must be 128 or 256 bits (16 or 32 ASCII characters)')
