@@ -133,12 +133,12 @@ class CipherData(TypedBuffer):
     def encoding_str(self):
         return self.ENCODING_ID + '+' + self.__cipher_type
 
-DEFAULT_KEYLENGTH = 32
+DEFAULT_KEYLENGTH = 256
 DEFAULT_BLOCKLENGTH = 16
 
 def generate_random_key(length=DEFAULT_KEYLENGTH):
     rndfile = Random.new()
-    return rndfile.read(length)
+    return rndfile.read(length // 8)
 
 def get_default_params(params=None):
     # Backwards compatibility
@@ -148,7 +148,7 @@ def get_default_params(params=None):
 
     key = params.get('key')
     algorithm = params.get('algorithm') or 'AES'
-    iv = params.get('iv') or generate_random_key(DEFAULT_BLOCKLENGTH)
+    iv = params.get('iv') or generate_random_key(DEFAULT_BLOCKLENGTH * 8)
     mode = params.get('mode') or 'CBC'
 
     if not key:
