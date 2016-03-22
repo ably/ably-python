@@ -25,6 +25,7 @@ class Channel(object):
         self.__ably = ably
         self.__name = name
         self.__base_path = '/channels/%s/' % quote(name)
+        self.__cipher = None
         self.options = options
         self.__presence = Presence(self)
 
@@ -97,7 +98,7 @@ class Channel(object):
                     'current configured client_id \'{}\''.format(m.client_id, self.ably.auth.client_id),
                     400, 40012)
 
-            if self.encrypted:
+            if self.cipher:
                 m.encrypt(self.__cipher)
 
             request_body_list.append(m)
@@ -140,10 +141,6 @@ class Channel(object):
         return self.__cipher
 
     @property
-    def encrypted(self):
-        return self.options and self.options.encrypted
-
-    @property
     def options(self):
         return self.__options
 
@@ -155,10 +152,11 @@ class Channel(object):
     def options(self, options):
         self.__options = options
 
-        if options and options.encrypted:
-            self.__cipher = get_cipher(options.cipher_params)
-        else:
-            self.__cipher = None
+        if options and 'cipher' in options:
+            if options.get('cipher') is not None:
+                self.__cipher = get_cipher(options.get('cipher'))
+            else:
+                self.__cipher = None
 
 
 class Channels(object):
@@ -166,16 +164,16 @@ class Channels(object):
         self.__ably = rest
         self.__attached = OrderedDict()
 
-    def get(self, name, options=None):
+    def get(self, name, **kwargs):
         if isinstance(name, six.binary_type):
             name = name.decode('ascii')
 
         if name not in self.__attached:
-            result = self.__attached[name] = Channel(self.__ably, name, options)
+            result = self.__attached[name] = Channel(self.__ably, name, kwargs)
         else:
             result = self.__attached[name]
-            if options is not None:
-                result.options = options
+            if len(kwargs) != 0:
+                result.options = kwargs
 
         return result
 

@@ -9,8 +9,8 @@ import mock
 import msgpack
 
 from ably import AblyRest
-from ably import ChannelOptions, CipherParams
-from ably.util.crypto import get_cipher, get_default_params
+from ably import CipherParams
+from ably.util.crypto import get_cipher
 from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
@@ -162,14 +162,12 @@ class TestTextEncodersEncryption(BaseTestCase):
 
     def decrypt(self, payload, options={}):
         ciphertext = base64.b64decode(payload.encode('ascii'))
-        cipher = get_cipher(get_default_params('keyfordecrypt_16'))
+        cipher = get_cipher({'key': b'keyfordecrypt_16'})
         return cipher.decrypt(ciphertext)
 
     def test_text_utf8(self):
         channel = self.ably.channels.get("persisted:publish_enc",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         with mock.patch('ably.rest.rest.Http.post') as post_mock:
             channel.publish('event', six.u('fóo'))
             _, kwargs = post_mock.call_args
@@ -190,9 +188,7 @@ class TestTextEncodersEncryption(BaseTestCase):
 
     def test_with_binary_type(self):
         channel = self.ably.channels.get("persisted:publish_enc",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
 
         with mock.patch('ably.rest.rest.Http.post') as post_mock:
             channel.publish('event', bytearray(b'foo'))
@@ -206,9 +202,7 @@ class TestTextEncodersEncryption(BaseTestCase):
 
     def test_with_json_dict_data(self):
         channel = self.ably.channels.get("persisted:publish_enc",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         data = {six.u('foó'): six.u('bár')}
         with mock.patch('ably.rest.rest.Http.post') as post_mock:
             channel.publish('event', data)
@@ -220,9 +214,7 @@ class TestTextEncodersEncryption(BaseTestCase):
 
     def test_with_json_list_data(self):
         channel = self.ably.channels.get("persisted:publish_enc",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         data = [six.u('foó'), six.u('bár')]
         with mock.patch('ably.rest.rest.Http.post') as post_mock:
             channel.publish('event', data)
@@ -234,9 +226,7 @@ class TestTextEncodersEncryption(BaseTestCase):
 
     def test_text_utf8_decode(self):
         channel = self.ably.channels.get("persisted:enc_stringdecode",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         channel.publish('event', six.u('foó'))
         message = channel.history().items[0]
         self.assertEqual(message.data, six.u('foó'))
@@ -245,9 +235,7 @@ class TestTextEncodersEncryption(BaseTestCase):
 
     def test_with_binary_type_decode(self):
         channel = self.ably.channels.get("persisted:enc_binarydecode",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
 
         channel.publish('event', bytearray(b'foob'))
         message = channel.history().items[0]
@@ -257,9 +245,7 @@ class TestTextEncodersEncryption(BaseTestCase):
 
     def test_with_json_dict_data_decode(self):
         channel = self.ably.channels.get("persisted:enc_jsondict",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         data = {six.u('foó'): six.u('bár')}
         channel.publish('event', data)
         message = channel.history().items[0]
@@ -268,9 +254,7 @@ class TestTextEncodersEncryption(BaseTestCase):
 
     def test_with_json_list_data_decode(self):
         channel = self.ably.channels.get("persisted:enc_list",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         data = [six.u('foó'), six.u('bár')]
         channel.publish('event', data)
         message = channel.history().items[0]
@@ -380,7 +364,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
                                          algorithm='aes')
 
     def decrypt(self, payload, options={}):
-        cipher = get_cipher(get_default_params('keyfordecrypt_16'))
+        cipher = get_cipher({'key': b'keyfordecrypt_16'})
         return cipher.decrypt(payload)
 
     def decode(self, data):
@@ -388,9 +372,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
 
     def test_text_utf8(self):
         channel = self.ably.channels.get("persisted:publish_enc",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish('event', six.u('fóo'))
@@ -402,9 +384,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
 
     def test_with_binary_type(self):
         channel = self.ably.channels.get("persisted:publish_enc",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -419,9 +399,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
 
     def test_with_json_dict_data(self):
         channel = self.ably.channels.get("persisted:publish_enc",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         data = {six.u('foó'): six.u('bár')}
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -434,9 +412,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
 
     def test_with_json_list_data(self):
         channel = self.ably.channels.get("persisted:publish_enc",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         data = [six.u('foó'), six.u('bár')]
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -449,9 +425,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
 
     def test_text_utf8_decode(self):
         channel = self.ably.channels.get("persisted:enc_stringdecode-bin",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         channel.publish('event', six.u('foó'))
         message = channel.history().items[0]
         self.assertEqual(message.data, six.u('foó'))
@@ -460,9 +434,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
 
     def test_with_binary_type_decode(self):
         channel = self.ably.channels.get("persisted:enc_binarydecode-bin",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
 
         channel.publish('event', bytearray(b'foob'))
         message = channel.history().items[0]
@@ -472,9 +444,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
 
     def test_with_json_dict_data_decode(self):
         channel = self.ably.channels.get("persisted:enc_jsondict-bin",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         data = {six.u('foó'): six.u('bár')}
         channel.publish('event', data)
         message = channel.history().items[0]
@@ -483,9 +453,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
 
     def test_with_json_list_data_decode(self):
         channel = self.ably.channels.get("persisted:enc_list-bin",
-                                         options=ChannelOptions(
-                                            encrypted=True,
-                                            cipher_params=self.cipher_params))
+                                         cipher=self.cipher_params)
         data = [six.u('foó'), six.u('bár')]
         channel.publish('event', data)
         message = channel.history().items[0]

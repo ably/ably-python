@@ -12,8 +12,6 @@ from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.presence import (PresenceMessage,
                                  make_encrypted_presence_response_handler)
-from ably import ChannelOptions
-from ably.util.crypto import get_default_params
 
 from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase
 from test.ably.restsetup import RestSetup
@@ -77,23 +75,19 @@ class TestPresence(BaseTestCase):
                          {"example": {"json": "Object"}})
 
     def test_presence_history_encrypted(self):
-        params = get_default_params('0123456789abcdef')
+        key = b'0123456789abcdef'
         self.ably.channels.release('persisted:presence_fixtures')
         self.channel = self.ably.channels.get('persisted:presence_fixtures',
-                                              options=ChannelOptions(
-                                                encrypted=True,
-                                                cipher_params=params))
+                                              cipher={'key': key})
         presence_history = self.channel.presence.history()
         self.assertEqual(presence_history.items[0].data,
                          {'foo': 'bar'})
 
     def test_presence_get_encrypted(self):
-        params = get_default_params('0123456789abcdef')
+        key = b'0123456789abcdef'
         self.ably.channels.release('persisted:presence_fixtures')
         self.channel = self.ably.channels.get('persisted:presence_fixtures',
-                                              options=ChannelOptions(
-                                                encrypted=True,
-                                                cipher_params=params))
+                                              cipher={'key': key})
         presence_messages = self.channel.presence.get()
         message = list(filter(
             lambda message: message.client_id == 'client_encoded',
