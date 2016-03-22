@@ -27,7 +27,10 @@ class Auth(object):
     def __init__(self, ably, options):
         self.__ably = ably
         self.__auth_options = options
-        self.__client_id = options.client_id
+        if options.token_details:
+            self.__client_id = options.token_details.client_id
+        else:
+            self.__client_id = options.client_id
         self.__client_id_validated = False
 
         self.__basic_credentials = None

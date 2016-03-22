@@ -322,3 +322,29 @@ class TestRestChannelPublish(BaseTestCase):
         the_exception = cm.exception
         self.assertEqual(400, the_exception.status_code)
         self.assertEqual(40012, the_exception.code)
+
+    def test_wildcard_client_id_can_publish_as_others(self):
+        wildcard_token_details = self.ably.auth.request_token({'client_id': '*'})
+        wildcard_ably = AblyRest(token_details=wildcard_token_details,
+                                 rest_host=test_vars["host"],
+                                 port=test_vars["port"],
+                                 tls_port=test_vars["tls_port"],
+                                 tls=test_vars["tls"],
+                                 use_binary_protocol=self.use_binary_protocol)
+
+        self.assertEqual(wildcard_ably.auth.client_id, '*')
+        channel = wildcard_ably.channels[
+            self.protocol_channel_name('persisted:wildcard_client_id')]
+        channel.publish(name='publish1', data='no client_id')
+        some_client_id = uuid.uuid4().hex
+        channel.publish(name='publish2', data='some client_id',
+                        client_id=some_client_id)
+
+        history = channel.history()
+        messages = history.items
+
+        self.assertIsNotNone(messages, msg="Expected non-None messages")
+        self.assertEqual(len(messages), 2, msg="Expected 2 messages")
+
+        self.assertEqual(messages[0].client_id, some_client_id)
+        self.assertIsNone(messages[1].client_id)
