@@ -317,6 +317,26 @@ class TestAuthAuthorize(BaseTestCase):
         self.assertNotEqual(token_2, token_4)
         self.assertNotEqual(tr_mock.call_args[1]['timestamp'], timestamp)
 
+    def test_client_id_precedence(self):
+        client_id = uuid.uuid4().hex
+        overridden_client_id = uuid.uuid4().hex
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        rest_host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        use_binary_protocol=self.use_binary_protocol,
+                        client_id=client_id,
+                        default_token_params={'client_id': overridden_client_id})
+        token = ably.auth.authorise()
+        self.assertEqual(token.client_id, client_id)
+        self.assertEqual(ably.auth.client_id, client_id)
+
+        channel = ably.channels[
+            self.protocol_channel_name('test_client_id_precedence')]
+        channel.publish('test', 'data')
+        self.assertEqual(channel.history().items[0].client_id, client_id)
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRequestToken(BaseTestCase):

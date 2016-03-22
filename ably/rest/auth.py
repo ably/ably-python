@@ -88,7 +88,8 @@ class Auth(object):
             force = auth_options.pop('force', None) or force
             self.auth_options.merge(auth_options)
         auth_options = dict(self.auth_options.auth_options)
-        token_params.setdefault('client_id', self.client_id)
+        if self.client_id is not None:
+            token_params['client_id'] = self.client_id
 
         if self.__token_details:
             if not self.__token_details.is_expired(self._timestamp()):
