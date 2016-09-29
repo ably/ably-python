@@ -1,10 +1,9 @@
 ably-python
 -----------
 
-[![Build Status](https://travis-ci.org/ably/ably-python.svg?branch=master)](https://travis-ci.org/ably/ably-python)
 [![Coverage Status](https://coveralls.io/repos/ably/ably-python/badge.svg?branch=master&service=github)](https://coveralls.io/github/ably/ably-python?branch=master)
 
-A Python client library for [ably.io](https://www.ably.io), the realtime messaging service.
+A Python client library for [www.ably.io](https://www.ably.io), the realtime messaging service.
 
 Supports Python 2.7 - 3.5.
 
