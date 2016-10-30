@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 
+from ably.version import __version__
+
 import calendar
 import logging
+import re
 
 from six.moves.urllib.parse import urlencode
 
@@ -65,6 +68,9 @@ class AblyRest(object):
         # else:
         #     self.__session = None
 
+        self.__version = __version__
+        self.__variant = None
+
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
         self.__http.auth = self.__auth
@@ -117,6 +123,22 @@ class AblyRest(object):
         r = self.http.get('/time', skip_auth=True, timeout=timeout)
         AblyException.raise_for_response(r)
         return r.to_native()[0]
+
+    @property
+    def api_version(self):
+        return re.match("\d+\.\d+", self.__version).group(0)
+
+    @property
+    def lib(self):
+        return "python"
+
+    @property
+    def variant(self):
+        return self.__variant
+
+    @property
+    def version(self):
+        return self.__version
 
     @property
     def client_id(self):

@@ -150,6 +150,15 @@ class Http(object):
         if headers:
             all_headers.update(headers)
 
+        if self.__ably.variant:
+            x_ably_lib = "%s.%s-%s" % (self.__ably.lib, self.__ably.variant, self.__ably.version)
+        else:
+            x_ably_lib = "%s-%s" % (self.__ably.lib, self.__ably.version)
+        all_headers.update({
+            "X-Ably-Version": self.__ably.api_version,
+            "X-Ably-Lib": x_ably_lib,
+        })
+
         http_open_timeout = self.http_open_timeout
         http_request_timeout = self.http_request_timeout
         if fallback_hosts:

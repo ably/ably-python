@@ -2,10 +2,11 @@ from setuptools import setup
 
 with open('LONG_DESCRIPTION.rst') as f:
     long_description = f.read()
+execfile("ably/version.py"),
 
 setup(
     name='ably',
-    version='0.8.1',
+    version=__version__,
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -25,7 +26,7 @@ setup(
               'ably.types', 'ably.util'],
     install_requires=['msgpack-python>=0.4.6',
                       'pycrypto>=2.6.1',
-                      'requests>=2.7.0,<2.8',
+                      'requests>=2.7.0,<3',
                       'six>=1.9.0'],  # remember to update these
                                       # according to requirements.txt!
                                       # there's no easy way to reuse this.
