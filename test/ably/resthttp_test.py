@@ -2,6 +2,10 @@ from __future__ import absolute_import
 
 import time
 
+from multiprocessing import Process
+import tornado.web
+import tornado.ioloop
+
 import mock
 import requests
 from six.moves.urllib.parse import urljoin
@@ -135,3 +139,38 @@ class TestRestHttp(BaseTestCase):
         self.assertEqual(ably.http.http_open_timeout, 8)
         self.assertEqual(ably.http.http_max_retry_count, 6)
         self.assertEqual(ably.http.http_max_retry_duration, 20)
+
+    def test_version_and_lib_in_headers(self):
+        port = 8887
+        def start_server():
+            class Handler(tornado.web.RequestHandler):
+                def get(self):
+                    self.write(dict(self.request.headers))
+
+            app = tornado.web.Application([
+                (r"/", Handler),
+            ])
+            app.listen(port)
+            tornado.ioloop.IOLoop.current().start()
+
+        proc = Process(target=start_server)
+        proc.start()
+        time.sleep(1)
+        ably = AblyRest(token="foo", rest_host="localhost", port=port, tls=False)
+        try:
+            body = ably.http.get("/", skip_auth=True).json()
+        except:
+            raise
+        finally:
+            proc.terminate()
+
+        self.assertIn("X-Ably-Version", body)
+        self.assertEqual(body["X-Ably-Version"], ably.api_version)
+        self.assertIn("X-Ably-Lib", body)
+
+        if ably.variant:
+            x_ably_lib = "%s.%s-%s" % (ably.lib, ably.variant, ably.version)
+        else:
+            x_ably_lib = "%s-%s" % (ably.lib, ably.version)
+        self.assertEqual(body["X-Ably-Lib"], x_ably_lib)
+
