@@ -1,12 +1,13 @@
 language: python
 python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
   - "3.5"
 sudo: false
 install:
-  # virtualenv>=14.0.0 has dropped Python 3.2 support
-  - travis_retry pip install "virtualenv<14.0.0"
-  - travis_retry pip install tox
+  - travis_retry pip install tox-travis
 script:
   - tox
 after_success:
-  - "if [ $TOX_ENV == 'py27' ]; then pip install coveralls; coveralls; fi"
+  - "if [ $TRAVIS_PYTHON_VERSION == '2.7' ]; then pip install coveralls; coveralls; fi"
