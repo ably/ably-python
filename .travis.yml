@@ -8,3 +8,5 @@ install:
   - travis_retry pip install tox
 script:
   - tox
+after_success:
+  - "if [ $TOX_ENV == 'py27' ]; then pip install coveralls; coveralls; fi"
