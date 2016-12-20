@@ -19,6 +19,7 @@ logger.addHandler(NullHandler())
 requests_log = logging.getLogger('requests')
 requests_log.setLevel(logging.WARNING)
 
+from ably.version import __api_version__, __lib_version__
 from ably.rest.rest import AblyRest
 from ably.rest.auth import Auth
 from ably.types.capability import Capability

@@ -12,6 +12,7 @@ from six.moves.urllib.parse import urljoin
 import requests
 import msgpack
 
+from ably.version import __api_version__, __lib_version__
 from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
@@ -45,6 +46,13 @@ class Request(object):
         self.__body = body
         self.__skip_auth = skip_auth
         self.__url = url
+
+        self.set_version_headers()
+
+    def set_version_headers(self):
+        self.__headers.update({
+            "X-Ably-Version": __api_version__,
+            "X-Ably-Lib": "ably-python-{}".format(__lib_version__)})
 
     def with_relative_url(self, relative_url):
         return Request(self.method, urljoin(self.url, relative_url), self.headers, self.body, self.skip_auth)
