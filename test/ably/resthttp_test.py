@@ -7,9 +7,11 @@ import requests
 from six.moves.urllib.parse import urljoin
 
 from ably import AblyRest
+from ably.http.http import Request
 from ably.transport.defaults import Defaults
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
+from ably.version import __api_version__, __lib_version__
 from test.ably.utils import BaseTestCase
 
 
@@ -135,3 +137,12 @@ class TestRestHttp(BaseTestCase):
         self.assertEqual(ably.http.http_open_timeout, 8)
         self.assertEqual(ably.http.http_max_retry_count, 6)
         self.assertEqual(ably.http.http_max_retry_duration, 20)
+
+    def test_version_headers(self):
+        req = Request('GET', '/', skip_auth=True)
+
+        self.assertIn('X-Ably-Version', req.headers.keys())
+        self.assertIn('X-Ably-Lib', req.headers.keys())
+
+        self.assertEqual(req.headers.get('X-Ably-Version'), __api_version__)
+        self.assertEqual(req.headers.get('X-Ably-Lib'), "ably-python-{}".format(__lib_version__))
