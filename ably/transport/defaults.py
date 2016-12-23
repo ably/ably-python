@@ -47,7 +47,8 @@ class Defaults(object):
 
     @staticmethod
     def get_fallback_rest_hosts(options):
-        if options.rest_host:
+        # RTN17b
+        if options.rest_host or options.environment:
             return []
         else:
             fallback_hosts_copy = list(Defaults.fallback_hosts)
