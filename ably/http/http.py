@@ -50,6 +50,7 @@ class Request(object):
         self.set_version_headers()
 
     def set_version_headers(self):
+        # RSC7a, RSC7b
         self.__headers.update({
             "X-Ably-Version": __api_version__,
             "X-Ably-Lib": "ably-python-{}".format(__lib_version__)})
