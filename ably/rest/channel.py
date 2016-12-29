@@ -72,19 +72,20 @@ class Channel(object):
 
     @catch_all
     def publish(self, name=None, data=None, client_id=None,
-                messages=None, timeout=None):
+                connection_key=None, messages=None, timeout=None):
         """Publishes a message on this channel.
 
         :Parameters:
         - `name`: the name for this message.
         - `data`: the data for this message.
+        - `connection_key`: connection key from a realtime connection, when publishing on behalf of it.
         - `messages`: list of `Message` objects to be published.
             Specify this param OR `name` and `data`.
 
         :attention: You can publish using `name` and `data` OR `messages`, never all three.
         """
         if not messages:
-            messages = [Message(name, data, client_id)]
+            messages = [Message(name, data, client_id, connection_key)]
 
         request_body_list = []
         for m in messages:

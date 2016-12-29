@@ -348,3 +348,13 @@ class TestRestChannelPublish(BaseTestCase):
 
         self.assertEqual(messages[0].client_id, some_client_id)
         self.assertIsNone(messages[1].client_id)
+
+    def test_publish_message_with_connection_key(self):
+        publish0 = self.ably.channels['testConnectionKey']
+
+        with self.assertRaises(AblyException) as context:
+            # publishing the message with an invalid key must fail
+            publish0.publish("publish",
+                             {"test": "This is a JSONObject message payload"},
+                             'client_id',
+                             'fake!realtime_key')

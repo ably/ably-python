@@ -18,8 +18,9 @@ log = logging.getLogger(__name__)
 
 class Message(EncodeDataMixin):
     def __init__(self, name=None, data=None, client_id=None,
-                 id=None, connection_id=None, timestamp=None,
-                 encoding=''):
+                 connection_key=None, id=None, connection_id=None,
+                 timestamp=None, encoding=''):
+
         if name is None:
             self.__name = None
         elif isinstance(name, six.text_type):
@@ -30,11 +31,13 @@ class Message(EncodeDataMixin):
             # log.debug(name)
             # log.debug(name.__class__)
             raise ValueError("name must be a string or bytes")
+
         self.__id = id
         self.__client_id = client_id
         self.__data = data
         self.__timestamp = timestamp
         self.__connection_id = connection_id
+        self.__connection_key = connection_key
         super(Message, self).__init__(encoding)
 
     def __eq__(self, other):
@@ -67,6 +70,10 @@ class Message(EncodeDataMixin):
     @property
     def connection_id(self):
         return self.__connection_id
+
+    @property
+    def connection_key(self):
+        return self.__connection_key
 
     @property
     def id(self):
@@ -174,6 +181,9 @@ class Message(EncodeDataMixin):
         if self.connection_id:
             request_body['connectionId'] = self.connection_id
 
+        if self.connection_key:
+            request_body['connectionKey'] = self.connection_key
+
         return request_body
 
     def as_json(self):
@@ -186,6 +196,7 @@ class Message(EncodeDataMixin):
         data = obj.get('data')
         client_id = obj.get('clientId')
         connection_id = obj.get('connectionId')
+        connection_key= obj.get('connectionKey')
         timestamp = obj.get('timestamp')
         encoding = obj.get('encoding', '')
 
@@ -195,6 +206,7 @@ class Message(EncodeDataMixin):
             id=id,
             name=name,
             connection_id=connection_id,
+            connection_key=connection_key,
             client_id=client_id,
             timestamp=timestamp,
             **decoded_data
