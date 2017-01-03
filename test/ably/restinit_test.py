@@ -198,3 +198,13 @@ class TestRestInit(BaseTestCase):
         self.assertEqual(ably.options.http_open_timeout, 8)
         self.assertEqual(ably.options.http_max_retry_count, 6)
         self.assertEqual(ably.options.http_max_retry_duration, 20)
+
+    @dont_vary_protocol
+    def test_specified_fallback_hosts_use_default(self):
+        ably = AblyRest(token='foo', fallback_hosts_use_default=False)
+        self.assertEqual(ably.options.fallback_hosts_use_default, False)
+
+    @dont_vary_protocol
+    def test_specified_fallback_hosts(self):
+        ably = AblyRest(token='foo', fallback_hosts=['some.other.fallback.server'])
+        self.assertEqual(ably.options.fallback_hosts, ['some.other.fallback.server'])

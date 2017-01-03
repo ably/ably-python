@@ -135,3 +135,28 @@ class TestRestHttp(BaseTestCase):
         self.assertEqual(ably.http.http_open_timeout, 8)
         self.assertEqual(ably.http.http_max_retry_count, 6)
         self.assertEqual(ably.http.http_max_retry_duration, 20)
+
+    def test_no_host_fallback_if_environment_is_set(self):
+        # RSC15b
+        ably = AblyRest(token="foo", environment="sandbox")
+        self.assertEqual(ably.options.fallback_hosts, [])
+
+    def test_no_host_fallback_if_custom_host_is_set(self):
+        # RSC15b
+        ably = AblyRest(token="foo", rest_host="example.org")
+        self.assertEqual(ably.options.fallback_hosts, [])
+
+    def test_no_host_fallback_if_use_default_is_false_without_custom_list(self):
+        # RSC15b
+        ably = AblyRest(token="foo", fallback_hosts_use_default=False)
+        self.assertEqual(ably.options.fallback_hosts, [])
+
+    def test_host_fallback_if_use_default_is_false_with_custom_list(self):
+        # RSC15b
+        ably = AblyRest(token="foo", fallback_hosts_use_default=False)
+        self.assertEqual(ably.options.fallback_hosts, [])
+
+    def test_host_fallback_with_custom_fallback_hosts(self):
+        # RSC15b
+        ably = AblyRest(token="foo", fallback_hosts_use_default=False, fallback_hosts=["example.org"])
+        self.assertEqual(ably.options.fallback_hosts, ["example.org"])

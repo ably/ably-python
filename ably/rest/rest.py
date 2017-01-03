@@ -41,6 +41,9 @@ class AblyRest(object):
           - `auth_callback`: Undocumented
           - `auth_url`: Undocumented
           - `keep_alive`: use persistent connections. Defaults to True
+          - `fallbackHostsUseDefault`: use default fallback servers
+            if connection to default server fails. Defaults to True
+          - `fallbackHosts`: list of fallback servers
         """
         if key is not None and ('key_name' in kwargs or 'key_secret' in kwargs):
             raise ValueError("key and key_name or key_secret are mutually exclusive. "

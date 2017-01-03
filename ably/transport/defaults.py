@@ -47,13 +47,17 @@ class Defaults(object):
 
     @staticmethod
     def get_fallback_rest_hosts(options):
-        # RTN17b
-        if options.rest_host or options.environment:
+        if (options.rest_host or options.environment or \
+           not options.fallback_hosts_use_default) and \
+           not options.fallback_hosts:
             return []
+        elif options.fallback_hosts:
+            fallback_hosts_copy = list(options.fallback_hosts)
         else:
             fallback_hosts_copy = list(Defaults.fallback_hosts)
-            random.shuffle(fallback_hosts_copy)
-            return fallback_hosts_copy
+
+        random.shuffle(fallback_hosts_copy)
+        return fallback_hosts_copy
 
     @staticmethod
     def get_scheme(options):

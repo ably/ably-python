@@ -10,6 +10,7 @@ class Options(AuthOptions):
                  queue_messages=False, recover=False, environment=None,
                  http_open_timeout=None, http_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None,
+                 fallback_hosts_use_default=True, fallback_hosts=[],
                  **kwargs):
         super(Options, self).__init__(**kwargs)
 
@@ -30,6 +31,8 @@ class Options(AuthOptions):
         self.__http_request_timeout = http_request_timeout
         self.__http_max_retry_count = http_max_retry_count
         self.__http_max_retry_duration = http_max_retry_duration
+        self.__fallback_hosts_use_default = fallback_hosts_use_default
+        self.__fallback_hosts = fallback_hosts
 
     @property
     def client_id(self):
@@ -141,9 +144,24 @@ class Options(AuthOptions):
 
     @property
     def http_max_retry_duration(self):
-            return self.__http_max_retry_duration
+        return self.__http_max_retry_duration
 
     @http_max_retry_duration.setter
     def http_max_retry_duration(self, value):
-
         self.__http_max_retry_duration = value
+
+    @property
+    def fallback_hosts_use_default(self):
+        return self.__fallback_hosts_use_default
+
+    @fallback_hosts_use_default.setter
+    def fallback_hosts_use_default(self, value):
+        self.__fallback_hosts_use_default = value
+
+    @property
+    def fallback_hosts(self):
+        return self.__fallback_hosts
+
+    @fallback_hosts.setter
+    def fallback_hosts(self, value):
+        self.__fallback_hosts = value
