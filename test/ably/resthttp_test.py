@@ -139,6 +139,8 @@ class TestRestHttp(BaseTestCase):
         self.assertEqual(ably.http.http_max_retry_duration, 20)
 
     def test_version_headers(self):
+        # RSC7a, RSC7b
+
         req = Request('GET', '/', skip_auth=True)
 
         self.assertIn('X-Ably-Version', req.headers.keys())
