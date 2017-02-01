@@ -6,11 +6,15 @@ import mock
 import requests
 from six.moves.urllib.parse import urljoin
 
+from ably import api_version, lib_version
 from ably import AblyRest
 from ably.transport.defaults import Defaults
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
+from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
+
+test_vars = RestSetup.get_test_vars()
 
 
 class TestRestHttp(BaseTestCase):
@@ -135,3 +139,16 @@ class TestRestHttp(BaseTestCase):
         self.assertEqual(ably.http.http_open_timeout, 8)
         self.assertEqual(ably.http.http_max_retry_count, 6)
         self.assertEqual(ably.http.http_max_retry_duration, 20)
+
+    def test_request_headers(self):
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        rest_host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"])
+        r = ably.http.make_request('HEAD', '/time', skip_auth=True)
+        self.assertIn('X-Ably-Version', r.request.headers)
+        self.assertEqual(r.request.headers['X-Ably-Version'], api_version)
+
+        self.assertIn('X-Ably-Lib', r.request.headers)
+        self.assertEqual(r.request.headers['X-Ably-Lib'], 'python-%s' % lib_version)
