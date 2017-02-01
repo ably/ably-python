@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import ably
+
 
 class HttpUtils(object):
     default_format = "json"
@@ -13,24 +15,18 @@ class HttpUtils(object):
 
     @staticmethod
     def default_get_headers(binary=False):
+        headers = {
+            "X-Ably-Version": ably.api_version,
+            "X-Ably-Lib": 'python-%s' % ably.lib_version,
+        }
         if binary:
-            return {
-                "Accept": HttpUtils.mime_types['binary']
-            }
+            headers["Accept"] = HttpUtils.mime_types['binary']
         else:
-            return {
-                "Accept": HttpUtils.mime_types['json']
-            }
+            headers["Accept"] = HttpUtils.mime_types['json']
+        return headers
 
     @staticmethod
     def default_post_headers(binary=False):
-        if binary:
-            return {
-                "Accept": HttpUtils.mime_types['binary'],
-                "Content-Type": HttpUtils.mime_types['binary']
-            }
-        else:
-            return {
-                "Accept": HttpUtils.mime_types['json'],
-                "Content-Type": HttpUtils.mime_types['json']
-            }
+        headers = HttpUtils.default_get_headers(binary=binary)
+        headers["Content-Type"] = headers["Accept"]
+        return headers
