@@ -139,10 +139,8 @@ class TestRestHttp(BaseTestCase):
         self.assertEqual(ably.http.http_max_retry_count, 6)
         self.assertEqual(ably.http.http_max_retry_duration, 20)
 
+    # RSC7a, RSC7b
     def test_request_headers(self):
-        """
-        RSC7a, RSC7b
-        """
         ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                         rest_host=test_vars["host"],
                         port=test_vars["port"],
