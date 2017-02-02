@@ -19,6 +19,9 @@ log = logging.getLogger(__name__)
 
 class AblyRest(object):
     """Ably Rest Client"""
+
+    variant = None
+
     def __init__(self, key=None, token=None, token_details=None, **kwargs):
         """Create an AblyRest instance.
 
@@ -71,6 +74,10 @@ class AblyRest(object):
 
         self.__channels = Channels(self)
         self.__options = options
+
+    def set_variant(self, variant):
+        """Sets library variant as per RSC7b"""
+        self.variant = variant
 
     def _format_time_param(self, t):
         try:
