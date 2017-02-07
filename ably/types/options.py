@@ -10,10 +10,14 @@ class Options(AuthOptions):
                  queue_messages=False, recover=False, environment=None,
                  http_open_timeout=None, http_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None,
+                 fallback_hosts=None, fallback_hosts_use_default=None,
                  **kwargs):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
+
+        if environment is not None and rest_host is not None:
+            raise ValueError('specify rest_host or environment, not both')
 
         self.__client_id = client_id
         self.__log_level = log_level
@@ -30,6 +34,8 @@ class Options(AuthOptions):
         self.__http_request_timeout = http_request_timeout
         self.__http_max_retry_count = http_max_retry_count
         self.__http_max_retry_duration = http_max_retry_duration
+        self.__fallback_hosts = fallback_hosts
+        self.__fallback_hosts_use_default = fallback_hosts_use_default
 
     @property
     def client_id(self):
@@ -133,7 +139,7 @@ class Options(AuthOptions):
 
     @property
     def http_max_retry_count(self):
-            return self.__http_max_retry_count
+        return self.__http_max_retry_count
 
     @http_max_retry_count.setter
     def http_max_retry_count(self, value):
@@ -141,9 +147,16 @@ class Options(AuthOptions):
 
     @property
     def http_max_retry_duration(self):
-            return self.__http_max_retry_duration
+        return self.__http_max_retry_duration
 
     @http_max_retry_duration.setter
     def http_max_retry_duration(self, value):
-
         self.__http_max_retry_duration = value
+
+    @property
+    def fallback_hosts(self):
+        return self.__fallback_hosts
+
+    @property
+    def fallback_hosts_use_default(self):
+        return self.__fallback_hosts_use_default

@@ -36,6 +36,7 @@ class AblyRest(object):
           **Optional Parameters**
           - `client_id`: Undocumented
           - `rest_host`: The host to connect to. Defaults to rest.ably.io
+          - `environment`: The environment to use. Defaults to 'production'
           - `port`: The port to connect to. Defaults to 80
           - `tls_port`: The tls_port to connect to. Defaults to 443
           - `tls`: Specifies whether the client should use TLS. Defaults
