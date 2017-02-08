@@ -22,7 +22,7 @@ class HttpUtils(object):
 
         headers = {
             "X-Ably-Version": ably.api_version,
-            "X-Ably-Lib": 'python-%s' % lib_version,
+            "X-Ably-Lib": lib_version,
         }
         if binary:
             headers["Accept"] = HttpUtils.mime_types['binary']
