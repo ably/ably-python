@@ -149,11 +149,11 @@ class TestRestHttp(BaseTestCase):
 
         # Lib
         self.assertIn('X-Ably-Lib', r.request.headers)
-        expr = r"python-1\.0\.\d+(-\w+)?$"
+        expr = r"^python-1\.0\.\d+(-\w+)?$"
         self.assertRegexpMatches(r.request.headers['X-Ably-Lib'], expr)
 
         # Lib Variant
         ably.set_variant('django')
         r = ably.http.make_request('HEAD', '/time', skip_auth=True)
-        expr = r"python.django-1\.0\.\d+(-\w+)?$"
+        expr = r"^python.django-1\.0\.\d+(-\w+)?$"
         self.assertRegexpMatches(r.request.headers['X-Ably-Lib'], expr)
