@@ -57,12 +57,12 @@ class TestPaginatedResult(BaseTestCase):
 
         self.paginated_result = PaginatedResult.paginated_query(
             self.ably.http,
-            'http://rest.ably.io/channels/channel_name/ch1',
-            {}, lambda response: response.to_native())
+            url='http://rest.ably.io/channels/channel_name/ch1',
+            response_processor=lambda response: response.to_native())
         self.paginated_result_with_headers = PaginatedResult.paginated_query(
             self.ably.http,
-            'http://rest.ably.io/channels/channel_name/ch2',
-            {}, lambda response: response.to_native())
+            url='http://rest.ably.io/channels/channel_name/ch2',
+            response_processor=lambda response: response.to_native())
 
     def tearDown(self):
         responses.stop()

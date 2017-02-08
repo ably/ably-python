@@ -6,7 +6,7 @@ import logging
 from six.moves.urllib.parse import urlencode
 
 from ably.http.http import Http
-from ably.http.paginatedresult import PaginatedResult
+from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResult
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
@@ -115,9 +115,8 @@ class AblyRest(object):
         stats_response_processor = make_stats_response_processor(
             self.options.use_binary_protocol)
 
-        return PaginatedResult.paginated_query(self.http,
-                                               url, None,
-                                               stats_response_processor)
+        return PaginatedResult.paginated_query(
+            self.http, url=url, response_processor=stats_response_processor)
 
     @catch_all
     def time(self, timeout=None):
@@ -146,3 +145,21 @@ class AblyRest(object):
     @property
     def options(self):
         return self.__options
+
+    def request(self, method, path, params=None, body=None, headers=None):
+        url = path
+        if params:
+            url += '?' + urlencode(params)
+
+        def response_processor(response):
+            items = response.to_native()
+            if not items:
+                return []
+            if type(items) is not list:
+                items = [items]
+            return items
+
+        return HttpPaginatedResult.paginated_query(
+            self.http, method, url, body=body, headers=headers,
+            response_processor=response_processor,
+            raise_on_error=False)
