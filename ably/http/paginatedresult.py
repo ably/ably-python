@@ -101,4 +101,4 @@ class HttpPaginatedResult(PaginatedResult):
 
     @property
     def headers(self):
-        return self.response.headers.items()
+        return list(self.response.headers.items())
