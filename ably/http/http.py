@@ -83,7 +83,7 @@ class Response(object):
 
     def to_native(self):
         content = self.__response.content
-        if content == '':
+        if not content:
             return None
 
         content_type = self.__response.headers.get('content-type')
@@ -132,7 +132,7 @@ class Http(object):
     def make_request(self, method, path, headers=None, body=None,
                      skip_auth=False, timeout=None, raise_on_error=True):
 
-        if body is not None and type(body) is not str:
+        if body is not None and type(body) not in (bytes, str):
             body = self.dump_body(body)
 
         if body:
