@@ -64,11 +64,7 @@ class Channel(object):
                 self.ably.options.use_binary_protocol)
 
         return PaginatedResult.paginated_query(
-            self.ably.http,
-            path,
-            None,
-            message_handler
-        )
+            self.ably.http, url=path, response_processor=message_handler)
 
     @catch_all
     def publish(self, name=None, data=None, client_id=None,

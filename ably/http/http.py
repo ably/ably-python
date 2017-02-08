@@ -38,15 +38,19 @@ def reauth_if_expired(func):
 
 
 class Request(object):
-    def __init__(self, method='GET', url='/', headers=None, body=None, skip_auth=False):
+    def __init__(self, method='GET', url='/', headers=None, body=None,
+                 skip_auth=False, raise_on_error=True):
         self.__method = method
         self.__headers = headers or {}
         self.__body = body
         self.__skip_auth = skip_auth
         self.__url = url
+        self.raise_on_error = raise_on_error
 
     def with_relative_url(self, relative_url):
-        return Request(self.method, urljoin(self.url, relative_url), self.headers, self.body, self.skip_auth)
+        url = urljoin(self.url, relative_url)
+        return Request(self.method, url, self.headers, self.body,
+                       self.skip_auth, self.raise_on_error)
 
     @property
     def method(self):
@@ -78,11 +82,15 @@ class Response(object):
         self.__response = response
 
     def to_native(self):
+        content = self.__response.content
+        if content == '':
+            return None
+
         content_type = self.__response.headers.get('content-type')
         if content_type == 'application/x-msgpack':
-            return msgpack.unpackb(self.__response.content, encoding='utf-8')
+            return msgpack.unpackb(content, encoding='utf-8')
         elif content_type == 'application/json':
-            return self.json()
+            return self.__response.json()
         else:
             raise ValueError("Unsuported content type")
 
@@ -122,12 +130,11 @@ class Http(object):
 
     @reauth_if_expired
     def make_request(self, method, path, headers=None, body=None,
-                     native_data=None, skip_auth=False, timeout=None):
-        hosts = Defaults.get_rest_hosts(self.__options)
-        if native_data is not None and body is not None:
-            raise ValueError("make_request takes either body or native_data")
-        elif native_data is not None:
-            body = self.dump_body(native_data)
+                     skip_auth=False, timeout=None, raise_on_error=True):
+
+        if body is not None and type(body) is not str:
+            body = self.dump_body(body)
+
         if body:
             all_headers = HttpUtils.default_post_headers(
                 self.options.use_binary_protocol, self.__ably.variant)
@@ -149,6 +156,8 @@ class Http(object):
         http_request_timeout = self.http_request_timeout
         http_max_retry_duration = self.http_max_retry_duration
         requested_at = time.time()
+
+        hosts = Defaults.get_rest_hosts(self.__options)
         for retry_count, host in enumerate(hosts):
             base_url = "%s://%s:%d" % (self.preferred_scheme,
                                        host,
@@ -172,21 +181,18 @@ class Http(object):
                     raise e
             else:
                 try:
-                    AblyException.raise_for_response(response)
+                    if raise_on_error:
+                        AblyException.raise_for_response(response)
                     return Response(response)
                 except AblyException as e:
                     if not e.is_server_error:
                         raise e
 
-    def request(self, request):
-        return self.make_request(request.method, request.url, headers=request.headers, body=request.body,
-                                 skip_auth=request.skip_auth)
-
     def get(self, url, headers=None, skip_auth=False, timeout=None):
         return self.make_request('GET', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
 
-    def post(self, url, headers=None, body=None, native_data=None, skip_auth=False, timeout=None):
-        return self.make_request('POST', url, headers=headers, body=body, native_data=native_data,
+    def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        return self.make_request('POST', url, headers=headers, body=body,
                                  skip_auth=skip_auth, timeout=timeout)
 
     def delete(self, url, headers=None, skip_auth=False, timeout=None):

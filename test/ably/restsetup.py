@@ -44,7 +44,7 @@ class RestSetup:
     @staticmethod
     def get_test_vars(sender=None):
         if not RestSetup.__test_vars:
-            r = ably.http.post("/apps", native_data=app_spec_local, skip_auth=True)
+            r = ably.http.post("/apps", body=app_spec_local, skip_auth=True)
             AblyException.raise_for_response(r)
             
             app_spec = r.json()

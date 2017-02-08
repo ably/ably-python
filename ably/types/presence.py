@@ -130,10 +130,7 @@ class Presence(object):
             presence_handler = make_presence_response_handler(self.__binary)
 
         return PaginatedResult.paginated_query(
-            self.__http,
-            path,
-            {},
-            presence_handler)
+            self.__http, url=path, response_processor=presence_handler)
 
     def history(self, limit=None, direction=None, start=None, end=None):
         qs = {}
@@ -166,12 +163,7 @@ class Presence(object):
             presence_handler = make_presence_response_handler(self.__binary)
 
         return PaginatedResult.paginated_query(
-            self.__http,
-            path,
-            {},
-            presence_handler
-        )
-
+            self.__http, url=path, response_processor=presence_handler)
 
 def make_presence_response_handler(binary):
     def presence_response_handler(response):
