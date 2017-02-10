@@ -13,17 +13,18 @@ test_vars = RestSetup.get_test_vars()
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestRequest(BaseTestCase):
 
-    def setUp(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+    @classmethod
+    def setUpClass(cls):
+        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                              rest_host=test_vars["host"],
                              port=test_vars["port"],
                              tls_port=test_vars["tls_port"],
                              tls=test_vars["tls"])
 
         # Populate the channel (using the new api)
-        for i in range(50):
+        for i in range(20):
             body = {'name': 'event%s' % i, 'data': 'lorem ipsum %s' % i}
-            self.ably.request('POST', '/channels/test/messages', body=body)
+            cls.ably.request('POST', '/channels/test/messages', body=body)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -37,7 +38,7 @@ class TestRestRequest(BaseTestCase):
         self.assertEqual(result.items, [])                 # HP3
 
     def test_get(self):
-        params = {'limit': 10}
+        params = {'limit': 10, 'direction': 'forwards'}
         result = self.ably.request('GET', '/channels/test/messages', params=params)
 
         self.assertIsInstance(result, HttpPaginatedResult) # RSC19d
@@ -46,7 +47,15 @@ class TestRestRequest(BaseTestCase):
         self.assertIsInstance(result.next(), HttpPaginatedResult)
         self.assertIsInstance(result.first(), HttpPaginatedResult)
 
-        self.assertIsInstance(result.items, list)    # HP3
+        # HP3
+        self.assertIsInstance(result.items, list)
+        item = result.items[0]
+        self.assertIsInstance(item, dict)
+        self.assertIn('timestamp', item)
+        self.assertIn('id', item)
+        self.assertEqual(item['name'], 'event0')
+        self.assertEqual(item['data'], 'lorem ipsum 0')
+
         self.assertEqual(result.status_code, 200)    # HP4
         self.assertEqual(result.success, True)       # HP5
         self.assertEqual(result.error_code, None)    # HP6
