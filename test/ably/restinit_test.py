@@ -84,13 +84,13 @@ class TestRestInit(BaseTestCase):
 
         # environment: production
         ably = AblyRest(token='foo', environment="production")
-        host = Defaults.get_rest_host(ably.options)
+        host = ably.options.get_rest_host()
         self.assertEqual("rest.ably.io", host,
                          msg="Unexpected host mismatch %s" % host)
 
         # environment: other
         ably = AblyRest(token='foo', environment="sandbox")
-        host = Defaults.get_rest_host(ably.options)
+        host = ably.options.get_rest_host()
         self.assertEqual("sandbox-rest.ably.io", host,
                          msg="Unexpected host mismatch %s" % host)
 
@@ -107,14 +107,14 @@ class TestRestInit(BaseTestCase):
         ably = AblyRest(token='foo', fallback_hosts=fallback_hosts)
         self.assertEqual(
             sorted(fallback_hosts),
-            sorted(Defaults.get_fallback_rest_hosts(ably.options))
+            sorted(ably.options.get_fallback_rest_hosts())
         )
 
         # Specify environment
         ably = AblyRest(token='foo', environment='sandbox')
         self.assertEqual(
             [],
-            sorted(Defaults.get_fallback_rest_hosts(ably.options))
+            sorted(ably.options.get_fallback_rest_hosts())
         )
 
         # Specify environment and fallback_hosts_use_default
@@ -123,7 +123,7 @@ class TestRestInit(BaseTestCase):
                         http_max_retry_count=10)
         self.assertEqual(
             sorted(Defaults.fallback_hosts),
-            sorted(Defaults.get_fallback_rest_hosts(ably.options))
+            sorted(ably.options.get_fallback_rest_hosts())
         )
 
     @dont_vary_protocol

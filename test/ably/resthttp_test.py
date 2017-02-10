@@ -73,7 +73,7 @@ class TestRestHttp(BaseTestCase):
 
                 expected_urls_set = set([
                     make_url(host)
-                    for host in Defaults.get_rest_hosts(Options(http_max_retry_count=10))
+                    for host in Options(http_max_retry_count=10).get_rest_hosts()
                 ])
                 for ((__, url), ___) in request_mock.call_args_list:
                     self.assertIn(url, expected_urls_set)
@@ -100,7 +100,7 @@ class TestRestHttp(BaseTestCase):
                     mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY))
 
     def test_no_retry_if_not_500_to_599_http_code(self):
-        default_host = Defaults.get_rest_host(Options())
+        default_host = Options().get_rest_host()
         ably = AblyRest(token="foo")
 
         default_url = "%s://%s:%d/" % (
