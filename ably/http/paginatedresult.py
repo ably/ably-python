@@ -63,17 +63,13 @@ class PaginatedResult(object):
 
         content_type = response.headers['Content-Type']
         links = response.links
-        #log.debug("Links: %s" % links)
-        #log.debug("Response: %s" % response)
         if 'first' in links:
             first_rel_request = request.with_relative_url(links['first']['url'])
         else:
             first_rel_request = None
 
         if 'next' in links:
-            #log.debug("Next: %s" % links['next']['url'])
             next_rel_request = request.with_relative_url(links['next']['url'])
-            #log.debug("Next rel request: %s" % next_rel_request)
         else:
             next_rel_request = None
 
