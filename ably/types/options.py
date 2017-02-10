@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 
+import random
+
+from ably.transport.defaults import Defaults
 from ably.types.authoptions import AuthOptions
-from ably.util.exceptions import AblyException
 
 
 class Options(AuthOptions):
@@ -36,6 +38,8 @@ class Options(AuthOptions):
         self.__http_max_retry_duration = http_max_retry_duration
         self.__fallback_hosts = fallback_hosts
         self.__fallback_hosts_use_default = fallback_hosts_use_default
+
+        self.__rest_hosts = self.__get_rest_hosts()
 
     @property
     def client_id(self):
@@ -160,3 +164,52 @@ class Options(AuthOptions):
     @property
     def fallback_hosts_use_default(self):
         return self.__fallback_hosts_use_default
+
+    def __get_rest_hosts(self):
+        """
+        Return the list of hosts as they should be tried. First comes the main
+        host. Then the fallback hosts in random order.
+        The returned list will have a length of up to http_max_retry_count.
+        """
+        # Defaults
+        host = self.rest_host
+        if host is None:
+            host = Defaults.rest_host
+
+        environment = self.environment
+        if environment is None:
+            environment = Defaults.environment
+
+        http_max_retry_count = self.http_max_retry_count
+        if http_max_retry_count is None:
+            http_max_retry_count = Defaults.http_max_retry_count
+
+        # Prepend environment
+        if environment != 'production':
+            host = '%s-%s' % (environment, host)
+
+        # Fallback hosts
+        fallback_hosts = self.fallback_hosts
+        if fallback_hosts is None:
+            if host == Defaults.rest_host or self.fallback_hosts_use_default:
+                fallback_hosts = Defaults.fallback_hosts
+            else:
+                fallback_hosts = []
+
+        # Shuffle
+        fallback_hosts = list(fallback_hosts)
+        random.shuffle(fallback_hosts)
+
+        # First main host
+        hosts = [host] + fallback_hosts
+        hosts = hosts[:http_max_retry_count]
+        return hosts
+
+    def get_rest_hosts(self):
+        return self.__rest_hosts
+
+    def get_rest_host(self):
+        return self.__rest_hosts[0]
+
+    def get_fallback_rest_hosts(self):
+        return self.__rest_hosts[1:]

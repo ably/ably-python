@@ -157,7 +157,7 @@ class Http(object):
         http_max_retry_duration = self.http_max_retry_duration
         requested_at = time.time()
 
-        hosts = Defaults.get_rest_hosts(self.__options)
+        hosts = self.options.get_rest_hosts()
         for retry_count, host in enumerate(hosts):
             base_url = "%s://%s:%d" % (self.preferred_scheme,
                                        host,
@@ -212,7 +212,7 @@ class Http(object):
 
     @property
     def preferred_host(self):
-        return Defaults.get_rest_host(self.options)
+        return self.options.get_rest_host()
 
     @property
     def preferred_port(self):
