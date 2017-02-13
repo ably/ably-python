@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import random
 
 
 class Defaults(object):
@@ -14,6 +13,7 @@ class Defaults(object):
 
     rest_host = "rest.ably.io"
     realtime_host = "realtime.ably.io"
+    environment = 'production'
 
     port = 80
     tls_port = 443
@@ -25,12 +25,7 @@ class Defaults(object):
 
     transports = []  # ["web_socket", "comet"]
 
-    @staticmethod
-    def get_rest_host(options):
-        if options.rest_host:
-            return options.rest_host
-        else:
-            return Defaults.rest_host
+    http_max_retry_count = 3
 
     @staticmethod
     def get_port(options):
@@ -44,15 +39,6 @@ class Defaults(object):
                 return options.port
             else:
                 return Defaults.port
-
-    @staticmethod
-    def get_fallback_rest_hosts(options):
-        if options.rest_host:
-            return []
-        else:
-            fallback_hosts_copy = list(Defaults.fallback_hosts)
-            random.shuffle(fallback_hosts_copy)
-            return fallback_hosts_copy
 
     @staticmethod
     def get_scheme(options):

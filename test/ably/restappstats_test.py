@@ -88,7 +88,7 @@ class TestRestAppStatsSetup(object):
                 }
             )
 
-        cls.ably.http.post('/stats', native_data=stats + previous_stats)
+        cls.ably.http.post('/stats', body=stats + previous_stats)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol

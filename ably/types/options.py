@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 
+import random
+
+from ably.transport.defaults import Defaults
 from ably.types.authoptions import AuthOptions
-from ably.util.exceptions import AblyException
 
 
 class Options(AuthOptions):
@@ -10,10 +12,14 @@ class Options(AuthOptions):
                  queue_messages=False, recover=False, environment=None,
                  http_open_timeout=None, http_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None,
+                 fallback_hosts=None, fallback_hosts_use_default=None,
                  **kwargs):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
+
+        if environment is not None and rest_host is not None:
+            raise ValueError('specify rest_host or environment, not both')
 
         self.__client_id = client_id
         self.__log_level = log_level
@@ -30,6 +36,10 @@ class Options(AuthOptions):
         self.__http_request_timeout = http_request_timeout
         self.__http_max_retry_count = http_max_retry_count
         self.__http_max_retry_duration = http_max_retry_duration
+        self.__fallback_hosts = fallback_hosts
+        self.__fallback_hosts_use_default = fallback_hosts_use_default
+
+        self.__rest_hosts = self.__get_rest_hosts()
 
     @property
     def client_id(self):
@@ -133,7 +143,7 @@ class Options(AuthOptions):
 
     @property
     def http_max_retry_count(self):
-            return self.__http_max_retry_count
+        return self.__http_max_retry_count
 
     @http_max_retry_count.setter
     def http_max_retry_count(self, value):
@@ -141,9 +151,65 @@ class Options(AuthOptions):
 
     @property
     def http_max_retry_duration(self):
-            return self.__http_max_retry_duration
+        return self.__http_max_retry_duration
 
     @http_max_retry_duration.setter
     def http_max_retry_duration(self, value):
-
         self.__http_max_retry_duration = value
+
+    @property
+    def fallback_hosts(self):
+        return self.__fallback_hosts
+
+    @property
+    def fallback_hosts_use_default(self):
+        return self.__fallback_hosts_use_default
+
+    def __get_rest_hosts(self):
+        """
+        Return the list of hosts as they should be tried. First comes the main
+        host. Then the fallback hosts in random order.
+        The returned list will have a length of up to http_max_retry_count.
+        """
+        # Defaults
+        host = self.rest_host
+        if host is None:
+            host = Defaults.rest_host
+
+        environment = self.environment
+        if environment is None:
+            environment = Defaults.environment
+
+        http_max_retry_count = self.http_max_retry_count
+        if http_max_retry_count is None:
+            http_max_retry_count = Defaults.http_max_retry_count
+
+        # Prepend environment
+        if environment != 'production':
+            host = '%s-%s' % (environment, host)
+
+        # Fallback hosts
+        fallback_hosts = self.fallback_hosts
+        if fallback_hosts is None:
+            if host == Defaults.rest_host or self.fallback_hosts_use_default:
+                fallback_hosts = Defaults.fallback_hosts
+            else:
+                fallback_hosts = []
+
+        # Shuffle
+        fallback_hosts = list(fallback_hosts)
+        random.shuffle(fallback_hosts)
+
+        # First main host
+        hosts = [host] + fallback_hosts
+        hosts = hosts[:http_max_retry_count]
+        return hosts
+
+    def get_rest_hosts(self):
+        return self.__rest_hosts
+
+    def get_rest_host(self):
+        return self.__rest_hosts[0]
+
+    def get_fallback_rest_hosts(self):
+        return self.__rest_hosts[1:]

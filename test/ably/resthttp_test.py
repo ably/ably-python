@@ -10,7 +10,10 @@ from ably import AblyRest
 from ably.transport.defaults import Defaults
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
+from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
+
+test_vars = RestSetup.get_test_vars()
 
 
 class TestRestHttp(BaseTestCase):
@@ -18,7 +21,6 @@ class TestRestHttp(BaseTestCase):
         ably = AblyRest(token="foo")
         self.assertIn('http_open_timeout', ably.http.CONNECTION_RETRY_DEFAULTS)
         self.assertIn('http_request_timeout', ably.http.CONNECTION_RETRY_DEFAULTS)
-        self.assertIn('http_max_retry_count', ably.http.CONNECTION_RETRY_DEFAULTS)
 
         with mock.patch('requests.sessions.Session.send',
                         side_effect=requests.exceptions.RequestException) as send_mock:
@@ -27,7 +29,7 @@ class TestRestHttp(BaseTestCase):
 
             self.assertEqual(
                 send_mock.call_count,
-                ably.http.CONNECTION_RETRY_DEFAULTS['http_max_retry_count'])
+                Defaults.http_max_retry_count)
             self.assertEqual(
                 send_mock.call_args,
                 mock.call(mock.ANY, timeout=(ably.http.CONNECTION_RETRY_DEFAULTS['http_open_timeout'],
@@ -52,7 +54,6 @@ class TestRestHttp(BaseTestCase):
 
     def test_host_fallback(self):
         ably = AblyRest(token="foo")
-        self.assertIn('http_max_retry_count', ably.http.CONNECTION_RETRY_DEFAULTS)
 
         def make_url(host):
             base_url = "%s://%s:%d" % (ably.http.preferred_scheme,
@@ -68,12 +69,11 @@ class TestRestHttp(BaseTestCase):
 
                 self.assertEqual(
                     send_mock.call_count,
-                    ably.http.CONNECTION_RETRY_DEFAULTS['http_max_retry_count'])
+                    Defaults.http_max_retry_count)
 
                 expected_urls_set = set([
                     make_url(host)
-                    for host in ([ably.http.preferred_host] +
-                                 Defaults.get_fallback_rest_hosts(Options()))
+                    for host in Options(http_max_retry_count=10).get_rest_hosts()
                 ])
                 for ((__, url), ___) in request_mock.call_args_list:
                     self.assertIn(url, expected_urls_set)
@@ -82,7 +82,6 @@ class TestRestHttp(BaseTestCase):
     def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
         ably = AblyRest(token="foo", rest_host=custom_host)
-        self.assertIn('http_max_retry_count', ably.http.CONNECTION_RETRY_DEFAULTS)
 
         custom_url = "%s://%s:%d/" % (
             ably.http.preferred_scheme,
@@ -101,9 +100,8 @@ class TestRestHttp(BaseTestCase):
                     mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY))
 
     def test_no_retry_if_not_500_to_599_http_code(self):
-        default_host = Defaults.get_rest_host(Options())
+        default_host = Options().get_rest_host()
         ably = AblyRest(token="foo")
-        self.assertIn('http_max_retry_count', ably.http.CONNECTION_RETRY_DEFAULTS)
 
         default_url = "%s://%s:%d/" % (
             ably.http.preferred_scheme,
@@ -135,3 +133,27 @@ class TestRestHttp(BaseTestCase):
         self.assertEqual(ably.http.http_open_timeout, 8)
         self.assertEqual(ably.http.http_max_retry_count, 6)
         self.assertEqual(ably.http.http_max_retry_duration, 20)
+
+    # RSC7a, RSC7b
+    def test_request_headers(self):
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        rest_host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"])
+        r = ably.http.make_request('HEAD', '/time', skip_auth=True)
+
+        # API
+        self.assertIn('X-Ably-Version', r.request.headers)
+        self.assertEqual(r.request.headers['X-Ably-Version'], '1.0')
+
+        # Lib
+        self.assertIn('X-Ably-Lib', r.request.headers)
+        expr = r"^python-1\.0\.\d+(-\w+)?$"
+        self.assertRegexpMatches(r.request.headers['X-Ably-Lib'], expr)
+
+        # Lib Variant
+        ably.set_variant('django')
+        r = ably.http.make_request('HEAD', '/time', skip_auth=True)
+        expr = r"^python.django-1\.0\.\d+(-\w+)?$"
+        self.assertRegexpMatches(r.request.headers['X-Ably-Lib'], expr)

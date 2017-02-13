@@ -6,7 +6,7 @@ import logging
 from six.moves.urllib.parse import urlencode
 
 from ably.http.http import Http
-from ably.http.paginatedresult import PaginatedResult
+from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResult
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
@@ -19,6 +19,9 @@ log = logging.getLogger(__name__)
 
 class AblyRest(object):
     """Ably Rest Client"""
+
+    variant = None
+
     def __init__(self, key=None, token=None, token_details=None, **kwargs):
         """Create an AblyRest instance.
 
@@ -33,6 +36,7 @@ class AblyRest(object):
           **Optional Parameters**
           - `client_id`: Undocumented
           - `rest_host`: The host to connect to. Defaults to rest.ably.io
+          - `environment`: The environment to use. Defaults to 'production'
           - `port`: The port to connect to. Defaults to 80
           - `tls_port`: The tls_port to connect to. Defaults to 443
           - `tls`: Specifies whether the client should use TLS. Defaults
@@ -72,6 +76,10 @@ class AblyRest(object):
         self.__channels = Channels(self)
         self.__options = options
 
+    def set_variant(self, variant):
+        """Sets library variant as per RSC7b"""
+        self.variant = variant
+
     def _format_time_param(self, t):
         try:
             return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
@@ -107,9 +115,8 @@ class AblyRest(object):
         stats_response_processor = make_stats_response_processor(
             self.options.use_binary_protocol)
 
-        return PaginatedResult.paginated_query(self.http,
-                                               url, None,
-                                               stats_response_processor)
+        return PaginatedResult.paginated_query(
+            self.http, url=url, response_processor=stats_response_processor)
 
     @catch_all
     def time(self, timeout=None):
@@ -138,3 +145,21 @@ class AblyRest(object):
     @property
     def options(self):
         return self.__options
+
+    def request(self, method, path, params=None, body=None, headers=None):
+        url = path
+        if params:
+            url += '?' + urlencode(params)
+
+        def response_processor(response):
+            items = response.to_native()
+            if not items:
+                return []
+            if type(items) is not list:
+                items = [items]
+            return items
+
+        return HttpPaginatedResult.paginated_query(
+            self.http, method, url, body=body, headers=headers,
+            response_processor=response_processor,
+            raise_on_error=False)
