@@ -195,29 +195,15 @@ class TestAuthAuthorize(BaseTestCase):
         self.assertEqual(Auth.Method.TOKEN, self.ably.auth.auth_mechanism,
                          msg="Authorise should change the Auth method")
 
-    def test_authorize_shouldnt_create_token_if_not_expired(self):
-
+    # RSA10a
+    def test_authorize_always_creates_new_token(self):
         token = self.ably.auth.authorize()
-
         new_token = self.ably.auth.authorize()
 
         self.assertGreater(token.expires, time.time()*1000)
-
-        self.assertIs(new_token, token)
-
-    def test_authorize_should_create_new_token_if_forced(self):
-
-        token = self.ably.auth.authorize()
-
-        new_token = self.ably.auth.authorize(force=True)
-
-        self.assertGreater(token.expires, time.time()*1000)
-
         self.assertIsNot(new_token, token)
-        self.assertGreater(new_token.expires, token.expires)
 
-        another_token = self.ably.auth.authorize(auth_options={'force': True})
-        self.assertIsNot(new_token, another_token)
+        self.assertGreater(new_token.expires, token.expires)
 
     def test_authorize_create_new_token_if_expired(self):
 
@@ -240,7 +226,7 @@ class TestAuthAuthorize(BaseTestCase):
         token_params = {'ttl': 10, 'client_id': 'client_id'}
         auth_params = {'auth_url': 'somewhere.com', 'query_time': True}
         with mock.patch('ably.rest.auth.Auth.request_token') as request_mock:
-            self.ably.auth.authorize(token_params, auth_params, force=True)
+            self.ably.auth.authorize(token_params, auth_params)
 
         token_called, auth_called = request_mock.call_args
         self.assertEqual(token_called[0], token_params)
@@ -277,44 +263,41 @@ class TestAuthAuthorize(BaseTestCase):
         token = ably.auth.authorize()
         self.assertEqual(token.client_id, 'my_client_id')
 
+    # RSA10j
     def test_if_parameters_are_stored_and_used_as_defaults(self):
         self.ably.auth.authorize({'ttl': 555, 'client_id': 'new_id'},
                                  {'auth_headers': {'a_headers': 'a_value'}})
         with mock.patch('ably.rest.auth.Auth.request_token',
                         wraps=self.ably.auth.request_token) as request_mock:
-            self.ably.auth.authorize(force=True)
+            self.ably.auth.authorize()
 
         token_called, auth_called = request_mock.call_args
         self.assertEqual(token_called[0], {'ttl': 555, 'client_id': 'new_id'})
         self.assertEqual(auth_called['auth_headers'], {'a_headers': 'a_value'})
 
-    def test_force_and_timestamp_are_not_stored(self):
+    # RSA10g
+    def test_timestamp_is_not_stored(self):
         # authorize once with arbitrary defaults
         token_1 = self.ably.auth.authorize(
             {'ttl': 60 * 1000, 'client_id': 'new_id'},
             {'auth_headers': {'a_headers': 'a_value'}})
         self.assertIsInstance(token_1, TokenDetails)
 
-        # call authorize again with force and timestamp set
+        # call authorize again with timestamp set
         timestamp = self.ably.time()
         with mock.patch('ably.rest.auth.TokenRequest',
                         wraps=ably.types.tokenrequest.TokenRequest) as tr_mock:
             token_2 = self.ably.auth.authorize(
                 {'ttl': 60 * 1000, 'client_id': 'new_id', 'timestamp': timestamp},
-                {'auth_headers': {'a_headers': 'a_value'}, 'force': True})
+                {'auth_headers': {'a_headers': 'a_value'}})
         self.assertIsInstance(token_2, TokenDetails)
         self.assertNotEqual(token_1, token_2)
         self.assertEqual(tr_mock.call_args[1]['timestamp'], timestamp)
 
         # call authorize again with no params
-        token_3 = self.ably.auth.authorize()
-        self.assertIsInstance(token_3, TokenDetails)
-        self.assertEqual(token_2, token_3)
-
-        # call authorize again with force
         with mock.patch('ably.rest.auth.TokenRequest',
                         wraps=ably.types.tokenrequest.TokenRequest) as tr_mock:
-            token_4 = self.ably.auth.authorize(force=True)
+            token_4 = self.ably.auth.authorize()
         self.assertIsInstance(token_4, TokenDetails)
         self.assertNotEqual(token_2, token_4)
         self.assertNotEqual(tr_mock.call_args[1]['timestamp'], timestamp)

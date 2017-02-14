@@ -121,7 +121,7 @@ class Http(object):
 
     def reauth(self):
         try:
-            self.auth.authorize(force=True)
+            self.auth.authorize()
         except AblyAuthException as e:
             if e.code == 40101:
                 e.message = ("The provided token is not renewable and there is"

@@ -305,7 +305,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
         new_token = self.ably.auth.authorize(
-            token_params={'client_id': uuid.uuid4().hex}, force=True)
+            token_params={'client_id': uuid.uuid4().hex})
         new_ably = AblyRest(token=new_token.token,
                             rest_host=test_vars["host"],
                             port=test_vars["port"],
