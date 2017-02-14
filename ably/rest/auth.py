@@ -198,14 +198,13 @@ class Auth(object):
 
         token_request['timestamp'] = int(token_request['timestamp'])
 
-        token_request['ttl'] = token_params.get('ttl') or TokenDetails.DEFAULTS['ttl']
+        ttl = token_params.get('ttl')
+        if ttl is not None:
+            token_request['ttl'] = ttl
 
-        if token_params.get('capability') is None:
-            token_request["capability"] = ""
-        else:
-            token_request['capability'] = six.text_type(
-                Capability(token_params['capability'])
-            )
+        capability = token_params.get('capability')
+        if capability is not None:
+            token_request['capability'] = six.text_type(Capability(capability))
 
         token_request["client_id"] = (
             token_params.get('client_id') or self.client_id)

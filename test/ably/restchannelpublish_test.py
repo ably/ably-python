@@ -323,6 +323,7 @@ class TestRestChannelPublish(BaseTestCase):
         self.assertEqual(400, the_exception.status_code)
         self.assertEqual(40012, the_exception.code)
 
+    # RSA15b
     def test_wildcard_client_id_can_publish_as_others(self):
         wildcard_token_details = self.ably.auth.request_token({'client_id': '*'})
         wildcard_ably = AblyRest(token_details=wildcard_token_details,
