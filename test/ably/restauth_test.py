@@ -93,6 +93,7 @@ class TestAuth(BaseTestCase):
         self.assertEqual(Auth.Method.TOKEN, ably.auth.auth_mechanism,
                 msg="Unexpected Auth method mismatch")
 
+    # RSA11
     def test_request_basic_auth_header(self):
         ably = AblyRest(key_secret='foo', key_name='bar')
 

@@ -246,12 +246,19 @@ class TestCreateTokenRequest(BaseTestCase):
 
         self.assertNotEqual(token_request.nonce, another_token_request.nonce)
 
+    # RSA5
     @dont_vary_protocol
     def test_ttl_is_optional_and_specified_in_ms(self):
         token_request = self.ably.auth.create_token_request(
             key_name=self.key_name, key_secret=self.key_secret)
-        self.assertEquals(
-            token_request.ttl, TokenDetails.DEFAULTS['ttl'])
+        self.assertEquals(token_request.ttl, None)
+
+    # RSA6
+    @dont_vary_protocol
+    def test_capability_is_optional(self):
+        token_request = self.ably.auth.create_token_request(
+            key_name=self.key_name, key_secret=self.key_secret)
+        self.assertEquals(token_request.capability, None)
 
     @dont_vary_protocol
     def test_accept_all_token_params(self):
