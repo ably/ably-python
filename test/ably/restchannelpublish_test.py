@@ -127,7 +127,7 @@ class TestRestChannelPublish(BaseTestCase):
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
-        ably.auth.authorise(
+        ably.auth.authorize(
             token_params={'capability': {"only_subscribe": ["subscribe"]}})
 
         with self.assertRaises(AblyException) as cm:
@@ -304,7 +304,7 @@ class TestRestChannelPublish(BaseTestCase):
                             client_id='invalid')
 
     def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
-        new_token = self.ably.auth.authorise(
+        new_token = self.ably.auth.authorize(
             token_params={'client_id': uuid.uuid4().hex}, force=True)
         new_ably = AblyRest(token=new_token.token,
                             rest_host=test_vars["host"],

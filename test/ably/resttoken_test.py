@@ -230,7 +230,7 @@ class TestCreateTokenRequest(BaseTestCase):
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
 
-        token = ably.auth.authorise()
+        token = ably.auth.authorize()
 
         self.assertIsInstance(token, TokenDetails)
 
@@ -296,7 +296,7 @@ class TestCreateTokenRequest(BaseTestCase):
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
 
-        token = ably.auth.authorise()
+        token = ably.auth.authorize()
 
         self.assertEqual(str(token.capability), str(capability))
 
