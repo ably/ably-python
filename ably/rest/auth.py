@@ -4,6 +4,7 @@ import base64
 import logging
 import time
 import uuid
+import warnings
 
 import six
 import requests
@@ -76,7 +77,7 @@ class Auth(object):
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    def authorise(self, token_params=None, auth_options=None, force=False):
+    def authorize(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
 
         if token_params is None:
@@ -109,6 +110,12 @@ class Auth(object):
         self.__token_details = self.request_token(token_params, **auth_options)
         self._configure_client_id(self.__token_details.client_id)
         return self.__token_details
+
+    def authorise(self, *args, **kwargs):
+        warnings.warn(
+            "authorise is deprecated and will be removed in v1.0, please use authorize",
+            DeprecationWarning)
+        return self.authorize(*args, **kwargs)
 
     def request_token(self, token_params=None,
                       # auth_options
@@ -293,7 +300,7 @@ class Auth(object):
                 'Authorization': 'Basic %s' % self.basic_credentials,
             }
         else:
-            self.authorise()
+            self.authorize()
             return {
                 'Authorization': 'Bearer %s' % self.token_credentials,
             }
