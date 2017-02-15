@@ -77,7 +77,7 @@ class Auth(object):
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    def _authorize(self, token_params=None, auth_options=None, force=False):
+    def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
 
         if token_params is None:
@@ -111,11 +111,11 @@ class Auth(object):
         return self.__token_details
 
     def authorize(self, token_params=None, auth_options=None):
-        return self._authorize(token_params, auth_options, force=True)
+        return self.__authorize_when_necessary(token_params, auth_options, force=True)
 
     def authorise(self, *args, **kwargs):
         warnings.warn(
-            "authorise is deprecated and will be removed in v1.0, please use authorize",
+            "authorise is deprecated and will be removed in v2.0, please use authorize",
             DeprecationWarning)
         return self.authorize(*args, **kwargs)
 
@@ -302,7 +302,7 @@ class Auth(object):
                 'Authorization': 'Basic %s' % self.basic_credentials,
             }
         else:
-            self._authorize()
+            self.__authorize_when_necessary()
             return {
                 'Authorization': 'Bearer %s' % self.token_credentials,
             }
