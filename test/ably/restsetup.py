@@ -24,7 +24,7 @@ if host is None:
     host = "sandbox-rest.ably.io"
 
 if host.endswith("rest.ably.io"):
-    host = "sandbox-rest.ably.io"
+    host = "staging-rest.ably.io"
     port = 80
     tls_port = 443
 else:

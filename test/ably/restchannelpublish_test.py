@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import json
 import logging
+import os
 import uuid
 
 import six
@@ -349,3 +350,57 @@ class TestRestChannelPublish(BaseTestCase):
 
         self.assertEqual(messages[0].client_id, some_client_id)
         self.assertIsNone(messages[1].client_id)
+
+    # TM2h
+    # FIXME This one does not work yet, the server replies with a timeout error
+    @dont_vary_protocol
+    def test_invalid_connection_key(self):
+        channel = self.ably.channels["persisted:invalid_connection_key"]
+        message = Message(data='payload', connection_key='this.should.be.wrong')
+        with self.assertRaises(AblyException) as cm:
+            channel.publish(messages=[message])
+
+        self.assertEqual(50003, cm.exception.code) # FIXME Which code should it be?
+
+    # TM2i, RSL6a2, RSL1h
+    def test_publish_extras(self):
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:extras_channel')]
+        extras = {"push": [{"title": "Testing"}]}
+        channel.publish(name='test-name', data='test-data', extras=extras)
+
+        # Get the history for this channel
+        history = channel.history()
+        message = history.items[0]
+        self.assertEqual(message.name, 'test-name')
+        self.assertEqual(message.data, 'test-data')
+        self.assertEqual(message.extras, extras)
+
+    # RSL6a1
+    def test_interoperability(self):
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:interoperability_channel')]
+
+        type_mapping = {
+            'string': six.text_type,
+            'jsonObject': dict,
+            'jsonArray': list,
+            'binary': bytearray,
+        }
+
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        path = os.path.join(root_dir, 'submodules', 'test-resources', 'messages-encoding.json')
+        with open(path) as f:
+            data = json.load(f)
+            for input_msg in data['messages'][-1:]:
+                message = Message(data=input_msg['data'], encoding=input_msg['encoding'])
+                channel.publish(messages=[message])
+                history = channel.history()
+                message = history.items[0]
+                expected_type = input_msg['expectedType']
+                if expected_type == 'binary':
+                    expected_value = input_msg.get('expectedHexValue').decode('hex')
+                else:
+                    expected_value = input_msg.get('expectedValue')
+                self.assertEqual(message.data, expected_value)
+                self.assertEqual(type(message.data), type_mapping[expected_type])

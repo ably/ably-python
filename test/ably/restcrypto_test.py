@@ -243,12 +243,22 @@ class AbstractTestCryptoWithFixture(object):
             return json.loads(encoded_item['data'])
         return encoded_item['data']
 
+    # TM3
     def test_decode(self):
         for item in self.items:
             self.assertEqual(item['encoded']['name'], item['encrypted']['name'])
-            message = Message.from_dict(item['encrypted'], self.cipher)
+            message = Message.from_encoded(item['encrypted'], self.cipher)
             self.assertEqual(message.encoding, '')
             expected_data = self.get_encoded(item['encoded'])
+            self.assertEqual(expected_data, message.data)
+
+    # TM3
+    def test_decode_array(self):
+        items_encrypted = [item['encrypted'] for item in self.items]
+        messages = Message.from_encoded_array(items_encrypted, self.cipher)
+        for i, message in enumerate(messages):
+            self.assertEqual(message.encoding, '')
+            expected_data = self.get_encoded(self.items[i]['encoded'])
             self.assertEqual(expected_data, message.data)
 
     def test_encode(self):
