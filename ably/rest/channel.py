@@ -67,7 +67,7 @@ class Channel(object):
             self.ably.http, url=path, response_processor=message_handler)
 
     @catch_all
-    def publish(self, name=None, data=None, client_id=None,
+    def publish(self, name=None, data=None, client_id=None, extras=None,
                 messages=None, timeout=None):
         """Publishes a message on this channel.
 
@@ -80,7 +80,7 @@ class Channel(object):
         :attention: You can publish using `name` and `data` OR `messages`, never all three.
         """
         if not messages:
-            messages = [Message(name, data, client_id)]
+            messages = [Message(name, data, client_id, extras=extras)]
 
         request_body_list = []
         for m in messages:

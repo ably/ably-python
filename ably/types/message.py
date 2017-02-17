@@ -17,9 +17,10 @@ log = logging.getLogger(__name__)
 
 
 class Message(EncodeDataMixin):
-    def __init__(self, name=None, data=None, client_id=None,
-                 id=None, connection_id=None, timestamp=None,
-                 encoding=''):
+
+    def __init__(self, name=None, data=None, client_id=None, extras=None,
+                 id=None, connection_id=None, connection_key=None,
+                 timestamp=None, encoding=''):
         if name is None:
             self.__name = None
         elif isinstance(name, six.text_type):
@@ -30,11 +31,14 @@ class Message(EncodeDataMixin):
             # log.debug(name)
             # log.debug(name.__class__)
             raise ValueError("name must be a string or bytes")
+
         self.__id = id
         self.__client_id = client_id
         self.__data = data
         self.__timestamp = timestamp
         self.__connection_id = connection_id
+        self.__connection_key = connection_key
+        self.__extras = extras
         super(Message, self).__init__(encoding)
 
     def __eq__(self, other):
@@ -69,12 +73,20 @@ class Message(EncodeDataMixin):
         return self.__connection_id
 
     @property
+    def connection_key(self):
+        return self.__connection_key
+
+    @property
     def id(self):
         return self.__id
 
     @property
     def timestamp(self):
         return self.__timestamp
+
+    @property
+    def extras(self):
+        return self.__extras
 
     def encrypt(self, channel_cipher):
         if isinstance(self.data, CipherData):
@@ -175,13 +187,22 @@ class Message(EncodeDataMixin):
         if self.connection_id:
             request_body[u'connectionId'] = self.connection_id
 
+        if self.connection_key:
+            request_body['connectionKey'] = self.connection_key
+
+        if self.extras:
+            request_body['extras'] = self.extras
+
         return request_body
 
     def as_json(self):
         return json.dumps(self.as_dict(), separators=(',', ':'))
 
+    def as_msgpack(self):
+        return msgpack.packb(self.as_dict(binary=True), use_bin_type=True)
+
     @staticmethod
-    def from_dict(obj, cipher=None):
+    def from_encoded(obj, cipher=None):
         id = obj.get('id')
         name = obj.get('name')
         data = obj.get('data')
@@ -189,6 +210,7 @@ class Message(EncodeDataMixin):
         connection_id = obj.get('connectionId')
         timestamp = obj.get('timestamp')
         encoding = obj.get('encoding', '')
+        extras = obj.get('extras', None)
 
         decoded_data = Message.decode(data, encoding, cipher)
 
@@ -198,21 +220,25 @@ class Message(EncodeDataMixin):
             connection_id=connection_id,
             client_id=client_id,
             timestamp=timestamp,
+            extras=extras,
             **decoded_data
         )
 
+    @staticmethod
+    def from_encoded_array(objs, cipher=None):
+        return [Message.from_encoded(obj, cipher=cipher) for obj in objs]
 
 def make_message_response_handler(binary):
     def message_response_handler(response):
         messages = response.to_native()
-        return [Message.from_dict(j) for j in messages]
+        return Message.from_encoded_array(messages)
     return message_response_handler
 
 
 def make_encrypted_message_response_handler(cipher, binary):
     def encrypted_message_response_handler(response):
         messages = response.to_native()
-        return [Message.from_dict(j, cipher) for j in messages]
+        return Message.from_encoded_array(messages, cipher=cipher)
     return encrypted_message_response_handler
 
 
