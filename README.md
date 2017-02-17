@@ -148,6 +148,14 @@ To see what has changed in recent versions of Bundler, see the [CHANGELOG](CHANG
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
 
+## Release instructions
+
+1. Update [`setup.py`](./setup.py) with the new version number
+2. Run `python setup.py sdist upload -r pypi` to build and upload this new package to PyPi
+3. Run [`github_changelog_generator`](https://github.com/skywinder/Github-Changelog-Generator) to automate the update of the [CHANGELOG](./CHANGELOG.md). Once the CHANGELOG has completed, manually change the `Unreleased` heading and link with the current version number such as `v0.8.2`. Also ensure that the `Full Changelog` link points to the new version tag instead of the `HEAD`. Commit this change.
+4. Tag the new version such as `git tag v0.8.2`
+5. Push the tag to origin `git push origin v0.8.2`
+
 ## License
 
 Copyright (c) 2016 Ably Real-time Ltd, Licensed under the Apache License, Version 2.0.  Refer to [LICENSE](LICENSE) for the license terms.
