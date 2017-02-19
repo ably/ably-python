@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import codecs
 import json
 import logging
 import os
@@ -392,14 +393,16 @@ class TestRestChannelPublish(BaseTestCase):
         path = os.path.join(root_dir, 'submodules', 'test-resources', 'messages-encoding.json')
         with open(path) as f:
             data = json.load(f)
-            for input_msg in data['messages'][-1:]:
-                message = Message(data=input_msg['data'], encoding=input_msg['encoding'])
+            for input_msg in data['messages']:
+                encoding = input_msg['encoding']
+                message = Message(data=input_msg['data'], encoding=encoding)
                 channel.publish(messages=[message])
                 history = channel.history()
                 message = history.items[0]
                 expected_type = input_msg['expectedType']
                 if expected_type == 'binary':
-                    expected_value = input_msg.get('expectedHexValue').decode('hex')
+                    expected_value = input_msg.get('expectedHexValue')
+                    expected_value = codecs.decode(expected_value, 'hex')
                 else:
                     expected_value = input_msg.get('expectedValue')
                 self.assertEqual(message.data, expected_value)
