@@ -352,15 +352,15 @@ class TestRestChannelPublish(BaseTestCase):
         self.assertIsNone(messages[1].client_id)
 
     # TM2h
-    # FIXME This one does not work yet, the server replies with a timeout error
     @dont_vary_protocol
     def test_invalid_connection_key(self):
         channel = self.ably.channels["persisted:invalid_connection_key"]
-        message = Message(data='payload', connection_key='this.should.be.wrong')
+        message = Message(data='payload', connection_key='should.be.wrong')
         with self.assertRaises(AblyException) as cm:
             channel.publish(messages=[message])
 
-        self.assertEqual(50003, cm.exception.code) # FIXME Which code should it be?
+        self.assertEqual(400, cm.exception.status_code)
+        self.assertEqual(40006, cm.exception.code)
 
     # TM2i, RSL6a2, RSL1h
     def test_publish_extras(self):
