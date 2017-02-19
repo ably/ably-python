@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-import codecs
+import binascii
 import json
 import logging
 import os
@@ -402,7 +402,8 @@ class TestRestChannelPublish(BaseTestCase):
                 expected_type = input_msg['expectedType']
                 if expected_type == 'binary':
                     expected_value = input_msg.get('expectedHexValue')
-                    expected_value = codecs.decode(expected_value, 'hex')
+                    expected_value = expected_value.encode('ascii')
+                    expected_value = binascii.a2b_hex(expected_value)
                 else:
                     expected_value = input_msg.get('expectedValue')
                 self.assertEqual(message.data, expected_value)
