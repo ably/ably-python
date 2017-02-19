@@ -510,6 +510,7 @@ class TestRequestToken(BaseTestCase):
 class TestRenewToken(BaseTestCase):
 
     def setUp(self):
+        host = test_vars['host']
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                              rest_host=test_vars["host"],
                              port=test_vars["port"],
@@ -532,8 +533,8 @@ class TestRenewToken(BaseTestCase):
 
         responses.add_callback(
             responses.POST,
-            'https://sandbox-rest.ably.io:443/keys/{}/requestToken'.format(
-                test_vars["keys"][0]['key_name']),
+            'https://{}:443/keys/{}/requestToken'.format(
+                host, test_vars["keys"][0]['key_name']),
             call_back)
 
         def call_back(request):
@@ -550,8 +551,8 @@ class TestRenewToken(BaseTestCase):
 
         responses.add_callback(
             responses.POST,
-            'https://sandbox-rest.ably.io:443/channels/{}/publish'.format(
-                self.channel),
+            'https://{}:443/channels/{}/publish'.format(
+                host, self.channel),
             call_back)
         responses.start()
 
