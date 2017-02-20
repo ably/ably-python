@@ -19,18 +19,10 @@ with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST')
 
-
+port = 80
+tls_port = 443
 if host is None:
     host = "sandbox-rest.ably.io"
-
-if host.endswith("rest.ably.io"):
-    host = "staging-rest.ably.io"
-    port = 80
-    tls_port = 443
-else:
-    tls = tls and not host.equals("localhost")
-    port = 8080
-    tls_port = 8081
 
 
 ably = AblyRest(token='not_a_real_token', rest_host=host,
