@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 
+import binascii
 import json
 import logging
+import os
 import uuid
 
 import six
@@ -127,7 +129,7 @@ class TestRestChannelPublish(BaseTestCase):
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
-        ably.auth.authorise(
+        ably.auth.authorize(
             token_params={'capability': {"only_subscribe": ["subscribe"]}})
 
         with self.assertRaises(AblyException) as cm:
@@ -304,8 +306,8 @@ class TestRestChannelPublish(BaseTestCase):
                             client_id='invalid')
 
     def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
-        new_token = self.ably.auth.authorise(
-            token_params={'client_id': uuid.uuid4().hex}, force=True)
+        new_token = self.ably.auth.authorize(
+            token_params={'client_id': uuid.uuid4().hex})
         new_ably = AblyRest(token=new_token.token,
                             rest_host=test_vars["host"],
                             port=test_vars["port"],
@@ -323,6 +325,7 @@ class TestRestChannelPublish(BaseTestCase):
         self.assertEqual(400, the_exception.status_code)
         self.assertEqual(40012, the_exception.code)
 
+    # RSA15b
     def test_wildcard_client_id_can_publish_as_others(self):
         wildcard_token_details = self.ably.auth.request_token({'client_id': '*'})
         wildcard_ably = AblyRest(token_details=wildcard_token_details,
@@ -348,3 +351,60 @@ class TestRestChannelPublish(BaseTestCase):
 
         self.assertEqual(messages[0].client_id, some_client_id)
         self.assertIsNone(messages[1].client_id)
+
+    # TM2h
+    @dont_vary_protocol
+    def test_invalid_connection_key(self):
+        channel = self.ably.channels["persisted:invalid_connection_key"]
+        message = Message(data='payload', connection_key='should.be.wrong')
+        with self.assertRaises(AblyException) as cm:
+            channel.publish(messages=[message])
+
+        self.assertEqual(400, cm.exception.status_code)
+        self.assertEqual(40006, cm.exception.code)
+
+    # TM2i, RSL6a2, RSL1h
+    def test_publish_extras(self):
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:extras_channel')]
+        extras = {"push": [{"title": "Testing"}]}
+        channel.publish(name='test-name', data='test-data', extras=extras)
+
+        # Get the history for this channel
+        history = channel.history()
+        message = history.items[0]
+        self.assertEqual(message.name, 'test-name')
+        self.assertEqual(message.data, 'test-data')
+        self.assertEqual(message.extras, extras)
+
+    # RSL6a1
+    def test_interoperability(self):
+        channel = self.ably.channels[
+            self.protocol_channel_name('persisted:interoperability_channel')]
+
+        type_mapping = {
+            'string': six.text_type,
+            'jsonObject': dict,
+            'jsonArray': list,
+            'binary': bytearray,
+        }
+
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        path = os.path.join(root_dir, 'submodules', 'test-resources', 'messages-encoding.json')
+        with open(path) as f:
+            data = json.load(f)
+            for input_msg in data['messages']:
+                encoding = input_msg['encoding']
+                message = Message(data=input_msg['data'], encoding=encoding)
+                channel.publish(messages=[message])
+                history = channel.history()
+                message = history.items[0]
+                expected_type = input_msg['expectedType']
+                if expected_type == 'binary':
+                    expected_value = input_msg.get('expectedHexValue')
+                    expected_value = expected_value.encode('ascii')
+                    expected_value = binascii.a2b_hex(expected_value)
+                else:
+                    expected_value = input_msg.get('expectedValue')
+                self.assertEqual(message.data, expected_value)
+                self.assertEqual(type(message.data), type_mapping[expected_type])

@@ -56,6 +56,15 @@ class TokenDetails(object):
         else:
             return self.__expires < timestamp + self.TOKEN_EXPIRY_BUFFER
 
+    def to_dict(self):
+        return {
+            'expires': self.expires,
+            'token': self.token,
+            'issued': self.issued,
+            'capability': self.capability.to_dict(),
+            'clientId': self.client_id,
+        }
+
     @staticmethod
     def from_dict(obj):
         kwargs = {
@@ -69,3 +78,27 @@ class TokenDetails(object):
         kwargs['issued'] = issued if issued is None else int(issued)
 
         return TokenDetails(**kwargs)
+
+    @staticmethod
+    def from_json(data):
+        if isinstance(data, six.string_types):
+            data = json.loads(data)
+
+        mapping = {
+            'clientId': 'client_id',
+        }
+        for name in data:
+            py_name = mapping.get(name)
+            if py_name:
+                data[py_name] = data.pop(name)
+
+        return TokenDetails(**data)
+
+    def __eq__(self, other):
+        if isinstance(other, TokenDetails):
+            return (self.expires == other.expires
+                    and self.token == other.token
+                    and self.issued == other.issued
+                    and self.capability == other.capability
+                    and self.client_id == other.client_id)
+        return NotImplemented

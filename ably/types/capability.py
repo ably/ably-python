@@ -74,10 +74,10 @@ class Capability(MutableMapping, UnicodeMixin):
     def __unicode__(self):
         return Capability.c14n(self)
 
+    def to_dict(self):
+        return {k: sorted(v) for k, v in six.iteritems(self)}
+
     @staticmethod
     def c14n(capability):
-        sorted_ops = {
-            k: sorted(v)
-            for k, v in six.iteritems(capability)
-        }
+        sorted_ops = capability.to_dict()
         return six.text_type(json.dumps(sorted_ops, sort_keys=True))
