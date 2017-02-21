@@ -30,7 +30,7 @@ The client library is available as a [PyPI package](https://pypi.python.org/pypi
     git submodule init
     git submodule update
     pip install -r requirements-test.txt
-    nosetests
+    pytest test
 
 ## Using the REST API
 
