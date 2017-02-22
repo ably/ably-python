@@ -124,6 +124,7 @@ class Message(EncodeDataMixin):
         if isinstance(data, dict) or isinstance(data, list):
             encoding.append('json')
             data = json.dumps(data)
+            data = six.text_type(data)
         elif isinstance(data, six.text_type) and not binary:
             # text_type is always a unicode string
             pass
@@ -152,27 +153,27 @@ class Message(EncodeDataMixin):
             raise AblyException("Invalid data payload", 400, 40011)
 
         request_body = {
-            'name': self.name,
-            'data': data,
-            'timestamp': self.timestamp or int(time.time() * 1000.0),
+            u'name': self.name,
+            u'data': data,
+            u'timestamp': self.timestamp or int(time.time() * 1000.0),
         }
         request_body = {k: v for (k, v) in request_body.items()
                         if v is not None}  # None values aren't included
 
         if encoding:
-            request_body['encoding'] = '/'.join(encoding).strip('/')
+            request_body[u'encoding'] = u'/'.join(encoding).strip(u'/')
 
         if data_type:
-            request_body['type'] = data_type
+            request_body[u'type'] = data_type
 
         if self.client_id:
-            request_body['clientId'] = self.client_id
+            request_body[u'clientId'] = self.client_id
 
         if self.id:
-            request_body['id'] = self.id
+            request_body[u'id'] = self.id
 
         if self.connection_id:
-            request_body['connectionId'] = self.connection_id
+            request_body[u'connectionId'] = self.connection_id
 
         return request_body
 
@@ -199,9 +200,6 @@ class Message(EncodeDataMixin):
             timestamp=timestamp,
             **decoded_data
         )
-
-    def as_msgpack(self):
-        return msgpack.packb(self.as_dict(binary=True), use_bin_type=True)
 
 
 def make_message_response_handler(binary):

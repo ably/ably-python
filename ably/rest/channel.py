@@ -109,12 +109,10 @@ class Channel(object):
             else:
                 request_body = json.dumps(request_body_list, cls=MessageJSONEncoder)
         else:
-            if len(request_body_list) == 1:
-                request_body = request_body_list[0].as_msgpack()
-            else:
-                request_body = msgpack.packb(
-                    [message.as_dict(binary=True) for message in request_body_list],
-                    use_bin_type=True)
+            request_body = [message.as_dict(binary=True) for message in request_body_list]
+            if len(request_body) == 1:
+                request_body = request_body[0]
+            request_body = msgpack.packb(request_body, use_bin_type=True)
 
         path = '/channels/%s/publish' % self.__name
 
