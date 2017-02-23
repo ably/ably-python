@@ -109,9 +109,9 @@ class TestRestInit(BaseTestCase):
         ]
 
         for aux in fallback_hosts:
-            ably = AblyRest(token='foo', fallback_hosts=fallback_hosts)
+            ably = AblyRest(token='foo', fallback_hosts=aux)
             self.assertEqual(
-                sorted(fallback_hosts),
+                sorted(aux),
                 sorted(ably.options.get_fallback_rest_hosts())
             )
 
