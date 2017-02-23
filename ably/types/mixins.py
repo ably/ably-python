@@ -71,3 +71,7 @@ class EncodeDataMixin(object):
             self._encoding_array = []
         else:
             self._encoding_array = encoding.strip('/').split('/')
+
+    @classmethod
+    def from_encoded_array(cls, objs, cipher=None):
+        return [cls.from_encoded(obj, cipher=cipher) for obj in objs]

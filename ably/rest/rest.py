@@ -6,7 +6,7 @@ import logging
 from six.moves.urllib.parse import urlencode
 
 from ably.http.http import Http
-from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResult
+from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
 from ably.util.exceptions import AblyException, catch_all
@@ -159,7 +159,7 @@ class AblyRest(object):
                 items = [items]
             return items
 
-        return HttpPaginatedResult.paginated_query(
+        return HttpPaginatedResponse.paginated_query(
             self.http, method, url, body=body, headers=headers,
             response_processor=response_processor,
             raise_on_error=False)

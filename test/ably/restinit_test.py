@@ -102,13 +102,18 @@ class TestRestInit(BaseTestCase):
     # RSC15
     @dont_vary_protocol
     def test_fallback_hosts(self):
-        # Specify the fallback_hosts
-        fallback_hosts = ['fallback1.com', 'fallback2.com']
-        ably = AblyRest(token='foo', fallback_hosts=fallback_hosts)
-        self.assertEqual(
-            sorted(fallback_hosts),
-            sorted(ably.options.get_fallback_rest_hosts())
-        )
+        # Specify the fallback_hosts (RSC15a)
+        fallback_hosts = [
+            ['fallback1.com', 'fallback2.com'],
+            [],
+        ]
+
+        for aux in fallback_hosts:
+            ably = AblyRest(token='foo', fallback_hosts=fallback_hosts)
+            self.assertEqual(
+                sorted(fallback_hosts),
+                sorted(ably.options.get_fallback_rest_hosts())
+            )
 
         # Specify environment
         ably = AblyRest(token='foo', environment='sandbox')

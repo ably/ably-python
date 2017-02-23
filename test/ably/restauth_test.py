@@ -560,6 +560,7 @@ class TestRenewToken(BaseTestCase):
         responses.stop()
         responses.reset()
 
+    # RSA4b
     def test_when_renewable(self):
         self.ably.auth.authorize()
         self.ably.channels[self.channel].publish('evt', 'msg')
@@ -571,6 +572,7 @@ class TestRenewToken(BaseTestCase):
         self.assertEquals(2, self.token_requests)
         self.assertEquals(3, self.publish_attempts)
 
+    # RSA4a
     def test_when_not_renewable(self):
         self.ably = AblyRest(token='token ID cannot be used to create a new token',
                              rest_host=test_vars["host"],
@@ -589,6 +591,7 @@ class TestRenewToken(BaseTestCase):
             'evt', 'msg')
         self.assertEquals(0, self.token_requests)
 
+    # RSA4a
     def test_when_not_renewable_with_token_details(self):
         token_details = TokenDetails(token='a_dummy_token')
         self.ably = AblyRest(
