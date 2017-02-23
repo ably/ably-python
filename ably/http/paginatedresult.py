@@ -77,7 +77,7 @@ class PaginatedResult(object):
                    next_rel_request, response_processor, response)
 
 
-class HttpPaginatedResult(PaginatedResult):
+class HttpPaginatedResponse(PaginatedResult):
     @property
     def status_code(self):
         return self.response.status_code

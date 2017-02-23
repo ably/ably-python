@@ -1,7 +1,11 @@
+import time
+
+import mock
+import requests
 import six
 
 from ably import AblyRest
-from ably.http.paginatedresult import HttpPaginatedResult
+from ably.http.paginatedresult import HttpPaginatedResponse
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
@@ -34,18 +38,18 @@ class TestRestRequest(BaseTestCase):
         body = {'name': 'test-post', 'data': 'lorem ipsum'}
         result = self.ably.request('POST', '/channels/test/messages', body=body)
 
-        self.assertIsInstance(result, HttpPaginatedResult) # RSC19d
+        self.assertIsInstance(result, HttpPaginatedResponse) # RSC19d
         self.assertEqual(result.items, [])                 # HP3
 
     def test_get(self):
         params = {'limit': 10, 'direction': 'forwards'}
         result = self.ably.request('GET', '/channels/test/messages', params=params)
 
-        self.assertIsInstance(result, HttpPaginatedResult) # RSC19d
+        self.assertIsInstance(result, HttpPaginatedResponse) # RSC19d
 
         # HP2
-        self.assertIsInstance(result.next(), HttpPaginatedResult)
-        self.assertIsInstance(result.first(), HttpPaginatedResult)
+        self.assertIsInstance(result.next(), HttpPaginatedResponse)
+        self.assertIsInstance(result.first(), HttpPaginatedResponse)
 
         # HP3
         self.assertIsInstance(result.items, list)
@@ -65,7 +69,7 @@ class TestRestRequest(BaseTestCase):
     @dont_vary_protocol
     def test_not_found(self):
         result = self.ably.request('GET', '/not-found')
-        self.assertIsInstance(result, HttpPaginatedResult) # RSC19d
+        self.assertIsInstance(result, HttpPaginatedResponse) # RSC19d
         self.assertEqual(result.status_code, 404)          # HP4
         self.assertEqual(result.success, False)            # HP5
 
@@ -73,7 +77,7 @@ class TestRestRequest(BaseTestCase):
     def test_error(self):
         params = {'limit': 'abc'}
         result = self.ably.request('GET', '/channels/test/messages', params=params)
-        self.assertIsInstance(result, HttpPaginatedResult) # RSC19d
+        self.assertIsInstance(result, HttpPaginatedResponse) # RSC19d
         self.assertEqual(result.status_code, 400) # HP4
         self.assertFalse(result.success)
         self.assertTrue(result.error_code)
@@ -84,3 +88,34 @@ class TestRestRequest(BaseTestCase):
         value = 'lorem ipsum'
         result = self.ably.request('GET', '/time', headers={key: value})
         self.assertEqual(result.response.request.headers[key], value)
+
+    # RSC19e
+    @dont_vary_protocol
+    def test_timeout(self):
+        # Timeout
+        timeout = 0.01
+        ably = AblyRest(token="foo", http_request_timeout=timeout)
+        self.assertEqual(ably.http.http_request_timeout, timeout)
+        with self.assertRaises(requests.exceptions.ReadTimeout):
+            ably.request('GET', '/time')
+
+        # Bad host, use fallback
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        rest_host='some.other.host',
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        fallback_hosts_use_default=True)
+        result = ably.request('GET', '/time')
+        self.assertIsInstance(result, HttpPaginatedResponse)
+        self.assertEqual(len(result.items), 1)
+        self.assertIsInstance(result.items[0], int)
+
+        # Bad host, no Fallback
+        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                        rest_host='some.other.host',
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"])
+        with self.assertRaises(requests.exceptions.ConnectionError):
+            ably.request('GET', '/time')

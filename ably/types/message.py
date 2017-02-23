@@ -224,10 +224,6 @@ class Message(EncodeDataMixin):
             **decoded_data
         )
 
-    @staticmethod
-    def from_encoded_array(objs, cipher=None):
-        return [Message.from_encoded(obj, cipher=cipher) for obj in objs]
-
 def make_message_response_handler(binary):
     def message_response_handler(response):
         messages = response.to_native()
