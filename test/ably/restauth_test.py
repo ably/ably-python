@@ -198,28 +198,12 @@ class TestAuthAuthorize(BaseTestCase):
     # RSA10a
     @dont_vary_protocol
     def test_authorize_always_creates_new_token(self):
-        # Token with short ttl
-        ttl = TokenDetails.TOKEN_EXPIRY_BUFFER + 1000
-        token_details = self.ably.auth.request_token(token_params={'ttl': ttl})
+        self.ably.auth.authorize({'capability': {'test': ['publish']}})
+        self.ably.channels.test.publish('event', 'data')
 
-        # Client with no means to renew
-        ably = AblyRest(token_details=token_details,
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"])
-
-        # First request passes
-        ably.request('GET', '/time')
-        time.sleep(1)
-
-        # Second does not
+        self.ably.auth.authorize({'capability': {'test': ['subscribe']}})
         with self.assertRaises(AblyAuthException):
-            ably.request('GET', '/time')
-
-        # Authorise and third requests should pass
-        ably.auth.authorize()
-        ably.request('GET', '/time')
+            self.ably.channels.test.publish('event', 'data')
 
     def test_authorize_create_new_token_if_expired(self):
 
