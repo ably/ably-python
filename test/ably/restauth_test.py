@@ -265,15 +265,26 @@ class TestAuthAuthorize(BaseTestCase):
 
     # RSA10j
     def test_if_parameters_are_stored_and_used_as_defaults(self):
-        self.ably.auth.authorize({'ttl': 555, 'client_id': 'new_id'},
+        # Define some parameters
+        self.ably.auth.authorize({'ttl': 555},
                                  {'auth_headers': {'a_headers': 'a_value'}})
         with mock.patch('ably.rest.auth.Auth.request_token',
                         wraps=self.ably.auth.request_token) as request_mock:
             self.ably.auth.authorize()
 
         token_called, auth_called = request_mock.call_args
-        self.assertEqual(token_called[0], {'ttl': 555, 'client_id': 'new_id'})
+        self.assertEqual(token_called[0], {'ttl': 555})
         self.assertEqual(auth_called['auth_headers'], {'a_headers': 'a_value'})
+
+        # Different parameters, should completely replace the first ones, not merge
+        self.ably.auth.authorize({})
+        with mock.patch('ably.rest.auth.Auth.request_token',
+                        wraps=self.ably.auth.request_token) as request_mock:
+            self.ably.auth.authorize()
+
+        token_called, auth_called = request_mock.call_args
+        self.assertEqual(token_called[0], {})
+
 
     # RSA10g
     def test_timestamp_is_not_stored(self):

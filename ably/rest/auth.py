@@ -83,8 +83,6 @@ class Auth(object):
         if token_params is None:
             token_params = dict(self.auth_options.default_token_params)
         else:
-            token_params = dict(self.auth_options.default_token_params,
-                                **token_params)
             self.auth_options.default_token_params = dict(token_params)
             self.auth_options.default_token_params.pop('timestamp', None)
 
