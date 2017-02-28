@@ -87,7 +87,7 @@ class Auth(object):
             self.auth_options.default_token_params.pop('timestamp', None)
 
         if auth_options is not None:
-            self.auth_options.merge(auth_options)
+            self.auth_options.replace(auth_options)
         auth_options = dict(self.auth_options.auth_options)
         if self.client_id is not None:
             token_params['client_id'] = self.client_id
