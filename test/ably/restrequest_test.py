@@ -93,7 +93,7 @@ class TestRestRequest(BaseTestCase):
     @dont_vary_protocol
     def test_timeout(self):
         # Timeout
-        timeout = 0.01
+        timeout = 0.001
         ably = AblyRest(token="foo", http_request_timeout=timeout)
         self.assertEqual(ably.http.http_request_timeout, timeout)
         with self.assertRaises(requests.exceptions.ReadTimeout):
