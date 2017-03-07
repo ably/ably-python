@@ -40,7 +40,7 @@ class PresenceMessage(EncodeDataMixin):
         self.__timestamp = timestamp
 
     @staticmethod
-    def from_dict(obj, cipher=None):
+    def from_encoded(obj, cipher=None):
         id = obj.get('id')
         action = obj.get('action', PresenceAction.ENTER)
         client_id = obj.get('clientId')
@@ -64,10 +64,6 @@ class PresenceMessage(EncodeDataMixin):
             timestamp=timestamp,
             **decoded_data
         )
-
-    @staticmethod
-    def messages_from_array(obj, cipher=None):
-        return [PresenceMessage.from_dict(d, cipher) for d in obj]
 
     @property
     def action(self):
@@ -130,10 +126,7 @@ class Presence(object):
             presence_handler = make_presence_response_handler(self.__binary)
 
         return PaginatedResult.paginated_query(
-            self.__http,
-            path,
-            {},
-            presence_handler)
+            self.__http, url=path, response_processor=presence_handler)
 
     def history(self, limit=None, direction=None, start=None, end=None):
         qs = {}
@@ -166,22 +159,17 @@ class Presence(object):
             presence_handler = make_presence_response_handler(self.__binary)
 
         return PaginatedResult.paginated_query(
-            self.__http,
-            path,
-            {},
-            presence_handler
-        )
-
+            self.__http, url=path, response_processor=presence_handler)
 
 def make_presence_response_handler(binary):
     def presence_response_handler(response):
         messages = response.to_native()
-        return [PresenceMessage.from_dict(message) for message in messages]
+        return PresenceMessage.from_encoded_array(messages)
     return presence_response_handler
 
 
 def make_encrypted_presence_response_handler(cipher, binary):
     def encrypted_presence_response_handler(response):
         messages = response.to_native()
-        return [PresenceMessage.from_dict(message, cipher) for message in messages]
+        return PresenceMessage.from_encoded_array(messages, cipher=cipher)
     return encrypted_presence_response_handler

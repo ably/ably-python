@@ -1,10 +1,10 @@
 
 import base64
-
-import six
-
 import hashlib
 import hmac
+import json
+
+import six
 
 
 class TokenRequest(object):
@@ -50,6 +50,33 @@ class TokenRequest(object):
             'timestamp': self.timestamp,
             'mac': self.mac
         }
+
+    @staticmethod
+    def from_json(data):
+        if isinstance(data, six.string_types):
+            data = json.loads(data)
+
+        mapping = {
+            'keyName': 'key_name',
+            'clientId': 'client_id',
+        }
+        for name in data:
+            py_name = mapping.get(name)
+            if py_name:
+                data[py_name] = data.pop(name)
+
+        return TokenRequest(**data)
+
+    def __eq__(self, other):
+        if isinstance(other, TokenRequest):
+            return (self.key_name == other.key_name
+                    and self.client_id == other.client_id
+                    and self.nonce == other.nonce
+                    and self.mac == other.mac
+                    and self.capability == other.capability
+                    and self.ttl == other.ttl
+                    and self.timestamp == other.timestamp)
+        return NotImplemented
 
     @property
     def key_name(self):

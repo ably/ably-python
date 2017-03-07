@@ -74,11 +74,62 @@ class TestRestInit(BaseTestCase):
     def test_with_options_auth_url(self):
         AblyRest(auth_url='not_really_an_url')
 
+    # RSC11
     @dont_vary_protocol
-    def test_specified_rest_host(self):
+    def test_rest_host_and_environment(self):
+        # rest host
         ably = AblyRest(token='foo', rest_host="some.other.host")
         self.assertEqual("some.other.host", ably.options.rest_host,
                          msg="Unexpected host mismatch")
+
+        # environment: production
+        ably = AblyRest(token='foo', environment="production")
+        host = ably.options.get_rest_host()
+        self.assertEqual("rest.ably.io", host,
+                         msg="Unexpected host mismatch %s" % host)
+
+        # environment: other
+        ably = AblyRest(token='foo', environment="sandbox")
+        host = ably.options.get_rest_host()
+        self.assertEqual("sandbox-rest.ably.io", host,
+                         msg="Unexpected host mismatch %s" % host)
+
+        # both, as per #TO3k2
+        with self.assertRaises(ValueError):
+            ably = AblyRest(token='foo', rest_host="some.other.host",
+                            environment="some.other.environment")
+
+    # RSC15
+    @dont_vary_protocol
+    def test_fallback_hosts(self):
+        # Specify the fallback_hosts (RSC15a)
+        fallback_hosts = [
+            ['fallback1.com', 'fallback2.com'],
+            [],
+        ]
+
+        for aux in fallback_hosts:
+            ably = AblyRest(token='foo', fallback_hosts=aux)
+            self.assertEqual(
+                sorted(aux),
+                sorted(ably.options.get_fallback_rest_hosts())
+            )
+
+        # Specify environment
+        ably = AblyRest(token='foo', environment='sandbox')
+        self.assertEqual(
+            [],
+            sorted(ably.options.get_fallback_rest_hosts())
+        )
+
+        # Specify environment and fallback_hosts_use_default
+        # We specify http_max_retry_count=10 so all the fallback hosts get in the list
+        ably = AblyRest(token='foo', environment='sandbox', fallback_hosts_use_default=True,
+                        http_max_retry_count=10)
+        self.assertEqual(
+            sorted(Defaults.fallback_hosts),
+            sorted(ably.options.get_fallback_rest_hosts())
+        )
 
     @dont_vary_protocol
     def test_specified_realtime_host(self):

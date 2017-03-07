@@ -4,6 +4,7 @@ import base64
 import logging
 import time
 import uuid
+import warnings
 
 import six
 import requests
@@ -76,20 +77,17 @@ class Auth(object):
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    def authorise(self, token_params=None, auth_options=None, force=False):
+    def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
 
         if token_params is None:
             token_params = dict(self.auth_options.default_token_params)
         else:
-            token_params = dict(self.auth_options.default_token_params,
-                                **token_params)
             self.auth_options.default_token_params = dict(token_params)
             self.auth_options.default_token_params.pop('timestamp', None)
 
         if auth_options is not None:
-            force = auth_options.pop('force', None) or force
-            self.auth_options.merge(auth_options)
+            self.auth_options.replace(auth_options)
         auth_options = dict(self.auth_options.auth_options)
         if self.client_id is not None:
             token_params['client_id'] = self.client_id
@@ -109,6 +107,15 @@ class Auth(object):
         self.__token_details = self.request_token(token_params, **auth_options)
         self._configure_client_id(self.__token_details.client_id)
         return self.__token_details
+
+    def authorize(self, token_params=None, auth_options=None):
+        return self.__authorize_when_necessary(token_params, auth_options, force=True)
+
+    def authorise(self, *args, **kwargs):
+        warnings.warn(
+            "authorise is deprecated and will be removed in v2.0, please use authorize",
+            DeprecationWarning)
+        return self.authorize(*args, **kwargs)
 
     def request_token(self, token_params=None,
                       # auth_options
@@ -165,7 +172,7 @@ class Auth(object):
         response = self.ably.http.post(
             token_path,
             headers=auth_headers,
-            native_data=token_request.to_dict(),
+            body=token_request.to_dict(),
             skip_auth=True
         )
 
@@ -198,14 +205,13 @@ class Auth(object):
 
         token_request['timestamp'] = int(token_request['timestamp'])
 
-        token_request['ttl'] = token_params.get('ttl') or TokenDetails.DEFAULTS['ttl']
+        ttl = token_params.get('ttl')
+        if ttl is not None:
+            token_request['ttl'] = ttl
 
-        if token_params.get('capability') is None:
-            token_request["capability"] = ""
-        else:
-            token_request['capability'] = six.text_type(
-                Capability(token_params['capability'])
-            )
+        capability = token_params.get('capability')
+        if capability is not None:
+            token_request['capability'] = six.text_type(Capability(capability))
 
         token_request["client_id"] = (
             token_params.get('client_id') or self.client_id)
@@ -294,7 +300,7 @@ class Auth(object):
                 'Authorization': 'Basic %s' % self.basic_credentials,
             }
         else:
-            self.authorise()
+            self.__authorize_when_necessary()
             return {
                 'Authorization': 'Bearer %s' % self.token_credentials,
             }

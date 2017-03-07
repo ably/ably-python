@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import json
 import logging
 
 from mock import patch
@@ -162,6 +163,22 @@ class TestRestToken(BaseTestCase):
             self.assertFalse(local_time.called)
             self.assertTrue(server_time.called)
 
+    # TD7
+    def test_toke_details_from_json(self):
+        token_details = self.ably.auth.request_token()
+        token_details_dict = token_details.to_dict()
+        token_details_str = json.dumps(token_details_dict)
+
+        self.assertEqual(
+            token_details,
+            TokenDetails.from_json(token_details_dict),
+        )
+
+        self.assertEqual(
+            token_details,
+            TokenDetails.from_json(token_details_str),
+        )
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestCreateTokenRequest(BaseTestCase):
@@ -230,9 +247,28 @@ class TestCreateTokenRequest(BaseTestCase):
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
 
-        token = ably.auth.authorise()
+        token = ably.auth.authorize()
 
         self.assertIsInstance(token, TokenDetails)
+
+    # TE6
+    @dont_vary_protocol
+    def test_token_request_from_json(self):
+        token_request = self.ably.auth.create_token_request(
+            key_name=self.key_name, key_secret=self.key_secret)
+        self.assertIsInstance(token_request, TokenRequest)
+
+        token_request_dict = token_request.to_dict()
+        self.assertEqual(
+            token_request,
+            TokenRequest.from_json(token_request_dict),
+        )
+
+        token_request_str = json.dumps(token_request_dict)
+        self.assertEqual(
+            token_request,
+            TokenRequest.from_json(token_request_str),
+        )
 
     @dont_vary_protocol
     def test_nonce_is_random_and_longer_than_15_characters(self):
@@ -246,12 +282,19 @@ class TestCreateTokenRequest(BaseTestCase):
 
         self.assertNotEqual(token_request.nonce, another_token_request.nonce)
 
+    # RSA5
     @dont_vary_protocol
     def test_ttl_is_optional_and_specified_in_ms(self):
         token_request = self.ably.auth.create_token_request(
             key_name=self.key_name, key_secret=self.key_secret)
-        self.assertEquals(
-            token_request.ttl, TokenDetails.DEFAULTS['ttl'])
+        self.assertEquals(token_request.ttl, None)
+
+    # RSA6
+    @dont_vary_protocol
+    def test_capability_is_optional(self):
+        token_request = self.ably.auth.create_token_request(
+            key_name=self.key_name, key_secret=self.key_secret)
+        self.assertEquals(token_request.capability, None)
 
     @dont_vary_protocol
     def test_accept_all_token_params(self):
@@ -289,7 +332,7 @@ class TestCreateTokenRequest(BaseTestCase):
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
 
-        token = ably.auth.authorise()
+        token = ably.auth.authorize()
 
         self.assertEqual(str(token.capability), str(capability))
 

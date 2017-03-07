@@ -19,7 +19,8 @@ with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST')
 
-
+port = 80
+tls_port = 443
 if host is None:
     host = "sandbox-rest.ably.io"
 
@@ -44,11 +45,11 @@ class RestSetup:
     @staticmethod
     def get_test_vars(sender=None):
         if not RestSetup.__test_vars:
-            r = ably.http.post("/apps", native_data=app_spec_local, skip_auth=True)
+            r = ably.http.post("/apps", body=app_spec_local, skip_auth=True)
             AblyException.raise_for_response(r)
-            
+
             app_spec = r.json()
-            
+
             app_id = app_spec.get("appId", "")
 
             test_vars = {
@@ -66,7 +67,7 @@ class RestSetup:
             }
 
             RestSetup.__test_vars = test_vars
-            log.debug([(app_id, k.get("id", ""), k.get("value", "")) 
+            log.debug([(app_id, k.get("id", ""), k.get("value", ""))
                   for k in app_spec.get("keys", [])])
         return RestSetup.__test_vars
 

@@ -15,36 +15,41 @@ class AuthOptions(object):
         self.auth_options['auth_callback'] = auth_callback
         self.auth_options['auth_url'] = auth_url
         self.auth_options['auth_method'] = auth_method
-        self.__auth_token = auth_token
         self.auth_options['auth_headers'] = auth_headers
         self.auth_options['auth_params'] = auth_params
+        self.auth_options['query_time'] = query_time
+        self.auth_options['key_name'] = key_name
+        self.auth_options['key_secret'] = key_secret
+        self.set_key(key)
+
+        self.__auth_token = auth_token
         self.__token_details = token_details
         self.__use_token_auth = use_token_auth
         default_token_params = default_token_params or {}
         default_token_params.pop('timestamp', None)
         self.default_token_params = default_token_params
-        if key is not None:
-            self.auth_options['key_name'], self.auth_options['key_secret'] = (
-                self.parse_key(key))
-        else:
-            self.auth_options['key_name'] = key_name
-            self.auth_options['key_secret'] = key_secret
-        self.auth_options['query_time'] = query_time
 
-    def parse_key(self, key):
+    def set_key(self, key):
+        if key is None:
+            return
+
         try:
             key_name, key_secret = key.split(':')
-            return key_name, key_secret
+            self.auth_options['key_name'] = key_name
+            self.auth_options['key_secret'] = key_secret
         except ValueError:
             raise AblyException("key of not len 2 parameters: {0}"
                                 .format(key.split(':')),
                                 401, 40101)
 
-    def merge(self, auth_options):
+    def replace(self, auth_options):
         if type(auth_options) is dict:
-            self.auth_options.update(auth_options)
+            auth_options = dict(auth_options)
+            key = auth_options.pop('key', None)
+            self.auth_options = auth_options
+            self.set_key(key)
         elif type(auth_options) is AuthOptions:
-            self.auth_options.update(auth_options.auth_options)
+            self.auth_options = dict(auth_options.auth_options)
         else:
             raise KeyError('Expected dict or AuthOptions')
 

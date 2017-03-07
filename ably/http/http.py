@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import functools
-import itertools
 import logging
 import time
 import json
@@ -39,15 +38,19 @@ def reauth_if_expired(func):
 
 
 class Request(object):
-    def __init__(self, method='GET', url='/', headers=None, body=None, skip_auth=False):
+    def __init__(self, method='GET', url='/', headers=None, body=None,
+                 skip_auth=False, raise_on_error=True):
         self.__method = method
         self.__headers = headers or {}
         self.__body = body
         self.__skip_auth = skip_auth
         self.__url = url
+        self.raise_on_error = raise_on_error
 
     def with_relative_url(self, relative_url):
-        return Request(self.method, urljoin(self.url, relative_url), self.headers, self.body, self.skip_auth)
+        url = urljoin(self.url, relative_url)
+        return Request(self.method, url, self.headers, self.body,
+                       self.skip_auth, self.raise_on_error)
 
     @property
     def method(self):
@@ -79,11 +82,15 @@ class Response(object):
         self.__response = response
 
     def to_native(self):
+        content = self.__response.content
+        if not content:
+            return None
+
         content_type = self.__response.headers.get('content-type')
         if content_type == 'application/x-msgpack':
-            return msgpack.unpackb(self.__response.content, encoding='utf-8')
+            return msgpack.unpackb(content, encoding='utf-8')
         elif content_type == 'application/json':
-            return self.json()
+            return self.__response.json()
         else:
             raise ValueError("Unsuported content type")
 
@@ -95,7 +102,6 @@ class Http(object):
     CONNECTION_RETRY_DEFAULTS = {
         'http_open_timeout': 4,
         'http_request_timeout': 15,
-        'http_max_retry_count': 3,
         'http_max_retry_duration': 10,
     }
 
@@ -115,7 +121,7 @@ class Http(object):
 
     def reauth(self):
         try:
-            self.auth.authorise(force=True)
+            self.auth.authorize()
         except AblyAuthException as e:
             if e.code == 40101:
                 e.message = ("The provided token is not renewable and there is"
@@ -124,21 +130,17 @@ class Http(object):
 
     @reauth_if_expired
     def make_request(self, method, path, headers=None, body=None,
-                     native_data=None, skip_auth=False, timeout=None):
-        fallback_hosts = Defaults.get_fallback_rest_hosts(self.__options)
-        if fallback_hosts:
-            fallback_hosts.insert(0, self.preferred_host)
-            fallback_hosts = itertools.cycle(fallback_hosts)
-        if native_data is not None and body is not None:
-            raise ValueError("make_request takes either body or native_data")
-        elif native_data is not None:
-            body = self.dump_body(native_data)
+                     skip_auth=False, timeout=None, raise_on_error=True):
+
+        if body is not None and type(body) not in (bytes, str):
+            body = self.dump_body(body)
+
         if body:
             all_headers = HttpUtils.default_post_headers(
-                self.options.use_binary_protocol)
+                self.options.use_binary_protocol, self.__ably.variant)
         else:
             all_headers = HttpUtils.default_get_headers(
-                self.options.use_binary_protocol)
+                self.options.use_binary_protocol, self.__ably.variant)
 
         if not skip_auth:
             if self.auth.auth_mechanism == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
@@ -152,17 +154,11 @@ class Http(object):
 
         http_open_timeout = self.http_open_timeout
         http_request_timeout = self.http_request_timeout
-        if fallback_hosts:
-            http_max_retry_count = self.http_max_retry_count
-        else:
-            http_max_retry_count = 1
         http_max_retry_duration = self.http_max_retry_duration
         requested_at = time.time()
-        for retry_count in range(http_max_retry_count):
-            host = next(fallback_hosts) if fallback_hosts else self.preferred_host
-            if self.options.environment:
-                host = self.options.environment + '-' + host
 
+        hosts = self.options.get_rest_hosts()
+        for retry_count, host in enumerate(hosts):
             base_url = "%s://%s:%d" % (self.preferred_scheme,
                                        host,
                                        self.preferred_port)
@@ -180,26 +176,23 @@ class Http(object):
 
                 # if last try or cumulative timeout is done, throw exception up
                 time_passed = time.time() - requested_at
-                if retry_count == http_max_retry_count - 1 or \
+                if retry_count == len(hosts) - 1 or \
                    time_passed > http_max_retry_duration:
                     raise e
             else:
                 try:
-                    AblyException.raise_for_response(response)
+                    if raise_on_error:
+                        AblyException.raise_for_response(response)
                     return Response(response)
                 except AblyException as e:
                     if not e.is_server_error:
                         raise e
 
-    def request(self, request):
-        return self.make_request(request.method, request.url, headers=request.headers, body=request.body,
-                                 skip_auth=request.skip_auth)
-
     def get(self, url, headers=None, skip_auth=False, timeout=None):
         return self.make_request('GET', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
 
-    def post(self, url, headers=None, body=None, native_data=None, skip_auth=False, timeout=None):
-        return self.make_request('POST', url, headers=headers, body=body, native_data=native_data,
+    def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        return self.make_request('POST', url, headers=headers, body=body,
                                  skip_auth=skip_auth, timeout=timeout)
 
     def delete(self, url, headers=None, skip_auth=False, timeout=None):
@@ -219,7 +212,7 @@ class Http(object):
 
     @property
     def preferred_host(self):
-        return Defaults.get_rest_host(self.options)
+        return self.options.get_rest_host()
 
     @property
     def preferred_port(self):

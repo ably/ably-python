@@ -22,6 +22,13 @@ class EncodeDataMixin(object):
         while encoding_list:
             encoding = encoding_list.pop()
             if not encoding:
+                # With messagepack, binary data is sent as bytes, without need
+                # to specify the base64 encoding. Here we coerce to bytearray,
+                # since that's what is used with the Json transport; though it
+                # can be argued that it should be the other way, and use always
+                # bytes, never bytearray.
+                if type(data) is bytes:
+                    data = bytearray(data)
                 continue
             if encoding == 'json':
                 if isinstance(data, six.binary_type):
@@ -64,3 +71,7 @@ class EncodeDataMixin(object):
             self._encoding_array = []
         else:
             self._encoding_array = encoding.strip('/').split('/')
+
+    @classmethod
+    def from_encoded_array(cls, objs, cipher=None):
+        return [cls.from_encoded(obj, cipher=cipher) for obj in objs]
