@@ -25,13 +25,6 @@ The client library is available as a [PyPI package](https://pypi.python.org/pypi
     cd ably-python
     python setup.py install
 
-#### To run the tests after local install
-
-    git submodule init
-    git submodule update
-    pip install -r requirements-test.txt
-    pytest test
-
 ## Using the REST API
 
 All examples assume a client and/or channel has been created as follows:
@@ -139,6 +132,15 @@ You can also view the [community reported Github issues](https://github.com/ably
 
 To see what has changed in recent versions of Bundler, see the [CHANGELOG](CHANGELOG.md).
 
+## Running the test suite
+
+```python
+git submodule init
+git submodule update
+pip install -r requirements-test.txt
+pytest test
+```
+
 ## Contributing
 
 1. Fork it
@@ -152,9 +154,9 @@ To see what has changed in recent versions of Bundler, see the [CHANGELOG](CHANG
 
 1. Update [`setup.py`](./setup.py) with the new version number
 2. Run `python setup.py sdist upload -r pypi` to build and upload this new package to PyPi
-3. Run [`github_changelog_generator`](https://github.com/skywinder/Github-Changelog-Generator) to automate the update of the [CHANGELOG](./CHANGELOG.md). Once the CHANGELOG has completed, manually change the `Unreleased` heading and link with the current version number such as `v0.8.2`. Also ensure that the `Full Changelog` link points to the new version tag instead of the `HEAD`. Commit this change.
-4. Tag the new version such as `git tag v0.8.2`
-5. Push the tag to origin `git push origin v0.8.2`
+3. Run [`github_changelog_generator`](https://github.com/skywinder/Github-Changelog-Generator) to automate the update of the [CHANGELOG](./CHANGELOG.md). Once the CHANGELOG has completed, manually change the `Unreleased` heading and link with the current version number such as `v1.0.0`. Also ensure that the `Full Changelog` link points to the new version tag instead of the `HEAD`. Commit this change.
+4. Tag the new version such as `git tag v1.0.0`
+5. Push the tag to origin `git push origin v1.0.0`
 
 ## License
 

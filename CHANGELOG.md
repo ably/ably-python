@@ -1,7 +1,30 @@
 # Change Log
 
-## [v0.8.2](https://github.com/ably/ably-python/tree/v0.8.2)
+## [v1.0.0](https://github.com/ably/ably-python/tree/v1.0.0)
 
+[Full Changelog](https://github.com/ably/ably-python/compare/v0.8.2...v1.0.0)
+
+### v1.0 release and upgrade notes from v0.8
+
+- See https://github.com/ably/docs/issues/235
+
+**Implemented enhancements:**
+
+- RSC19\*, HP\* - New REST \#request method + HttpPaginatedResponse type [\#78](https://github.com/ably/ably-python/issues/78)
+- Update REST library for realtime platform to v1.0 specification [\#77](https://github.com/ably/ably-python/issues/77)
+
+**Closed issues:**
+
+- requests version pin too strict? [\#66](https://github.com/ably/ably-python/issues/66)
+
+**Merged pull requests:**
+
+- Issue\#84 TP4, RSC15a \(test\), RSC19e \(test\), .. [\#87](https://github.com/ably/ably-python/pull/87) ([jdavid](https://github.com/jdavid))
+- Fix issue 72 [\#85](https://github.com/ably/ably-python/pull/85) ([jdavid](https://github.com/jdavid))
+- Fix README, now using pytest instead of nose [\#83](https://github.com/ably/ably-python/pull/83) ([jdavid](https://github.com/jdavid))
+- RSA5, RSA6, RSA10, RSL\*, TM\*, TE6, TD7 [\#82](https://github.com/ably/ably-python/pull/82) ([jdavid](https://github.com/jdavid))
+
+## [v0.8.2](https://github.com/ably/ably-python/tree/v0.8.2) (2017-02-17)
 [Full Changelog](https://github.com/ably/ably-python/compare/v0.8.1...v0.8.2)
 
 **Implemented enhancements:**
@@ -20,6 +43,7 @@
 **Merged pull requests:**
 
 - RSC7, RSC11, RSC15, RSC19 [\#81](https://github.com/ably/ably-python/pull/81) ([jdavid](https://github.com/jdavid))
+- Several python code repo improvements [\#73](https://github.com/ably/ably-python/pull/73) ([txomon](https://github.com/txomon))
 - updated reqests version in requirements [\#67](https://github.com/ably/ably-python/pull/67) ([essweine](https://github.com/essweine))
 
 ## [v0.8.1](https://github.com/ably/ably-python/tree/v0.8.1) (2016-03-22)
