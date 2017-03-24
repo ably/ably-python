@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import datetime
 import json
 import logging
 
@@ -178,6 +179,12 @@ class TestRestToken(BaseTestCase):
             token_details,
             TokenDetails.from_json(token_details_str),
         )
+
+    # Issue #71
+    @dont_vary_protocol
+    def test_request_token_float(self):
+        lifetime = datetime.timedelta(hours=4)
+        self.ably.auth.request_token({'ttl': lifetime.total_seconds() * 1000})
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
