@@ -19,6 +19,10 @@ The client library is available as a [PyPI package](https://pypi.python.org/pypi
 
     pip install ably
 
+Or, if you need encryption features:
+
+    pip install 'ably[crypto]'
+
 ### Locally
 
     git clone https://github.com/ably/ably-python.git

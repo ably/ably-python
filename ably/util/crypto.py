@@ -1,14 +1,16 @@
 from __future__ import absolute_import
 
-import logging
-
 import base64
+import logging
 
 import six
 from six.moves import range
 
-from Crypto.Cipher import AES
-from Crypto import Random
+try:
+    from Crypto.Cipher import AES
+    from Crypto import Random
+except ImportError:
+    from .nocrypto import AES, Random
 
 from ably.types.typedbuffer import TypedBuffer
 from ably.util.exceptions import AblyException
@@ -17,8 +19,7 @@ log = logging.getLogger(__name__)
 
 
 class CipherParams(object):
-    def __init__(self, algorithm='AES', mode='CBC', secret_key=None,
-                 iv=None):
+    def __init__(self, algorithm='AES', mode='CBC', secret_key=None, iv=None):
         self.__algorithm = algorithm.upper()
         self.__secret_key = secret_key
         self.__key_length = len(secret_key) * 8 if secret_key is not None else 128

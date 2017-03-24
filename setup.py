@@ -24,11 +24,11 @@ setup(
     packages=['ably', 'ably.http', 'ably.rest', 'ably.transport',
               'ably.types', 'ably.util'],
     install_requires=['msgpack-python>=0.4.6',
-                      'pycrypto>=2.6.1',
                       'requests>=2.7.0,<3',
-                      'six>=1.9.0'],  # remember to update these
-                                      # according to requirements.txt!
-                                      # there's no easy way to reuse this.
+                      'six>=1.9.0'],
+    extras_require={
+        'crypto': ['pycrypto>=2.6.1'],
+    },
     author="Ably",
     author_email='support@ably.io',
     url='https://github.com/ably/ably-python',
