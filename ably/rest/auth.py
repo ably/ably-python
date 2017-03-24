@@ -207,7 +207,7 @@ class Auth(object):
 
         ttl = token_params.get('ttl')
         if ttl is not None:
-            token_request['ttl'] = ttl
+            token_request['ttl'] = int(ttl)
 
         capability = token_params.get('capability')
         if capability is not None:
