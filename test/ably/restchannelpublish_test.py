@@ -10,6 +10,7 @@ import six
 from six.moves import range
 import mock
 import msgpack
+import requests
 
 from ably import AblyException, IncompatibleClientIdException
 from ably import AblyRest
@@ -379,8 +380,12 @@ class TestRestChannelPublish(BaseTestCase):
 
     # RSL6a1
     def test_interoperability(self):
-        channel = self.ably.channels[
-            self.protocol_channel_name('persisted:interoperability_channel')]
+        name = self.protocol_channel_name('persisted:interoperability_channel')
+        channel = self.ably.channels[name]
+
+        url = 'https://%s/channels/%s/messages' % (test_vars["host"], name)
+        key = test_vars['keys'][0]
+        auth = (key['key_name'], key['key_secret'])
 
         type_mapping = {
             'string': six.text_type,
@@ -394,11 +399,8 @@ class TestRestChannelPublish(BaseTestCase):
         with open(path) as f:
             data = json.load(f)
             for input_msg in data['messages']:
+                data = input_msg['data']
                 encoding = input_msg['encoding']
-                message = Message(data=input_msg['data'], encoding=encoding)
-                channel.publish(messages=[message])
-                history = channel.history()
-                message = history.items[0]
                 expected_type = input_msg['expectedType']
                 if expected_type == 'binary':
                     expected_value = input_msg.get('expectedHexValue')
@@ -406,5 +408,23 @@ class TestRestChannelPublish(BaseTestCase):
                     expected_value = binascii.a2b_hex(expected_value)
                 else:
                     expected_value = input_msg.get('expectedValue')
+
+                # 1)
+                channel.publish(data=expected_value)
+                r = requests.get(url, auth=auth)
+                item = r.json()[0]
+                self.assertEqual(item.get('encoding'), encoding)
+                if encoding == 'json':
+                    self.assertEqual(
+                        json.loads(item['data']),
+                        json.loads(data),
+                    )
+                else:
+                    self.assertEqual(item['data'], data)
+
+                # 2)
+                channel.publish(messages=[Message(data=data, encoding=encoding)])
+                history = channel.history()
+                message = history.items[0]
                 self.assertEqual(message.data, expected_value)
                 self.assertEqual(type(message.data), type_mapping[expected_type])
