@@ -101,8 +101,8 @@ class Response(object):
 class Http(object):
     CONNECTION_RETRY_DEFAULTS = {
         'http_open_timeout': 4,
-        'http_request_timeout': 15,
-        'http_max_retry_duration': 10,
+        'http_request_timeout': 10,
+        'http_max_retry_duration': 15,
     }
 
     def __init__(self, ably, options):
