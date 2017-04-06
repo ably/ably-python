@@ -1,6 +1,8 @@
 
 class InstallPycrypto(object):
     def __getattr__(self, name):
-        raise ImportError('This feature requires pycrypto')
+        raise ImportError(
+            "This requires to install ably with crypto support: pip install 'ably[crypto]'"
+        )
 
 AES = Random = InstallPycrypto()
