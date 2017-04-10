@@ -38,14 +38,14 @@ class TestRestRequest(BaseTestCase):
         body = {'name': 'test-post', 'data': 'lorem ipsum'}
         result = self.ably.request('POST', '/channels/test/messages', body=body)
 
-        self.assertIsInstance(result, HttpPaginatedResponse) # RSC19d
+        self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
         self.assertEqual(result.items, [])                 # HP3
 
     def test_get(self):
         params = {'limit': 10, 'direction': 'forwards'}
         result = self.ably.request('GET', '/channels/test/messages', params=params)
 
-        self.assertIsInstance(result, HttpPaginatedResponse) # RSC19d
+        self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
 
         # HP2
         self.assertIsInstance(result.next(), HttpPaginatedResponse)
@@ -60,25 +60,25 @@ class TestRestRequest(BaseTestCase):
         self.assertEqual(item['name'], 'event0')
         self.assertEqual(item['data'], 'lorem ipsum 0')
 
-        self.assertEqual(result.status_code, 200)    # HP4
-        self.assertEqual(result.success, True)       # HP5
-        self.assertEqual(result.error_code, None)    # HP6
-        self.assertEqual(result.error_message, None) # HP7
-        self.assertIsInstance(result.headers, list)  # HP7
+        self.assertEqual(result.status_code, 200)     # HP4
+        self.assertEqual(result.success, True)        # HP5
+        self.assertEqual(result.error_code, None)     # HP6
+        self.assertEqual(result.error_message, None)  # HP7
+        self.assertIsInstance(result.headers, list)   # HP7
 
     @dont_vary_protocol
     def test_not_found(self):
         result = self.ably.request('GET', '/not-found')
-        self.assertIsInstance(result, HttpPaginatedResponse) # RSC19d
-        self.assertEqual(result.status_code, 404)          # HP4
-        self.assertEqual(result.success, False)            # HP5
+        self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
+        self.assertEqual(result.status_code, 404)             # HP4
+        self.assertEqual(result.success, False)               # HP5
 
     @dont_vary_protocol
     def test_error(self):
         params = {'limit': 'abc'}
         result = self.ably.request('GET', '/channels/test/messages', params=params)
-        self.assertIsInstance(result, HttpPaginatedResponse) # RSC19d
-        self.assertEqual(result.status_code, 400) # HP4
+        self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
+        self.assertEqual(result.status_code, 400)  # HP4
         self.assertFalse(result.success)
         self.assertTrue(result.error_code)
         self.assertTrue(result.error_message)
