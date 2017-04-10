@@ -289,7 +289,6 @@ class TestAuthAuthorize(BaseTestCase):
         self.assertEqual(token_called[0], {})
         self.assertEqual(auth_called['auth_headers'], None)
 
-
     # RSA10g
     def test_timestamp_is_not_stored(self):
         # authorize once with arbitrary defaults
