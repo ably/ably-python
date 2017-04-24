@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import base64
+from datetime import timedelta
 import logging
 import time
 import uuid
@@ -207,6 +208,8 @@ class Auth(object):
 
         ttl = token_params.get('ttl')
         if ttl is not None:
+            if type(ttl) is timedelta:
+                ttl = ttl.total_seconds() * 1000
             token_request['ttl'] = int(ttl)
 
         capability = token_params.get('capability')

@@ -182,9 +182,10 @@ class TestRestToken(BaseTestCase):
 
     # Issue #71
     @dont_vary_protocol
-    def test_request_token_float(self):
+    def test_request_token_float_and_timedelta(self):
         lifetime = datetime.timedelta(hours=4)
         self.ably.auth.request_token({'ttl': lifetime.total_seconds() * 1000})
+        self.ably.auth.request_token({'ttl': lifetime})
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
