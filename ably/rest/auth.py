@@ -208,7 +208,7 @@ class Auth(object):
 
         ttl = token_params.get('ttl')
         if ttl is not None:
-            if type(ttl) is timedelta:
+            if isinstance(ttl, timedelta):
                 ttl = ttl.total_seconds() * 1000
             token_request['ttl'] = int(ttl)
 
