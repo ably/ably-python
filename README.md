@@ -154,13 +154,14 @@ pytest test
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
 
-## Release instructions
+## Release Process
 
 1. Update [`setup.py`](./setup.py) with the new version number
 2. Run `python setup.py sdist upload -r pypi` to build and upload this new package to PyPi
 3. Run [`github_changelog_generator`](https://github.com/skywinder/Github-Changelog-Generator) to automate the update of the [CHANGELOG](./CHANGELOG.md). Once the CHANGELOG has completed, manually change the `Unreleased` heading and link with the current version number such as `v1.0.0`. Also ensure that the `Full Changelog` link points to the new version tag instead of the `HEAD`. Commit this change.
 4. Tag the new version such as `git tag v1.0.0`
-5. Push the tag to origin `git push origin v1.0.0`
+5. Visit https://github.com/ably/ably-python/tags and add release notes for the release including links to the changelog entry.
+6. Push the tag to origin `git push origin v1.0.0`
 
 ## License
 
