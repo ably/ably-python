@@ -27,7 +27,7 @@ setup(
                       'requests>=2.7.0,<3',
                       'six>=1.9.0'],
     extras_require={
-        'crypto': ['pycrypto>=2.6.1'],
+        'crypto': ['pycryptodome'],
     },
     author="Ably",
     author_email='support@ably.io',

@@ -51,6 +51,8 @@ class CbcChannelCipher(object):
     def __init__(self, cipher_params):
         self.__secret_key = (cipher_params.secret_key or
                              self.__random(cipher_params.key_length / 8))
+        if isinstance(self.__secret_key, six.text_type):
+            self.__secret_key = self.__secret_key.encode()
         self.__iv = cipher_params.iv or self.__random(16)
         self.__block_size = len(self.__iv)
         if cipher_params.algorithm != 'AES':
