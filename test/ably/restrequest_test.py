@@ -1,6 +1,6 @@
-import time
+#import time
 
-import mock
+#import mock
 import requests
 import six
 
@@ -38,8 +38,13 @@ class TestRestRequest(BaseTestCase):
         body = {'name': 'test-post', 'data': 'lorem ipsum'}
         result = self.ably.request('POST', '/channels/test/messages', body=body)
 
-        self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
-        self.assertEqual(result.items, [])                 # HP3
+        assert isinstance(result, HttpPaginatedResponse)  # RSC19d
+        # HP3
+        assert type(result.items) is list
+        assert len(result.items) == 1
+        assert result.items[0]['channel'] == 'test'
+        assert 'messageId' in result.items[0]
+
 
     def test_get(self):
         params = {'limit': 10, 'direction': 'forwards'}
