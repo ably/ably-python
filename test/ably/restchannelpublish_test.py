@@ -367,8 +367,12 @@ class TestRestChannelPublish(BaseTestCase):
     # TM2i, RSL6a2, RSL1h
     def test_publish_extras(self):
         channel = self.ably.channels[
-            self.protocol_channel_name('persisted:extras_channel')]
-        extras = {"push": [{"title": "Testing"}]}
+            self.protocol_channel_name('canpublish:extras_channel')]
+        extras = {
+            'push': {
+                'notification': {"title": "Testing"},
+            }
+        }
         channel.publish(name='test-name', data='test-data', extras=extras)
 
         # Get the history for this channel
