@@ -31,8 +31,9 @@ class TestRestTime(BaseTestCase):
         reported_time = ably.time()
         actual_time = time.time() * 1000.0
 
-        self.assertLess(abs(actual_time - reported_time), 2000,
-                msg="Time is not within 2 seconds")
+        seconds = 10
+        self.assertLess(abs(actual_time - reported_time), seconds * 1000,
+                msg="Time is not within %s seconds" % seconds)
 
     def test_time_without_key_or_token(self):
         ably = AblyRest(token='foo',
@@ -45,8 +46,9 @@ class TestRestTime(BaseTestCase):
         reported_time = ably.time()
         actual_time = time.time() * 1000.0
 
-        self.assertLess(abs(actual_time - reported_time), 2000,
-                msg="Time is not within 2 seconds")
+        seconds = 10
+        self.assertLess(abs(actual_time - reported_time), seconds * 1000,
+                msg="Time is not within %s seconds" % seconds)
 
     @dont_vary_protocol
     def test_time_fails_without_valid_host(self):
