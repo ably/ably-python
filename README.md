@@ -5,7 +5,8 @@ ably-python
 
 A Python client library for [www.ably.io](https://www.ably.io), the realtime messaging service.
 
-Supports Python 2.7 and 3.3 onwards. 3.1 and 3.2 may work.
+Works with Python 2.7 and 3.4 onwards. User support for older Python 3.2 and
+3.3 versions is still provided.
 
 ## Documentation
 
