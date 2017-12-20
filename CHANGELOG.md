@@ -1,6 +1,37 @@
 # Change Log
 
-## [v1.0.0](https://github.com/ably/ably-python/tree/v1.0.0)
+## [v1.0.1](https://github.com/ably/ably-python/tree/v1.0.1) (2017-12-20)
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.0.0...v1.0.1)
+
+**Implemented enhancements:**
+
+- Fix HttpRequest & HttpRetry timeouts [\#86](https://github.com/ably/ably-python/issues/86)
+- Cast TTL to integer [\#71](https://github.com/ably/ably-python/issues/71)
+- Make PyCrypto optional [\#65](https://github.com/ably/ably-python/issues/65)
+
+**Fixed bugs:**
+
+- Travis random failures [\#88](https://github.com/ably/ably-python/issues/88)
+
+**Closed issues:**
+
+- pycrypto --\> pycryptodome [\#96](https://github.com/ably/ably-python/issues/96)
+- `ably` module seems to be broken / empty in some circumstances [\#95](https://github.com/ably/ably-python/issues/95)
+- installing via pip installs a more restrictive version of requests [\#91](https://github.com/ably/ably-python/issues/91)
+- Add test coverage to prevent possible MsgPack regression [\#89](https://github.com/ably/ably-python/issues/89)
+- 1.0 spec review [\#84](https://github.com/ably/ably-python/issues/84)
+- When using python2 with msgpack, dicts are not encoded correctly [\#72](https://github.com/ably/ably-python/issues/72)
+
+**Merged pull requests:**
+
+- Fix unit tests [\#99](https://github.com/ably/ably-python/pull/99) ([jdavid](https://github.com/jdavid))
+- Switch to cryptodome [\#98](https://github.com/ably/ably-python/pull/98) ([jdavid](https://github.com/jdavid))
+- ttl: use isinstance instead of type [\#94](https://github.com/ably/ably-python/pull/94) ([jdavid](https://github.com/jdavid))
+- Fix Flake8 warnings regarding spacing [\#93](https://github.com/ably/ably-python/pull/93) ([sginn](https://github.com/sginn))
+- Bumped upper limit on requests library, and removed websocket [\#92](https://github.com/ably/ably-python/pull/92) ([sginn](https://github.com/sginn))
+- Fix \#65, \#71, \#72, \#86 and \#89 [\#90](https://github.com/ably/ably-python/pull/90) ([jdavid](https://github.com/jdavid))
+
+## [v1.0.0](https://github.com/ably/ably-python/tree/v1.0.0) (2017-03-07)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v0.8.2...v1.0.0)
 
