@@ -62,7 +62,8 @@ def assert_responses_type(protocol):
             for response in responses:
                 if protocol == 'json':
                     self.assertEquals(response.headers['content-type'], 'application/json')
-                    json.loads(response.text)
+                    if response.content:
+                        json.loads(response.text)
                 else:
                     self.assertEquals(response.headers['content-type'], 'application/x-msgpack')
                     if response.content:
