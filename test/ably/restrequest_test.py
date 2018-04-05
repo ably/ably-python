@@ -28,7 +28,7 @@ class TestRestRequest(BaseTestCase):
         # Populate the channel (using the new api)
         for i in range(20):
             body = {'name': 'event%s' % i, 'data': 'lorem ipsum %s' % i}
-            cls.ably.request('POST', '/channels/test/messages', body=body)
+            cls.ably.request('POST', '/channels/rest-request/messages', body=body)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -36,19 +36,19 @@ class TestRestRequest(BaseTestCase):
 
     def test_post(self):
         body = {'name': 'test-post', 'data': 'lorem ipsum'}
-        result = self.ably.request('POST', '/channels/test/messages', body=body)
+        result = self.ably.request('POST', '/channels/rest-request/messages', body=body)
 
         assert isinstance(result, HttpPaginatedResponse)  # RSC19d
         # HP3
         assert type(result.items) is list
         assert len(result.items) == 1
-        assert result.items[0]['channel'] == 'test'
+        assert result.items[0]['channel'] == 'rest-request'
         assert 'messageId' in result.items[0]
 
 
     def test_get(self):
         params = {'limit': 10, 'direction': 'forwards'}
-        result = self.ably.request('GET', '/channels/test/messages', params=params)
+        result = self.ably.request('GET', '/channels/rest-request/messages', params=params)
 
         self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
 
@@ -81,7 +81,7 @@ class TestRestRequest(BaseTestCase):
     @dont_vary_protocol
     def test_error(self):
         params = {'limit': 'abc'}
-        result = self.ably.request('GET', '/channels/test/messages', params=params)
+        result = self.ably.request('GET', '/channels/rest-request/messages', params=params)
         self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
         self.assertEqual(result.status_code, 400)  # HP4
         self.assertFalse(result.success)
