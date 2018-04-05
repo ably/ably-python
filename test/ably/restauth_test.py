@@ -343,7 +343,7 @@ class TestAuthAuthorize(BaseTestCase):
     # RSA10l
     @dont_vary_protocol
     def test_authorise(self):
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as ws:
             # Cause all warnings to always be triggered
             warnings.simplefilter("always")
 
@@ -351,8 +351,8 @@ class TestAuthAuthorize(BaseTestCase):
             self.assertIsInstance(token, TokenDetails)
 
             # Verify warning is raised
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
+            ws = [w for w in ws if issubclass(w.category, DeprecationWarning)]
+            self.assertEqual(len(ws), 1)
 
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
