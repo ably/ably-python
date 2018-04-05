@@ -1,6 +1,5 @@
 
 import unittest
-import json
 from functools import wraps
 
 import msgpack
@@ -63,7 +62,7 @@ def assert_responses_type(protocol):
                 if protocol == 'json':
                     self.assertEquals(response.headers['content-type'], 'application/json')
                     if response.content:
-                        json.loads(response.text)
+                        response.json()
                 else:
                     self.assertEquals(response.headers['content-type'], 'application/x-msgpack')
                     if response.content:

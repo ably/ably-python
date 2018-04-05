@@ -19,7 +19,13 @@ class PushAdmin(object):
     def ably(self):
         return self.__ably
 
-    def publish(self, recipient, data):
+    def publish(self, recipient, data, timeout=None):
+        """Publish a push notification to a single device.
+
+        :Parameters:
+        - `recipient`: the recipient of the notification
+        - `data`: the data of the notification
+        """
         if not isinstance(recipient, dict):
             raise TypeError('Unexpected %s recipient, expected a dict' % type(recipient))
 
@@ -34,4 +40,4 @@ class PushAdmin(object):
 
         body = data.copy()
         body.update({'recipient': recipient})
-        return self.ably.http.post('/push/publish', body=body)
+        return self.ably.http.post('/push/publish', body=body, timeout=timeout)
