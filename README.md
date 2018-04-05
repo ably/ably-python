@@ -5,10 +5,13 @@ ably-python
 
 A Python client library for [www.ably.io](https://www.ably.io), the realtime messaging service.
 
-Works with Python 2.7 and 3.4 onwards.
+## Supported platforms
 
-User support for older Python 3.2 and 3.3 versions is still provided through
-Github issues and pull requests.
+This SDK supports Python 2.7 and 3.4+.
+
+We regression-test the SDK against a selection of Python versions (which we update over time, but usually consists of mainstream and widely used versions). Please refer to [.travis.yml](./.travis.yml) for the set of versions that currently undergo CI testing.
+
+If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://support.ably.io/) for advice.
 
 ## Documentation
 
