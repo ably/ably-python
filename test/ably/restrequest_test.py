@@ -1,6 +1,7 @@
 #import time
+import random
+import string
 
-#import mock
 import requests
 import six
 
@@ -26,9 +27,11 @@ class TestRestRequest(BaseTestCase):
                              tls=test_vars["tls"])
 
         # Populate the channel (using the new api)
+        cls.channel = ''.join([random.choice(string.ascii_letters) for x in range(8)])
+        cls.path = '/channels/%s/messages' % cls.channel
         for i in range(20):
             body = {'name': 'event%s' % i, 'data': 'lorem ipsum %s' % i}
-            cls.ably.request('POST', '/channels/test/messages', body=body)
+            cls.ably.request('POST', cls.path, body=body)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -36,19 +39,19 @@ class TestRestRequest(BaseTestCase):
 
     def test_post(self):
         body = {'name': 'test-post', 'data': 'lorem ipsum'}
-        result = self.ably.request('POST', '/channels/test/messages', body=body)
+        result = self.ably.request('POST', self.path, body=body)
 
         assert isinstance(result, HttpPaginatedResponse)  # RSC19d
         # HP3
         assert type(result.items) is list
         assert len(result.items) == 1
-        assert result.items[0]['channel'] == 'test'
+        assert result.items[0]['channel'] == self.channel
         assert 'messageId' in result.items[0]
 
 
     def test_get(self):
         params = {'limit': 10, 'direction': 'forwards'}
-        result = self.ably.request('GET', '/channels/test/messages', params=params)
+        result = self.ably.request('GET', self.path, params=params)
 
         self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
 
@@ -81,7 +84,7 @@ class TestRestRequest(BaseTestCase):
     @dont_vary_protocol
     def test_error(self):
         params = {'limit': 'abc'}
-        result = self.ably.request('GET', '/channels/test/messages', params=params)
+        result = self.ably.request('GET', self.path, params=params)
         self.assertIsInstance(result, HttpPaginatedResponse)  # RSC19d
         self.assertEqual(result.status_code, 400)  # HP4
         self.assertFalse(result.success)
@@ -98,7 +101,7 @@ class TestRestRequest(BaseTestCase):
     @dont_vary_protocol
     def test_timeout(self):
         # Timeout
-        timeout = 0.00001
+        timeout = 0.000001
         ably = AblyRest(token="foo", http_request_timeout=timeout)
         self.assertEqual(ably.http.http_request_timeout, timeout)
         with self.assertRaises(requests.exceptions.ReadTimeout):
