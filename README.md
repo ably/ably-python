@@ -107,12 +107,12 @@ token_request = client.auth.create_token_request(
     {
         'client_id': 'jim',
         'capability': {'channel1': '"*"'},
-        'ttl': 3600,
+        'ttl': 3600 * 1000, # ms
     }
 )
 # => {"id": ...,
 #     "clientId": "jim",
-#     "ttl": 3600,
+#     "ttl": 3600000,
 #     "timestamp": ...,
 #     "capability": "{\"*\":[\"*\"]}",
 #     "nonce": ...,
