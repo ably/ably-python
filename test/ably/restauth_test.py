@@ -446,7 +446,7 @@ class TestRequestToken(BaseTestCase):
 
     @dont_vary_protocol
     def test_with_callback(self):
-        called_token_params = {'ttl': '3600'}
+        called_token_params = {'ttl': '3600000'}
         def callback(token_params):
             self.assertEquals(token_params, called_token_params)
             return 'token_string'
