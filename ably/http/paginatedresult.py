@@ -1,10 +1,44 @@
 from __future__ import absolute_import
 
+import calendar
 import logging
+
+from six.moves.urllib.parse import urlencode
 
 from ably.http.http import Request
 
 log = logging.getLogger(__name__)
+
+
+def format_time_param(t):
+    try:
+        return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
+    except:
+        return str(t)
+
+def format_params(params=None, direction=None, start=None, end=None, limit=None, **kw):
+    if params is None:
+        params = {}
+
+    for key, value in kw.items():
+        if value is not None:
+            params[key] = value
+
+    if direction:
+        params['direction'] = str(direction)
+    if start:
+        params['start'] = format_time_param(start)
+    if end:
+        params['end'] = format_time_param(end)
+    if limit:
+        if limit > 1000:
+            raise ValueError("The maximum allowed limit is 1000")
+        params['limit'] = '%d' % limit
+
+    if 'start' in params and 'end' in params and params['start'] > params['end']:
+        raise ValueError("'end' parameter has to be greater than or equal to 'start'")
+
+    return '?' + urlencode(params) if params else ''
 
 
 class PaginatedResult(object):

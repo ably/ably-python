@@ -4,6 +4,7 @@ import pytest
 import six
 
 from ably import AblyRest, AblyException, DeviceDetails
+from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, BaseTestCase
@@ -74,6 +75,51 @@ class TestPush(BaseTestCase):
         assert device_details.platform == data['platform']
         assert device_details.form_factor == data['formFactor']
         assert device_details.device_secret == data['deviceSecret']
+
+    # RSH1b2
+    def test_admin_device_registrations_list(self):
+        datas = []
+        for i in range(10):
+            device_id = random_string(26, string.ascii_uppercase + string.digits)
+            client_id = random_string(12)
+            data = {
+                'id': device_id,
+                'clientId': client_id,
+                'platform': 'ios',
+                'formFactor': 'phone',
+                'push': {
+                    'recipient': {
+                        'transportType': 'apns',
+                        'deviceToken': '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad'
+                    }
+                },
+                'deviceSecret': random_string(12),
+            }
+            self.ably.push.admin.device_registrations.save(data)
+            datas.append(data)
+
+        response = self.ably.push.admin.device_registrations.list()
+        assert type(response) is PaginatedResult
+        assert type(response.items) is list
+        assert type(response.items[0]) is DeviceDetails
+
+        # limit
+        response = self.ably.push.admin.device_registrations.list(limit=2)
+        assert len(response.items) == 2
+
+        # Filter by device id
+        first = datas[0]
+        response = self.ably.push.admin.device_registrations.list(deviceId=first['id'])
+        assert len(response.items) == 1
+        response = self.ably.push.admin.device_registrations.list(
+            deviceId=random_string(26, string.ascii_uppercase + string.digits))
+        assert len(response.items) == 0
+
+        # Filter by client id
+        response = self.ably.push.admin.device_registrations.list(clientId=first['clientId'])
+        assert len(response.items) == 1
+        response = self.ably.push.admin.device_registrations.list(clientId=random_string(12))
+        assert len(response.items) == 0
 
     # RSH1b3
     def test_admin_device_registrations_save(self):
