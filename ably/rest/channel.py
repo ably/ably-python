@@ -1,15 +1,14 @@
 from __future__ import absolute_import
 
-import calendar
 import logging
 import json
 from collections import OrderedDict
 
 import six
 import msgpack
-from six.moves.urllib.parse import urlencode, quote
+from six.moves.urllib.parse import quote
 
-from ably.http.paginatedresult import PaginatedResult
+from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.message import (
     Message, make_message_response_handler, make_encrypted_message_response_handler,
     MessageJSONEncoder)
@@ -29,32 +28,12 @@ class Channel(object):
         self.options = options
         self.__presence = Presence(self)
 
-    def _format_time_param(self, t):
-        try:
-            return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
-        except:
-            return '%s' % t
-
     @catch_all
     def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
         """Returns the history for this channel"""
-        params = {}
-
-        if direction:
-            params['direction'] = '%s' % direction
-        if limit:
-            if limit > 1000:
-                raise ValueError("The maximum allowed limit is 1000")
-            params['limit'] = '%d' % limit
-        if start:
-            params['start'] = self._format_time_param(start)
-        if end:
-            params['end'] = self._format_time_param(end)
-
+        params = format_params({}, direction=direction, start=start, end=end, limit=limit)
         path = '/channels/%s/history' % self.__name
-
-        if params:
-            path = path + '?' + urlencode(params)
+        path += params
 
         if self.__cipher:
             message_handler = make_encrypted_message_response_handler(

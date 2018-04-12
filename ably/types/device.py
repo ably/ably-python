@@ -72,3 +72,18 @@ class DeviceDetails(object):
     @property
     def device_identity_token(self):
         return self.__device_identity_token
+
+    @classmethod
+    def from_array(cls, array):
+        return [cls.from_dict(d) for d in array]
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(**data)
+
+
+def make_device_details_response_processor(binary):
+    def device_details_response_processor(response):
+        native = response.to_native()
+        return DeviceDetails.from_array(native)
+    return device_details_response_processor
