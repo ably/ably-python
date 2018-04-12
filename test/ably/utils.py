@@ -120,3 +120,8 @@ def dont_vary_protocol(func):
 
 def random_string(length, alphabet=string.ascii_letters):
     return ''.join([random.choice(alphabet) for x in range(length)])
+
+def new_dict(src, **kw):
+    new = src.copy()
+    new.update(kw)
+    return new

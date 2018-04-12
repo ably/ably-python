@@ -1,9 +1,27 @@
+DevicePushTransportType = {'fcm', 'gcm', 'apns', 'web'}
+DevicePlatform = {'android', 'ios', 'browser'}
+DeviceFormFactor = {'phone', 'tablet', 'desktop', 'tv', 'watch', 'car', 'embedded', 'other'}
+
 
 class DeviceDetails(object):
 
     def __init__(self, id, clientId=None, formFactor=None, metadata=None,
                  platform=None, push=None, updateToken=None,
                  deviceSecret=None, appId=None):
+
+        if push:
+            recipient = push.get('recipient')
+            if recipient:
+                transport_type = recipient.get('transportType')
+                if transport_type is not None and transport_type not in DevicePushTransportType:
+                    raise ValueError('unexpected transport type {}'.format(transport_type))
+
+        if platform is not None and platform not in DevicePlatform:
+            raise ValueError('unexpected platform {}'.format(platform))
+
+        if formFactor is not None and formFactor not in DeviceFormFactor:
+            raise ValueError('unexpected form factor {}'.format(formFactor))
+
         self.__id = id
         self.__client_id = clientId
         self.__form_factor = formFactor

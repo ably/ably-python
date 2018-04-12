@@ -7,7 +7,7 @@ from ably import AblyRest, AblyException
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, BaseTestCase
-from test.ably.utils import random_string
+from test.ably.utils import new_dict, random_string
 
 test_vars = RestSetup.get_test_vars()
 
@@ -74,6 +74,8 @@ class TestPush(BaseTestCase):
 
     # RSH1b3
     def test_admin_device_registrations_save(self):
+        save = self.ably.push.admin.device_registrations.save
+
         device_id = random_string(26, string.ascii_uppercase + string.digits)
         data = {
             'id': device_id,
@@ -89,13 +91,19 @@ class TestPush(BaseTestCase):
         }
 
         # Create
-        self.ably.push.admin.device_registrations.save(data)
+        save(data)
 
         # Update
-        data['formFactor'] = 'tablet'
-        self.ably.push.admin.device_registrations.save(data)
+        save(new_dict(data, formFactor='tablet'))
+
+        # Invalid values
+        with pytest.raises(ValueError):
+            save(new_dict(data, push={'recipient': new_dict(data['push']['recipient'], transportType='xyz')}))
+        with pytest.raises(ValueError):
+            save(new_dict(data, platform='native'))
+        with pytest.raises(ValueError):
+            save(new_dict(data, formFactor='fridge'))
 
         # Fail
-        data['deviceSecret'] = random_string(12)
         with pytest.raises(AblyException):
-            self.ably.push.admin.device_registrations.save(data)
+            save(new_dict(data, deviceSecret=random_string(12)))
