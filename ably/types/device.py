@@ -3,7 +3,7 @@ class DeviceDetails(object):
 
     def __init__(self, id, clientId=None, formFactor=None, metadata=None,
                  platform=None, push=None, updateToken=None,
-                 deviceSecret=None):
+                 deviceSecret=None, appId=None):
         self.__id = id
         self.__client_id = clientId
         self.__form_factor = formFactor
@@ -12,6 +12,7 @@ class DeviceDetails(object):
         self.__push = push
         self.__update_token = updateToken
         self.__device_secret = deviceSecret
+        self.__app_id = appId
 
     @property
     def id(self):
@@ -44,3 +45,7 @@ class DeviceDetails(object):
     @property
     def device_secret(self):
         return self.__device_secret
+
+    @property
+    def app_id(self):
+        return self.__app_id
