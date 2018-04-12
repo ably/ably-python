@@ -1,3 +1,4 @@
+from ably.types.device import DeviceDetails
 
 class Push(object):
 
@@ -14,10 +15,15 @@ class PushAdmin(object):
 
     def __init__(self, ably):
         self.__ably = ably
+        self.__device_registrations = PushDeviceRegistrations(ably)
 
     @property
     def ably(self):
         return self.__ably
+
+    @property
+    def device_registrations(self):
+        return self.__device_registrations
 
     def publish(self, recipient, data, timeout=None):
         """Publish a push notification to a single device.
@@ -41,3 +47,18 @@ class PushAdmin(object):
         body = data.copy()
         body.update({'recipient': recipient})
         return self.ably.http.post('/push/publish', body=body, timeout=timeout)
+
+
+class PushDeviceRegistrations(object):
+
+    def __init__(self, ably):
+        self.__ably = ably
+
+    @property
+    def ably(self):
+        return self.__ably
+
+    def save(self, device):
+        device_details = DeviceDetails(**device)
+        path = '/push/deviceRegistrations/%s' % device_details.id
+        return self.ably.http.put(path, body=device)

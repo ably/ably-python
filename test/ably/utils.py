@@ -1,6 +1,7 @@
-
+import functools
+import random
+import string
 import unittest
-from functools import wraps
 
 import msgpack
 import mock
@@ -50,7 +51,7 @@ def assert_responses_type(protocol):
         patcher.stop()
 
     def test_decorator(fn):
-        @wraps(fn)
+        @functools.wraps(fn)
         def test_decorated(self, *args, **kwargs):
             patcher = patch()
             fn(self, *args, **kwargs)
@@ -115,3 +116,7 @@ class VaryByProtocolTestsMetaclass(type):
 def dont_vary_protocol(func):
     func.dont_vary_protocol = True
     return func
+
+
+def random_string(length, alphabet=string.ascii_letters):
+    return ''.join([random.choice(alphabet) for x in range(length)])
