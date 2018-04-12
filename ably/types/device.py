@@ -7,7 +7,7 @@ class DeviceDetails(object):
 
     def __init__(self, id, clientId=None, formFactor=None, metadata=None,
                  platform=None, push=None, updateToken=None,
-                 deviceSecret=None, appId=None):
+                 deviceSecret=None, appId=None, deviceIdentityToken=None):
 
         if push:
             recipient = push.get('recipient')
@@ -31,6 +31,7 @@ class DeviceDetails(object):
         self.__update_token = updateToken
         self.__device_secret = deviceSecret
         self.__app_id = appId
+        self.__device_identity_token = deviceIdentityToken
 
     @property
     def id(self):
@@ -67,3 +68,7 @@ class DeviceDetails(object):
     @property
     def app_id(self):
         return self.__app_id
+
+    @property
+    def device_identity_token(self):
+        return self.__device_identity_token

@@ -3,7 +3,7 @@ import string
 import pytest
 import six
 
-from ably import AblyRest, AblyException
+from ably import AblyRest, AblyException, DeviceDetails
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, BaseTestCase
@@ -67,6 +67,7 @@ class TestPush(BaseTestCase):
 
         # Found
         device_details = get(device_id)
+        assert type(device_details) is DeviceDetails
         assert device_details.id == device_id
         assert device_details.platform == data['platform']
         assert device_details.form_factor == data['formFactor']
@@ -91,7 +92,8 @@ class TestPush(BaseTestCase):
         }
 
         # Create
-        save(data)
+        device_details = save(data)
+        assert type(device_details) is DeviceDetails
 
         # Update
         save(new_dict(data, formFactor='tablet'))

@@ -67,4 +67,6 @@ class PushDeviceRegistrations(object):
     def save(self, device):
         device_details = DeviceDetails(**device)
         path = '/push/deviceRegistrations/%s' % device_details.id
-        return self.ably.http.put(path, body=device)
+        response = self.ably.http.put(path, body=device)
+        details = response.to_native()
+        return DeviceDetails(**details)
