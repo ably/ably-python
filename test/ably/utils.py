@@ -1,7 +1,7 @@
-
+import functools
+import random
+import string
 import unittest
-import json
-from functools import wraps
 
 import msgpack
 import mock
@@ -51,7 +51,7 @@ def assert_responses_type(protocol):
         patcher.stop()
 
     def test_decorator(fn):
-        @wraps(fn)
+        @functools.wraps(fn)
         def test_decorated(self, *args, **kwargs):
             patcher = patch()
             fn(self, *args, **kwargs)
@@ -62,7 +62,8 @@ def assert_responses_type(protocol):
             for response in responses:
                 if protocol == 'json':
                     self.assertEquals(response.headers['content-type'], 'application/json')
-                    json.loads(response.text)
+                    if response.content:
+                        response.json()
                 else:
                     self.assertEquals(response.headers['content-type'], 'application/x-msgpack')
                     if response.content:
@@ -115,3 +116,12 @@ class VaryByProtocolTestsMetaclass(type):
 def dont_vary_protocol(func):
     func.dont_vary_protocol = True
     return func
+
+
+def random_string(length, alphabet=string.ascii_letters):
+    return ''.join([random.choice(alphabet) for x in range(length)])
+
+def new_dict(src, **kw):
+    new = src.copy()
+    new.update(kw)
+    return new

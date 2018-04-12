@@ -3,8 +3,6 @@ from __future__ import absolute_import
 import logging
 from datetime import datetime
 
-import msgpack
-
 log = logging.getLogger(__name__)
 
 
@@ -124,8 +122,8 @@ class Stats(object):
                                      granularity_from_interval_id(self.interval_id))
         self.interval_time = interval_from_interval_id(self.interval_id)
 
-    @staticmethod
-    def from_dict(stats_dict):
+    @classmethod
+    def from_dict(cls, stats_dict):
         stats_dict = stats_dict or {}
 
         kwargs = {
@@ -141,11 +139,11 @@ class Stats(object):
             "interval_id": stats_dict.get("intervalId")
         }
 
-        return Stats(**kwargs)
+        return cls(**kwargs)
 
-    @staticmethod
-    def from_array(stats_array):
-        return [Stats.from_dict(d) for d in stats_array]
+    @classmethod
+    def from_array(cls, stats_array):
+        return [cls.from_dict(d) for d in stats_array]
 
     @staticmethod
     def to_interval_id(date_time, granularity):
