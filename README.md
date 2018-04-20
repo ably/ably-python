@@ -45,6 +45,20 @@ client = AblyRest('api:key')
 channel = client.channels.get('channel_name')
 ```
 
+You can define the logging level for the whole library, and override for an
+specific module:
+
+    import logging
+    import ably
+
+    logging.getLogger('ably').setLevel(logging.WARNING)
+    logging.getLogger('ably.rest.auth').setLevel(logging.INFO)
+
+You need to add a handler to see any output:
+
+    logger = logging.getLogger('ably')
+    logger.addHandler(logging.StreamHandler())
+
 ### Publishing a message to a channel
 
 ```python
