@@ -9,6 +9,7 @@ from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
+from ably.rest.push import Push
 from ably.util.exceptions import AblyException, catch_all
 from ably.types.options import Options
 from ably.types.stats import make_stats_response_processor
@@ -75,6 +76,7 @@ class AblyRest(object):
 
         self.__channels = Channels(self)
         self.__options = options
+        self.__push = Push(self)
 
     def set_variant(self, variant):
         """Sets library variant as per RSC7b"""
@@ -145,6 +147,10 @@ class AblyRest(object):
     @property
     def options(self):
         return self.__options
+
+    @property
+    def push(self):
+        return self.__push
 
     def request(self, method, path, params=None, body=None, headers=None):
         url = path
