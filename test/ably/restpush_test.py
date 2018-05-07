@@ -12,6 +12,9 @@ from test.ably.utils import new_dict, random_string
 test_vars = RestSetup.get_test_vars()
 
 
+DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad'
+
+
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestPush(BaseTestCase):
 
@@ -53,7 +56,7 @@ class TestPush(BaseTestCase):
             'push': {
                 'recipient': {
                     'transportType': 'apns',
-                    'deviceToken': '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad'
+                    'deviceToken': DEVICE_TOKEN,
                 }
             },
             'deviceSecret': random_string(12),
