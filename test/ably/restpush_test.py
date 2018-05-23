@@ -4,7 +4,8 @@ import time
 import pytest
 import six
 
-from ably import AblyRest, AblyException, DeviceDetails
+from ably import AblyRest, AblyException, AblyAuthException
+from ably import DeviceDetails, PushChannelSubscription
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
@@ -240,4 +241,50 @@ class TestPush(BaseTestCase):
         with pytest.raises(AblyException): get(device_id) # Doesn't exist
 
         # Remove with no matching params
-        assert remove_where(clientId=data['clientId']).status_code == 204
+        assert remove_where(clientId=client_id).status_code == 204
+
+    # RSH1c3
+    def test_admin_channel_subscriptions_save(self):
+        save = self.ably.push.admin.channel_subscriptions.save
+
+        # Register device
+        device_id = self.get_device_id()
+        data = {
+            'id': device_id,
+            'platform': 'ios',
+            'formFactor': 'phone',
+            'push': {
+                'recipient': {
+                    'transportType': 'apns',
+                    'deviceToken': DEVICE_TOKEN
+                }
+            },
+        }
+        self.__save(data)
+
+        # Subscribe
+        channel = 'canpublish:test'
+        subscription = PushChannelSubscription(channel, device_id=device_id)
+        subscription = save(subscription)
+        assert type(subscription) is PushChannelSubscription
+        assert subscription.channel == channel
+        assert subscription.device_id == device_id
+
+        # Update
+        channel = 'canpublish:test'
+        subscription = PushChannelSubscription(channel, device_id=device_id)
+        subscription = save(subscription)
+        assert type(subscription) is PushChannelSubscription
+        assert subscription.channel == channel
+        assert subscription.device_id == device_id
+
+        # Failures
+        client_id = random_string(12)
+        with pytest.raises(ValueError):
+            PushChannelSubscription(channel, device_id=device_id, client_id=client_id)
+
+        subscription = PushChannelSubscription('notallowed', device_id=device_id)
+        with pytest.raises(AblyAuthException): save(subscription)
+
+        subscription = PushChannelSubscription(channel, device_id='notregistered')
+        with pytest.raises(AblyException): save(subscription)
