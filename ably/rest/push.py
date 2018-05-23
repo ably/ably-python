@@ -95,3 +95,12 @@ class PushDeviceRegistrations(object):
         response = self.ably.http.put(path, body=device)
         details = response.to_native()
         return DeviceDetails(**details)
+
+    def remove(self, device_id):
+        """Deletes the registered device identified by the given device id.
+
+        :Parameters:
+        - `device_id`: the id of the device
+        """
+        path = '/push/deviceRegistrations/%s' % device_id
+        return self.ably.http.delete(path)
