@@ -104,3 +104,12 @@ class PushDeviceRegistrations(object):
         """
         path = '/push/deviceRegistrations/%s' % device_id
         return self.ably.http.delete(path)
+
+    def remove_where(self, **params):
+        """Deletes the registered devices identified by the given parameters.
+
+        :Parameters:
+        - `**params`: the parameters that identify the devices to remove
+        """
+        path = '/push/deviceRegistrations' + format_params(params)
+        return self.ably.http.delete(path)
