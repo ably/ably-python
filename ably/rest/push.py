@@ -58,6 +58,18 @@ class PushDeviceRegistrations(object):
     def ably(self):
         return self.__ably
 
+    def get(self, device_id):
+        """Returns a DeviceDetails object if the device id is found or results
+        in a not found error if the device cannot be found.
+
+        :Parameters:
+        - `device_id`: the id of the device
+        """
+        path = '/push/deviceRegistrations/%s' % device_id
+        response = self.ably.http.get(path)
+        details = response.to_native()
+        return DeviceDetails(**details)
+
     def save(self, device):
         """Creates or updates the device. Returns a DeviceDetails object.
 

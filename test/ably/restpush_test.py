@@ -44,6 +44,37 @@ class TestPush(BaseTestCase):
         response = publish(recipient, data)
         assert response.status_code == 204
 
+    # RSH1b1
+    def test_admin_device_registrations_get(self):
+        get = self.ably.push.admin.device_registrations.get
+
+        # Not found
+        with pytest.raises(AblyException):
+            get('not-found')
+
+        # Save
+        device_id = random_string(26, string.ascii_uppercase + string.digits)
+        data = {
+            'id': device_id,
+            'platform': 'ios',
+            'formFactor': 'phone',
+            'push': {
+                'recipient': {
+                    'transportType': 'apns',
+                    'deviceToken': DEVICE_TOKEN
+                }
+            },
+            'deviceSecret': random_string(12),
+        }
+        self.ably.push.admin.device_registrations.save(data)
+
+        # Found
+        device_details = get(device_id)
+        assert device_details.id == device_id
+        assert device_details.platform == data['platform']
+        assert device_details.form_factor == data['formFactor']
+        assert device_details.device_secret == data['deviceSecret']
+
     # RSH1b3
     def test_admin_device_registrations_save(self):
         save = self.ably.push.admin.device_registrations.save
