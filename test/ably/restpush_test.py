@@ -19,7 +19,10 @@ DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestPush(BaseTestCase):
 
-    def setUp(self):
+    count = 0 # Number of devices registered
+
+    @classmethod
+    def setUpClass(self):
         self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
                              rest_host=test_vars["host"],
                              port=test_vars["port"],
@@ -28,6 +31,16 @@ class TestPush(BaseTestCase):
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
+
+    @classmethod
+    def __save(self, data):
+        """
+        Wrapps calls to save, to keep a count on the numer of devices
+        registered.
+        """
+        result = self.ably.push.admin.device_registrations.save(data)
+        self.count += 1
+        return result
 
     # RSH1a
     def test_admin_publish(self):
@@ -67,7 +80,7 @@ class TestPush(BaseTestCase):
             },
             'deviceSecret': random_string(12),
         }
-        self.ably.push.admin.device_registrations.save(data)
+        self.__save(data)
 
         # Found
         device_details = get(device_id)
@@ -90,12 +103,12 @@ class TestPush(BaseTestCase):
                 'push': {
                     'recipient': {
                         'transportType': 'apns',
-                        'deviceToken': '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad'
+                        'deviceToken': DEVICE_TOKEN,
                     }
                 },
                 'deviceSecret': random_string(12),
             }
-            self.ably.push.admin.device_registrations.save(data)
+            self.__save(data)
             datas.append(data)
 
         response = self.ably.push.admin.device_registrations.list()
@@ -104,6 +117,8 @@ class TestPush(BaseTestCase):
         assert type(response.items[0]) is DeviceDetails
 
         # limit
+        response = self.ably.push.admin.device_registrations.list(limit=5000)
+        assert len(response.items) == self.count
         response = self.ably.push.admin.device_registrations.list(limit=2)
         assert len(response.items) == 2
 
@@ -123,8 +138,6 @@ class TestPush(BaseTestCase):
 
     # RSH1b3
     def test_admin_device_registrations_save(self):
-        save = self.ably.push.admin.device_registrations.save
-
         device_id = random_string(26, string.ascii_uppercase + string.digits)
         data = {
             'id': device_id,
@@ -140,20 +153,20 @@ class TestPush(BaseTestCase):
         }
 
         # Create
-        device_details = save(data)
+        device_details = self.__save(data)
         assert type(device_details) is DeviceDetails
 
         # Update
-        save(new_dict(data, formFactor='tablet'))
+        self.__save(new_dict(data, formFactor='tablet'))
 
         # Invalid values
         with pytest.raises(ValueError):
-            save(new_dict(data, push={'recipient': new_dict(data['push']['recipient'], transportType='xyz')}))
+            self.__save(new_dict(data, push={'recipient': new_dict(data['push']['recipient'], transportType='xyz')}))
         with pytest.raises(ValueError):
-            save(new_dict(data, platform='native'))
+            self.__save(new_dict(data, platform='native'))
         with pytest.raises(ValueError):
-            save(new_dict(data, formFactor='fridge'))
+            self.__save(new_dict(data, formFactor='fridge'))
 
         # Fail
         with pytest.raises(AblyException):
-            save(new_dict(data, deviceSecret=random_string(12)))
+            self.__save(new_dict(data, deviceSecret=random_string(12)))

@@ -73,7 +73,7 @@ class PushDeviceRegistrations(object):
 
     def list(self, **params):
         """Returns a PaginatedResult object with the list of DeviceDetails
-        objects, filterede by the given parameters.
+        objects, filtered by the given parameters.
 
         :Parameters:
         - `**params`: the parameters used to filter the list
