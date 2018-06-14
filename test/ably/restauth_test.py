@@ -336,7 +336,7 @@ class TestAuthAuthorize(BaseTestCase):
         self.assertEqual(ably.auth.client_id, client_id)
 
         channel = ably.channels[
-            self.protocol_channel_name('test_client_id_precedence')]
+            self.get_channel_name('test_client_id_precedence')]
         channel.publish('test', 'data')
         self.assertEqual(channel.history().items[0].client_id, client_id)
 
@@ -378,7 +378,7 @@ class TestRequestToken(BaseTestCase):
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
-        channel = self.protocol_channel_name('test_request_token_with_key')
+        channel = self.get_channel_name('test_request_token_with_key')
 
         ably.channels[channel].publish('event', 'foo')
 
