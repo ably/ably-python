@@ -6,8 +6,8 @@ python:
   - "3.6"
 sudo: false
 install:
-  - travis_retry pip install tox-travis
+  - travis_retry pip install -r requirements-test.txt
 script:
-  - tox
+  - py.test --tb=short test
 after_success:
   - "if [ $TRAVIS_PYTHON_VERSION == '2.7' ]; then pip install coveralls; coveralls; fi"
