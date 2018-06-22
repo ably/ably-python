@@ -78,7 +78,6 @@ class TestPush(BaseTestCase):
                     'deviceToken': DEVICE_TOKEN
                 }
             },
-            'deviceSecret': random_string(12),
         }
         self.__save(data)
 
@@ -87,7 +86,6 @@ class TestPush(BaseTestCase):
         assert device_details.id == device_id
         assert device_details.platform == data['platform']
         assert device_details.form_factor == data['formFactor']
-        assert device_details.device_secret == data['deviceSecret']
 
     # RSH1b2
     def test_admin_device_registrations_list(self):
@@ -106,7 +104,6 @@ class TestPush(BaseTestCase):
                         'deviceToken': DEVICE_TOKEN,
                     }
                 },
-                'deviceSecret': random_string(12),
             }
             self.__save(data)
             datas.append(data)
@@ -149,7 +146,6 @@ class TestPush(BaseTestCase):
                     'deviceToken': DEVICE_TOKEN,
                 }
             },
-            'deviceSecret': random_string(12),
         }
 
         # Create
@@ -169,4 +165,4 @@ class TestPush(BaseTestCase):
 
         # Fail
         with pytest.raises(AblyException):
-            self.__save(new_dict(data, deviceSecret=random_string(12)))
+            self.__save(new_dict(data, push={'color': 'red'}))
