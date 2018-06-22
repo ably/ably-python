@@ -16,8 +16,9 @@ class BaseTestCase(unittest.TestCase):
         responses.add(responses.GET, url, body=msgpack.packb({}),
                       content_type='application/x-msgpack')
 
-    def protocol_channel_name(self, name):
-        return name + ('_bin' if self.use_binary_protocol else '_text')
+    @classmethod
+    def get_channel_name(cls, prefix=''):
+        return prefix + random_string(10)
 
 
 def assert_responses_type(protocol):

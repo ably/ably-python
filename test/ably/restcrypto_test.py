@@ -70,7 +70,7 @@ class TestRestCrypto(BaseTestCase):
         self.assertEqual(expected_ciphertext, actual_ciphertext)
 
     def test_crypto_publish(self):
-        channel_name = self.protocol_channel_name('persisted:crypto_publish_text')
+        channel_name = self.get_channel_name('persisted:crypto_publish_text')
         publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
         publish0.publish("publish3", six.u("This is a string message payload"))
@@ -134,7 +134,7 @@ class TestRestCrypto(BaseTestCase):
                 msg="Expect publish6 to be expected JSONObject")
 
     def test_crypto_publish_key_mismatch(self):
-        channel_name = self.protocol_channel_name('persisted:crypto_publish_key_mismatch')
+        channel_name = self.get_channel_name('persisted:crypto_publish_key_mismatch')
 
         publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
@@ -161,7 +161,7 @@ class TestRestCrypto(BaseTestCase):
             the_exception.message.startswith("UnicodeDecodeError: 'utf-8'"))
 
     def test_crypto_send_unencrypted(self):
-        channel_name = self.protocol_channel_name('persisted:crypto_send_unencrypted')
+        channel_name = self.get_channel_name('persisted:crypto_send_unencrypted')
         publish0 = self.ably.channels[channel_name]
 
         publish0.publish("publish3", six.u("This is a string message payload"))
@@ -193,7 +193,7 @@ class TestRestCrypto(BaseTestCase):
                 msg="Expect publish6 to be expected JSONObject")
 
     def test_crypto_encrypted_unhandled(self):
-        channel_name = self.protocol_channel_name('persisted:crypto_send_encrypted_unhandled')
+        channel_name = self.get_channel_name('persisted:crypto_send_encrypted_unhandled')
         key = six.b('0123456789abcdef')
         data = six.u('foobar')
         publish0 = self.ably.channels.get(channel_name, cipher={'key': key})

@@ -6,8 +6,8 @@ DeviceFormFactor = {'phone', 'tablet', 'desktop', 'tv', 'watch', 'car', 'embedde
 class DeviceDetails(object):
 
     def __init__(self, id, clientId=None, formFactor=None, metadata=None,
-                 platform=None, push=None, updateToken=None,
-                 deviceSecret=None, appId=None, deviceIdentityToken=None):
+                 platform=None, push=None, updateToken=None, appId=None,
+                 deviceIdentityToken=None):
 
         if push:
             recipient = push.get('recipient')
@@ -29,7 +29,6 @@ class DeviceDetails(object):
         self.__platform = platform
         self.__push = push
         self.__update_token = updateToken
-        self.__device_secret = deviceSecret
         self.__app_id = appId
         self.__device_identity_token = deviceIdentityToken
 
@@ -62,13 +61,24 @@ class DeviceDetails(object):
         return self.__update_token
 
     @property
-    def device_secret(self):
-        return self.__device_secret
-
-    @property
     def app_id(self):
         return self.__app_id
 
     @property
     def device_identity_token(self):
         return self.__device_identity_token
+
+    @classmethod
+    def from_array(cls, array):
+        return [cls.from_dict(d) for d in array]
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(**data)
+
+
+def make_device_details_response_processor(binary):
+    def device_details_response_processor(response):
+        native = response.to_native()
+        return DeviceDetails.from_array(native)
+    return device_details_response_processor

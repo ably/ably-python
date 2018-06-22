@@ -6,7 +6,6 @@ from ably.http.paginatedresult import HttpPaginatedResponse
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
-from test.ably.utils import random_string
 
 test_vars = RestSetup.get_test_vars()
 
@@ -24,7 +23,7 @@ class TestRestRequest(BaseTestCase):
                              tls=test_vars["tls"])
 
         # Populate the channel (using the new api)
-        cls.channel = random_string(8)
+        cls.channel = cls.get_channel_name()
         cls.path = '/channels/%s/messages' % cls.channel
         for i in range(20):
             body = {'name': 'event%s' % i, 'data': 'lorem ipsum %s' % i}

@@ -48,7 +48,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_publish_various_datatypes_text(self):
         publish0 = self.ably.channels[
-            self.protocol_channel_name('persisted:publish0')]
+            self.get_channel_name('persisted:publish0')]
 
         publish0.publish("publish0", six.u("This is a string message payload"))
         publish0.publish("publish1", b"This is a byte[] message payload")
@@ -86,7 +86,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_publish_message_list(self):
         channel = self.ably.channels[
-            self.protocol_channel_name('persisted:message_list_channel')]
+            self.get_channel_name('persisted:message_list_channel')]
 
         expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
 
@@ -105,7 +105,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_message_list_generate_one_request(self):
         channel = self.ably.channels[
-            self.protocol_channel_name('persisted:message_list_channel_one_request')]
+            self.get_channel_name('persisted:message_list_channel_one_request')]
 
         expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
 
@@ -141,7 +141,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_publish_message_null_name(self):
         channel = self.ably.channels[
-            self.protocol_channel_name('persisted:message_null_name_channel')]
+            self.get_channel_name('persisted:message_null_name_channel')]
 
         data = "String message"
         channel.publish(name=None, data=data)
@@ -158,7 +158,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_publish_message_null_data(self):
         channel = self.ably.channels[
-            self.protocol_channel_name('persisted:message_null_data_channel')]
+            self.get_channel_name('persisted:message_null_data_channel')]
 
         name = "Test name"
         channel.publish(name=name, data=None)
@@ -175,7 +175,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_publish_message_null_name_and_data(self):
         channel = self.ably.channels[
-            self.protocol_channel_name('persisted:null_name_and_data_channel')]
+            self.get_channel_name('persisted:null_name_and_data_channel')]
 
         channel.publish(name=None, data=None)
         channel.publish()
@@ -193,7 +193,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_publish_message_null_name_and_data_keys_arent_sent(self):
         channel = self.ably.channels[
-            self.protocol_channel_name('persisted:null_name_and_data_keys_arent_sent_channel')]
+            self.get_channel_name('persisted:null_name_and_data_keys_arent_sent_channel')]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -218,7 +218,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_message_attr(self):
         publish0 = self.ably.channels[
-            self.protocol_channel_name('persisted:publish_message_attr')]
+            self.get_channel_name('persisted:publish_message_attr')]
 
         messages = [Message('publish',
                             {"test": "This is a JSONObject message payload"},
@@ -243,7 +243,7 @@ class TestRestChannelPublish(BaseTestCase):
 
         # created after message publish and will have client_id
         channel = self.ably_with_client_id.channels[
-            self.protocol_channel_name('persisted:restricted_to_client_id')]
+            self.get_channel_name('persisted:restricted_to_client_id')]
         channel.publish(name='publish', data='test')
 
         # defined after publish
@@ -254,7 +254,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     def test_publish_message_without_client_id_on_identified_client(self):
         channel = self.ably_with_client_id.channels[
-            self.protocol_channel_name('persisted:no_client_id_identified_client')]
+            self.get_channel_name('persisted:no_client_id_identified_client')]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -289,7 +289,7 @@ class TestRestChannelPublish(BaseTestCase):
     def test_publish_message_with_client_id_on_identified_client(self):
         # works if same
         channel = self.ably_with_client_id.channels[
-            self.protocol_channel_name('persisted:with_client_id_identified_client')]
+            self.get_channel_name('persisted:with_client_id_identified_client')]
         channel.publish(name='publish', data='test',
                         client_id=self.ably_with_client_id.client_id)
 
@@ -316,7 +316,7 @@ class TestRestChannelPublish(BaseTestCase):
                             tls=test_vars["tls"],
                             use_binary_protocol=self.use_binary_protocol)
         channel = new_ably.channels[
-            self.protocol_channel_name('persisted:wrong_client_id_implicit_client')]
+            self.get_channel_name('persisted:wrong_client_id_implicit_client')]
 
         with self.assertRaises(AblyException) as cm:
             channel.publish(name='publish', data='test',
@@ -338,7 +338,7 @@ class TestRestChannelPublish(BaseTestCase):
 
         self.assertEqual(wildcard_ably.auth.client_id, '*')
         channel = wildcard_ably.channels[
-            self.protocol_channel_name('persisted:wildcard_client_id')]
+            self.get_channel_name('persisted:wildcard_client_id')]
         channel.publish(name='publish1', data='no client_id')
         some_client_id = uuid.uuid4().hex
         channel.publish(name='publish2', data='some client_id',
@@ -367,7 +367,7 @@ class TestRestChannelPublish(BaseTestCase):
     # TM2i, RSL6a2, RSL1h
     def test_publish_extras(self):
         channel = self.ably.channels[
-            self.protocol_channel_name('canpublish:extras_channel')]
+            self.get_channel_name('canpublish:extras_channel')]
         extras = {
             'push': {
                 'notification': {"title": "Testing"},
@@ -384,7 +384,7 @@ class TestRestChannelPublish(BaseTestCase):
 
     # RSL6a1
     def test_interoperability(self):
-        name = self.protocol_channel_name('persisted:interoperability_channel')
+        name = self.get_channel_name('persisted:interoperability_channel')
         channel = self.ably.channels[name]
 
         url = 'https://%s/channels/%s/messages' % (test_vars["host"], name)
