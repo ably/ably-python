@@ -94,6 +94,10 @@ class Response(object):
         else:
             raise ValueError("Unsuported content type")
 
+    @property
+    def response(self):
+        return self.__response
+
     def __getattr__(self, attr):
         return getattr(self.__response, attr)
 

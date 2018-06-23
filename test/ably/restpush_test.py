@@ -166,3 +166,32 @@ class TestPush(BaseTestCase):
         # Fail
         with pytest.raises(AblyException):
             self.__save(new_dict(data, push={'color': 'red'}))
+
+    # RSH1b4
+    def test_admin_device_registrations_remove(self):
+        remove = self.ably.push.admin.device_registrations.remove
+        get = self.ably.push.admin.device_registrations.get
+
+        # Save
+        device_id = random_string(26, string.ascii_uppercase + string.digits)
+        data = {
+            'id': device_id,
+            'platform': 'ios',
+            'formFactor': 'phone',
+            'push': {
+                'recipient': {
+                    'transportType': 'apns',
+                    'deviceToken': DEVICE_TOKEN
+                }
+            },
+        }
+        self.__save(data)
+
+        # Remove
+        assert get(device_id).id == device_id # Exists
+        assert remove(device_id).status_code == 204
+        with pytest.raises(AblyException): get(device_id) # Doesn't exist
+
+        # Remove again, it doesn't fail
+        response = remove(device_id)
+        assert response.status_code == 204
