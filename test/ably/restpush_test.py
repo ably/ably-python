@@ -1,4 +1,5 @@
 import string
+import time
 
 import pytest
 import six
@@ -42,6 +43,9 @@ class TestPush(BaseTestCase):
         self.count += 1
         return result
 
+    def get_device_id(self):
+        return random_string(26, string.ascii_uppercase + string.digits)
+
     # RSH1a
     def test_admin_publish(self):
         recipient = {'clientId': 'ablyChannel'}
@@ -67,7 +71,7 @@ class TestPush(BaseTestCase):
             get('not-found')
 
         # Save
-        device_id = random_string(26, string.ascii_uppercase + string.digits)
+        device_id = self.get_device_id()
         data = {
             'id': device_id,
             'platform': 'ios',
@@ -91,7 +95,7 @@ class TestPush(BaseTestCase):
     def test_admin_device_registrations_list(self):
         datas = []
         for i in range(10):
-            device_id = random_string(26, string.ascii_uppercase + string.digits)
+            device_id = self.get_device_id()
             client_id = random_string(12)
             data = {
                 'id': device_id,
@@ -124,7 +128,7 @@ class TestPush(BaseTestCase):
         response = self.ably.push.admin.device_registrations.list(deviceId=first['id'])
         assert len(response.items) == 1
         response = self.ably.push.admin.device_registrations.list(
-            deviceId=random_string(26, string.ascii_uppercase + string.digits))
+            deviceId=self.get_device_id())
         assert len(response.items) == 0
 
         # Filter by client id
@@ -135,7 +139,8 @@ class TestPush(BaseTestCase):
 
     # RSH1b3
     def test_admin_device_registrations_save(self):
-        device_id = random_string(26, string.ascii_uppercase + string.digits)
+        device_id = self.get_device_id()
+
         data = {
             'id': device_id,
             'platform': 'ios',
@@ -173,7 +178,7 @@ class TestPush(BaseTestCase):
         get = self.ably.push.admin.device_registrations.get
 
         # Save
-        device_id = random_string(26, string.ascii_uppercase + string.digits)
+        device_id = self.get_device_id()
         data = {
             'id': device_id,
             'platform': 'ios',
@@ -193,5 +198,46 @@ class TestPush(BaseTestCase):
         with pytest.raises(AblyException): get(device_id) # Doesn't exist
 
         # Remove again, it doesn't fail
-        response = remove(device_id)
-        assert response.status_code == 204
+        assert remove(device_id).status_code == 204
+
+    # RSH1b5
+    def test_admin_device_registrations_remove_where(self):
+        remove_where = self.ably.push.admin.device_registrations.remove_where
+        get = self.ably.push.admin.device_registrations.get
+
+        # Save
+        datas = []
+        for i in range(5):
+            device_id = self.get_device_id()
+            client_id = random_string(12)
+            data = {
+                'id': device_id,
+                'clientId': client_id,
+                'platform': 'ios',
+                'formFactor': 'phone',
+                'push': {
+                    'recipient': {
+                        'transportType': 'apns',
+                        'deviceToken': DEVICE_TOKEN
+                    }
+                },
+            }
+            self.__save(data)
+            datas.append(data)
+
+        # Remove by device id
+        device_id = datas[0]['id']
+        assert get(device_id).id == device_id # Exists
+        assert remove_where(deviceId=device_id).status_code == 204
+        with pytest.raises(AblyException): get(device_id) # Doesn't exist
+
+        # Remove by client id
+        device_id = datas[1]['id']
+        client_id = datas[1]['clientId']
+        assert get(device_id).id == device_id # Exists
+        assert remove_where(clientId=client_id).status_code == 204
+        time.sleep(1) # Deletion is async: wait a little bit
+        with pytest.raises(AblyException): get(device_id) # Doesn't exist
+
+        # Remove with no matching params
+        assert remove_where(clientId=data['clientId']).status_code == 204
