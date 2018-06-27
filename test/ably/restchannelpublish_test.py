@@ -150,11 +150,10 @@ class TestRestChannelPublish(BaseTestCase):
         history = channel.history()
         messages = history.items
 
-        self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(len(messages), 1, msg="Expected 1 message")
-
-        self.assertIsNone(messages[0].name)
-        self.assertEqual(messages[0].data, data)
+        assert messages is not None, "Expected non-None messages"
+        assert len(messages) == 1, "Expected 1 message"
+        assert messages[0].name is None
+        assert messages[0].data == data
 
     def test_publish_message_null_data(self):
         channel = self.ably.channels[

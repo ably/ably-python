@@ -5,6 +5,7 @@ import os
 import logging
 import base64
 
+import pytest
 import six
 
 from ably import AblyException
@@ -145,20 +146,15 @@ class TestRestCrypto(BaseTestCase):
 
         rx_channel = self.ably2.channels.get(channel_name, cipher={'key': generate_random_key()})
 
-        try:
-            with self.assertRaises(AblyException) as cm:
-                messages = rx_channel.history()
-        except Exception as e:
-            log.debug('test_crypto_publish_key_mismatch_fail: rx_channel.history not creating exception')
-            log.debug(messages.items[0].data)
+        with pytest.raises(AblyException) as excinfo:
+            rx_channel.history()
 
-            raise(e)
-
-        the_exception = cm.exception
-        self.assertTrue(
-            'invalid-padding' == the_exception.message or
-            the_exception.message.startswith("UnicodeDecodeError: 'utf8'") or
-            the_exception.message.startswith("UnicodeDecodeError: 'utf-8'"))
+        message = excinfo.value.message
+        assert (
+            'invalid-padding' == message or
+            message.startswith("UnicodeDecodeError: 'utf8'") or
+            message.startswith("UnicodeDecodeError: 'utf-8'")
+        )
 
     def test_crypto_send_unencrypted(self):
         channel_name = self.get_channel_name('persisted:crypto_send_unencrypted')
