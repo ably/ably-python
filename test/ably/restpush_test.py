@@ -207,8 +207,11 @@ class TestPush(BaseTestCase):
         device = self.get_device()
         assert get(device.id).id == device.id # Exists
         assert self.remove_device_where(clientId=device.client_id).status_code == 204
-        time.sleep(1) # Deletion is async: wait a little bit
-        with pytest.raises(AblyException): get(device.id) # Doesn't exist
+        # Doesn't exist (Deletion is async: wait up to a few seconds before giving up)
+        with pytest.raises(AblyException):
+            for i in range(5):
+                time.sleep(1)
+                get(device.id)
 
         # Remove with no matching params
         assert self.remove_device_where(clientId=device.client_id).status_code == 204
