@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import logging
 import time
 
+import pytest
 import responses
 import six
 from six.moves import range
@@ -43,24 +44,20 @@ class TestRestChannelHistory(BaseTestCase):
         history0.publish('history3', ['This is a JSONArray message payload'])
 
         history = history0.history()
-        self.assertIsInstance(history, PaginatedResult)
+        assert isinstance(history, PaginatedResult)
         messages = history.items
-        self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(4, len(messages), msg="Expected 4 messages")
+        assert messages is not None, "Expected non-None messages"
+        assert 4 == len(messages), "Expected 4 messages"
 
         message_contents = {m.name: m for m in messages}
-        self.assertEqual(six.u("This is a string message payload"),
-                         message_contents["history0"].data,
-                         msg="Expect history0 to be expected String)")
-        self.assertEqual(b"This is a byte[] message payload",
-                         message_contents["history1"].data,
-                         msg="Expect history1 to be expected byte[]")
-        self.assertEqual({"test": "This is a JSONObject message payload"},
-                         message_contents["history2"].data,
-                         msg="Expect history2 to be expected JSONObject")
-        self.assertEqual(["This is a JSONArray message payload"],
-                         message_contents["history3"].data,
-                         msg="Expect history3 to be expected JSONObject")
+        assert six.u("This is a string message payload") == message_contents["history0"].data, \
+               "Expect history0 to be expected String)"
+        assert b"This is a byte[] message payload" == message_contents["history1"].data, \
+               "Expect history1 to be expected byte[]"
+        assert {"test": "This is a JSONObject message payload"} == message_contents["history2"].data, \
+               "Expect history2 to be expected JSONObject"
+        assert ["This is a JSONArray message payload"] == message_contents["history3"].data, \
+               "Expect history3 to be expected JSONObject"
 
         expected_message_history = [
             message_contents['history3'],
@@ -68,9 +65,7 @@ class TestRestChannelHistory(BaseTestCase):
             message_contents['history1'],
             message_contents['history0'],
         ]
-
-        self.assertEqual(expected_message_history, messages,
-                msg="Expect messages in reverse order")
+        assert expected_message_history == messages, "Expect messages in reverse order"
 
     def test_channel_history_multi_50_forwards(self):
         history0 = self.ably.channels[
@@ -80,7 +75,7 @@ class TestRestChannelHistory(BaseTestCase):
             history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards')
-        self.assertIsNotNone(history)
+        assert history is not None
         messages = history.items
         assert len(messages) == 50, "Expected 50 messages"
 
@@ -96,16 +91,13 @@ class TestRestChannelHistory(BaseTestCase):
             history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards')
-        self.assertIsNotNone(history)
+        assert history is not None
         messages = history.items
-        self.assertEqual(50, len(messages),
-                msg="Expected 50 messages")
+        assert 50 == len(messages), "Expected 50 messages"
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(49, -1, -1)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expect messages in reverse order')
+        assert expected_messages == messages, 'Expect messages in reverse order'
 
     def history_mock_url(self, channel_name):
         kwargs = {
@@ -129,7 +121,7 @@ class TestRestChannelHistory(BaseTestCase):
         url = self.history_mock_url('persisted:channelhistory_limit')
         self.responses_add_empty_msg_pack(url)
         channel.history()
-        self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
+        assert 'limit=' not in responses.calls[0].request.url.split('?')[-1]
 
     @responses.activate
     @dont_vary_protocol
@@ -139,14 +131,14 @@ class TestRestChannelHistory(BaseTestCase):
         url = self.history_mock_url('persisted:channelhistory_limit')
         self.responses_add_empty_msg_pack(url)
         channel.history(limit=500)
-        self.assertIn('limit=500', responses.calls[0].request.url.split('?')[-1])
+        assert 'limit=500' in responses.calls[0].request.url.split('?')[-1]
         channel.history(limit=1000)
-        self.assertIn('limit=1000', responses.calls[1].request.url.split('?')[-1])
+        assert 'limit=1000' in responses.calls[1].request.url.split('?')[-1]
 
     @dont_vary_protocol
     def test_channel_history_max_limit_is_1000(self):
         channel = self.ably.channels['persisted:channelhistory_limit']
-        with self.assertRaises(AblyException):
+        with pytest.raises(AblyException):
             channel.history(limit=1001)
 
     def test_channel_history_limit_forwards(self):
@@ -157,7 +149,7 @@ class TestRestChannelHistory(BaseTestCase):
             history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards', limit=25)
-        self.assertIsNotNone(history)
+        assert history is not None
         messages = history.items
         assert len(messages) == 25, "Expected 25 messages"
 
@@ -173,7 +165,7 @@ class TestRestChannelHistory(BaseTestCase):
             history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards', limit=25)
-        self.assertIsNotNone(history)
+        assert history is not None
         messages = history.items
         assert len(messages) == 25, "Expected 25 messages"
 
@@ -202,13 +194,11 @@ class TestRestChannelHistory(BaseTestCase):
                                    end=interval_end)
 
         messages = history.items
-        self.assertEqual(20, len(messages))
+        assert 20 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(20, 40)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expect messages in forward order')
+        assert expected_messages == messages, 'Expect messages in forward order'
 
     def test_channel_history_time_backwards(self):
         history0 = self.ably.channels[
@@ -231,13 +221,11 @@ class TestRestChannelHistory(BaseTestCase):
                                    end=interval_end)
 
         messages = history.items
-        self.assertEqual(20, len(messages))
+        assert 20 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(39, 19, -1)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expect messages in reverse order')
+        assert expected_messages, messages == 'Expect messages in reverse order'
 
     def test_channel_history_paginate_forwards(self):
         history0 = self.ably.channels[
@@ -249,35 +237,27 @@ class TestRestChannelHistory(BaseTestCase):
         history = history0.history(direction='forwards', limit=10)
         messages = history.items
 
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
         history = history.next()
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(10, 20)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
         history = history.next()
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(20, 30)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
     def test_channel_history_paginate_backwards(self):
         history0 = self.ably.channels[
@@ -288,36 +268,27 @@ class TestRestChannelHistory(BaseTestCase):
 
         history = history0.history(direction='backwards', limit=10)
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
         history = history.next()
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(39, 29, -1)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
         history = history.next()
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(29, 19, -1)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
     def test_channel_history_paginate_forwards_first(self):
         history0 = self.ably.channels[
@@ -328,36 +299,27 @@ class TestRestChannelHistory(BaseTestCase):
 
         history = history0.history(direction='forwards', limit=10)
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
         history = history.next()
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(10, 20)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
         history = history.first()
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
     def test_channel_history_paginate_backwards_rel_first(self):
         history0 = self.ably.channels[
@@ -368,33 +330,24 @@ class TestRestChannelHistory(BaseTestCase):
 
         history = history0.history(direction='backwards', limit=10)
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
         history = history.next()
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(39, 29, -1)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
         
         history = history.first()
         messages = history.items
-
-        self.assertEqual(10, len(messages))
+        assert 10 == len(messages)
 
         message_contents = {m.name:m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
-
-        self.assertEqual(expected_messages, messages,
-                msg='Expected 10 messages')
+        assert expected_messages == messages, 'Expected 10 messages'
