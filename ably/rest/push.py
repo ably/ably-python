@@ -74,8 +74,8 @@ class PushDeviceRegistrations(object):
         """
         path = '/push/deviceRegistrations/%s' % device_id
         response = self.ably.http.get(path)
-        details = response.to_native()
-        return DeviceDetails(**details)
+        obj = response.to_native()
+        return DeviceDetails.from_dict(obj)
 
     def list(self, **params):
         """Returns a PaginatedResult object with the list of DeviceDetails
@@ -96,11 +96,12 @@ class PushDeviceRegistrations(object):
         :Parameters:
         - `device`: a dictionary with the device information
         """
-        device_details = DeviceDetails(**device)
+        device_details = DeviceDetails.factory(device)
         path = '/push/deviceRegistrations/%s' % device_details.id
-        response = self.ably.http.put(path, body=device)
-        details = response.to_native()
-        return DeviceDetails(**details)
+        body = device_details.as_dict()
+        response = self.ably.http.put(path, body=body)
+        obj = response.to_native()
+        return DeviceDetails.from_dict(obj)
 
     def remove(self, device_id):
         """Deletes the registered device identified by the given device id.

@@ -23,35 +23,35 @@ DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad
 class TestPush(BaseTestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+    def setUpClass(cls):
+        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
+                            rest_host=test_vars["host"],
+                            port=test_vars["port"],
+                            tls_port=test_vars["tls_port"],
+                            tls=test_vars["tls"])
 
         # Register several devices for later use
-        self.devices = {}
+        cls.devices = {}
         for i in range(10):
-            self.save_device()
+            cls.save_device()
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
 
     @classmethod
-    def get_client_id(self):
+    def get_client_id(cls):
         return random_string(12)
 
     @classmethod
-    def get_device_id(self):
+    def get_device_id(cls):
         return random_string(26, string.ascii_uppercase + string.digits)
 
     @classmethod
-    def gen_device_data(self, data=None, **kw):
+    def gen_device_data(cls, data=None, **kw):
         if data is None:
             data = {
-                'id': self.get_device_id(),
-                'clientId': self.get_client_id(),
+                'id': cls.get_device_id(),
+                'clientId': cls.get_client_id(),
                 'platform': random.choice(['android', 'ios']),
                 'formFactor': 'phone',
                 'push': {
@@ -68,34 +68,34 @@ class TestPush(BaseTestCase):
         return data
 
     @classmethod
-    def save_device(self, data=None, **kw):
+    def save_device(cls, data=None, **kw):
         """
         Helper method to register a device, to not have this code repeated
         everywhere. Returns the input dict that was sent to Ably, and the
         device details returned by Ably.
         """
-        data = self.gen_device_data(data, **kw)
-        device = self.ably.push.admin.device_registrations.save(data)
-        self.devices[device.id] = device
+        data = cls.gen_device_data(data, **kw)
+        device = cls.ably.push.admin.device_registrations.save(data)
+        cls.devices[device.id] = device
         return device
 
     @classmethod
-    def remove_device(self, device_id):
-        result = self.ably.push.admin.device_registrations.remove(device_id)
-        self.devices.pop(device_id, None)
+    def remove_device(cls, device_id):
+        result = cls.ably.push.admin.device_registrations.remove(device_id)
+        cls.devices.pop(device_id, None)
         return result
 
     @classmethod
-    def remove_device_where(self, **kw):
-        remove_where = self.ably.push.admin.device_registrations.remove_where
+    def remove_device_where(cls, **kw):
+        remove_where = cls.ably.push.admin.device_registrations.remove_where
         result = remove_where(**kw)
 
         aux = {'deviceId': 'id', 'clientId': 'client_id'}
-        for device in list(self.devices.values()):
+        for device in list(cls.devices.values()):
             for key, value in kw.items():
                 key = aux[key]
                 if getattr(device, key) == value:
-                    del self.devices[device.id]
+                    del cls.devices[device.id]
 
         return result
 
@@ -111,10 +111,14 @@ class TestPush(BaseTestCase):
         }
 
         publish = self.ably.push.admin.publish
-        with pytest.raises(TypeError): publish('ablyChannel', data)
-        with pytest.raises(TypeError): publish(recipient, 25)
-        with pytest.raises(ValueError): publish({}, data)
-        with pytest.raises(ValueError): publish(recipient, {})
+        with pytest.raises(TypeError):
+            publish('ablyChannel', data)
+        with pytest.raises(TypeError):
+            publish(recipient, 25)
+        with pytest.raises(ValueError):
+            publish({}, data)
+        with pytest.raises(ValueError):
+            publish(recipient, {})
 
         response = publish(recipient, data)
         assert response.status_code == 204
@@ -186,9 +190,10 @@ class TestPush(BaseTestCase):
         device = self.get_device()
 
         # Remove
-        assert get(device.id).id == device.id # Exists
+        assert get(device.id).id == device.id  # Exists
         assert self.remove_device(device.id).status_code == 204
-        with pytest.raises(AblyException): get(device.id) # Doesn't exist
+        with pytest.raises(AblyException):  # Doesn't exist
+            get(device.id)
 
         # Remove again, it doesn't fail
         assert self.remove_device(device.id).status_code == 204
@@ -199,13 +204,14 @@ class TestPush(BaseTestCase):
 
         # Remove by device id
         device = self.get_device()
-        assert get(device.id).id == device.id # Exists
+        assert get(device.id).id == device.id  # Exists
         assert self.remove_device_where(deviceId=device.id).status_code == 204
-        with pytest.raises(AblyException): get(device.id) # Doesn't exist
+        with pytest.raises(AblyException):  # Doesn't exist
+            get(device.id)
 
         # Remove by client id
         device = self.get_device()
-        assert get(device.id).id == device.id # Exists
+        assert get(device.id).id == device.id  # Exists
         assert self.remove_device_where(clientId=device.client_id).status_code == 204
         # Doesn't exist (Deletion is async: wait up to a few seconds before giving up)
         with pytest.raises(AblyException):
@@ -247,7 +253,9 @@ class TestPush(BaseTestCase):
             PushChannelSubscription(channel, device_id=device.id, client_id=client_id)
 
         subscription = PushChannelSubscription('notallowed', device_id=device.id)
-        with pytest.raises(AblyAuthException): save(subscription)
+        with pytest.raises(AblyAuthException):
+            save(subscription)
 
         subscription = PushChannelSubscription(channel, device_id='notregistered')
-        with pytest.raises(AblyException): save(subscription)
+        with pytest.raises(AblyException):
+            save(subscription)

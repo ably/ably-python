@@ -69,7 +69,7 @@ class TestAuth(BaseTestCase):
 
         try:
             ably.stats(None)
-        except:
+        except Exception:
             pass
 
         self.assertTrue(callback_called, msg="Token callback not called")

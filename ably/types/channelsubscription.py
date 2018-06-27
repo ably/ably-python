@@ -37,13 +37,13 @@ class PushChannelSubscription(object):
         return obj
 
     @classmethod
-    def from_dict(self, obj):
+    def from_dict(cls, obj):
         obj = {camel_to_snake(key): value for key, value in obj.items()}
-        return self(**obj)
+        return cls(**obj)
 
     @classmethod
-    def factory(self, subscription):
-        if isinstance(subscription, self):
+    def factory(cls, subscription):
+        if isinstance(subscription, cls):
             return subscription
 
-        return self.from_dict(subscription)
+        return cls.from_dict(subscription)
