@@ -270,7 +270,7 @@ class TestAuthAuthorize(BaseTestCase):
 
         token_called, auth_called = request_mock.call_args
         assert token_called[0] == {}
-        assert auth_called['auth_headers'] == None
+        assert auth_called['auth_headers'] is None
 
     # RSA10g
     def test_timestamp_is_not_stored(self):
@@ -392,7 +392,7 @@ class TestRequestToken(BaseTestCase):
         assert request.headers['content-type'] == 'application/x-www-form-urlencoded'
         assert headers['foo'] == request.headers['foo']
         assert urlparse(request.url).query == ''  # No querystring!
-        assert parse_qs(request.body) == {'foo': ['token'], 'spam': ['eggs']} # TokenParams has precedence
+        assert parse_qs(request.body) == {'foo': ['token'], 'spam': ['eggs']}  # TokenParams has precedence
         assert 'token_string' == token_details.token
 
     @dont_vary_protocol
