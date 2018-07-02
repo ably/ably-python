@@ -231,17 +231,7 @@ class TestPush(BaseTestCase):
 
         # Subscribe
         channel = 'canpublish:test'
-        subscription = PushChannelSubscription(channel, device_id=device.id)
-        subscription = save(subscription)
-        assert type(subscription) is PushChannelSubscription
-        assert subscription.channel == channel
-        assert subscription.device_id == device.id
-        assert subscription.client_id is None
-
-        # Update
-        channel = 'canpublish:test'
-        subscription = PushChannelSubscription(channel, device_id=device.id)
-        subscription = save(subscription)
+        subscription = save(PushChannelSubscription(channel, device_id=device.id))
         assert type(subscription) is PushChannelSubscription
         assert subscription.channel == channel
         assert subscription.device_id == device.id
