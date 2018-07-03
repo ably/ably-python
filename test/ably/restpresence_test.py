@@ -4,14 +4,13 @@ from __future__ import absolute_import
 
 from datetime import datetime, timedelta
 
+import pytest
 import six
-import msgpack
 import responses
 
 from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
-from ably.types.presence import (PresenceMessage,
-                                 make_encrypted_presence_response_handler)
+from ably.types.presence import PresenceMessage
 
 from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase
 from test.ably.restsetup import RestSetup
@@ -37,42 +36,39 @@ class TestPresence(BaseTestCase):
 
     def test_channel_presence_get(self):
         presence_page = self.channel.presence.get()
-        self.assertIsInstance(presence_page, PaginatedResult)
-        self.assertEqual(len(presence_page.items), 6)
+        assert isinstance(presence_page, PaginatedResult)
+        assert len(presence_page.items) == 6
         member = presence_page.items[0]
-        self.assertIsInstance(member, PresenceMessage)
-        self.assertTrue(member.action)
-        self.assertTrue(member.id)
-        self.assertTrue(member.client_id)
-        self.assertTrue(member.data)
-        self.assertTrue(member.connection_id)
-        self.assertTrue(member.timestamp)
+        assert isinstance(member, PresenceMessage)
+        assert member.action
+        assert member.id
+        assert member.client_id
+        assert member.data
+        assert member.connection_id
+        assert member.timestamp
 
     def test_channel_presence_history(self):
         presence_history = self.channel.presence.history()
-        self.assertIsInstance(presence_history, PaginatedResult)
-        self.assertEqual(len(presence_history.items), 6)
+        assert isinstance(presence_history, PaginatedResult)
+        assert len(presence_history.items) == 6
         member = presence_history.items[0]
-        self.assertIsInstance(member, PresenceMessage)
-        self.assertTrue(member.action)
-        self.assertTrue(member.id)
-        self.assertTrue(member.client_id)
-        self.assertTrue(member.data)
-        self.assertTrue(member.connection_id)
-        self.assertTrue(member.timestamp)
-        self.assertTrue(member.encoding)
+        assert isinstance(member, PresenceMessage)
+        assert member.action
+        assert member.id
+        assert member.client_id
+        assert member.data
+        assert member.connection_id
+        assert member.timestamp
+        assert member.encoding
 
     def test_presence_get_encoded(self):
         presence_history = self.channel.presence.history()
-        self.assertEqual(presence_history.items[-1].data, six.u("true"))
-        self.assertEqual(presence_history.items[-2].data, six.u("24"))
-        self.assertEqual(presence_history.items[-3].data,
-                         six.u("This is a string clientData payload"))
+        assert presence_history.items[-1].data == six.u("true")
+        assert presence_history.items[-2].data == six.u("24")
+        assert presence_history.items[-3].data == six.u("This is a string clientData payload")
         # this one doesn't have encoding field
-        self.assertEqual(presence_history.items[-4].data,
-                         six.u('{ "test": "This is a JSONObject clientData payload"}'))
-        self.assertEqual(presence_history.items[-5].data,
-                         {"example": {"json": "Object"}})
+        assert presence_history.items[-4].data == six.u('{ "test": "This is a JSONObject clientData payload"}')
+        assert presence_history.items[-5].data == {"example": {"json": "Object"}}
 
     def test_presence_history_encrypted(self):
         key = b'0123456789abcdef'
@@ -80,8 +76,7 @@ class TestPresence(BaseTestCase):
         self.channel = self.ably.channels.get('persisted:presence_fixtures',
                                               cipher={'key': key})
         presence_history = self.channel.presence.history()
-        self.assertEqual(presence_history.items[0].data,
-                         {'foo': 'bar'})
+        assert presence_history.items[0].data == {'foo': 'bar'}
 
     def test_presence_get_encrypted(self):
         key = b'0123456789abcdef'
@@ -93,19 +88,18 @@ class TestPresence(BaseTestCase):
             lambda message: message.client_id == 'client_encoded',
             presence_messages.items))[0]
 
-        self.assertEqual(message.data, {'foo': 'bar'})
+        assert message.data == {'foo': 'bar'}
 
     def test_timestamp_is_datetime(self):
         presence_page = self.channel.presence.get()
         member = presence_page.items[0]
-        self.assertIsInstance(member.timestamp, datetime)
+        assert isinstance(member.timestamp, datetime)
 
     def test_presence_message_has_correct_member_key(self):
         presence_page = self.channel.presence.get()
         member = presence_page.items[0]
 
-        self.assertEqual(member.member_key, "%s:%s" % (member.connection_id,
-                                                       member.client_id))
+        assert member.member_key == "%s:%s" % (member.connection_id, member.client_id)
 
     def presence_mock_url(self):
         kwargs = {
@@ -139,7 +133,7 @@ class TestPresence(BaseTestCase):
         url = self.presence_mock_url()
         self.responses_add_empty_msg_pack(url)
         self.channel.presence.get()
-        self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
+        assert 'limit=' not in responses.calls[0].request.url.split('?')[-1]
 
     @dont_vary_protocol
     @responses.activate
@@ -147,14 +141,15 @@ class TestPresence(BaseTestCase):
         url = self.presence_mock_url()
         self.responses_add_empty_msg_pack(url)
         self.channel.presence.get(300)
-        self.assertIn('limit=300', responses.calls[0].request.url.split('?')[-1])
+        assert 'limit=300' in responses.calls[0].request.url.split('?')[-1]
 
     @dont_vary_protocol
     @responses.activate
     def test_get_presence_max_limit_is_1000(self):
         url = self.presence_mock_url()
         self.responses_add_empty_msg_pack(url)
-        self.assertRaises(ValueError, self.channel.presence.get, 5000)
+        with pytest.raises(ValueError):
+            self.channel.presence.get(5000)
 
     @dont_vary_protocol
     @responses.activate
@@ -162,7 +157,7 @@ class TestPresence(BaseTestCase):
         url = self.history_mock_url()
         self.responses_add_empty_msg_pack(url)
         self.channel.presence.history()
-        self.assertNotIn('limit=', responses.calls[0].request.url.split('?')[-1])
+        assert 'limit=' not in responses.calls[0].request.url.split('?')[-1]
 
     @dont_vary_protocol
     @responses.activate
@@ -170,7 +165,7 @@ class TestPresence(BaseTestCase):
         url = self.history_mock_url()
         self.responses_add_empty_msg_pack(url)
         self.channel.presence.history(300)
-        self.assertIn('limit=300', responses.calls[0].request.url.split('?')[-1])
+        assert 'limit=300' in responses.calls[0].request.url.split('?')[-1]
 
     @dont_vary_protocol
     @responses.activate
@@ -178,14 +173,15 @@ class TestPresence(BaseTestCase):
         url = self.history_mock_url()
         self.responses_add_empty_msg_pack(url)
         self.channel.presence.history(direction='backwards')
-        self.assertIn('direction=backwards', responses.calls[0].request.url.split('?')[-1])
+        assert 'direction=backwards' in responses.calls[0].request.url.split('?')[-1]
 
     @dont_vary_protocol
     @responses.activate
     def test_history_max_limit_is_1000(self):
         url = self.history_mock_url()
         self.responses_add_empty_msg_pack(url)
-        self.assertRaises(ValueError, self.channel.presence.history, 5000)
+        with pytest.raises(ValueError):
+            self.channel.presence.history(5000)
 
     @dont_vary_protocol
     @responses.activate
@@ -193,8 +189,8 @@ class TestPresence(BaseTestCase):
         url = self.history_mock_url()
         self.responses_add_empty_msg_pack(url)
         self.channel.presence.history(start=100000, end=100001)
-        self.assertIn('start=100000', responses.calls[0].request.url.split('?')[-1])
-        self.assertIn('end=100001', responses.calls[0].request.url.split('?')[-1])
+        assert 'start=100000' in responses.calls[0].request.url.split('?')[-1]
+        assert 'end=100001' in responses.calls[0].request.url.split('?')[-1]
 
     @dont_vary_protocol
     @responses.activate
@@ -206,8 +202,8 @@ class TestPresence(BaseTestCase):
         end_ms = start_ms + (1000 * 60 * 60)
         self.responses_add_empty_msg_pack(url)
         self.channel.presence.history(start=start, end=end)
-        self.assertIn('start=' + str(start_ms), responses.calls[0].request.url.split('?')[-1])
-        self.assertIn('end=' + str(end_ms), responses.calls[0].request.url.split('?')[-1])
+        assert 'start=' + str(start_ms) in responses.calls[0].request.url.split('?')[-1]
+        assert 'end=' + str(end_ms) in responses.calls[0].request.url.split('?')[-1]
 
     @dont_vary_protocol
     @responses.activate
@@ -216,5 +212,5 @@ class TestPresence(BaseTestCase):
         end = datetime(2015, 8, 15, 17, 11, 44, 706539)
         start = end + timedelta(hours=1)
         self.responses_add_empty_msg_pack(url)
-        with self.assertRaisesRegexp(ValueError, "'end' parameter has to be greater than or equal to 'start'"):
+        with pytest.raises(ValueError, match="'end' parameter has to be greater than or equal to 'start'"):
             self.channel.presence.history(start=start, end=end)
