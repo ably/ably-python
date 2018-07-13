@@ -44,7 +44,6 @@ class TestRestRequest(BaseTestCase):
         assert result.items[0]['channel'] == self.channel
         assert 'messageId' in result.items[0]
 
-
     def test_get(self):
         params = {'limit': 10, 'direction': 'forwards'}
         result = self.ably.request('GET', self.path, params=params)

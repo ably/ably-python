@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 def format_time_param(t):
     try:
         return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
-    except:
+    except Exception:
         return str(t)
 
 def format_params(params=None, direction=None, start=None, end=None, limit=None, **kw):

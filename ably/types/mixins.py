@@ -1,8 +1,7 @@
-import six
-import json
 import base64
-
+import json
 import logging
+import six
 
 from ably.util.crypto import CipherData
 

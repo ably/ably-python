@@ -1,5 +1,6 @@
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.device import DeviceDetails, make_device_details_response_processor
+from ably.types.channelsubscription import PushChannelSubscription
 
 class Push(object):
 
@@ -17,6 +18,7 @@ class PushAdmin(object):
     def __init__(self, ably):
         self.__ably = ably
         self.__device_registrations = PushDeviceRegistrations(ably)
+        self.__channel_subscriptions = PushChannelSubscriptions(ably)
 
     @property
     def ably(self):
@@ -25,6 +27,10 @@ class PushAdmin(object):
     @property
     def device_registrations(self):
         return self.__device_registrations
+
+    @property
+    def channel_subscriptions(self):
+        return self.__channel_subscriptions
 
     def publish(self, recipient, data, timeout=None):
         """Publish a push notification to a single device.
@@ -68,8 +74,8 @@ class PushDeviceRegistrations(object):
         """
         path = '/push/deviceRegistrations/%s' % device_id
         response = self.ably.http.get(path)
-        details = response.to_native()
-        return DeviceDetails(**details)
+        obj = response.to_native()
+        return DeviceDetails.from_dict(obj)
 
     def list(self, **params):
         """Returns a PaginatedResult object with the list of DeviceDetails
@@ -90,11 +96,12 @@ class PushDeviceRegistrations(object):
         :Parameters:
         - `device`: a dictionary with the device information
         """
-        device_details = DeviceDetails(**device)
+        device_details = DeviceDetails.factory(device)
         path = '/push/deviceRegistrations/%s' % device_details.id
-        response = self.ably.http.put(path, body=device)
-        details = response.to_native()
-        return DeviceDetails(**details)
+        body = device_details.as_dict()
+        response = self.ably.http.put(path, body=body)
+        obj = response.to_native()
+        return DeviceDetails.from_dict(obj)
 
     def remove(self, device_id):
         """Deletes the registered device identified by the given device id.
@@ -113,3 +120,27 @@ class PushDeviceRegistrations(object):
         """
         path = '/push/deviceRegistrations' + format_params(params)
         return self.ably.http.delete(path)
+
+
+class PushChannelSubscriptions(object):
+
+    def __init__(self, ably):
+        self.__ably = ably
+
+    @property
+    def ably(self):
+        return self.__ably
+
+    def save(self, subscription):
+        """Creates or updates the subscription. Returns a
+        PushChannelSubscription object.
+
+        :Parameters:
+        - `subscription`: a dictionary with the subscription information
+        """
+        subscription = PushChannelSubscription.factory(subscription)
+        path = '/push/channelSubscriptions'
+        body = subscription.as_dict()
+        response = self.ably.http.post(path, body=body)
+        obj = response.to_native()
+        return PushChannelSubscription.from_dict(obj)
