@@ -126,3 +126,6 @@ def new_dict(src, **kw):
     new = src.copy()
     new.update(kw)
     return new
+
+def get_random_key(d):
+    return random.choice(list(d))

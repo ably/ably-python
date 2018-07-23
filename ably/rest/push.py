@@ -1,6 +1,6 @@
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.device import DeviceDetails, make_device_details_response_processor
-from ably.types.channelsubscription import PushChannelSubscription
+from ably.types.channelsubscription import PushChannelSubscription, make_channel_subscriptions_response_processor
 
 class Push(object):
 
@@ -130,6 +130,19 @@ class PushChannelSubscriptions(object):
     @property
     def ably(self):
         return self.__ably
+
+    def list(self, **params):
+        """Returns a PaginatedResult object with the list of
+        PushChannelSubscription objects, filtered by the given parameters.
+
+        :Parameters:
+        - `**params`: the parameters used to filter the list
+        """
+        path = '/push/channelSubscriptions' + format_params(params)
+        response_processor = make_channel_subscriptions_response_processor(
+            self.ably.options.use_binary_protocol)
+        return PaginatedResult.paginated_query(
+            self.ably.http, url=path, response_processor=response_processor)
 
     def save(self, subscription):
         """Creates or updates the subscription. Returns a

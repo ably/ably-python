@@ -11,7 +11,7 @@ from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, BaseTestCase
-from test.ably.utils import new_dict, random_string
+from test.ably.utils import new_dict, random_string, get_random_key
 
 test_vars = RestSetup.get_test_vars()
 
@@ -99,9 +99,10 @@ class TestPush(BaseTestCase):
 
         return result
 
-    def get_device(self):
-        key = random.choice(list(self.devices.keys()))
-        return self.devices[key]
+    @classmethod
+    def get_device(cls):
+        key = get_random_key(cls.devices)
+        return cls.devices[key]
 
     # RSH1a
     def test_admin_publish(self):
@@ -221,6 +222,36 @@ class TestPush(BaseTestCase):
 
         # Remove with no matching params
         assert self.remove_device_where(clientId=device.client_id).status_code == 204
+
+    # RSH1c1
+    def test_admin_channel_subscriptions_list(self):
+        list_ = self.ably.push.admin.channel_subscriptions.list
+
+        channel = 'canpublish:test1'
+
+        # Register several channel subscriptions for later use
+        save = self.ably.push.admin.channel_subscriptions.save
+        for key in self.devices:
+            device = self.devices[key]
+            save(PushChannelSubscription(channel, device_id=device.id))
+
+        response = list_(channel=channel)
+        assert type(response) is PaginatedResult
+        assert type(response.items) is list
+        assert type(response.items[0]) is PushChannelSubscription
+
+        # limit
+        assert len(list_(channel=channel, limit=5000).items) == len(self.devices)
+        assert len(list_(channel=channel, limit=2).items) == 2
+
+        # Filter by device id
+        device = self.get_device()
+        assert len(list_(channel=channel, deviceId=device.id).items) == 1
+        assert len(list_(channel=channel, deviceId=self.get_device_id()).items) == 0
+
+        # Filter by client id
+        assert len(list_(channel=channel, clientId=device.client_id).items) == 0
+
 
     # RSH1c3
     def test_admin_channel_subscriptions_save(self):
