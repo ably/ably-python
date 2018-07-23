@@ -252,7 +252,6 @@ class TestPush(BaseTestCase):
         # Filter by client id
         assert len(list_(channel=channel, clientId=device.client_id).items) == 0
 
-
     # RSH1c3
     def test_admin_channel_subscriptions_save(self):
         save = self.ably.push.admin.channel_subscriptions.save
