@@ -1,3 +1,4 @@
+import itertools
 import random
 import string
 import time
@@ -28,6 +29,12 @@ class TestPush(BaseTestCase):
         cls.devices = {}
         for i in range(10):
             cls.save_device()
+
+        # Register several subscriptions for later use
+        cls.channels = {'canpublish:test1': [], 'canpublish:test2': [], 'canpublish:test3': []}
+        for key, channel in zip(cls.devices, itertools.cycle(cls.channels)):
+            device = cls.devices[key]
+            cls.save_subscription(channel, device_id=device.id)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -97,6 +104,23 @@ class TestPush(BaseTestCase):
     def get_device(cls):
         key = get_random_key(cls.devices)
         return cls.devices[key]
+
+    @classmethod
+    def get_channel(cls):
+        key = get_random_key(cls.channels)
+        return key, cls.channels[key]
+
+    @classmethod
+    def save_subscription(cls, channel, **kw):
+        """
+        Helper method to register a device, to not have this code repeated
+        everywhere. Returns the input dict that was sent to Ably, and the
+        device details returned by Ably.
+        """
+        subscription = PushChannelSubscription(channel, **kw)
+        subscription = cls.ably.push.admin.channel_subscriptions.save(subscription)
+        cls.channels.setdefault(channel, []).append(subscription)
+        return subscription
 
     # RSH1a
     def test_admin_publish(self):
@@ -221,15 +245,7 @@ class TestPush(BaseTestCase):
     def test_admin_channel_subscriptions_list(self):
         list_ = self.ably.push.admin.channel_subscriptions.list
 
-        channel = 'canpublish:test1'
-
-        # Register several channel subscriptions for later use
-        ids = set()
-        save = self.ably.push.admin.channel_subscriptions.save
-        for key in self.devices:
-            device = self.devices[key]
-            save(PushChannelSubscription(channel, device_id=device.id))
-            ids.add(device.id)
+        channel, subscriptions = self.get_channel()
 
         response = list_(channel=channel)
         assert type(response) is PaginatedResult
@@ -237,21 +253,34 @@ class TestPush(BaseTestCase):
         assert type(response.items[0]) is PushChannelSubscription
 
         # limit
-        assert len(list_(channel=channel, limit=5000).items) == len(self.devices)
+        assert len(list_(channel=channel, limit=5000).items) == len(subscriptions)
         assert len(list_(channel=channel, limit=2).items) == 2
 
         # Filter by device id
-        device = self.get_device()
-        items = list_(channel=channel, deviceId=device.id).items
+        device_id = subscriptions[0].device_id
+        items = list_(channel=channel, deviceId=device_id).items
         assert len(items) == 1
-        assert items[0].device_id == device.id
+        assert items[0].device_id == device_id
         assert items[0].channel == channel
-        assert device.id in ids
 
         assert len(list_(channel=channel, deviceId=self.get_device_id()).items) == 0
 
         # Filter by client id
+        device = self.get_device()
         assert len(list_(channel=channel, clientId=device.client_id).items) == 0
+
+    # RSH1c2
+    def test_admin_channels_list(self):
+        list_ = self.ably.push.admin.channel_subscriptions.list_channels
+
+        response = list_()
+        assert type(response) is PaginatedResult
+        assert type(response.items) is list
+        assert type(response.items[0]) is str
+
+        # limit
+        assert len(list_(limit=5000).items) == len(self.channels)
+        assert len(list_(limit=2).items) == 2
 
     # RSH1c3
     def test_admin_channel_subscriptions_save(self):
@@ -262,7 +291,7 @@ class TestPush(BaseTestCase):
 
         # Subscribe
         channel = 'canpublish:test'
-        subscription = save(PushChannelSubscription(channel, device_id=device.id))
+        subscription = self.save_subscription(channel, device_id=device.id)
         assert type(subscription) is PushChannelSubscription
         assert subscription.channel == channel
         assert subscription.device_id == device.id
