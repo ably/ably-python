@@ -101,8 +101,6 @@ class DeviceDetails(object):
         return cls.from_dict(device)
 
 
-def make_device_details_response_processor(binary):
-    def device_details_response_processor(response):
-        native = response.to_native()
-        return DeviceDetails.from_array(native)
-    return device_details_response_processor
+def device_details_response_processor(response):
+    native = response.to_native()
+    return DeviceDetails.from_array(native)

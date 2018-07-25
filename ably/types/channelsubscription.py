@@ -53,8 +53,6 @@ class PushChannelSubscription(object):
         return cls.from_dict(subscription)
 
 
-def make_channel_subscriptions_response_processor(binary):
-    def channel_subscriptions_response_processor(response):
-        native = response.to_native()
-        return PushChannelSubscription.from_array(native)
-    return channel_subscriptions_response_processor
+def channel_subscriptions_response_processor(response):
+    native = response.to_native()
+    return PushChannelSubscription.from_array(native)

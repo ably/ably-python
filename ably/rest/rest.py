@@ -12,7 +12,7 @@ from ably.rest.channel import Channels
 from ably.rest.push import Push
 from ably.util.exceptions import AblyException, catch_all
 from ably.types.options import Options
-from ably.types.stats import make_stats_response_processor
+from ably.types.stats import stats_response_processor
 from ably.types.tokendetails import TokenDetails
 
 log = logging.getLogger(__name__)
@@ -88,9 +88,6 @@ class AblyRest(object):
         """Returns the stats for this application"""
         params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
         url = '/stats' + params
-
-        stats_response_processor = make_stats_response_processor(
-            self.options.use_binary_protocol)
 
         return PaginatedResult.paginated_query(
             self.http, url=url, response_processor=stats_response_processor)

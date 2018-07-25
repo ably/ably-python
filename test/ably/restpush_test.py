@@ -230,10 +230,12 @@ class TestPush(BaseTestCase):
         channel = 'canpublish:test1'
 
         # Register several channel subscriptions for later use
+        ids = set()
         save = self.ably.push.admin.channel_subscriptions.save
         for key in self.devices:
             device = self.devices[key]
             save(PushChannelSubscription(channel, device_id=device.id))
+            ids.add(device.id)
 
         response = list_(channel=channel)
         assert type(response) is PaginatedResult
@@ -246,7 +248,12 @@ class TestPush(BaseTestCase):
 
         # Filter by device id
         device = self.get_device()
-        assert len(list_(channel=channel, deviceId=device.id).items) == 1
+        items = list_(channel=channel, deviceId=device.id).items
+        assert len(items) == 1
+        assert items[0].device_id == device.id
+        assert items[0].channel == channel
+        assert device.id in ids
+
         assert len(list_(channel=channel, deviceId=self.get_device_id()).items) == 0
 
         # Filter by client id

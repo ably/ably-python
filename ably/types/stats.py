@@ -150,11 +150,9 @@ class Stats(object):
         return date_time.strftime(INTERVALS_FMT[granularity])
 
 
-def make_stats_response_processor(binary):
-    def stats_response_processor(response):
-        stats_array = response.to_native()
-        return Stats.from_array(stats_array)
-    return stats_response_processor
+def stats_response_processor(response):
+    stats_array = response.to_native()
+    return Stats.from_array(stats_array)
 
 
 INTERVALS_FMT = {
