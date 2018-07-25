@@ -1,4 +1,4 @@
-from .utils import camel_to_snake, snake_to_camel
+from ably.util import case
 
 
 DevicePushTransportType = {'fcm', 'gcm', 'apns', 'web'}
@@ -79,14 +79,14 @@ class DeviceDetails(object):
         for key in keys:
             value = getattr(self, key)
             if value is not None:
-                key = snake_to_camel(key)
+                key = case.snake_to_camel(key)
                 obj[key] = value
 
         return obj
 
     @classmethod
     def from_dict(cls, obj):
-        obj = {camel_to_snake(key): value for key, value in obj.items()}
+        obj = {case.camel_to_snake(key): value for key, value in obj.items()}
         return cls(**obj)
 
     @classmethod

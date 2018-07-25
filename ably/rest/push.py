@@ -178,5 +178,13 @@ class PushChannelSubscriptions(object):
         """
         subscription = PushChannelSubscription.factory(subscription)
         params = subscription.as_dict()
-        path = '/push/channelSubscriptions' + format_params(params)
+        return self.remove_where(**params)
+
+    def remove_where(self, **params):
+        """Deletes the subscriptions identified by the given parameters.
+
+        :Parameters:
+        - `**params`: the parameters that identify the subscriptions to remove
+        """
+        path = '/push/channelSubscriptions' + format_params(**params)
         return self.ably.http.delete(path)

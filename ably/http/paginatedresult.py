@@ -6,6 +6,7 @@ import logging
 from six.moves.urllib.parse import urlencode
 
 from ably.http.http import Request
+from ably.util import case
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ def format_params(params=None, direction=None, start=None, end=None, limit=None,
 
     for key, value in kw.items():
         if value is not None:
+            key = case.snake_to_camel(key)
             params[key] = value
 
     if direction:
