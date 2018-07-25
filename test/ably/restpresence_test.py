@@ -21,18 +21,24 @@ test_vars = RestSetup.get_test_vars()
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestPresence(BaseTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.ably = AblyRest(test_vars["keys"][0]["key_str"],
+                            rest_host=test_vars["host"],
+                            port=test_vars["port"],
+                            tls_port=test_vars["tls_port"],
+                            tls=test_vars["tls"])
+        cls.channel = cls.ably.channels.get('persisted:presence_fixtures')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.ably.channels.release('persisted:presence_fixtures')
+
     def setUp(self):
-        self.ably = AblyRest(test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
-        self.per_protocol_setup(True)
+        self.ably.options.use_binary_protocol = True
 
     def per_protocol_setup(self, use_binary_protocol):
-        # This will be called every test that vary by protocol for each protocol
         self.ably.options.use_binary_protocol = use_binary_protocol
-        self.channel = self.ably.channels.get('persisted:presence_fixtures')
 
     def test_channel_presence_get(self):
         presence_page = self.channel.presence.get()
@@ -69,26 +75,6 @@ class TestPresence(BaseTestCase):
         # this one doesn't have encoding field
         assert presence_history.items[-4].data == six.u('{ "test": "This is a JSONObject clientData payload"}')
         assert presence_history.items[-5].data == {"example": {"json": "Object"}}
-
-    def test_presence_history_encrypted(self):
-        key = b'0123456789abcdef'
-        self.ably.channels.release('persisted:presence_fixtures')
-        self.channel = self.ably.channels.get('persisted:presence_fixtures',
-                                              cipher={'key': key})
-        presence_history = self.channel.presence.history()
-        assert presence_history.items[0].data == {'foo': 'bar'}
-
-    def test_presence_get_encrypted(self):
-        key = b'0123456789abcdef'
-        self.ably.channels.release('persisted:presence_fixtures')
-        self.channel = self.ably.channels.get('persisted:presence_fixtures',
-                                              cipher={'key': key})
-        presence_messages = self.channel.presence.get()
-        message = list(filter(
-            lambda message: message.client_id == 'client_encoded',
-            presence_messages.items))[0]
-
-        assert message.data == {'foo': 'bar'}
 
     def test_timestamp_is_datetime(self):
         presence_page = self.channel.presence.get()
@@ -214,3 +200,37 @@ class TestPresence(BaseTestCase):
         self.responses_add_empty_msg_pack(url)
         with pytest.raises(ValueError, match="'end' parameter has to be greater than or equal to 'start'"):
             self.channel.presence.history(start=start, end=end)
+
+
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
+class TestPresenceCrypt(BaseTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ably = AblyRest(test_vars["keys"][0]["key_str"],
+                            rest_host=test_vars["host"],
+                            port=test_vars["port"],
+                            tls_port=test_vars["tls_port"],
+                            tls=test_vars["tls"])
+
+        key = b'0123456789abcdef'
+        cls.channel = cls.ably.channels.get('persisted:presence_fixtures', cipher={'key': key})
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.ably.channels.release('persisted:presence_fixtures')
+
+    def per_protocol_setup(self, use_binary_protocol):
+        self.ably.options.use_binary_protocol = use_binary_protocol
+
+    def test_presence_history_encrypted(self):
+        presence_history = self.channel.presence.history()
+        assert presence_history.items[0].data == {'foo': 'bar'}
+
+    def test_presence_get_encrypted(self):
+        presence_messages = self.channel.presence.get()
+        message = list(filter(
+            lambda message: message.client_id == 'client_encoded',
+            presence_messages.items))[0]
+
+        assert message.data == {'foo': 'bar'}
