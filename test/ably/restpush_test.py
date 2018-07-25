@@ -281,17 +281,15 @@ class TestPush(BaseTestCase):
 
         # limit
         assert len(list_(limit=5000).items) == len(self.channels)
-        assert len(list_(limit=2).items) == 2
+        assert len(list_(limit=1).items) == 1
 
     # RSH1c3
     def test_admin_channel_subscriptions_save(self):
         save = self.ably.push.admin.channel_subscriptions.save
 
-        # Register device
-        device = self.get_device()
-
         # Subscribe
-        channel = 'canpublish:test'
+        device = self.get_device()
+        channel = 'canpublish:testsave'
         subscription = self.save_subscription(channel, device_id=device.id)
         assert type(subscription) is PushChannelSubscription
         assert subscription.channel == channel
@@ -310,3 +308,23 @@ class TestPush(BaseTestCase):
         subscription = PushChannelSubscription(channel, device_id='notregistered')
         with pytest.raises(AblyException):
             save(subscription)
+
+    # RSH1c4
+    def test_admin_channel_subscriptions_remove(self):
+        save = self.ably.push.admin.channel_subscriptions.save
+        remove = self.ably.push.admin.channel_subscriptions.remove
+
+        channel = 'canpublish:testremove'
+
+        # Subscribe device
+        device = self.get_device()
+        subscription = save(PushChannelSubscription(channel, device_id=device.id))
+        assert remove(subscription).status_code == 204
+
+        # Subscribe client
+        client_id = self.get_client_id()
+        subscription = save(PushChannelSubscription(channel, client_id=client_id))
+        assert remove(subscription).status_code == 204
+
+        # Remove again, it doesn't fail
+        assert remove(subscription).status_code == 204
