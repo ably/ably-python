@@ -224,14 +224,8 @@ class Message(EncodeDataMixin):
             **decoded_data
         )
 
-def make_message_response_handler(binary):
-    def message_response_handler(response):
-        messages = response.to_native()
-        return Message.from_encoded_array(messages)
-    return message_response_handler
 
-
-def make_encrypted_message_response_handler(cipher, binary):
+def make_message_response_handler(cipher):
     def encrypted_message_response_handler(response):
         messages = response.to_native()
         return Message.from_encoded_array(messages, cipher=cipher)

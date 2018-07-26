@@ -10,8 +10,7 @@ from six.moves.urllib.parse import quote
 
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.message import (
-    Message, make_message_response_handler, make_encrypted_message_response_handler,
-    MessageJSONEncoder)
+    Message, make_message_response_handler, MessageJSONEncoder)
 from ably.types.presence import Presence
 from ably.util.crypto import get_cipher
 from ably.util.exceptions import catch_all, IncompatibleClientIdException
@@ -35,13 +34,7 @@ class Channel(object):
         path = '/channels/%s/history' % self.__name
         path += params
 
-        if self.__cipher:
-            message_handler = make_encrypted_message_response_handler(
-                self.__cipher, self.ably.options.use_binary_protocol)
-        else:
-            message_handler = make_message_response_handler(
-                self.ably.options.use_binary_protocol)
-
+        message_handler = make_message_response_handler(self.__cipher)
         return PaginatedResult.paginated_query(
             self.ably.http, url=path, response_processor=message_handler)
 

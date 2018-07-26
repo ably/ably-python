@@ -20,6 +20,11 @@ class BaseTestCase(unittest.TestCase):
     def get_channel_name(cls, prefix=''):
         return prefix + random_string(10)
 
+    @classmethod
+    def get_channel(cls, prefix=''):
+        name = cls.get_channel_name(prefix)
+        return cls.ably.channels.get(name)
+
 
 def assert_responses_type(protocol):
     """

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import logging
-import time
 
 import pytest
 import responses
@@ -28,15 +27,12 @@ class TestRestChannelHistory(BaseTestCase):
                             port=test_vars["port"],
                             tls_port=test_vars["tls_port"],
                             tls=test_vars["tls"])
-        cls.time_offset = cls.ably.time() - int(time.time())
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
-        self.use_binary_protocol = use_binary_protocol
 
     def test_channel_history_types(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_types')]
+        history0 = self.get_channel('persisted:channelhistory_types')
 
         history0.publish('history0', six.u('This is a string message payload'))
         history0.publish('history1', b'This is a byte[] message payload')
@@ -68,8 +64,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert expected_message_history == messages, "Expect messages in reverse order"
 
     def test_channel_history_multi_50_forwards(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_multi_50_f')]
+        history0 = self.get_channel('persisted:channelhistory_multi_50_f')
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -84,8 +79,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert messages == expected_messages, 'Expect messages in forward order'
 
     def test_channel_history_multi_50_backwards(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_multi_50_b')]
+        history0 = self.get_channel('persisted:channelhistory_multi_50_b')
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -142,8 +136,7 @@ class TestRestChannelHistory(BaseTestCase):
             channel.history(limit=1001)
 
     def test_channel_history_limit_forwards(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_limit_f')]
+        history0 = self.get_channel('persisted:channelhistory_limit_f')
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -158,8 +151,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert messages == expected_messages, 'Expect messages in forward order'
 
     def test_channel_history_limit_backwards(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_limit_b')]
+        history0 = self.get_channel('persisted:channelhistory_limit_b')
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -174,8 +166,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert messages == expected_messages, 'Expect messages in forward order'
 
     def test_channel_history_time_forwards(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_time_f')]
+        history0 = self.get_channel('persisted:channelhistory_time_f')
 
         for i in range(20):
             history0.publish('history%d' % i, str(i))
@@ -201,8 +192,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert expected_messages == messages, 'Expect messages in forward order'
 
     def test_channel_history_time_backwards(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_time_b')]
+        history0 = self.get_channel('persisted:channelhistory_time_b')
 
         for i in range(20):
             history0.publish('history%d' % i, str(i))
@@ -228,8 +218,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert expected_messages, messages == 'Expect messages in reverse order'
 
     def test_channel_history_paginate_forwards(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_paginate_f')]
+        history0 = self.get_channel('persisted:channelhistory_paginate_f')
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -260,8 +249,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert expected_messages == messages, 'Expected 10 messages'
         
     def test_channel_history_paginate_backwards(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_paginate_b')]
+        history0 = self.get_channel('persisted:channelhistory_paginate_b')
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))
@@ -291,9 +279,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert expected_messages == messages, 'Expected 10 messages'
         
     def test_channel_history_paginate_forwards_first(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_paginate_first_f')]
-
+        history0 = self.get_channel('persisted:channelhistory_paginate_first_f')
         for i in range(50):
             history0.publish('history%d' % i, str(i))
 
@@ -322,8 +308,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert expected_messages == messages, 'Expected 10 messages'
         
     def test_channel_history_paginate_backwards_rel_first(self):
-        history0 = self.ably.channels[
-            self.get_channel_name('persisted:channelhistory_paginate_first_b')]
+        history0 = self.get_channel('persisted:channelhistory_paginate_first_b')
 
         for i in range(50):
             history0.publish('history%d' % i, str(i))

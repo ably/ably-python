@@ -120,11 +120,7 @@ class Presence(object):
             qs['limit'] = limit
         path = self._path_with_qs('%s/presence' % self.__base_path.rstrip('/'), qs)
 
-        if self.__cipher:
-            presence_handler = make_encrypted_presence_response_handler(self.__cipher, self.__binary)
-        else:
-            presence_handler = make_presence_response_handler(self.__binary)
-
+        presence_handler = make_presence_response_handler(self.__cipher)
         return PaginatedResult.paginated_query(
             self.__http, url=path, response_processor=presence_handler)
 
@@ -152,23 +148,12 @@ class Presence(object):
 
         path = self._path_with_qs('%s/presence/history' % self.__base_path.rstrip('/'), qs)
 
-        if self.__cipher:
-            presence_handler = make_encrypted_presence_response_handler(
-                self.__cipher, self.__binary)
-        else:
-            presence_handler = make_presence_response_handler(self.__binary)
-
+        presence_handler = make_presence_response_handler(self.__cipher)
         return PaginatedResult.paginated_query(
             self.__http, url=path, response_processor=presence_handler)
 
-def make_presence_response_handler(binary):
-    def presence_response_handler(response):
-        messages = response.to_native()
-        return PresenceMessage.from_encoded_array(messages)
-    return presence_response_handler
 
-
-def make_encrypted_presence_response_handler(cipher, binary):
+def make_presence_response_handler(cipher):
     def encrypted_presence_response_handler(response):
         messages = response.to_native()
         return PresenceMessage.from_encoded_array(messages, cipher=cipher)
