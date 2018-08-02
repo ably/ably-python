@@ -2,11 +2,11 @@ from __future__ import absolute_import
 
 import time
 
+import pytest
 import six
 
 from ably import AblyException
 from ably import AblyRest
-from ably import Options
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
@@ -32,8 +32,7 @@ class TestRestTime(BaseTestCase):
         actual_time = time.time() * 1000.0
 
         seconds = 10
-        self.assertLess(abs(actual_time - reported_time), seconds * 1000,
-                msg="Time is not within %s seconds" % seconds)
+        assert abs(actual_time - reported_time) < seconds * 1000, "Time is not within %s seconds" % seconds
 
     def test_time_without_key_or_token(self):
         ably = AblyRest(token='foo',
@@ -47,8 +46,7 @@ class TestRestTime(BaseTestCase):
         actual_time = time.time() * 1000.0
 
         seconds = 10
-        self.assertLess(abs(actual_time - reported_time), seconds * 1000,
-                msg="Time is not within %s seconds" % seconds)
+        assert abs(actual_time - reported_time) < seconds * 1000, "Time is not within %s seconds" % seconds
 
     @dont_vary_protocol
     def test_time_fails_without_valid_host(self):
@@ -57,4 +55,5 @@ class TestRestTime(BaseTestCase):
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"])
 
-        self.assertRaises(AblyException, ably.time)
+        with pytest.raises(AblyException):
+            ably.time()
