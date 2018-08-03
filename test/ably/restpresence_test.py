@@ -8,7 +8,6 @@ import pytest
 import six
 import responses
 
-from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.presence import PresenceMessage
 
@@ -23,11 +22,7 @@ class TestPresence(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"])
+        cls.ably = RestSetup.get_ably_rest()
         cls.channel = cls.ably.channels.get('persisted:presence_fixtures')
 
     @classmethod
@@ -207,12 +202,7 @@ class TestPresenceCrypt(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"])
-
+        cls.ably = RestSetup.get_ably_rest()
         key = b'0123456789abcdef'
         cls.channel = cls.ably.channels.get('persisted:presence_fixtures', cipher={'key': key})
 

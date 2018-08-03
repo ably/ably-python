@@ -8,7 +8,6 @@ import logging
 import pytest
 import six
 
-from ably import AblyRest
 from ably.types.stats import Stats
 from ably.util.exceptions import AblyException
 from ably.http.paginatedresult import PaginatedResult
@@ -17,7 +16,6 @@ from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 log = logging.getLogger(__name__)
-test_vars = RestSetup.get_test_vars()
 
 
 class TestRestAppStatsSetup(object):
@@ -34,18 +32,8 @@ class TestRestAppStatsSetup(object):
     @classmethod
     def setUpClass(cls):
         RestSetup._RestSetup__test_vars = None
-        test_vars = RestSetup.get_test_vars()
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"])
-        cls.ably_text = AblyRest(key=test_vars["keys"][0]["key_str"],
-                                 rest_host=test_vars["host"],
-                                 port=test_vars["port"],
-                                 tls_port=test_vars["tls_port"],
-                                 tls=test_vars["tls"],
-                                 use_binary_protocol=False)
+        cls.ably = RestSetup.get_ably_rest()
+        cls.ably_text = RestSetup.get_ably_rest(use_binary_protocol=False)
 
         cls.last_year = datetime.now().year - 1
         cls.previous_year = datetime.now().year - 2

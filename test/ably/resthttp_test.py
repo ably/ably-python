@@ -15,8 +15,6 @@ from ably.util.exceptions import AblyException
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
 
-test_vars = RestSetup.get_test_vars()
-
 
 class TestRestHttp(BaseTestCase):
     def test_max_retry_attempts_and_timeouts_defaults(self):
@@ -131,11 +129,7 @@ class TestRestHttp(BaseTestCase):
 
     # RSC7a, RSC7b
     def test_request_headers(self):
-        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"])
+        ably = RestSetup.get_ably_rest()
         r = ably.http.make_request('HEAD', '/time', skip_auth=True)
 
         # API

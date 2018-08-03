@@ -17,11 +17,7 @@ class TestRestRequest(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        cls.ably = RestSetup.get_ably_rest()
 
         # Populate the channel (using the new api)
         cls.channel = cls.get_channel_name()

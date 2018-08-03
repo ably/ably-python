@@ -17,7 +17,6 @@ from ably.types.tokenrequest import TokenRequest
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
-test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
@@ -30,11 +29,7 @@ class TestRestToken(BaseTestCase):
     def setUp(self):
         capability = {"*": ["*"]}
         self.permit_all = six.text_type(Capability(capability))
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        self.ably = RestSetup.get_ably_rest()
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -163,11 +158,7 @@ class TestRestToken(BaseTestCase):
 class TestCreateTokenRequest(BaseTestCase):
 
     def setUp(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        self.ably = RestSetup.get_ably_rest()
         self.key_name = self.ably.options.key_name
         self.key_secret = self.ably.options.key_secret
 
@@ -177,11 +168,7 @@ class TestCreateTokenRequest(BaseTestCase):
 
     @dont_vary_protocol
     def test_key_name_and_secret_are_required(self):
-        ably = AblyRest(token='not a real token',
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        ably = RestSetup.get_ably_rest(key=None, token='not a real token')
         with pytest.raises(AblyException, match="40101 401 No key specified"):
             ably.auth.create_token_request()
         with pytest.raises(AblyException, match="40101 401 No key specified"):
@@ -217,12 +204,8 @@ class TestCreateTokenRequest(BaseTestCase):
         def auth_callback(token_params):
             return token_request
 
-        ably = AblyRest(auth_callback=auth_callback,
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"],
-                        use_binary_protocol=self.use_binary_protocol)
+        ably = RestSetup.get_ably_rest(key=None, auth_callback=auth_callback,
+                                       use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
 
@@ -296,12 +279,8 @@ class TestCreateTokenRequest(BaseTestCase):
         def auth_callback(token_params):
             return token_request
 
-        ably = AblyRest(auth_callback=auth_callback,
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"],
-                        use_binary_protocol=self.use_binary_protocol)
+        ably = RestSetup.get_ably_rest(key=None, auth_callback=auth_callback,
+                                       use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
 

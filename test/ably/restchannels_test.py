@@ -5,7 +5,7 @@ import collections
 import pytest
 from six.moves import range
 
-from ably import AblyRest, AblyException
+from ably import AblyException
 from ably.rest.channel import Channel, Channels, Presence
 from ably.util.crypto import generate_random_key
 
@@ -19,11 +19,7 @@ test_vars = RestSetup.get_test_vars()
 class TestChannels(BaseTestCase):
 
     def setUp(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        self.ably = RestSetup.get_ably_rest()
 
     def test_rest_channels_attr(self):
         assert hasattr(self.ably, 'channels')
@@ -96,11 +92,7 @@ class TestChannels(BaseTestCase):
 
     def test_without_permissions(self):
         key = test_vars["keys"][2]
-        ably = AblyRest(key=key["key_str"],
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"])
+        ably = RestSetup.get_ably_rest(key=key["key_str"])
         with pytest.raises(AblyException) as excinfo:
             ably.channels['test_publish_without_permission'].publish('foo', 'woop')
 

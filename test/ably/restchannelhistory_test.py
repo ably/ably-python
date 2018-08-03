@@ -8,7 +8,6 @@ import six
 from six.moves import range
 
 from ably import AblyException
-from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
@@ -22,11 +21,7 @@ log = logging.getLogger(__name__)
 class TestRestChannelHistory(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"])
+        cls.ably = RestSetup.get_ably_rest()
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol

@@ -8,7 +8,6 @@ import six
 import mock
 import msgpack
 
-from ably import AblyRest
 from ably import CipherParams
 from ably.util.crypto import get_cipher
 from ably.types.message import Message
@@ -16,19 +15,13 @@ from ably.types.message import Message
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
 
-test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
 class TestTextEncodersNoEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"],
-                            use_binary_protocol=False)
+        cls.ably = RestSetup.get_ably_rest(use_binary_protocol=False)
 
     def test_text_utf8(self):
         channel = self.ably.channels["persisted:publish"]
@@ -145,12 +138,7 @@ class TestTextEncodersNoEncryption(BaseTestCase):
 class TestTextEncodersEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"],
-                            use_binary_protocol=False)
+        cls.ably = RestSetup.get_ably_rest(use_binary_protocol=False)
         cls.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
                                          algorithm='aes')
 
@@ -255,11 +243,7 @@ class TestTextEncodersEncryption(BaseTestCase):
 class TestBinaryEncodersNoEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"])
+        cls.ably = RestSetup.get_ably_rest()
 
     def decode(self, data):
         return msgpack.unpackb(data, encoding='utf-8')
@@ -343,11 +327,7 @@ class TestBinaryEncodersNoEncryption(BaseTestCase):
 class TestBinaryEncodersEncryption(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"])
+        cls.ably = RestSetup.get_ably_rest()
         cls.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
                                          algorithm='aes')
 

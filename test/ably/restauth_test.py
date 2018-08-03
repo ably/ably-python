@@ -57,12 +57,10 @@ class TestAuth(BaseTestCase):
             callback_called.append(True)
             return "this_is_not_really_a_token_request"
 
-        ably = AblyRest(key_name=test_vars["keys"][0]["key_name"],
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"],
-                        auth_callback=token_callback)
+        ably = RestSetup.get_ably_rest(
+            key=None,
+            key_name=test_vars["keys"][0]["key_name"],
+            auth_callback=token_callback)
 
         try:
             ably.stats(None)
@@ -79,13 +77,7 @@ class TestAuth(BaseTestCase):
         assert ably.auth.client_id == 'testClientId'
 
     def test_auth_init_with_token(self):
-
-        ably = AblyRest(token="this_is_not_really_a_token",
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"])
-
+        ably = RestSetup.get_ably_rest(key=None, token="this_is_not_really_a_token")
         assert Auth.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
 
     # RSA11
@@ -163,11 +155,7 @@ class TestAuth(BaseTestCase):
 class TestAuthAuthorize(BaseTestCase):
 
     def setUp(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        self.ably = RestSetup.get_ably_rest()
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -222,27 +210,20 @@ class TestAuthAuthorize(BaseTestCase):
     def test_with_token_str_https(self):
         token = self.ably.auth.authorize()
         token = token.token
-        ably = AblyRest(token=token, rest_host=test_vars["host"],
-                        port=test_vars["port"], tls_port=test_vars["tls_port"],
-                        tls=True, use_binary_protocol=self.use_binary_protocol)
+        ably = RestSetup.get_ably_rest(key=None, token=token, tls=True,
+                                       use_binary_protocol=self.use_binary_protocol)
         ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
 
     def test_with_token_str_http(self):
         token = self.ably.auth.authorize()
         token = token.token
-        ably = AblyRest(token=token, rest_host=test_vars["host"],
-                        port=test_vars["port"], tls_port=test_vars["tls_port"],
-                        tls=False, use_binary_protocol=self.use_binary_protocol)
+        ably = RestSetup.get_ably_rest(key=None, token=token, tls=False,
+                                       use_binary_protocol=self.use_binary_protocol)
         ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
 
     def test_if_default_client_id_is_used(self):
-        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"],
-                        client_id='my_client_id',
-                        use_binary_protocol=self.use_binary_protocol)
+        ably = RestSetup.get_ably_rest(client_id='my_client_id',
+                                       use_binary_protocol=self.use_binary_protocol)
         token = ably.auth.authorize()
         assert token.client_id == 'my_client_id'
 
@@ -306,14 +287,10 @@ class TestAuthAuthorize(BaseTestCase):
     def test_client_id_precedence(self):
         client_id = uuid.uuid4().hex
         overridden_client_id = uuid.uuid4().hex
-        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"],
-                        use_binary_protocol=self.use_binary_protocol,
-                        client_id=client_id,
-                        default_token_params={'client_id': overridden_client_id})
+        ably = RestSetup.get_ably_rest(
+            use_binary_protocol=self.use_binary_protocol,
+            client_id=client_id,
+            default_token_params={'client_id': overridden_client_id})
         token = ably.auth.authorize()
         assert token.client_id == client_id
         assert ably.auth.client_id == client_id
@@ -345,22 +322,13 @@ class TestRequestToken(BaseTestCase):
         self.use_binary_protocol = use_binary_protocol
 
     def test_with_key(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"],
-                             use_binary_protocol=self.use_binary_protocol)
+        self.ably = RestSetup.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
 
         token_details = self.ably.auth.request_token()
         assert isinstance(token_details, TokenDetails)
 
-        ably = AblyRest(token_details=token_details,
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"],
-                        use_binary_protocol=self.use_binary_protocol)
+        ably = RestSetup.get_ably_rest(key=None, token_details=token_details,
+                                       use_binary_protocol=self.use_binary_protocol)
         channel = self.get_channel_name('test_request_token_with_key')
 
         ably.channels[channel].publish('event', 'foo')
@@ -372,11 +340,7 @@ class TestRequestToken(BaseTestCase):
     def test_with_auth_url_headers_and_params_POST(self):
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
-        self.ably = AblyRest(auth_url=url,
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        self.ably = RestSetup.get_ably_rest(key=None, auth_url=url)
 
         auth_params = {'foo': 'auth', 'spam': 'eggs'}
         token_params = {'foo': 'token'}
@@ -401,13 +365,10 @@ class TestRequestToken(BaseTestCase):
 
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
-        self.ably = AblyRest(auth_url=url,
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"],
-                             auth_headers={'this': 'will_not_be_used'},
-                             auth_params={'this': 'will_not_be_used'})
+        self.ably = RestSetup.get_ably_rest(
+            key=None, auth_url=url,
+            auth_headers={'this': 'will_not_be_used'},
+            auth_params={'this': 'will_not_be_used'})
 
         auth_params = {'foo': 'auth', 'spam': 'eggs'}
         token_params = {'foo': 'token'}
@@ -431,11 +392,7 @@ class TestRequestToken(BaseTestCase):
             assert token_params == called_token_params
             return 'token_string'
 
-        self.ably = AblyRest(auth_callback=callback,
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        self.ably = RestSetup.get_ably_rest(key=None, auth_callback=callback)
 
         token_details = self.ably.auth.request_token(
             token_params=called_token_params, auth_callback=callback)
@@ -455,11 +412,7 @@ class TestRequestToken(BaseTestCase):
     def test_when_auth_url_has_query_string(self):
         url = 'http://www.example.com?with=query'
         headers = {'foo': 'bar'}
-        self.ably = AblyRest(auth_url=url,
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        self.ably = RestSetup.get_ably_rest(key=None, auth_url=url)
 
         responses.add(responses.GET, 'http://www.example.com',
                       body='token_string')
@@ -470,13 +423,10 @@ class TestRequestToken(BaseTestCase):
 
     @dont_vary_protocol
     def test_client_id_null_for_anonymous_auth(self):
-        ably = AblyRest(
+        ably = RestSetup.get_ably_rest(
+            key=None,
             key_name=test_vars["keys"][0]["key_name"],
-            key_secret=test_vars["keys"][0]["key_secret"],
-            rest_host=test_vars["host"],
-            port=test_vars["port"],
-            tls_port=test_vars["tls_port"],
-            tls=test_vars["tls"])
+            key_secret=test_vars["keys"][0]["key_secret"])
         token = ably.auth.authorize()
 
         assert isinstance(token, TokenDetails)
@@ -486,12 +436,8 @@ class TestRequestToken(BaseTestCase):
     @dont_vary_protocol
     def test_client_id_null_until_auth(self):
         client_id = uuid.uuid4().hex
-        token_ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                              rest_host=test_vars["host"],
-                              port=test_vars["port"],
-                              tls_port=test_vars["tls_port"],
-                              tls=test_vars["tls"],
-                              default_token_params={'client_id': client_id})
+        token_ably = RestSetup.get_ably_rest(
+            default_token_params={'client_id': client_id})
         # before auth, client_id is None
         assert token_ably.auth.client_id is None
 
@@ -507,12 +453,7 @@ class TestRenewToken(BaseTestCase):
 
     def setUp(self):
         host = test_vars['host']
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"],
-                             use_binary_protocol=False)
+        self.ably = RestSetup.get_ably_rest(use_binary_protocol=False)
         # with headers
         self.token_requests = 0
         self.publish_attempts = 0
@@ -570,12 +511,10 @@ class TestRenewToken(BaseTestCase):
 
     # RSA4a
     def test_when_not_renewable(self):
-        self.ably = AblyRest(token='token ID cannot be used to create a new token',
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"],
-                             use_binary_protocol=False)
+        self.ably = RestSetup.get_ably_rest(
+            key=None,
+            token='token ID cannot be used to create a new token',
+            use_binary_protocol=False)
         self.ably.channels[self.channel].publish('evt', 'msg')
         assert 1 == self.publish_attempts
 
@@ -589,12 +528,9 @@ class TestRenewToken(BaseTestCase):
     # RSA4a
     def test_when_not_renewable_with_token_details(self):
         token_details = TokenDetails(token='a_dummy_token')
-        self.ably = AblyRest(
+        self.ably = RestSetup.get_ably_rest(
+            key=None,
             token_details=token_details,
-            rest_host=test_vars["host"],
-            port=test_vars["port"],
-            tls_port=test_vars["tls_port"],
-            tls=test_vars["tls"],
             use_binary_protocol=False)
         self.ably.channels[self.channel].publish('evt', 'msg')
         assert 1 == self.publish_attempts

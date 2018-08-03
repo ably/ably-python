@@ -14,7 +14,6 @@ import six
 from six.moves import range
 
 from ably import AblyException, IncompatibleClientIdException
-from ably import AblyRest
 from ably.rest.auth import Auth
 from ably.types.message import Message
 from ably.types.tokendetails import TokenDetails
@@ -29,18 +28,9 @@ log = logging.getLogger(__name__)
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestChannelPublish(BaseTestCase):
     def setUp(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"])
+        self.ably = RestSetup.get_ably_rest()
         self.client_id = uuid.uuid4().hex
-        self.ably_with_client_id = AblyRest(key=test_vars["keys"][0]["key_str"],
-                                            rest_host=test_vars["host"],
-                                            port=test_vars["port"],
-                                            tls_port=test_vars["tls_port"],
-                                            tls=test_vars["tls"],
-                                            client_id=self.client_id)
+        self.ably_with_client_id = RestSetup.get_ably_rest(client_id=self.client_id)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -124,12 +114,7 @@ class TestRestChannelPublish(BaseTestCase):
             assert message['data'] == six.text_type(i)
 
     def test_publish_error(self):
-        ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                        rest_host=test_vars["host"],
-                        port=test_vars["port"],
-                        tls_port=test_vars["tls_port"],
-                        tls=test_vars["tls"],
-                        use_binary_protocol=self.use_binary_protocol)
+        ably = RestSetup.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
         ably.auth.authorize(
             token_params={'capability': {"only_subscribe": ["subscribe"]}})
 
@@ -306,12 +291,8 @@ class TestRestChannelPublish(BaseTestCase):
     def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
         new_token = self.ably.auth.authorize(
             token_params={'client_id': uuid.uuid4().hex})
-        new_ably = AblyRest(token=new_token.token,
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"],
-                            use_binary_protocol=self.use_binary_protocol)
+        new_ably = RestSetup.get_ably_rest(key=None, token=new_token.token,
+                                           use_binary_protocol=self.use_binary_protocol)
         channel = new_ably.channels[
             self.get_channel_name('persisted:wrong_client_id_implicit_client')]
 
@@ -324,12 +305,10 @@ class TestRestChannelPublish(BaseTestCase):
     # RSA15b
     def test_wildcard_client_id_can_publish_as_others(self):
         wildcard_token_details = self.ably.auth.request_token({'client_id': '*'})
-        wildcard_ably = AblyRest(token_details=wildcard_token_details,
-                                 rest_host=test_vars["host"],
-                                 port=test_vars["port"],
-                                 tls_port=test_vars["tls_port"],
-                                 tls=test_vars["tls"],
-                                 use_binary_protocol=self.use_binary_protocol)
+        wildcard_ably = RestSetup.get_ably_rest(
+            key=None,
+            token_details=wildcard_token_details,
+            use_binary_protocol=self.use_binary_protocol)
 
         assert wildcard_ably.auth.client_id == '*'
         channel = wildcard_ably.channels[

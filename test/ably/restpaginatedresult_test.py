@@ -4,13 +4,10 @@ import re
 
 import responses
 
-from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
-
-test_vars = RestSetup.get_test_vars()
 
 
 class TestPaginatedResult(BaseTestCase):
@@ -25,12 +22,7 @@ class TestPaginatedResult(BaseTestCase):
         return callback
 
     def setUp(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"],
-                             use_binary_protocol=False)
+        self.ably = RestSetup.get_ably_rest(use_binary_protocol=False)
 
         # Mocked responses
         # without headers

@@ -5,15 +5,13 @@ import time
 import pytest
 import six
 
-from ably import AblyRest, AblyException, AblyAuthException
+from ably import AblyException, AblyAuthException
 from ably import DeviceDetails, PushChannelSubscription
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, BaseTestCase
 from test.ably.utils import new_dict, random_string, get_random_key
-
-test_vars = RestSetup.get_test_vars()
 
 
 DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad'
@@ -24,11 +22,7 @@ class TestPush(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"])
+        cls.ably = RestSetup.get_ably_rest()
 
         # Register several devices for later use
         cls.devices = {}
