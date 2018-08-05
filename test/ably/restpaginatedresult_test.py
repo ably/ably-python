@@ -4,13 +4,10 @@ import re
 
 import responses
 
-from ably import AblyRest
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase
-
-test_vars = RestSetup.get_test_vars()
 
 
 class TestPaginatedResult(BaseTestCase):
@@ -25,12 +22,7 @@ class TestPaginatedResult(BaseTestCase):
         return callback
 
     def setUp(self):
-        self.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                             rest_host=test_vars["host"],
-                             port=test_vars["port"],
-                             tls_port=test_vars["tls_port"],
-                             tls=test_vars["tls"],
-                             use_binary_protocol=False)
+        self.ably = RestSetup.get_ably_rest(use_binary_protocol=False)
 
         # Mocked responses
         # without headers
@@ -69,24 +61,24 @@ class TestPaginatedResult(BaseTestCase):
         responses.reset()
 
     def test_items(self):
-        self.assertEquals(len(self.paginated_result.items), 2)
+        assert len(self.paginated_result.items) == 2
 
     def test_with_no_headers(self):
-        self.assertIsNone(self.paginated_result.first())
-        self.assertIsNone(self.paginated_result.next())
-        self.assertTrue(self.paginated_result.is_last())
+        assert self.paginated_result.first() is None
+        assert self.paginated_result.next() is None
+        assert self.paginated_result.is_last()
 
     def test_with_next(self):
         pag = self.paginated_result_with_headers
-        self.assertTrue(pag.has_next())
-        self.assertFalse(pag.is_last())
+        assert pag.has_next()
+        assert not pag.is_last()
 
     def test_first(self):
         pag = self.paginated_result_with_headers
         pag = pag.first()
-        self.assertEquals(pag.items[0]['page'], 1)
+        assert pag.items[0]['page'] == 1
 
     def test_next(self):
         pag = self.paginated_result_with_headers
         pag = pag.next()
-        self.assertEquals(pag.items[0]['page'], 2)
+        assert pag.items[0]['page'] == 2

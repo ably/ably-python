@@ -5,15 +5,13 @@ import time
 import pytest
 import six
 
-from ably import AblyRest, AblyException, AblyAuthException
+from ably import AblyException, AblyAuthException
 from ably import DeviceDetails, PushChannelSubscription
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, BaseTestCase
-from test.ably.utils import new_dict, random_string
-
-test_vars = RestSetup.get_test_vars()
+from test.ably.utils import new_dict, random_string, get_random_key
 
 
 DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad'
@@ -24,11 +22,7 @@ class TestPush(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ably = AblyRest(key=test_vars["keys"][0]["key_str"],
-                            rest_host=test_vars["host"],
-                            port=test_vars["port"],
-                            tls_port=test_vars["tls_port"],
-                            tls=test_vars["tls"])
+        cls.ably = RestSetup.get_ably_rest()
 
         # Register several devices for later use
         cls.devices = {}
@@ -99,9 +93,10 @@ class TestPush(BaseTestCase):
 
         return result
 
-    def get_device(self):
-        key = random.choice(list(self.devices.keys()))
-        return self.devices[key]
+    @classmethod
+    def get_device(cls):
+        key = get_random_key(cls.devices)
+        return cls.devices[key]
 
     # RSH1a
     def test_admin_publish(self):
@@ -221,6 +216,42 @@ class TestPush(BaseTestCase):
 
         # Remove with no matching params
         assert self.remove_device_where(clientId=device.client_id).status_code == 204
+
+    # RSH1c1
+    def test_admin_channel_subscriptions_list(self):
+        list_ = self.ably.push.admin.channel_subscriptions.list
+
+        channel = 'canpublish:test1'
+
+        # Register several channel subscriptions for later use
+        ids = set()
+        save = self.ably.push.admin.channel_subscriptions.save
+        for key in self.devices:
+            device = self.devices[key]
+            save(PushChannelSubscription(channel, device_id=device.id))
+            ids.add(device.id)
+
+        response = list_(channel=channel)
+        assert type(response) is PaginatedResult
+        assert type(response.items) is list
+        assert type(response.items[0]) is PushChannelSubscription
+
+        # limit
+        assert len(list_(channel=channel, limit=5000).items) == len(self.devices)
+        assert len(list_(channel=channel, limit=2).items) == 2
+
+        # Filter by device id
+        device = self.get_device()
+        items = list_(channel=channel, deviceId=device.id).items
+        assert len(items) == 1
+        assert items[0].device_id == device.id
+        assert items[0].channel == channel
+        assert device.id in ids
+
+        assert len(list_(channel=channel, deviceId=self.get_device_id()).items) == 0
+
+        # Filter by client id
+        assert len(list_(channel=channel, clientId=device.client_id).items) == 0
 
     # RSH1c3
     def test_admin_channel_subscriptions_save(self):

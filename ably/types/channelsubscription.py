@@ -42,8 +42,17 @@ class PushChannelSubscription(object):
         return cls(**obj)
 
     @classmethod
+    def from_array(cls, array):
+        return [cls.from_dict(d) for d in array]
+
+    @classmethod
     def factory(cls, subscription):
         if isinstance(subscription, cls):
             return subscription
 
         return cls.from_dict(subscription)
+
+
+def channel_subscriptions_response_processor(response):
+    native = response.to_native()
+    return PushChannelSubscription.from_array(native)

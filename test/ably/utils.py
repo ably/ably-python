@@ -20,6 +20,11 @@ class BaseTestCase(unittest.TestCase):
     def get_channel_name(cls, prefix=''):
         return prefix + random_string(10)
 
+    @classmethod
+    def get_channel(cls, prefix=''):
+        name = cls.get_channel_name(prefix)
+        return cls.ably.channels.get(name)
+
 
 def assert_responses_type(protocol):
     """
@@ -57,16 +62,14 @@ def assert_responses_type(protocol):
             patcher = patch()
             fn(self, *args, **kwargs)
             unpatch(patcher)
-            self.assertGreaterEqual(len(responses), 1,
-                                    "If your test doesn't make any requests,"
-                                    " use the @dont_vary_protocol decorator")
+            assert len(responses) >= 1, "If your test doesn't make any requests, use the @dont_vary_protocol decorator"
             for response in responses:
                 if protocol == 'json':
-                    self.assertEquals(response.headers['content-type'], 'application/json')
+                    assert response.headers['content-type'] == 'application/json'
                     if response.content:
                         response.json()
                 else:
-                    self.assertEquals(response.headers['content-type'], 'application/x-msgpack')
+                    assert response.headers['content-type'] == 'application/x-msgpack'
                     if response.content:
                         msgpack.unpackb(response.content, encoding='utf-8')
 
@@ -126,3 +129,6 @@ def new_dict(src, **kw):
     new = src.copy()
     new.update(kw)
     return new
+
+def get_random_key(d):
+    return random.choice(list(d))
