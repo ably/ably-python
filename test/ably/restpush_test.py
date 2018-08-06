@@ -276,7 +276,7 @@ class TestPush(BaseTestCase):
         response = list_()
         assert type(response) is PaginatedResult
         assert type(response.items) is list
-        assert type(response.items[0]) is str
+        assert type(response.items[0]) is six.text_type
 
         # limit
         assert len(list_(limit=5000).items) == len(self.channels)
