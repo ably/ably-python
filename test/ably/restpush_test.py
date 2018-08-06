@@ -35,6 +35,7 @@ class TestPush(BaseTestCase):
         for key, channel in zip(cls.devices, itertools.cycle(cls.channels)):
             device = cls.devices[key]
             cls.save_subscription(channel, device_id=device.id)
+        assert len(list(itertools.chain(*cls.channels.values()))) == len(cls.devices)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol

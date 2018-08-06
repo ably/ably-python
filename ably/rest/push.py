@@ -152,9 +152,9 @@ class PushChannelSubscriptions(object):
         - `**params`: the parameters used to filter the list
         """
         path = '/push/channels' + format_params(params)
-        response_processor = channels_response_processor
         return PaginatedResult.paginated_query(
-            self.ably.http, url=path, response_processor=response_processor)
+            self.ably.http, url=path,
+            response_processor=channels_response_processor)
 
     def save(self, subscription):
         """Creates or updates the subscription. Returns a
