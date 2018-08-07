@@ -313,18 +313,23 @@ class TestPush(BaseTestCase):
     def test_admin_channel_subscriptions_remove(self):
         save = self.ably.push.admin.channel_subscriptions.save
         remove = self.ably.push.admin.channel_subscriptions.remove
+        list_ = self.ably.push.admin.channel_subscriptions.list
 
         channel = 'canpublish:testremove'
 
         # Subscribe device
         device = self.get_device()
         subscription = save(PushChannelSubscription(channel, device_id=device.id))
+        assert device.id in (x.device_id for x in list_(channel=channel).items)
         assert remove(subscription).status_code == 204
+        assert device.id not in (x.device_id for x in list_(channel=channel).items)
 
         # Subscribe client
         client_id = self.get_client_id()
         subscription = save(PushChannelSubscription(channel, client_id=client_id))
+        assert client_id in (x.client_id for x in list_(channel=channel).items)
         assert remove(subscription).status_code == 204
+        assert client_id not in (x.client_id for x in list_(channel=channel).items)
 
         # Remove again, it doesn't fail
         assert remove(subscription).status_code == 204
