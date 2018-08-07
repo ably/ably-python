@@ -33,7 +33,14 @@ class PushChannelSubscription(object):
 
     def as_dict(self):
         keys = ['channel', 'device_id', 'client_id', 'app_id']
-        obj = {snake_to_camel(key): getattr(self, key) for key in keys}
+
+        obj = {}
+        for key in keys:
+            value = getattr(self, key)
+            if value is not None:
+                key = snake_to_camel(key)
+                obj[key] = value
+
         return obj
 
     @classmethod

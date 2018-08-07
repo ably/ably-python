@@ -169,3 +169,14 @@ class PushChannelSubscriptions(object):
         response = self.ably.http.post(path, body=body)
         obj = response.to_native()
         return PushChannelSubscription.from_dict(obj)
+
+    def remove(self, subscription):
+        """Deletes the given subscription.
+
+        :Parameters:
+        - `subscription`: the subscription object to remove
+        """
+        subscription = PushChannelSubscription.factory(subscription)
+        params = subscription.as_dict()
+        path = '/push/channelSubscriptions' + format_params(params)
+        return self.ably.http.delete(path)
