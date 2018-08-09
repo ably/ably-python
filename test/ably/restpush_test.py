@@ -333,3 +333,28 @@ class TestPush(BaseTestCase):
 
         # Remove again, it doesn't fail
         assert remove(subscription).status_code == 204
+
+    # RSH1c5
+    def test_admin_channel_subscriptions_remove_where(self):
+        save = self.ably.push.admin.channel_subscriptions.save
+        remove = self.ably.push.admin.channel_subscriptions.remove_where
+        list_ = self.ably.push.admin.channel_subscriptions.list
+
+        channel = 'canpublish:testremovewhere'
+
+        # Subscribe device
+        device = self.get_device()
+        save(PushChannelSubscription(channel, device_id=device.id))
+        assert device.id in (x.device_id for x in list_(channel=channel).items)
+        assert remove(channel=channel, device_id=device.id).status_code == 204
+        assert device.id not in (x.device_id for x in list_(channel=channel).items)
+
+        # Subscribe client
+        client_id = self.get_client_id()
+        save(PushChannelSubscription(channel, client_id=client_id))
+        assert client_id in (x.client_id for x in list_(channel=channel).items)
+        assert remove(channel=channel, client_id=client_id).status_code == 204
+        assert client_id not in (x.client_id for x in list_(channel=channel).items)
+
+        # Remove again, it doesn't fail
+        assert remove(channel=channel, client_id=client_id).status_code == 204
