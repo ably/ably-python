@@ -6,7 +6,6 @@ import logging
 import time
 
 import six
-import msgpack
 
 from ably.types.typedbuffer import TypedBuffer
 from ably.types.mixins import EncodeDataMixin
@@ -28,9 +27,7 @@ class Message(EncodeDataMixin):
         elif isinstance(name, six.binary_type):
             self.__name = name.decode('ascii')
         else:
-            # log.debug(name)
-            # log.debug(name.__class__)
-            raise ValueError("name must be a string or bytes")
+            raise ValueError("name must be a string or bytes, not %s" % type(name))
 
         self.__id = id
         self.__client_id = client_id
@@ -190,16 +187,10 @@ class Message(EncodeDataMixin):
         if self.connection_key:
             request_body['connectionKey'] = self.connection_key
 
-        if self.extras:
+        if self.extras is not None:
             request_body['extras'] = self.extras
 
         return request_body
-
-    def as_json(self):
-        return json.dumps(self.as_dict(), separators=(',', ':'))
-
-    def as_msgpack(self):
-        return msgpack.packb(self.as_dict(binary=True), use_bin_type=True)
 
     @staticmethod
     def from_encoded(obj, cipher=None):
@@ -230,11 +221,3 @@ def make_message_response_handler(cipher):
         messages = response.to_native()
         return Message.from_encoded_array(messages, cipher=cipher)
     return encrypted_message_response_handler
-
-
-class MessageJSONEncoder(json.JSONEncoder):
-    def default(self, message):
-        if isinstance(message, Message):
-            return message.as_dict()
-        else:
-            return json.JSONEncoder.default(self, message)

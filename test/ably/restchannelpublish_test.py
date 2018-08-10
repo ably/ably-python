@@ -18,6 +18,7 @@ from ably import AblyException, IncompatibleClientIdException
 from ably.rest.auth import Auth
 from ably.types.message import Message
 from ably.types.tokendetails import TokenDetails
+from ably.util import case
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
@@ -406,12 +407,18 @@ class TestRestChannelPublish(BaseTestCase):
                 assert type(message.data) == type_mapping[expected_type]
 
 
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestChannelPublishIdempotent(BaseTestCase):
 
-    def setUp(self):
-        self.ably = RestSetup.get_ably_rest()
+    @classmethod
+    def setUpClass(cls):
+        cls.ably = RestSetup.get_ably_rest()
+
+    def per_protocol_setup(self, use_binary_protocol):
+        self.ably.options.use_binary_protocol = use_binary_protocol
 
     # TO3n
+    @dont_vary_protocol
     def test_idempotent_rest_publishing(self):
         # Test default value
         if api_version < '1.1':
@@ -425,3 +432,19 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
 
         ably = RestSetup.get_ably_rest(idempotent_rest_publishing=False)
         assert ably.options.idempotent_rest_publishing is False
+
+    # RSL1j
+    @dont_vary_protocol
+    def test_message_serialization(self):
+        channel = self.get_channel()
+
+        data = {
+            'name': 'name',
+            'data': 'data',
+            'client_id': 'client_id',
+            'extras': {},
+        }
+        message = Message(**data)
+        request_body = channel._Channel__publish_request_body(messages=[message])
+        input_keys = set(case.snake_to_camel(x) for x in data.keys())
+        assert input_keys - set(request_body) == set()
