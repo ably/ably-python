@@ -470,3 +470,16 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
         message = Message('name', 'data', id='foobar')
         request_body = channel._Channel__publish_request_body(messages=[message])
         assert request_body['id'] == 'foobar'
+
+    # RSL1k3
+    @dont_vary_protocol
+    def test_idempotent_mixed_ids(self):
+        channel = self.ably_idempotent.channels[self.get_channel_name()]
+
+        messages = [
+            Message('name', 'data', id='foobar'),
+            Message('name', 'data'),
+        ]
+        request_body = channel._Channel__publish_request_body(messages=messages)
+        assert request_body[0]['id'] == 'foobar'
+        assert 'id' not in request_body[1]
