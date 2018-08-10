@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 
+import base64
+from collections import OrderedDict
 import logging
 import json
-from collections import OrderedDict
+import os
 
 import six
 import msgpack
@@ -44,6 +46,14 @@ class Channel(object):
         """
         if not messages:
             messages = [Message(name, data, client_id, extras=extras)]
+
+        # Idempotent publishing
+        if self.ably.options.idempotent_rest_publishing:
+            # RSL1k1
+            if all(message.id is None for message in messages):
+                base_id = base64.b64encode(os.urandom(12)).decode()
+                for serial, message in enumerate(messages):
+                    message.id = '{}:{}'.format(base_id, serial)
 
         request_body_list = []
         for m in messages:

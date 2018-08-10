@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import base64
 import binascii
 import json
 import logging
@@ -413,6 +414,7 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
     @classmethod
     def setUpClass(cls):
         cls.ably = RestSetup.get_ably_rest()
+        cls.ably_idempotent = RestSetup.get_ably_rest(idempotent_rest_publishing=True)
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
@@ -448,3 +450,14 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
         request_body = channel._Channel__publish_request_body(messages=[message])
         input_keys = set(case.snake_to_camel(x) for x in data.keys())
         assert input_keys - set(request_body) == set()
+
+    # RSL1k1
+    @dont_vary_protocol
+    def test_idempotent_library_generated(self):
+        channel = self.ably_idempotent.channels[self.get_channel_name()]
+
+        message = Message('name', 'data')
+        request_body = channel._Channel__publish_request_body(messages=[message])
+        base_id, serial = request_body['id'].split(':')
+        assert len(base64.b64decode(base_id)) >= 9
+        assert serial == '0'

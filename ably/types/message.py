@@ -77,6 +77,10 @@ class Message(EncodeDataMixin):
     def id(self):
         return self.__id
 
+    @id.setter
+    def id(self, value):
+        self.__id = value
+
     @property
     def timestamp(self):
         return self.__timestamp
