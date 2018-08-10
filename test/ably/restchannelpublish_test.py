@@ -13,6 +13,7 @@ import requests
 import six
 from six.moves import range
 
+from ably import api_version
 from ably import AblyException, IncompatibleClientIdException
 from ably.rest.auth import Auth
 from ably.types.message import Message
@@ -403,3 +404,24 @@ class TestRestChannelPublish(BaseTestCase):
                 message = history.items[0]
                 assert message.data == expected_value
                 assert type(message.data) == type_mapping[expected_type]
+
+
+class TestRestChannelPublishIdempotent(BaseTestCase):
+
+    def setUp(self):
+        self.ably = RestSetup.get_ably_rest()
+
+    # TO3n
+    def test_idempotent_rest_publishing(self):
+        # Test default value
+        if api_version < '1.1':
+            assert self.ably.options.idempotent_rest_publishing is False
+        else:
+            assert self.ably.options.idempotent_rest_publishing is True
+
+        # Test setting value explicitly
+        ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True)
+        assert ably.options.idempotent_rest_publishing is True
+
+        ably = RestSetup.get_ably_rest(idempotent_rest_publishing=False)
+        assert ably.options.idempotent_rest_publishing is False
