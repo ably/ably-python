@@ -170,10 +170,8 @@ class Http(object):
             request = requests.Request(method, url, data=body, headers=all_headers)
             prepped = self.__session.prepare_request(request)
             try:
-                response = self.__session.send(
-                    prepped,
-                    timeout=(http_open_timeout,
-                             http_request_timeout))
+                timeout = (http_open_timeout, http_request_timeout)
+                response = self.__session.send(prepped, timeout=timeout)
             except Exception as e:
                 # Need to catch `Exception`, see:
                 # https://github.com/kennethreitz/requests/issues/1236#issuecomment-133312626
