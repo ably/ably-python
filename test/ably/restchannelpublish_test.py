@@ -461,3 +461,12 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
         base_id, serial = request_body['id'].split(':')
         assert len(base64.b64decode(base_id)) >= 9
         assert serial == '0'
+
+    # RSL1k2
+    @dont_vary_protocol
+    def test_idempotent_client_supplied(self):
+        channel = self.ably_idempotent.channels[self.get_channel_name()]
+
+        message = Message('name', 'data', id='foobar')
+        request_body = channel._Channel__publish_request_body(messages=[message])
+        assert request_body['id'] == 'foobar'
