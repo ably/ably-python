@@ -492,13 +492,12 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
             ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
         channel = ably.channels[self.get_channel_name()]
 
-        failures = 0
+        state = {'failures': 0}
         send = requests.sessions.Session.send
         def side_effect(self, *args, **kwargs):
-            nonlocal failures
             x = send(self, *args, **kwargs)
-            if failures < 2:
-                failures += 1
+            if state['failures'] < 2:
+                state['failures'] += 1
                 raise Exception('faked exception')
             return x
 
@@ -506,7 +505,7 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
         with mock.patch('requests.sessions.Session.send', side_effect=side_effect, autospec=True):
             channel.publish(messages=messages)
 
-        assert failures == 2
+        assert state['failures'] == 2
         assert len(channel.history().items) == 1
 
     # RSL1k5
@@ -517,13 +516,12 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
             ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
         channel = ably.channels[self.get_channel_name()]
 
-        failures = 0
+        state = {'failures': 0}
         send = requests.sessions.Session.send
         def side_effect(self, *args, **kwargs):
-            nonlocal failures
             x = send(self, *args, **kwargs)
-            if failures < 2:
-                failures += 1
+            if state['failures'] < 2:
+                state['failures'] += 1
                 raise Exception('faked exception')
             return x
 
@@ -531,5 +529,5 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
         with mock.patch('requests.sessions.Session.send', side_effect=side_effect, autospec=True):
             channel.publish(messages=messages)
 
-        assert failures == 2
+        assert state['failures'] == 2
         assert len(channel.history().items) == 1
