@@ -508,3 +508,28 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
 
         assert failures == 2
         assert len(channel.history().items) == 1
+
+    # RSL1k5
+    def test_idempotent_client_supplied_retry(self):
+        ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True)
+        if not ably.options.fallback_hosts:
+            host = ably.options.get_rest_host()
+            ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
+        channel = ably.channels[self.get_channel_name()]
+
+        failures = 0
+        send = requests.sessions.Session.send
+        def side_effect(self, *args, **kwargs):
+            nonlocal failures
+            x = send(self, *args, **kwargs)
+            if failures < 2:
+                failures += 1
+                raise Exception('faked exception')
+            return x
+
+        messages = [Message('name1', 'data1', id='foobar')]
+        with mock.patch('requests.sessions.Session.send', side_effect=side_effect, autospec=True):
+            channel.publish(messages=messages)
+
+        assert failures == 2
+        assert len(channel.history().items) == 1
