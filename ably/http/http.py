@@ -94,6 +94,10 @@ class Response(object):
         else:
             raise ValueError("Unsuported content type")
 
+    @property
+    def response(self):
+        return self.__response
+
     def __getattr__(self, attr):
         return getattr(self.__response, attr)
 
@@ -193,6 +197,10 @@ class Http(object):
 
     def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         return self.make_request('POST', url, headers=headers, body=body,
+                                 skip_auth=skip_auth, timeout=timeout)
+
+    def put(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        return self.make_request('PUT', url, headers=headers, body=body,
                                  skip_auth=skip_auth, timeout=timeout)
 
     def delete(self, url, headers=None, skip_auth=False, timeout=None):

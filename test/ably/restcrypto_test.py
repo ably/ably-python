@@ -5,6 +5,7 @@ import os
 import logging
 import base64
 
+import pytest
 import six
 
 from ably import AblyException
@@ -67,10 +68,10 @@ class TestRestCrypto(BaseTestCase):
 
         actual_ciphertext = cipher.encrypt(plaintext)
 
-        self.assertEqual(expected_ciphertext, actual_ciphertext)
+        assert expected_ciphertext == actual_ciphertext
 
     def test_crypto_publish(self):
-        channel_name = self.protocol_channel_name('persisted:crypto_publish_text')
+        channel_name = self.get_channel_name('persisted:crypto_publish_text')
         publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
         publish0.publish("publish3", six.u("This is a string message payload"))
@@ -80,24 +81,16 @@ class TestRestCrypto(BaseTestCase):
 
         history = publish0.history()
         messages = history.items
-        self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(4, len(messages), msg="Expected 4 messages")
+        assert messages is not None, "Expected non-None messages"
+        assert 4 == len(messages), "Expected 4 messages"
 
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        self.assertEqual(six.u("This is a string message payload"),
-                message_contents["publish3"],
-                msg="Expect publish3 to be expected String)")
-        self.assertEqual(b"This is a byte[] message payload",
-                message_contents["publish4"],
-                msg="Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4']))
-        self.assertEqual({"test": "This is a JSONObject message payload"},
-                message_contents["publish5"],
-                msg="Expect publish5 to be expected JSONObject")
-        self.assertEqual(["This is a JSONArray message payload"],
-                message_contents["publish6"],
-                msg="Expect publish6 to be expected JSONObject")
+        assert six.u("This is a string message payload") == message_contents["publish3"], "Expect publish3 to be expected String)"
+        assert b"This is a byte[] message payload" == message_contents["publish4"], "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
+        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], "Expect publish5 to be expected JSONObject"
+        assert ["This is a JSONArray message payload"] == message_contents["publish6"], "Expect publish6 to be expected JSONObject"
 
     def test_crypto_publish_256(self):
         rndfile = Random.new()
@@ -114,27 +107,19 @@ class TestRestCrypto(BaseTestCase):
 
         history = publish0.history()
         messages = history.items
-        self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(4, len(messages), msg="Expected 4 messages")
+        assert messages is not None, "Expected non-None messages"
+        assert 4 == len(messages), "Expected 4 messages"
 
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        self.assertEqual(six.u("This is a string message payload"),
-                message_contents["publish3"],
-                msg="Expect publish3 to be expected String)")
-        self.assertEqual(b"This is a byte[] message payload",
-                message_contents["publish4"],
-                msg="Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4']))
-        self.assertEqual({"test": "This is a JSONObject message payload"},
-                message_contents["publish5"],
-                msg="Expect publish5 to be expected JSONObject")
-        self.assertEqual(["This is a JSONArray message payload"],
-                message_contents["publish6"],
-                msg="Expect publish6 to be expected JSONObject")
+        assert six.u("This is a string message payload") == message_contents["publish3"], "Expect publish3 to be expected String)"
+        assert b"This is a byte[] message payload" == message_contents["publish4"], "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
+        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], "Expect publish5 to be expected JSONObject"
+        assert ["This is a JSONArray message payload"] == message_contents["publish6"], "Expect publish6 to be expected JSONObject"
 
     def test_crypto_publish_key_mismatch(self):
-        channel_name = self.protocol_channel_name('persisted:crypto_publish_key_mismatch')
+        channel_name = self.get_channel_name('persisted:crypto_publish_key_mismatch')
 
         publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
@@ -145,23 +130,18 @@ class TestRestCrypto(BaseTestCase):
 
         rx_channel = self.ably2.channels.get(channel_name, cipher={'key': generate_random_key()})
 
-        try:
-            with self.assertRaises(AblyException) as cm:
-                messages = rx_channel.history()
-        except Exception as e:
-            log.debug('test_crypto_publish_key_mismatch_fail: rx_channel.history not creating exception')
-            log.debug(messages.items[0].data)
+        with pytest.raises(AblyException) as excinfo:
+            rx_channel.history()
 
-            raise(e)
-
-        the_exception = cm.exception
-        self.assertTrue(
-            'invalid-padding' == the_exception.message or
-            the_exception.message.startswith("UnicodeDecodeError: 'utf8'") or
-            the_exception.message.startswith("UnicodeDecodeError: 'utf-8'"))
+        message = excinfo.value.message
+        assert (
+            'invalid-padding' == message or
+            message.startswith("UnicodeDecodeError: 'utf8'") or
+            message.startswith("UnicodeDecodeError: 'utf-8'")
+        )
 
     def test_crypto_send_unencrypted(self):
-        channel_name = self.protocol_channel_name('persisted:crypto_send_unencrypted')
+        channel_name = self.get_channel_name('persisted:crypto_send_unencrypted')
         publish0 = self.ably.channels[channel_name]
 
         publish0.publish("publish3", six.u("This is a string message payload"))
@@ -173,27 +153,19 @@ class TestRestCrypto(BaseTestCase):
 
         history = rx_channel.history()
         messages = history.items
-        self.assertIsNotNone(messages, msg="Expected non-None messages")
-        self.assertEqual(4, len(messages), msg="Expected 4 messages")
+        assert messages is not None, "Expected non-None messages"
+        assert 4 == len(messages), "Expected 4 messages"
 
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        self.assertEqual(six.u("This is a string message payload"),
-                message_contents["publish3"],
-                msg="Expect publish3 to be expected String)")
-        self.assertEqual(b"This is a byte[] message payload",
-                message_contents["publish4"],
-                msg="Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4']))
-        self.assertEqual({"test": "This is a JSONObject message payload"},
-                message_contents["publish5"],
-                msg="Expect publish5 to be expected JSONObject")
-        self.assertEqual(["This is a JSONArray message payload"],
-                message_contents["publish6"],
-                msg="Expect publish6 to be expected JSONObject")
+        assert six.u("This is a string message payload") == message_contents["publish3"], "Expect publish3 to be expected String)"
+        assert b"This is a byte[] message payload" == message_contents["publish4"], "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
+        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], "Expect publish5 to be expected JSONObject"
+        assert ["This is a JSONArray message payload"] == message_contents["publish6"], "Expect publish6 to be expected JSONObject"
 
     def test_crypto_encrypted_unhandled(self):
-        channel_name = self.protocol_channel_name('persisted:crypto_send_encrypted_unhandled')
+        channel_name = self.get_channel_name('persisted:crypto_send_encrypted_unhandled')
         key = six.b('0123456789abcdef')
         data = six.u('foobar')
         publish0 = self.ably.channels.get(channel_name, cipher={'key': key})
@@ -204,20 +176,20 @@ class TestRestCrypto(BaseTestCase):
         history = rx_channel.history()
         message = history.items[0]
         cipher = get_cipher(get_default_params({'key': key}))
-        self.assertEqual(cipher.decrypt(message.data).decode(), data)
-        self.assertEqual(message.encoding, 'utf-8/cipher+aes-128-cbc')
+        assert cipher.decrypt(message.data).decode() == data
+        assert message.encoding == 'utf-8/cipher+aes-128-cbc'
 
     @dont_vary_protocol
     def test_cipher_params(self):
         params = CipherParams(secret_key='0123456789abcdef')
-        self.assertEqual(params.algorithm, 'AES')
-        self.assertEqual(params.mode, 'CBC')
-        self.assertEqual(params.key_length, 128)
+        assert params.algorithm == 'AES'
+        assert params.mode == 'CBC'
+        assert params.key_length == 128
 
         params = CipherParams(secret_key='0123456789abcdef' * 2)
-        self.assertEqual(params.algorithm, 'AES')
-        self.assertEqual(params.mode, 'CBC')
-        self.assertEqual(params.key_length, 256)
+        assert params.algorithm == 'AES'
+        assert params.mode == 'CBC'
+        assert params.key_length == 256
 
 
 class AbstractTestCryptoWithFixture(object):
@@ -246,20 +218,20 @@ class AbstractTestCryptoWithFixture(object):
     # TM3
     def test_decode(self):
         for item in self.items:
-            self.assertEqual(item['encoded']['name'], item['encrypted']['name'])
+            assert item['encoded']['name'] == item['encrypted']['name']
             message = Message.from_encoded(item['encrypted'], self.cipher)
-            self.assertEqual(message.encoding, '')
+            assert message.encoding == ''
             expected_data = self.get_encoded(item['encoded'])
-            self.assertEqual(expected_data, message.data)
+            assert expected_data == message.data
 
     # TM3
     def test_decode_array(self):
         items_encrypted = [item['encrypted'] for item in self.items]
         messages = Message.from_encoded_array(items_encrypted, self.cipher)
         for i, message in enumerate(messages):
-            self.assertEqual(message.encoding, '')
+            assert message.encoding == ''
             expected_data = self.get_encoded(self.items[i]['encoded'])
-            self.assertEqual(expected_data, message.data)
+            assert expected_data == message.data
 
     def test_encode(self):
         for item in self.items:
@@ -271,8 +243,8 @@ class AbstractTestCryptoWithFixture(object):
             message = Message(item['encoded']['name'], data)
             message.encrypt(self.cipher)
             as_dict = message.as_dict()
-            self.assertEqual(as_dict['data'], expected['data'])
-            self.assertEqual(as_dict['encoding'], expected['encoding'])
+            assert as_dict['data'] == expected['data']
+            assert as_dict['encoding'] == expected['encoding']
 
 
 class TestCryptoWithFixture128(AbstractTestCryptoWithFixture, BaseTestCase):
