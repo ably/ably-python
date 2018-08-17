@@ -445,6 +445,7 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
             'data': 'data',
             'client_id': 'client_id',
             'extras': {},
+            'id': 'foobar',
         }
         message = Message(**data)
         request_body = channel._Channel__publish_request_body(messages=[message])
