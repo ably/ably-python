@@ -418,6 +418,7 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol
+        self.use_binary_protocol = use_binary_protocol
 
     # TO3n
     @dont_vary_protocol
@@ -485,12 +486,16 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
         assert request_body[0]['id'] == 'foobar'
         assert 'id' not in request_body[1]
 
+    def get_ably_rest(self, *args, **kwargs):
+        kwargs['use_binary_protocol'] = self.use_binary_protocol
+        return RestSetup.get_ably_rest(*args, **kwargs)
+
     # RSL1k4
     def test_idempotent_library_generated_retry(self):
-        ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True)
+        ably = self.get_ably_rest(idempotent_rest_publishing=True)
         if not ably.options.fallback_hosts:
             host = ably.options.get_rest_host()
-            ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
+            ably = self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}
@@ -511,10 +516,10 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
 
     # RSL1k5
     def test_idempotent_client_supplied_retry(self):
-        ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True)
+        ably = self.get_ably_rest(idempotent_rest_publishing=True)
         if not ably.options.fallback_hosts:
             host = ably.options.get_rest_host()
-            ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
+            ably = self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}
