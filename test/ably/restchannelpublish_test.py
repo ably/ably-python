@@ -522,18 +522,8 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
             ably = self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
         channel = ably.channels[self.get_channel_name()]
 
-        state = {'failures': 0}
-        send = requests.sessions.Session.send
-        def side_effect(self, *args, **kwargs):
-            x = send(self, *args, **kwargs)
-            if state['failures'] < 2:
-                state['failures'] += 1
-                raise Exception('faked exception')
-            return x
-
         messages = [Message('name1', 'data1', id='foobar')]
-        with mock.patch('requests.sessions.Session.send', side_effect=side_effect, autospec=True):
-            channel.publish(messages=messages)
-
-        assert state['failures'] == 2
+        channel.publish(messages=messages)
+        channel.publish(messages=messages)
+        channel.publish(messages=messages)
         assert len(channel.history().items) == 1
