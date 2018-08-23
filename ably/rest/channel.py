@@ -101,7 +101,7 @@ class Channel(object):
         else:
             request_body = msgpack.packb(request_body, use_bin_type=True)
 
-        path = '/channels/%s/publish' % self.__name
+        path = '/channels/%s/messages' % self.__name
         return self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @property
