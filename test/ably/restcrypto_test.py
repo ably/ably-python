@@ -9,7 +9,6 @@ import pytest
 import six
 
 from ably import AblyException
-from ably import AblyRest
 from ably.types.message import Message
 from ably.util.crypto import CipherParams, get_cipher, generate_random_key, get_default_params
 
@@ -26,15 +25,8 @@ log = logging.getLogger(__name__)
 class TestRestCrypto(BaseTestCase):
 
     def setUp(self):
-        options = {
-            "key": test_vars["keys"][0]["key_str"],
-            "rest_host": test_vars["host"],
-            "port": test_vars["port"],
-            "tls_port": test_vars["tls_port"],
-            "tls": test_vars["tls"],
-        }
-        self.ably = AblyRest(**options)
-        self.ably2 = AblyRest(**options)
+        self.ably = RestSetup.get_ably_rest()
+        self.ably2 = RestSetup.get_ably_rest()
 
     def per_protocol_setup(self, use_binary_protocol):
         # This will be called every test that vary by protocol for each protocol

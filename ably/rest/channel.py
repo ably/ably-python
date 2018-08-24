@@ -32,7 +32,7 @@ class Channel(object):
     def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
-        path = '/channels/%s/history' % self.__name
+        path = '/channels/%s/messages' % self.__name
         path += params
 
         message_handler = make_message_response_handler(self.__cipher)
