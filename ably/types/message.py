@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import base64
 import json
 import logging
-import time
 
 import six
 
@@ -168,8 +167,9 @@ class Message(EncodeDataMixin):
         request_body = {
             u'name': self.name,
             u'data': data,
-            u'timestamp': self.timestamp or int(time.time() * 1000.0),
         }
+        if self.timestamp:
+            request_body[u'timestamp'] = self.timestamp
         request_body = {k: v for (k, v) in request_body.items()
                         if v is not None}  # None values aren't included
 

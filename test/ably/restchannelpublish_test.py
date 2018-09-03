@@ -199,7 +199,6 @@ class TestRestChannelPublish(BaseTestCase):
             else:
                 posted_body = json.loads(post_mock.call_args[1]['body'])
 
-            assert 'timestamp' in posted_body
             assert 'name' not in posted_body
             assert 'data' not in posted_body
 
