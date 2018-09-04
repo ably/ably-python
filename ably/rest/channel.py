@@ -53,7 +53,7 @@ class Channel(object):
             if all(message.id is None for message in messages):
                 base_id = base64.b64encode(os.urandom(12)).decode()
                 for serial, message in enumerate(messages):
-                    message.id = '{}:{}'.format(base_id, serial)
+                    message.id = u'{}:{}'.format(base_id, serial)
 
         request_body_list = []
         for m in messages:

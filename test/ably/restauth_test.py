@@ -488,8 +488,7 @@ class TestRenewToken(BaseTestCase):
 
         responses.add_callback(
             responses.POST,
-            'https://{}:443/channels/{}/publish'.format(
-                host, self.channel),
+            'https://{}:443/channels/{}/messages'.format(host, self.channel),
             call_back)
         responses.start()
 
