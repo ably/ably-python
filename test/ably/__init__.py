@@ -17,4 +17,4 @@ def send(*args, **kw):
 
 
 # Uncomment this to print request/response
-#HTTPAdapter.send = send
+# HTTPAdapter.send = send
