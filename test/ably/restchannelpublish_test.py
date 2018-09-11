@@ -514,11 +514,8 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
         assert len(channel.history().items) == 1
 
     # RSL1k5
-    def test_idempotent_client_supplied_retry(self):
+    def test_idempotent_client_supplied_publish(self):
         ably = self.get_ably_rest(idempotent_rest_publishing=True)
-        if not ably.options.fallback_hosts:
-            host = ably.options.get_rest_host()
-            ably = self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
         channel = ably.channels[self.get_channel_name()]
 
         messages = [Message('name1', 'data1', id='foobar')]
