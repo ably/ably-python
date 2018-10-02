@@ -16,7 +16,7 @@ with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
     app_spec_local = json.loads(f.read())
 
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
-host = os.environ.get('ABLY_HOST', 'sandbox-rest.ably.io')
+host = os.environ.get('ABLY_HOST', 'dev-rest.ably.io')
 environment = os.environ.get('ABLY_ENV')
 
 port = 80

@@ -1,16 +1,17 @@
 from __future__ import absolute_import
 
+import base64
+from collections import OrderedDict
 import logging
 import json
-from collections import OrderedDict
+import os
 
 import six
 import msgpack
 from six.moves.urllib.parse import quote
 
 from ably.http.paginatedresult import PaginatedResult, format_params
-from ably.types.message import (
-    Message, make_message_response_handler, MessageJSONEncoder)
+from ably.types.message import Message, make_message_response_handler
 from ably.types.presence import Presence
 from ably.util.crypto import get_cipher
 from ably.util.exceptions import catch_all, IncompatibleClientIdException
@@ -31,28 +32,28 @@ class Channel(object):
     def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
-        path = '/channels/%s/history' % self.__name
+        path = '/channels/%s/messages' % self.__name
         path += params
 
         message_handler = make_message_response_handler(self.__cipher)
         return PaginatedResult.paginated_query(
             self.ably.http, url=path, response_processor=message_handler)
 
-    @catch_all
-    def publish(self, name=None, data=None, client_id=None, extras=None,
-                messages=None, timeout=None):
-        """Publishes a message on this channel.
-
-        :Parameters:
-        - `name`: the name for this message.
-        - `data`: the data for this message.
-        - `messages`: list of `Message` objects to be published.
-            Specify this param OR `name` and `data`.
-
-        :attention: You can publish using `name` and `data` OR `messages`, never all three.
+    def __publish_request_body(self, name=None, data=None, client_id=None,
+                               extras=None, messages=None):
+        """
+        Helper private method, separated from publish() to test RSL1j
         """
         if not messages:
             messages = [Message(name, data, client_id, extras=extras)]
+
+        # Idempotent publishing
+        if self.ably.options.idempotent_rest_publishing:
+            # RSL1k1
+            if all(message.id is None for message in messages):
+                base_id = base64.b64encode(os.urandom(12)).decode()
+                for serial, message in enumerate(messages):
+                    message.id = u'{}:{}'.format(base_id, serial)
 
         request_body_list = []
         for m in messages:
@@ -71,24 +72,37 @@ class Channel(object):
 
             request_body_list.append(m)
 
+        request_body = [
+            message.as_dict(binary=self.ably.options.use_binary_protocol)
+            for message in request_body_list]
+
+        if len(request_body) == 1:
+            request_body = request_body[0]
+
+        return request_body
+
+    @catch_all
+    def publish(self, name=None, data=None, client_id=None, extras=None,
+                messages=None, timeout=None):
+        """Publishes a message on this channel.
+
+        :Parameters:
+        - `name`: the name for this message.
+        - `data`: the data for this message.
+        - `messages`: list of `Message` objects to be published.
+            Specify this param OR `name` and `data`.
+
+        :attention: You can publish using `name` and `data` OR `messages`, never all three.
+        """
+        request_body = self.__publish_request_body(name, data, client_id, extras, messages)
+
         if not self.ably.options.use_binary_protocol:
-            if len(request_body_list) == 1:
-                request_body = request_body_list[0].as_json()
-            else:
-                request_body = json.dumps(request_body_list, cls=MessageJSONEncoder)
+            request_body = json.dumps(request_body, separators=(',', ':'))
         else:
-            request_body = [message.as_dict(binary=True) for message in request_body_list]
-            if len(request_body) == 1:
-                request_body = request_body[0]
             request_body = msgpack.packb(request_body, use_bin_type=True)
 
-        path = '/channels/%s/publish' % self.__name
-
-        return self.ably.http.post(
-            path,
-            body=request_body,
-            timeout=timeout
-            )
+        path = '/channels/%s/messages' % self.__name
+        return self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @property
     def ably(self):
@@ -119,10 +133,10 @@ class Channel(object):
         self.__options = options
 
         if options and 'cipher' in options:
-            if options.get('cipher') is not None:
-                self.__cipher = get_cipher(options.get('cipher'))
-            else:
-                self.__cipher = None
+            cipher = options.get('cipher')
+            if cipher is not None:
+                cipher = get_cipher(cipher)
+            self.__cipher = cipher
 
 
 class Channels(object):

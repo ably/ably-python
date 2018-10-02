@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import base64
 import binascii
 import json
 import logging
@@ -13,10 +14,12 @@ import requests
 import six
 from six.moves import range
 
+from ably import api_version
 from ably import AblyException, IncompatibleClientIdException
 from ably.rest.auth import Auth
 from ably.types.message import Message
 from ably.types.tokendetails import TokenDetails
+from ably.util import case
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
@@ -196,7 +199,6 @@ class TestRestChannelPublish(BaseTestCase):
             else:
                 posted_body = json.loads(post_mock.call_args[1]['body'])
 
-            assert 'timestamp' in posted_body
             assert 'name' not in posted_body
             assert 'data' not in posted_body
 
@@ -403,3 +405,121 @@ class TestRestChannelPublish(BaseTestCase):
                 message = history.items[0]
                 assert message.data == expected_value
                 assert type(message.data) == type_mapping[expected_type]
+
+
+@six.add_metaclass(VaryByProtocolTestsMetaclass)
+class TestRestChannelPublishIdempotent(BaseTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ably = RestSetup.get_ably_rest()
+        cls.ably_idempotent = RestSetup.get_ably_rest(idempotent_rest_publishing=True)
+
+    def per_protocol_setup(self, use_binary_protocol):
+        self.ably.options.use_binary_protocol = use_binary_protocol
+        self.use_binary_protocol = use_binary_protocol
+
+    # TO3n
+    @dont_vary_protocol
+    def test_idempotent_rest_publishing(self):
+        # Test default value
+        if api_version < '1.1':
+            assert self.ably.options.idempotent_rest_publishing is False
+        else:
+            assert self.ably.options.idempotent_rest_publishing is True
+
+        # Test setting value explicitly
+        ably = RestSetup.get_ably_rest(idempotent_rest_publishing=True)
+        assert ably.options.idempotent_rest_publishing is True
+
+        ably = RestSetup.get_ably_rest(idempotent_rest_publishing=False)
+        assert ably.options.idempotent_rest_publishing is False
+
+    # RSL1j
+    @dont_vary_protocol
+    def test_message_serialization(self):
+        channel = self.get_channel()
+
+        data = {
+            'name': 'name',
+            'data': 'data',
+            'client_id': 'client_id',
+            'extras': {},
+            'id': 'foobar',
+        }
+        message = Message(**data)
+        request_body = channel._Channel__publish_request_body(messages=[message])
+        input_keys = set(case.snake_to_camel(x) for x in data.keys())
+        assert input_keys - set(request_body) == set()
+
+    # RSL1k1
+    @dont_vary_protocol
+    def test_idempotent_library_generated(self):
+        channel = self.ably_idempotent.channels[self.get_channel_name()]
+
+        message = Message('name', 'data')
+        request_body = channel._Channel__publish_request_body(messages=[message])
+        base_id, serial = request_body['id'].split(':')
+        assert len(base64.b64decode(base_id)) >= 9
+        assert serial == '0'
+
+    # RSL1k2
+    @dont_vary_protocol
+    def test_idempotent_client_supplied(self):
+        channel = self.ably_idempotent.channels[self.get_channel_name()]
+
+        message = Message('name', 'data', id='foobar')
+        request_body = channel._Channel__publish_request_body(messages=[message])
+        assert request_body['id'] == 'foobar'
+
+    # RSL1k3
+    @dont_vary_protocol
+    def test_idempotent_mixed_ids(self):
+        channel = self.ably_idempotent.channels[self.get_channel_name()]
+
+        messages = [
+            Message('name', 'data', id='foobar'),
+            Message('name', 'data'),
+        ]
+        request_body = channel._Channel__publish_request_body(messages=messages)
+        assert request_body[0]['id'] == 'foobar'
+        assert 'id' not in request_body[1]
+
+    def get_ably_rest(self, *args, **kwargs):
+        kwargs['use_binary_protocol'] = self.use_binary_protocol
+        return RestSetup.get_ably_rest(*args, **kwargs)
+
+    # RSL1k4
+    def test_idempotent_library_generated_retry(self):
+        ably = self.get_ably_rest(idempotent_rest_publishing=True)
+        if not ably.options.fallback_hosts:
+            host = ably.options.get_rest_host()
+            ably = self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
+        channel = ably.channels[self.get_channel_name()]
+
+        state = {'failures': 0}
+        send = requests.sessions.Session.send
+        def side_effect(self, *args, **kwargs):
+            x = send(self, *args, **kwargs)
+            if state['failures'] < 2:
+                state['failures'] += 1
+                raise Exception('faked exception')
+            return x
+
+        messages = [Message('name1', 'data1')]
+        with mock.patch('requests.sessions.Session.send', side_effect=side_effect, autospec=True):
+            channel.publish(messages=messages)
+
+        assert state['failures'] == 2
+        assert len(channel.history().items) == 1
+
+    # RSL1k5
+    def test_idempotent_client_supplied_publish(self):
+        ably = self.get_ably_rest(idempotent_rest_publishing=True)
+        channel = ably.channels[self.get_channel_name()]
+
+        messages = [Message('name1', 'data1', id='foobar')]
+        channel.publish(messages=messages)
+        channel.publish(messages=messages)
+        channel.publish(messages=messages)
+        assert len(channel.history().items) == 1

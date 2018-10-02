@@ -13,6 +13,7 @@ class Options(AuthOptions):
                  http_open_timeout=None, http_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None,
                  fallback_hosts=None, fallback_hosts_use_default=None,
+                 idempotent_rest_publishing=None,
                  **kwargs):
         super(Options, self).__init__(**kwargs)
 
@@ -20,6 +21,10 @@ class Options(AuthOptions):
 
         if environment is not None and rest_host is not None:
             raise ValueError('specify rest_host or environment, not both')
+
+        if idempotent_rest_publishing is None:
+            from ably import api_version
+            idempotent_rest_publishing = api_version >= '1.1'
 
         self.__client_id = client_id
         self.__log_level = log_level
@@ -38,6 +43,7 @@ class Options(AuthOptions):
         self.__http_max_retry_duration = http_max_retry_duration
         self.__fallback_hosts = fallback_hosts
         self.__fallback_hosts_use_default = fallback_hosts_use_default
+        self.__idempotent_rest_publishing = idempotent_rest_publishing
 
         self.__rest_hosts = self.__get_rest_hosts()
 
@@ -164,6 +170,10 @@ class Options(AuthOptions):
     @property
     def fallback_hosts_use_default(self):
         return self.__fallback_hosts_use_default
+
+    @property
+    def idempotent_rest_publishing(self):
+        return self.__idempotent_rest_publishing
 
     def __get_rest_hosts(self):
         """

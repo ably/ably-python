@@ -3,10 +3,8 @@ from __future__ import absolute_import
 import base64
 import json
 import logging
-import time
 
 import six
-import msgpack
 
 from ably.types.typedbuffer import TypedBuffer
 from ably.types.mixins import EncodeDataMixin
@@ -16,23 +14,24 @@ from ably.util.exceptions import AblyException
 log = logging.getLogger(__name__)
 
 
+def to_text(value):
+    if value is None:
+        return value
+    elif isinstance(value, six.text_type):
+        return value
+    elif isinstance(value, six.binary_type):
+        return value.decode('ascii')
+    else:
+        raise TypeError("expected string or bytes, not %s" % type(value))
+
+
 class Message(EncodeDataMixin):
 
     def __init__(self, name=None, data=None, client_id=None, extras=None,
                  id=None, connection_id=None, connection_key=None,
                  timestamp=None, encoding=''):
-        if name is None:
-            self.__name = None
-        elif isinstance(name, six.text_type):
-            self.__name = name
-        elif isinstance(name, six.binary_type):
-            self.__name = name.decode('ascii')
-        else:
-            # log.debug(name)
-            # log.debug(name.__class__)
-            raise ValueError("name must be a string or bytes")
-
-        self.__id = id
+        self.__name = to_text(name)
+        self.__id = to_text(id)
         self.__client_id = client_id
         self.__data = data
         self.__timestamp = timestamp
@@ -79,6 +78,10 @@ class Message(EncodeDataMixin):
     @property
     def id(self):
         return self.__id
+
+    @id.setter
+    def id(self, value):
+        self.__id = value
 
     @property
     def timestamp(self):
@@ -167,8 +170,9 @@ class Message(EncodeDataMixin):
         request_body = {
             u'name': self.name,
             u'data': data,
-            u'timestamp': self.timestamp or int(time.time() * 1000.0),
         }
+        if self.timestamp:
+            request_body[u'timestamp'] = self.timestamp
         request_body = {k: v for (k, v) in request_body.items()
                         if v is not None}  # None values aren't included
 
@@ -190,16 +194,10 @@ class Message(EncodeDataMixin):
         if self.connection_key:
             request_body['connectionKey'] = self.connection_key
 
-        if self.extras:
+        if self.extras is not None:
             request_body['extras'] = self.extras
 
         return request_body
-
-    def as_json(self):
-        return json.dumps(self.as_dict(), separators=(',', ':'))
-
-    def as_msgpack(self):
-        return msgpack.packb(self.as_dict(binary=True), use_bin_type=True)
 
     @staticmethod
     def from_encoded(obj, cipher=None):
@@ -230,11 +228,3 @@ def make_message_response_handler(cipher):
         messages = response.to_native()
         return Message.from_encoded_array(messages, cipher=cipher)
     return encrypted_message_response_handler
-
-
-class MessageJSONEncoder(json.JSONEncoder):
-    def default(self, message):
-        if isinstance(message, Message):
-            return message.as_dict()
-        else:
-            return json.JSONEncoder.default(self, message)

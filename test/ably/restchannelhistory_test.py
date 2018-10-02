@@ -99,7 +99,7 @@ class TestRestChannelHistory(BaseTestCase):
             kwargs['port_sufix'] = ''
         else:
             kwargs['port_sufix'] = ':' + str(port)
-        url = '{scheme}://{host}{port_sufix}/channels/{channel_name}/history'
+        url = '{scheme}://{host}{port_sufix}/channels/{channel_name}/messages'
         return url.format(**kwargs)
 
     @responses.activate
