@@ -406,6 +406,16 @@ class TestRestChannelPublish(BaseTestCase):
                 assert message.data == expected_value
                 assert type(message.data) == type_mapping[expected_type]
 
+    # https://github.com/ably/ably-python/issues/130
+    def test_publish_slash(self):
+        channel = self.ably.channels.get(self.get_channel_name('persisted:widgets/'))
+        name, data = 'Name', 'Data'
+        channel.publish(name, data)
+        history = channel.history().items
+        assert len(history) == 1
+        assert history[0].name == name
+        assert history[0].data == data
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestChannelPublishIdempotent(BaseTestCase):

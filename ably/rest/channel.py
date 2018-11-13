@@ -8,7 +8,7 @@ import os
 
 import six
 import msgpack
-from six.moves.urllib.parse import quote
+from six.moves.urllib import parse
 
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.message import Message, make_message_response_handler
@@ -23,7 +23,7 @@ class Channel(object):
     def __init__(self, ably, name, options):
         self.__ably = ably
         self.__name = name
-        self.__base_path = '/channels/%s/' % quote(name)
+        self.__base_path = '/channels/%s/' % parse.quote_plus(name, safe=':')
         self.__cipher = None
         self.options = options
         self.__presence = Presence(self)
@@ -32,8 +32,7 @@ class Channel(object):
     def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
-        path = '/channels/%s/messages' % self.__name
-        path += params
+        path = self.__base_path + 'messages' + params
 
         message_handler = make_message_response_handler(self.__cipher)
         return PaginatedResult.paginated_query(
@@ -101,7 +100,7 @@ class Channel(object):
         else:
             request_body = msgpack.packb(request_body, use_bin_type=True)
 
-        path = '/channels/%s/messages' % self.__name
+        path = self.__base_path + 'messages'
         return self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @property

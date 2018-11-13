@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from datetime import datetime, timedelta
 
-from six.moves.urllib.parse import urlencode
+from six.moves.urllib import parse
 
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.mixins import EncodeDataMixin
@@ -101,7 +101,7 @@ class PresenceMessage(EncodeDataMixin):
 
 class Presence(object):
     def __init__(self, channel):
-        self.__base_path = channel.base_path
+        self.__base_path = '/channels/%s/' % parse.quote_plus(channel.name)
         self.__binary = channel.ably.options.use_binary_protocol
         self.__http = channel.ably.http
         self.__cipher = channel.cipher
@@ -109,7 +109,7 @@ class Presence(object):
     def _path_with_qs(self, rel_path, qs=None):
         path = rel_path
         if qs:
-            path += ('?' + urlencode(qs))
+            path += ('?' + parse.urlencode(qs))
         return path
 
     def get(self, limit=None):
@@ -118,7 +118,7 @@ class Presence(object):
             if limit > 1000:
                 raise ValueError("The maximum allowed limit is 1000")
             qs['limit'] = limit
-        path = self._path_with_qs('%s/presence' % self.__base_path.rstrip('/'), qs)
+        path = self._path_with_qs(self.__base_path + 'presence', qs)
 
         presence_handler = make_presence_response_handler(self.__cipher)
         return PaginatedResult.paginated_query(
@@ -146,7 +146,7 @@ class Presence(object):
         if 'start' in qs and 'end' in qs and qs['start'] > qs['end']:
             raise ValueError("'end' parameter has to be greater than or equal to 'start'")
 
-        path = self._path_with_qs('%s/presence/history' % self.__base_path.rstrip('/'), qs)
+        path = self._path_with_qs(self.__base_path + 'presence/history', qs)
 
         presence_handler = make_presence_response_handler(self.__cipher)
         return PaginatedResult.paginated_query(
