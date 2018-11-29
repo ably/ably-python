@@ -65,11 +65,6 @@ class AblyRest(object):
         else:
             options = Options(**kwargs)
 
-        # if self.__keep_alive:
-        #     self.__session = requests.Session()
-        # else:
-        #     self.__session = None
-
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
         self.__http.auth = self.__auth
