@@ -433,7 +433,7 @@ class TestRestChannelPublishIdempotent(BaseTestCase):
     @dont_vary_protocol
     def test_idempotent_rest_publishing(self):
         # Test default value
-        if api_version < '1.1':
+        if api_version < '1.2':
             assert self.ably.options.idempotent_rest_publishing is False
         else:
             assert self.ably.options.idempotent_rest_publishing is True

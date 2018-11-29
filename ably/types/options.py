@@ -24,7 +24,7 @@ class Options(AuthOptions):
 
         if idempotent_rest_publishing is None:
             from ably import api_version
-            idempotent_rest_publishing = api_version >= '1.1'
+            idempotent_rest_publishing = api_version >= '1.2'
 
         self.__client_id = client_id
         self.__log_level = log_level
