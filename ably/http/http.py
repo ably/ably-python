@@ -105,12 +105,13 @@ class Http(object):
         'http_max_retry_duration': 15,
     }
 
+    __session = requests.Session()
+
     def __init__(self, ably, options):
         options = options or {}
         self.__ably = ably
         self.__options = options
 
-        self.__session = requests.Session()
         self.__auth = None
 
     def dump_body(self, body):
