@@ -191,8 +191,17 @@ class Http(object):
                     if not e.is_server_error:
                         raise e
 
+    def delete(self, url, headers=None, skip_auth=False, timeout=None):
+        return self.make_request('DELETE', url, headers=headers,
+                                 skip_auth=skip_auth, timeout=timeout)
+
     def get(self, url, headers=None, skip_auth=False, timeout=None):
-        return self.make_request('GET', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
+        return self.make_request('GET', url, headers=headers,
+                                 skip_auth=skip_auth, timeout=timeout)
+
+    def patch(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        return self.make_request('PATCH', url, headers=headers, body=body,
+                                 skip_auth=skip_auth, timeout=timeout)
 
     def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         return self.make_request('POST', url, headers=headers, body=body,
@@ -201,9 +210,6 @@ class Http(object):
     def put(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         return self.make_request('PUT', url, headers=headers, body=body,
                                  skip_auth=skip_auth, timeout=timeout)
-
-    def delete(self, url, headers=None, skip_auth=False, timeout=None):
-        return self.make_request('DELETE', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
 
     @property
     def auth(self):
