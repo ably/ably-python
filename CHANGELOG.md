@@ -1,5 +1,27 @@
 # Change Log
 
+## [v1.0.2](https://github.com/ably/ably-python/tree/v1.0.2)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.0.1...v1.0.2)
+
+**Fixed bugs:**
+
+- HTTP connection pooling [\#133](https://github.com/ably/ably-python/issues/133)
+- Timeouts when publishing messages [\#111](https://github.com/ably/ably-python/issues/111)
+- AWS lambda packaging [\#97](https://github.com/ably/ably-python/issues/97)
+- Rate limit requests to sandbox app [\#68](https://github.com/ably/ably-python/issues/68)
+
+**Closed issues:**
+
+- TokenRequest ttl unit discrepancy [\#104](https://github.com/ably/ably-python/issues/104)
+- Python subscribe? [\#100](https://github.com/ably/ably-python/issues/100)
+
+**Merged pull requests:**
+
+- Fix README so it doesn't mislead ttl to be in s [\#105](https://github.com/ably/ably-python/pull/105) ([jdavid](https://github.com/jdavid))
+- Fix tests [\#103](https://github.com/ably/ably-python/pull/103) ([jdavid](https://github.com/jdavid))
+- Update README with supported platforms [\#102](https://github.com/ably/ably-python/pull/102) ([funkyboy](https://github.com/funkyboy))
+
 ## [v1.0.1](https://github.com/ably/ably-python/tree/v1.0.1) (2017-12-20)
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.0.0...v1.0.1)
 
@@ -32,7 +54,6 @@
 - Fix \#65, \#71, \#72, \#86 and \#89 [\#90](https://github.com/ably/ably-python/pull/90) ([jdavid](https://github.com/jdavid))
 
 ## [v1.0.0](https://github.com/ably/ably-python/tree/v1.0.0) (2017-03-07)
-
 [Full Changelog](https://github.com/ably/ably-python/compare/v0.8.2...v1.0.0)
 
 ### v1.0 release and upgrade notes from v0.8
