@@ -245,18 +245,27 @@ class TestCreateTokenRequest(BaseTestCase):
             key_name=self.key_name, key_secret=self.key_secret)
         self.assertIsInstance(token_request, TokenRequest)
 
-        def auth_callback(token_params):
-            return token_request
-
-        ably = AblyRest(auth_callback=auth_callback,
+        ably = AblyRest(auth_callback=lambda x: token_request,
                         rest_host=test_vars["host"],
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"],
                         use_binary_protocol=self.use_binary_protocol)
-
         token = ably.auth.authorize()
+        self.assertIsInstance(token, TokenDetails)
 
+    def test_token_request_dict_can_be_used_to_get_a_token(self):
+        token_request = self.ably.auth.create_token_request(
+            key_name=self.key_name, key_secret=self.key_secret)
+        self.assertIsInstance(token_request, TokenRequest)
+
+        ably = AblyRest(auth_callback=lambda x: token_request.to_dict(),
+                        rest_host=test_vars["host"],
+                        port=test_vars["port"],
+                        tls_port=test_vars["tls_port"],
+                        tls=test_vars["tls"],
+                        use_binary_protocol=self.use_binary_protocol)
+        token = ably.auth.authorize()
         self.assertIsInstance(token, TokenDetails)
 
     # TE6
