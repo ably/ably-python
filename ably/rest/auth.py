@@ -161,7 +161,7 @@ class Auth(object):
         elif isinstance(token_request, dict) and 'issued' in token_request:
             return TokenDetails.from_dict(token_request)
         elif isinstance(token_request, dict):
-            token_request = TokenRequest(**token_request)
+            token_request = TokenRequest.from_json(token_request)
         elif isinstance(token_request, six.text_type):
             return TokenDetails(token=token_request)
         # python2
