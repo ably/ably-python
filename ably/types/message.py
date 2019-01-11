@@ -16,24 +16,25 @@ from ably.util.exceptions import AblyException
 log = logging.getLogger(__name__)
 
 
+def to_text(value):
+    if value is None:
+        return None
+    elif isinstance(value, six.text_type):
+        return value
+    elif isinstance(value, six.binary_type):
+        return value.decode()
+
+    raise TypeError("expected text string, got {}".format(type(value)))
+
+
 class Message(EncodeDataMixin):
 
     def __init__(self, name=None, data=None, client_id=None, extras=None,
                  id=None, connection_id=None, connection_key=None,
                  timestamp=None, encoding=''):
-        if name is None:
-            self.__name = None
-        elif isinstance(name, six.text_type):
-            self.__name = name
-        elif isinstance(name, six.binary_type):
-            self.__name = name.decode('ascii')
-        else:
-            # log.debug(name)
-            # log.debug(name.__class__)
-            raise ValueError("name must be a string or bytes")
-
+        self.__name = to_text(name)
         self.__id = id
-        self.__client_id = client_id
+        self.__client_id = to_text(client_id)
         self.__data = data
         self.__timestamp = timestamp
         self.__connection_id = connection_id
