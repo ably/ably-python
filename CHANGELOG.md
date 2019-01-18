@@ -1,7 +1,19 @@
 # Change Log
 
-## [v1.0.2](https://github.com/ably/ably-python/tree/v1.0.2)
+## [v1.0.3](https://github.com/ably/ably-python/tree/v1.0.3)
 
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.0.2...v1.0.3)
+
+**Closed issues:**
+
+- Travis failures with Python 2 in the 1.0 branch [\#138](https://github.com/ably/ably-python/issues/138)
+
+**Merged pull requests:**
+
+- clientId must be a \(text\) string [\#139](https://github.com/ably/ably-python/pull/139) ([jdavid](https://github.com/jdavid))
+- Fix authentication with auth\_url [\#137](https://github.com/ably/ably-python/pull/137) ([jdavid](https://github.com/jdavid))
+
+## [v1.0.2](https://github.com/ably/ably-python/tree/v1.0.2) (2018-12-10)
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.0.1...v1.0.2)
 
 **Fixed bugs:**
