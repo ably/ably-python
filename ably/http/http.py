@@ -206,7 +206,7 @@ class Http(object):
                     # Keep fallback host for later (RSC15f)
                     if retry_count > 0 and host != self.options.get_rest_host():
                         self.__host = host
-                        self.__host_expires = time.time() + (self.options.fallback_retry_timeout / 1000)
+                        self.__host_expires = time.time() + (self.options.fallback_retry_timeout / 1000.0)
 
                     return Response(response)
                 except AblyException as e:
