@@ -113,6 +113,12 @@ class TestRestInit(BaseTestCase):
                         http_max_retry_count=10)
         assert sorted(Defaults.fallback_hosts) == sorted(ably.options.get_fallback_rest_hosts())
 
+        # RSC15f
+        ably = AblyRest(token='foo')
+        assert 600000 == ably.options.fallback_retry_timeout
+        ably = AblyRest(token='foo', fallback_retry_timeout=1000)
+        assert 1000 == ably.options.fallback_retry_timeout
+
     @dont_vary_protocol
     def test_specified_realtime_host(self):
         ably = AblyRest(token='foo', realtime_host="some.other.host")

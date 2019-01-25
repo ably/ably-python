@@ -6,7 +6,7 @@ import time
 import mock
 import pytest
 import requests
-from six.moves.urllib.parse import urljoin
+from six.moves.urllib.parse import urljoin, urlparse
 
 from ably import AblyRest
 from ably.transport.defaults import Defaults
@@ -93,6 +93,33 @@ class TestRestHttp(BaseTestCase):
 
                 assert send_mock.call_count == 1
                 assert request_mock.call_args == mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY)
+
+    # RSC15f
+    def test_cached_fallback(self):
+        ably = RestSetup.get_ably_rest(fallback_hosts_use_default=True, fallback_retry_timeout=100)
+        host = ably.options.get_rest_host()
+
+        state = {'errors': 0}
+        send = requests.sessions.Session.send
+        def side_effect(self, prepped, *args, **kwargs):
+            if urlparse(prepped.url).hostname == host:
+                state['errors'] += 1
+                raise RuntimeError
+            return send(self, prepped, *args, **kwargs)
+
+        with mock.patch('requests.sessions.Session.send', side_effect=side_effect, autospec=True):
+            # The main host is called and there's an error
+            ably.time()
+            assert state['errors'] == 1
+
+            # The cached host is used: no error
+            ably.time()
+            assert state['errors'] == 1
+
+            # The cached host has expired, we've an error again
+            time.sleep(0.1)
+            ably.time()
+            assert state['errors'] == 2
 
     def test_no_retry_if_not_500_to_599_http_code(self):
         default_host = Options().get_rest_host()
