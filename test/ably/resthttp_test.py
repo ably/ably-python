@@ -96,7 +96,7 @@ class TestRestHttp(BaseTestCase):
 
     # RSC15f
     def test_cached_fallback(self):
-        timeout = 100
+        timeout = 2000
         ably = RestSetup.get_ably_rest(fallback_hosts_use_default=True, fallback_retry_timeout=timeout)
         host = ably.options.get_rest_host()
 
@@ -114,6 +114,8 @@ class TestRestHttp(BaseTestCase):
             assert state['errors'] == 1
 
             # The cached host is used: no error
+            ably.time()
+            ably.time()
             ably.time()
             assert state['errors'] == 1
 
