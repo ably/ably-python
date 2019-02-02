@@ -115,8 +115,10 @@ class Http(object):
         options = options or {}
         self.__ably = ably
         self.__options = options
-
         self.__auth = None
+        # Cached fallback host (RSC15f)
+        self.__host = None
+        self.__host_expires = None
 
     def dump_body(self, body):
         if self.options.use_binary_protocol:
@@ -132,6 +134,22 @@ class Http(object):
                 e.message = ("The provided token is not renewable and there is"
                              " no means to generate a new token")
             raise e
+
+    def get_rest_hosts(self):
+        hosts = self.options.get_rest_hosts()
+        host = self.__host
+        if host is None:
+            return hosts
+
+        if time.time() > self.__host_expires:
+            self.__host = None
+            self.__host_expires = None
+            return hosts
+
+        hosts = list(hosts)
+        hosts.remove(host)
+        hosts.insert(0, host)
+        return hosts
 
     @reauth_if_expired
     def make_request(self, method, path, headers=None, body=None,
@@ -157,12 +175,11 @@ class Http(object):
         if headers:
             all_headers.update(headers)
 
-        http_open_timeout = self.http_open_timeout
-        http_request_timeout = self.http_request_timeout
+        timeout = (self.http_open_timeout, self.http_request_timeout)
         http_max_retry_duration = self.http_max_retry_duration
         requested_at = time.time()
 
-        hosts = self.options.get_rest_hosts()
+        hosts = self.get_rest_hosts()
         for retry_count, host in enumerate(hosts):
             base_url = "%s://%s:%d" % (self.preferred_scheme,
                                        host,
@@ -171,7 +188,6 @@ class Http(object):
             request = requests.Request(method, url, data=body, headers=all_headers)
             prepped = self.__session.prepare_request(request)
             try:
-                timeout = (http_open_timeout, http_request_timeout)
                 response = self.__session.send(prepped, timeout=timeout)
             except Exception as e:
                 # Need to catch `Exception`, see:
@@ -186,6 +202,12 @@ class Http(object):
                 try:
                     if raise_on_error:
                         AblyException.raise_for_response(response)
+
+                    # Keep fallback host for later (RSC15f)
+                    if retry_count > 0 and host != self.options.get_rest_host():
+                        self.__host = host
+                        self.__host_expires = time.time() + (self.options.fallback_retry_timeout / 1000.0)
+
                     return Response(response)
                 except AblyException as e:
                     if not e.is_server_error:

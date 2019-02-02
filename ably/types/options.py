@@ -12,12 +12,14 @@ class Options(AuthOptions):
                  queue_messages=False, recover=False, environment=None,
                  http_open_timeout=None, http_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None,
-                 fallback_hosts=None, fallback_hosts_use_default=None,
+                 fallback_hosts=None, fallback_hosts_use_default=None, fallback_retry_timeout=None,
                  idempotent_rest_publishing=None,
                  **kwargs):
         super(Options, self).__init__(**kwargs)
 
         # TODO check these defaults
+        if fallback_retry_timeout is None:
+            fallback_retry_timeout = Defaults.fallback_retry_timeout
 
         if environment is not None and rest_host is not None:
             raise ValueError('specify rest_host or environment, not both')
@@ -43,6 +45,7 @@ class Options(AuthOptions):
         self.__http_max_retry_duration = http_max_retry_duration
         self.__fallback_hosts = fallback_hosts
         self.__fallback_hosts_use_default = fallback_hosts_use_default
+        self.__fallback_retry_timeout = fallback_retry_timeout
         self.__idempotent_rest_publishing = idempotent_rest_publishing
 
         self.__rest_hosts = self.__get_rest_hosts()
@@ -170,6 +173,10 @@ class Options(AuthOptions):
     @property
     def fallback_hosts_use_default(self):
         return self.__fallback_hosts_use_default
+
+    @property
+    def fallback_retry_timeout(self):
+        return self.__fallback_retry_timeout
 
     @property
     def idempotent_rest_publishing(self):

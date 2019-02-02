@@ -27,6 +27,8 @@ class Defaults(object):
 
     http_max_retry_count = 3
 
+    fallback_retry_timeout = 600000  # 10min
+
     @staticmethod
     def get_port(options):
         if options.tls:
