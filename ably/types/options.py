@@ -136,7 +136,7 @@ class Options(AuthOptions):
 
     @property
     def http_open_timeout(self):
-            return self.__http_open_timeout
+        return self.__http_open_timeout
 
     @http_open_timeout.setter
     def http_open_timeout(self, value):
@@ -144,7 +144,7 @@ class Options(AuthOptions):
 
     @property
     def http_request_timeout(self):
-            return self.__http_request_timeout
+        return self.__http_request_timeout
 
     @http_request_timeout.setter
     def http_request_timeout(self, value):
