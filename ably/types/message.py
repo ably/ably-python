@@ -147,8 +147,8 @@ class Message(EncodeDataMixin):
                 (isinstance(data, bytearray) or
                  # bytearray is always bytes
                  isinstance(data, six.binary_type))):
-                 # at this point binary_type is either a py3k bytes or a py2
-                 # str that failed to decode to unicode
+            # at this point binary_type is either a py3k bytes or a py2
+            # str that failed to decode to unicode
             data = base64.b64encode(data).decode('ascii')
             encoding.append('base64')
         elif isinstance(data, CipherData):

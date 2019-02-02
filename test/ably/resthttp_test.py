@@ -72,7 +72,7 @@ class TestRestHttp(BaseTestCase):
                     make_url(host)
                     for host in Options(http_max_retry_count=10).get_rest_hosts()
                 ])
-                for ((__, url), ___) in request_mock.call_args_list:
+                for ((_, url), _) in request_mock.call_args_list:
                     assert url in expected_urls_set
                     expected_urls_set.remove(url)
 
