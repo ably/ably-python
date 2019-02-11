@@ -3,7 +3,7 @@ ably-python
 
 [![Coverage Status](https://coveralls.io/repos/ably/ably-python/badge.svg?branch=master&service=github)](https://coveralls.io/github/ably/ably-python?branch=master)
 
-A Python client library for [www.ably.io](https://www.ably.io), the realtime messaging service.
+A Python client library for [www.ably.io](https://www.ably.io), the realtime messaging service. This library currently targets the [Ably 1.1 client library specification](https://www.ably.io/documentation/client-lib-development-guide/features/). You can jump to the '[Known Limitations](#known-limitations)' section to see the features this client library does not yet support.
 
 ## Supported platforms
 
@@ -12,6 +12,14 @@ This SDK supports Python 2.7 and 3.4+.
 We regression-test the SDK against a selection of Python versions (which we update over time, but usually consists of mainstream and widely used versions). Please refer to [.travis.yml](./.travis.yml) for the set of versions that currently undergo CI testing.
 
 If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://support.ably.io/) for advice.
+
+## Known Limitations
+
+Currently, this SDK only supports [Ably REST](https://www.ably.io/documentation/rest). The following are some of the Ably REST features that are *not supported*:
+
+- Feature 1
+- Feature 2
+- Feature 3
 
 ## Documentation
 
