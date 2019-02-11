@@ -17,9 +17,12 @@ If you find any compatibility issues, please [do raise an issue](https://github.
 
 Currently, this SDK only supports [Ably REST](https://www.ably.io/documentation/rest). The following are some of the Ably REST features that are *not supported*:
 
-- Feature 1
-- Feature 2
-- Feature 3
+| Feature | Spec reference |
+| --- | --- |
+| Feature 1 | spec |
+| Feature 2 | spec |
+| Feature 3 | spec |
+| Feature 4 | spec |
 
 ## Documentation
 
