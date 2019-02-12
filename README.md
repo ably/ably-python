@@ -15,14 +15,7 @@ If you find any compatibility issues, please [do raise an issue](https://github.
 
 ## Known Limitations
 
-Currently, this SDK only supports [Ably REST](https://www.ably.io/documentation/rest). However, you can use the [MQTT adapter](https://www.ably.io/documentation/mqtt) to implement [Ably's Realtime](https://link-to-matrix-page) features using Python. The following are some of the Ably REST features that are *not supported*:
-
-| Feature | Spec reference |
-| --- | --- |
-| Feature 1 | spec |
-| Feature 2 | spec |
-| Feature 3 | spec |
-| Feature 4 | spec |
+Currently, this SDK only supports [Ably REST](https://www.ably.io/documentation/rest). However, you can use the [MQTT adapter](https://www.ably.io/documentation/mqtt) to implement [Ably's Realtime](https://todo-link-to-matrix-page) features using Python. 
 
 ## Documentation
 
