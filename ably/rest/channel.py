@@ -80,7 +80,6 @@ class Channel(object):
 
         return request_body
 
-    @catch_all
     def publish(self, name=None, data=None, client_id=None, extras=None,
                 messages=None, timeout=None):
         """Publishes a message on this channel.

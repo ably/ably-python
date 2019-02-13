@@ -177,8 +177,8 @@ pytest test
 
 ## Release Process
 
-1. Update [`setup.py`](./setup.py) with the new version number
-2. Run `python setup.py sdist upload -r pypi` to build and upload this new package to PyPi
+1. Update [`setup.py`](./setup.py) and [`ably/__init__.py`](./ably/__init__.py) with the new version number
+2. Run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
 3. Run [`github_changelog_generator`](https://github.com/skywinder/Github-Changelog-Generator) to automate the update of the [CHANGELOG](./CHANGELOG.md). Once the CHANGELOG has completed, manually change the `Unreleased` heading and link with the current version number such as `v1.0.0`. Also ensure that the `Full Changelog` link points to the new version tag instead of the `HEAD`. Commit this change.
 4. Tag the new version such as `git tag v1.0.0`
 5. Visit https://github.com/ably/ably-python/tags and add release notes for the release including links to the changelog entry.

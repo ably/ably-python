@@ -20,7 +20,7 @@ def to_text(value):
     elif isinstance(value, six.text_type):
         return value
     elif isinstance(value, six.binary_type):
-        return value.decode('ascii')
+        return value.decode()
     else:
         raise TypeError("expected string or bytes, not %s" % type(value))
 
@@ -32,7 +32,7 @@ class Message(EncodeDataMixin):
                  timestamp=None, encoding=''):
         self.__name = to_text(name)
         self.__id = to_text(id)
-        self.__client_id = client_id
+        self.__client_id = to_text(client_id)
         self.__data = data
         self.__timestamp = timestamp
         self.__connection_id = connection_id
