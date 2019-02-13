@@ -201,14 +201,22 @@ class TestCreateTokenRequest(BaseTestCase):
             key_name=self.key_name, key_secret=self.key_secret)
         assert isinstance(token_request, TokenRequest)
 
-        def auth_callback(token_params):
-            return token_request
-
-        ably = RestSetup.get_ably_rest(key=None, auth_callback=auth_callback,
+        ably = RestSetup.get_ably_rest(key=None,
+                                       auth_callback=lambda x: token_request,
                                        use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
+        assert isinstance(token, TokenDetails)
 
+    def test_token_request_dict_can_be_used_to_get_a_token(self):
+        token_request = self.ably.auth.create_token_request(
+            key_name=self.key_name, key_secret=self.key_secret)
+        assert isinstance(token_request, TokenRequest)
+
+        ably = RestSetup.get_ably_rest(key=None,
+                                       auth_callback=lambda x: token_request.to_dict(),
+                                       use_binary_protocol=self.use_binary_protocol)
+        token = ably.auth.authorize()
         assert isinstance(token, TokenDetails)
 
     # TE6
