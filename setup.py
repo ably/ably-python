@@ -5,7 +5,7 @@ with open('LONG_DESCRIPTION.rst') as f:
 
 setup(
     name='ably',
-    version='1.0.3',
+    version='1.1.0',
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',
@@ -15,7 +15,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',

@@ -1,12 +1,51 @@
 # Change Log
 
-## [v1.0.3](https://github.com/ably/ably-python/tree/v1.0.3)
+## [v1.1.0](https://github.com/ably/ably-python/tree/v1.1.0)
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.0.3...v1.1.0)
 
+**Closed issues:**
+
+- Idempotent publishing is not enabled in the upcoming 1.1 release [\#132](https://github.com/ably/ably-python/issues/132)
+- forward slash in channel name [\#130](https://github.com/ably/ably-python/issues/130)
+- Refactor tests setup [\#109](https://github.com/ably/ably-python/issues/109)
+
+**Implemented enhancements:**
+
+- Add support for remembered REST fallback host  [\#131](https://github.com/ably/ably-python/issues/131)
+- Ensure request method accepts UPDATE, PATCH & DELETE verbs [\#128](https://github.com/ably/ably-python/issues/128)
+- Add idempotent REST publishing support  [\#121](https://github.com/ably/ably-python/issues/121)
+- Allow to configure logger [\#107](https://github.com/ably/ably-python/issues/107)
+
+**Merged pull requests:**
+
+- Fix flake8 [\#142](https://github.com/ably/ably-python/pull/142) ([jdavid](https://github.com/jdavid))
+- Rsc15f Support for remembered REST fallback host  [\#141](https://github.com/ably/ably-python/pull/141) ([jdavid](https://github.com/jdavid))
+- Add patch [\#135](https://github.com/ably/ably-python/pull/135) ([jdavid](https://github.com/jdavid))
+- Idempotent publishing [\#129](https://github.com/ably/ably-python/pull/129) ([jdavid](https://github.com/jdavid))
+- Push [\#127](https://github.com/ably/ably-python/pull/127) ([jdavid](https://github.com/jdavid))
+- RSH1c5 New push.admin.channel\_subscriptions.remove\_where [\#126](https://github.com/ably/ably-python/pull/126) ([jdavid](https://github.com/jdavid))
+- RSH1c4 New push.admin.channel\_subscriptions.remove [\#125](https://github.com/ably/ably-python/pull/125) ([jdavid](https://github.com/jdavid))
+- RSH1c2 New push.admin.channel\_subscriptions.list\_channels [\#124](https://github.com/ably/ably-python/pull/124) ([jdavid](https://github.com/jdavid))
+- RSH1c1 New push.admin.channel\_subscriptions.list [\#120](https://github.com/ably/ably-python/pull/120) ([jdavid](https://github.com/jdavid))
+- RSH1c3 New push.admin.channel\_subscriptions.save [\#118](https://github.com/ably/ably-python/pull/118) ([jdavid](https://github.com/jdavid))
+- RHS1b5 New push.admin.device\_registrations.remove\_where [\#117](https://github.com/ably/ably-python/pull/117) ([jdavid](https://github.com/jdavid))
+- RHS1b4 New push.admin.device\_registrations.remove [\#116](https://github.com/ably/ably-python/pull/116) ([jdavid](https://github.com/jdavid))
+- RSH1b2 New push.admin.device\_registrations.list [\#114](https://github.com/ably/ably-python/pull/114) ([jdavid](https://github.com/jdavid))
+- Rsh1b1 New push.admin.device\_registrations.get [\#113](https://github.com/ably/ably-python/pull/113) ([jdavid](https://github.com/jdavid))
+- RSH1b3 New push.admin.device\_registrations.save [\#112](https://github.com/ably/ably-python/pull/112) ([jdavid](https://github.com/jdavid))
+- Document how to configure logging [\#110](https://github.com/ably/ably-python/pull/110) ([jdavid](https://github.com/jdavid))
+- Rsh1a New push.admin.publish [\#106](https://github.com/ably/ably-python/pull/106) ([jdavid](https://github.com/jdavid))
+
+## [v1.0.3](https://github.com/ably/ably-python/tree/v1.0.3) (2019-01-18)
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.0.2...v1.0.3)
 
 **Closed issues:**
 
 - Travis failures with Python 2 in the 1.0 branch [\#138](https://github.com/ably/ably-python/issues/138)
+
+**Fixed bugs:**
+
+- Authentication with auth\_url doesn't accept camel case [\#136](https://github.com/ably/ably-python/issues/136)
 
 **Merged pull requests:**
 

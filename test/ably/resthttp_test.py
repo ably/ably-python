@@ -164,15 +164,15 @@ class TestRestHttp(BaseTestCase):
 
         # API
         assert 'X-Ably-Version' in r.request.headers
-        assert r.request.headers['X-Ably-Version'] == '1.0'
+        assert r.request.headers['X-Ably-Version'] == '1.1'
 
         # Lib
         assert 'X-Ably-Lib' in r.request.headers
-        expr = r"^python-1\.0\.\d+(-\w+)?$"
+        expr = r"^python-1\.1\.\d+(-\w+)?$"
         assert re.search(expr, r.request.headers['X-Ably-Lib'])
 
         # Lib Variant
         ably.set_variant('django')
         r = ably.http.make_request('HEAD', '/time', skip_auth=True)
-        expr = r"^python.django-1\.0\.\d+(-\w+)?$"
+        expr = r"^python.django-1\.1\.\d+(-\w+)?$"
         assert re.search(expr, r.request.headers['X-Ably-Lib'])
