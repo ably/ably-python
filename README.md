@@ -1,6 +1,7 @@
 ably-python
 -----------
 
+[![PyPI version](https://badge.fury.io/py/ably.svg)](https://badge.fury.io/py/ably)
 [![Coverage Status](https://coveralls.io/repos/ably/ably-python/badge.svg?branch=master&service=github)](https://coveralls.io/github/ably/ably-python?branch=master)
 
 A Python client library for [www.ably.io](https://www.ably.io), the realtime messaging service.
