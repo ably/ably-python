@@ -140,6 +140,9 @@ class TestPush(BaseTestCase):
         with pytest.raises(ValueError):
             publish(recipient, {})
 
+        with pytest.raises(AblyException):
+            publish(recipient, {'xxx': 5})
+
         response = publish(recipient, data)
         assert response.status_code == 204
 
