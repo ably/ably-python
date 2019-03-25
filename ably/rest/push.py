@@ -55,7 +55,7 @@ class PushAdmin(object):
 
         body = data.copy()
         body.update({'recipient': recipient})
-        return self.ably.http.post('/push/publish', body=body, timeout=timeout)
+        self.ably.http.post('/push/publish', body=body, timeout=timeout)
 
 
 class PushDeviceRegistrations(object):
