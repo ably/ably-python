@@ -140,8 +140,10 @@ class TestPush(BaseTestCase):
         with pytest.raises(ValueError):
             publish(recipient, {})
 
-        response = publish(recipient, data)
-        assert response.status_code == 204
+        with pytest.raises(AblyException):
+            publish(recipient, {'xxx': 5})
+
+        assert publish(recipient, data) is None
 
     # RSH1b1
     def test_admin_device_registrations_get(self):
