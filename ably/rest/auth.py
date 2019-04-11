@@ -94,21 +94,30 @@ class Auth(object):
         if self.client_id is not None:
             token_params['client_id'] = self.client_id
 
-        if self.__token_details:
-            if not self.__token_details.is_expired(self._timestamp()):
-                if not force:
-                    log.debug(
-                        "using cached token; expires = %d",
-                        self.__token_details.expires
-                    )
-                    return self.__token_details
-            else:
-                # token has expired
-                self.__token_details = None
+        token_details = self.__token_details
+        if not force and not self.token_details_has_expired():
+            log.debug("using cached token; expires = %d",
+                      token_details.expires)
+            return token_details
 
         self.__token_details = self.request_token(token_params, **auth_options)
         self._configure_client_id(self.__token_details.client_id)
         return self.__token_details
+
+    def token_details_has_expired(self):
+        token_details = self.__token_details
+        if token_details is None:
+            return True
+
+        expires = token_details.expires
+        if expires is None:
+            return False
+
+        timestamp = self._timestamp()
+        if self.__time_offset:
+            timestamp += self.__time_offset
+
+        return expires < timestamp + token_details.TOKEN_EXPIRY_BUFFER
 
     def authorize(self, token_params=None, auth_options=None):
         return self.__authorize_when_necessary(token_params, auth_options, force=True)
@@ -281,6 +290,10 @@ class Auth(object):
     @property
     def client_id(self):
         return self.__client_id
+
+    @property
+    def time_offset(self):
+        return self.__time_offset
 
     def _configure_client_id(self, new_client_id):
         # If new client ID from Ably is a wildcard, but preconfigured clientId is set,
