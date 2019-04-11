@@ -38,6 +38,7 @@ class Auth(object):
         self.__basic_credentials = None
         self.__auth_params = None
         self.__token_details = None
+        self.__time_offset = None
 
         must_use_token_auth = options.use_token_auth is True
         must_not_use_token_auth = options.use_token_auth is False
@@ -199,8 +200,16 @@ class Auth(object):
         else:
             if query_time is None:
                 query_time = self.auth_options.query_time
+
             if query_time:
-                token_request['timestamp'] = self.ably.time()
+                if self.__time_offset is None:
+                    server_time = self.ably.time()
+                    local_time = self._timestamp()
+                    self.__time_offset = server_time - local_time
+                    token_request['timestamp'] = server_time
+                else:
+                    local_time = self._timestamp()
+                    token_request['timestamp'] = local_time + self.__time_offset
             else:
                 token_request['timestamp'] = self._timestamp()
 
