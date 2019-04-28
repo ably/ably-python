@@ -5,7 +5,6 @@ import logging
 import time
 import json
 
-from six.moves import range
 from six.moves.urllib.parse import urljoin
 
 import requests
@@ -25,15 +24,24 @@ def reauth_if_expired(func):
         if kwargs.get("skip_auth"):
             return func(rest, *args, **kwargs)
 
-        num_tries = 5
-        for i in range(num_tries):
-            try:
+        # RSA4b1 Detect expired token to avoid round-trip request
+        auth = rest.auth
+        token_details = auth.token_details
+        if token_details and auth.time_offset is not None and auth.token_details_has_expired():
+            rest.reauth()
+            retried = True
+        else:
+            retried = False
+
+        try:
+            return func(rest, *args, **kwargs)
+        except AblyException as e:
+            if 40140 <= e.code < 40150 and not retried:
+                rest.reauth()
                 return func(rest, *args, **kwargs)
-            except AblyException as e:
-                if e.code == 40140 and i < (num_tries - 1):
-                    rest.reauth()
-                    continue
-                raise
+
+            raise
+
     return wrapper
 
 

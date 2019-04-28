@@ -50,12 +50,6 @@ class TokenDetails(object):
     def client_id(self):
         return self.__client_id
 
-    def is_expired(self, timestamp):
-        if self.__expires is None:
-            return False
-        else:
-            return self.__expires < timestamp + self.TOKEN_EXPIRY_BUFFER
-
     def to_dict(self):
         return {
             'expires': self.expires,

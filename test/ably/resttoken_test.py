@@ -129,13 +129,17 @@ class TestRestToken(BaseTestCase):
             assert local_time.called
             assert not server_time.called
 
+    # RSA10k
     def test_token_generation_with_server_time(self):
         timestamp = self.ably.auth._timestamp
         with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.request_token(query_time=True)
-            assert not local_time.called
-            assert server_time.called
+            assert local_time.call_count == 1
+            assert server_time.call_count == 1
+            self.ably.auth.request_token(query_time=True)
+            assert local_time.call_count == 2
+            assert server_time.call_count == 1
 
     # TD7
     def test_toke_details_from_json(self):
@@ -186,6 +190,7 @@ class TestCreateTokenRequest(BaseTestCase):
             assert local_time.called
             assert not server_time.called
 
+    # RSA10k
     @dont_vary_protocol
     def test_with_server_time(self):
         timestamp = self.ably.auth._timestamp
@@ -193,8 +198,12 @@ class TestCreateTokenRequest(BaseTestCase):
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.create_token_request(
                 key_name=self.key_name, key_secret=self.key_secret, query_time=True)
-            assert server_time.called
-            assert not local_time.called
+            assert local_time.call_count == 1
+            assert server_time.call_count == 1
+            self.ably.auth.create_token_request(
+                key_name=self.key_name, key_secret=self.key_secret, query_time=True)
+            assert local_time.call_count == 2
+            assert server_time.call_count == 1
 
     def test_token_request_can_be_used_to_get_a_token(self):
         token_request = self.ably.auth.create_token_request(

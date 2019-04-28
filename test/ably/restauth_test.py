@@ -180,10 +180,8 @@ class TestAuthAuthorize(BaseTestCase):
             self.ably.channels.test.publish('event', 'data')
 
     def test_authorize_create_new_token_if_expired(self):
-
         token = self.ably.auth.authorize()
-
-        with mock.patch('ably.types.tokendetails.TokenDetails.is_expired',
+        with mock.patch('ably.rest.auth.Auth.token_details_has_expired',
                         return_value=True):
             new_token = self.ably.auth.authorize()
 
@@ -519,7 +517,8 @@ class TestRenewToken(BaseTestCase):
 
         publish = self.ably.channels[self.channel].publish
 
-        with pytest.raises(AblyAuthException, match="The provided token is not renewable and there is no means to generate a new token"):
+        match = "The provided token is not renewable and there is no means to generate a new token"
+        with pytest.raises(AblyAuthException, match=match):
             publish('evt', 'msg')
 
         assert 0 == self.token_requests
@@ -536,7 +535,71 @@ class TestRenewToken(BaseTestCase):
 
         publish = self.ably.channels[self.channel].publish
 
-        with pytest.raises(AblyAuthException, match="The provided token is not renewable and there is no means to generate a new token"):
+        match = "The provided token is not renewable and there is no means to generate a new token"
+        with pytest.raises(AblyAuthException, match=match):
             publish('evt', 'msg')
 
         assert 0 == self.token_requests
+
+
+
+class TestRenewExpiredToken(BaseTestCase):
+
+    def setUp(self):
+        self.publish_attempts = 0
+        self.channel = uuid.uuid4().hex
+
+        host = test_vars['host']
+        key = test_vars["keys"][0]['key_name']
+        base_url = 'https://{}:443'.format(host)
+        headers = {'Content-Type': 'application/json'}
+
+        def cb_request_token(request):
+            body = {
+                'token': 'a_token',
+                'expires': int(time.time() * 1000), # Always expires
+            }
+            return (200, headers, json.dumps(body))
+
+        def cb_publish(request):
+            self.publish_attempts += 1
+            if self.publish_fail:
+                self.publish_fail = False
+                body = {'error': {'message': 'Authentication failure', 'statusCode': 401, 'code': 40140}}
+                status = 401
+            else:
+                body = '[]'
+                status = 201
+
+            return (status, headers, json.dumps(body))
+
+        def cb_time(request):
+            body = [int(time.time() * 1000)]
+            return (200, headers, json.dumps(body))
+
+        add_callback = responses.add_callback
+        add_callback(responses.POST, '{}/keys/{}/requestToken'.format(base_url, key), cb_request_token)
+        add_callback(responses.POST, '{}/channels/{}/messages'.format(base_url, self.channel), cb_publish)
+        add_callback(responses.GET, '{}/time'.format(base_url), cb_time)
+
+        responses.start()
+
+    def tearDown(self):
+        responses.stop()
+        responses.reset()
+
+    # RSA4b1
+    def test_query_time_false(self):
+        ably = RestSetup.get_ably_rest()
+        ably.auth.authorize()
+        self.publish_fail = True
+        ably.channels[self.channel].publish('evt', 'msg')
+        assert self.publish_attempts == 2
+
+    # RSA4b1
+    def test_query_time_true(self):
+        ably = RestSetup.get_ably_rest(query_time=True)
+        ably.auth.authorize()
+        self.publish_fail = False
+        ably.channels[self.channel].publish('evt', 'msg')
+        assert self.publish_attempts == 1

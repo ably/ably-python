@@ -161,6 +161,7 @@ class TestRestInit(BaseTestCase):
         with pytest.raises(ValueError):
             AblyRest(port=111)
 
+    # RSA10k
     def test_query_time_param(self):
         ably = RestSetup.get_ably_rest(query_time=True,
                                        use_binary_protocol=self.use_binary_protocol)
@@ -169,8 +170,11 @@ class TestRestInit(BaseTestCase):
         with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             ably.auth.request_token()
-            assert not local_time.called
-            assert server_time.called
+            assert local_time.call_count == 1
+            assert server_time.call_count == 1
+            ably.auth.request_token()
+            assert local_time.call_count == 2
+            assert server_time.call_count == 1
 
     @dont_vary_protocol
     def test_requests_over_https_production(self):
