@@ -542,7 +542,6 @@ class TestRenewToken(BaseTestCase):
         assert 0 == self.token_requests
 
 
-
 class TestRenewExpiredToken(BaseTestCase):
 
     def setUp(self):
@@ -557,7 +556,7 @@ class TestRenewExpiredToken(BaseTestCase):
         def cb_request_token(request):
             body = {
                 'token': 'a_token',
-                'expires': int(time.time() * 1000), # Always expires
+                'expires': int(time.time() * 1000),  # Always expires
             }
             return (200, headers, json.dumps(body))
 
