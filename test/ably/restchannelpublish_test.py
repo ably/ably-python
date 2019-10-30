@@ -416,6 +416,18 @@ class TestRestChannelPublish(BaseTestCase):
         assert history[0].name == name
         assert history[0].data == data
 
+    # RSL1l
+    @dont_vary_protocol
+    def test_publish_params(self):
+        channel = self.ably.channels.get(self.get_channel_name())
+
+        message = Message('name', 'data')
+        with pytest.raises(AblyException) as excinfo:
+            channel.publish(message, {'_forceNack': True})
+
+        assert 400 == excinfo.value.status_code
+        assert 40099 == excinfo.value.code
+
 
 @six.add_metaclass(VaryByProtocolTestsMetaclass)
 class TestRestChannelPublishIdempotent(BaseTestCase):

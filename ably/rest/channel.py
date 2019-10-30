@@ -95,6 +95,10 @@ class Channel(SingleDispatch):
             request_body = msgpack.packb(request_body, use_bin_type=True)
 
         path = self.__base_path + 'messages'
+        if params:
+            params = {k: str(v).lower() if type(v) is bool else v for k, v in params.items()}
+            path += '?' + parse.urlencode(params)
+
         return self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @_publish.register(str)

@@ -46,22 +46,23 @@ class AblyException(Exception, UnicodeMixin):
             raise AblyException(message=response.text,
                                 status_code=response.status_code,
                                 code=response.status_code * 100)
-        else:
-            if json_response and 'error' in json_response:
-                try:
-                    raise AblyException(message=json_response['error']['message'],
-                                        status_code=json_response['error']['statusCode'],
-                                        code=int(json_response['error']['code']))
-                except KeyError:
-                    msg = "Unexpected exception decoding server response: %s"
-                    msg = msg % response.text
-                    raise AblyException(message=msg,
-                                        status_code=500,
-                                        code=50000)
 
-            raise AblyException(message="",
-                                status_code=response.status_code,
-                                code=response.status_code * 100)
+        if json_response and 'error' in json_response:
+            error = json_response['error']
+            try:
+                raise AblyException(
+                    message=error['message'],
+                    status_code=error['statusCode'],
+                    code=int(error['code']),
+                )
+            except KeyError:
+                msg = "Unexpected exception decoding server response: %s"
+                msg = msg % response.text
+                raise AblyException(message=msg, status_code=500, code=50000)
+
+        raise AblyException(message="",
+                            status_code=response.status_code,
+                            code=response.status_code * 100)
 
     @staticmethod
     def from_exception(e):
