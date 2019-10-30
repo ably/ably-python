@@ -209,7 +209,7 @@ class TestRestChannelPublish(BaseTestCase):
         messages = [Message('publish',
                             {"test": "This is a JSONObject message payload"},
                             client_id='client_id')]
-        publish0.publish("publish", messages=messages)
+        publish0.publish(messages=messages)
 
         # Get the history for this channel
         history = publish0.history()

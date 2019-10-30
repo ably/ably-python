@@ -5,9 +5,11 @@ from collections import OrderedDict
 import logging
 import json
 import os
+import warnings
 
-import six
+from methoddispatch import SingleDispatch, singledispatch
 import msgpack
+import six
 from six.moves.urllib import parse
 
 from ably.http.paginatedresult import PaginatedResult, format_params
@@ -19,7 +21,7 @@ from ably.util.exceptions import catch_all, IncompatibleClientIdException
 log = logging.getLogger(__name__)
 
 
-class Channel(object):
+class Channel(SingleDispatch):
     def __init__(self, ably, name, options):
         self.__ably = ably
         self.__name = name
@@ -38,14 +40,10 @@ class Channel(object):
         return PaginatedResult.paginated_query(
             self.ably.http, url=path, response_processor=message_handler)
 
-    def __publish_request_body(self, name=None, data=None, client_id=None,
-                               extras=None, messages=None):
+    def __publish_request_body(self, messages):
         """
         Helper private method, separated from publish() to test RSL1j
         """
-        if not messages:
-            messages = [Message(name, data, client_id, extras=extras)]
-
         # Idempotent publishing
         if self.ably.options.idempotent_rest_publishing:
             # RSL1k1
@@ -80,20 +78,17 @@ class Channel(object):
 
         return request_body
 
-    def publish(self, name=None, data=None, client_id=None, extras=None,
-                messages=None, timeout=None):
-        """Publishes a message on this channel.
+    @singledispatch
+    def _publish(self, arg, *args, **kwargs):
+        raise TypeError('Unexpected type %s' % type(arg))
 
-        :Parameters:
-        - `name`: the name for this message.
-        - `data`: the data for this message.
-        - `messages`: list of `Message` objects to be published.
-            Specify this param OR `name` and `data`.
+    @_publish.register(Message)
+    def publish_message(self, message, params=None, timeout=None):
+        return self.publish_messages([message], params, timeout=timeout)
 
-        :attention: You can publish using `name` and `data` OR `messages`, never all three.
-        """
-        request_body = self.__publish_request_body(name, data, client_id, extras, messages)
-
+    @_publish.register(list)
+    def publish_messages(self, messages, params=None, timeout=None):
+        request_body = self.__publish_request_body(messages)
         if not self.ably.options.use_binary_protocol:
             request_body = json.dumps(request_body, separators=(',', ':'))
         else:
@@ -101,6 +96,46 @@ class Channel(object):
 
         path = self.__base_path + 'messages'
         return self.ably.http.post(path, body=request_body, timeout=timeout)
+
+    @_publish.register(str)
+    def publish_name_data(self, name, data, client_id=None, extras=None, timeout=None):
+        # RSL1h
+        if client_id or extras:
+            warnings.warn(
+                "Support for client_id and extras will be removed in 2.0",
+                DeprecationWarning
+            )
+
+        messages = [Message(name, data, client_id, extras=extras)]
+        return self.publish_messages(messages, timeout=timeout)
+
+    def publish(self, *args, **kwargs):
+        """Publishes a message on this channel.
+
+        :Parameters:
+        - `name`: the name for this message.
+        - `data`: the data for this message.
+        - `messages`: list of `Message` objects to be published.
+        - `message`: a single `Message` objet to be published
+
+        :attention: You can publish using `name` and `data` OR `messages` OR
+        `message`, never all three.
+        """
+        # For backwards compatibility
+        if len(args) == 0:
+            if len(kwargs) == 0:
+                return self.publish_name_data(None, None)
+
+            if 'name' in kwargs or 'data' in kwargs:
+                name = kwargs.pop('name', None)
+                data = kwargs.pop('data', None)
+                return self.publish_name_data(name, data, **kwargs)
+
+            if 'messages' in kwargs:
+                messages = kwargs.pop('messages')
+                return self.publish_messages(messages, **kwargs)
+
+        return self._publish(*args, **kwargs)
 
     @property
     def ably(self):

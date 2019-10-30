@@ -22,7 +22,8 @@ setup(
     ],
     packages=['ably', 'ably.http', 'ably.rest', 'ably.transport',
               'ably.types', 'ably.util'],
-    install_requires=['msgpack-python>=0.4.6',
+    install_requires=['methoddispatch>=3.0.2,<4',
+                      'msgpack-python>=0.4.6',
                       'requests>=2.7.0,<3',
                       'six>=1.9.0'],
     extras_require={
