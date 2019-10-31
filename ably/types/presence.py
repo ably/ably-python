@@ -28,9 +28,19 @@ class PresenceAction(object):
 
 
 class PresenceMessage(EncodeDataMixin):
-    def __init__(self, id=None, action=None, client_id=None,
-                 data=None, encoding=None, connection_id=None,
-                 timestamp=None):
+
+    def __init__(self,
+        id=None, # TP3a
+        action=None, # TP3b
+        client_id=None, # TP3c
+        connection_id=None, # TP3d
+        data=None, # TP3e
+        encoding=None, # TP3f
+        timestamp=None, # TP3g
+        member_key=None, # TP3h (for RT only)
+        extras=None, # TP3i (functionality not specified)
+    ):
+
         self.__id = id
         self.__action = action
         self.__client_id = client_id
@@ -38,32 +48,12 @@ class PresenceMessage(EncodeDataMixin):
         self.__data = data
         self.__encoding = encoding
         self.__timestamp = timestamp
+        self.__member_key = member_key
+        self.__extras = extras
 
-    @staticmethod
-    def from_encoded(obj, cipher=None):
-        id = obj.get('id')
-        action = obj.get('action', PresenceAction.ENTER)
-        client_id = obj.get('clientId')
-        connection_id = obj.get('connectionId')
-
-        encoding = obj.get('encoding', '')
-        timestamp = obj.get('timestamp')
-
-        if timestamp is not None:
-            timestamp = _dt_from_ms_epoch(timestamp)
-
-        data = obj.get('data')
-
-        decoded_data = PresenceMessage.decode(data, encoding, cipher)
-
-        return PresenceMessage(
-            id=id,
-            action=action,
-            client_id=client_id,
-            connection_id=connection_id,
-            timestamp=timestamp,
-            **decoded_data
-        )
+    @property
+    def id(self):
+        return self.__id
 
     @property
     def action(self):
@@ -74,8 +64,20 @@ class PresenceMessage(EncodeDataMixin):
         return self.__client_id
 
     @property
+    def connection_id(self):
+        return self.__connection_id
+
+    @property
+    def data(self):
+        return self.__data
+
+    @property
     def encoding(self):
         return self.__encoding
+
+    @property
+    def timestamp(self):
+        return self.__timestamp
 
     @property
     def member_key(self):
@@ -83,20 +85,35 @@ class PresenceMessage(EncodeDataMixin):
             return "%s:%s" % (self.connection_id, self.client_id)
 
     @property
-    def data(self):
-        return self.__data
+    def extras(self):
+        return self.__extras
 
-    @property
-    def id(self):
-        return self.__id
+    @staticmethod
+    def from_encoded(obj, cipher=None):
+        id = obj.get('id')
+        action = obj.get('action', PresenceAction.ENTER)
+        client_id = obj.get('clientId')
+        connection_id = obj.get('connectionId')
+        data = obj.get('data')
+        encoding = obj.get('encoding', '')
+        timestamp = obj.get('timestamp')
+        #member_key = obj.get('memberKey', None)
+        extras = obj.get('extras', None)
 
-    @property
-    def connection_id(self):
-        return self.__connection_id
+        if timestamp is not None:
+            timestamp = _dt_from_ms_epoch(timestamp)
 
-    @property
-    def timestamp(self):
-        return self.__timestamp
+        decoded_data = PresenceMessage.decode(data, encoding, cipher)
+
+        return PresenceMessage(
+            id=id,
+            action=action,
+            client_id=client_id,
+            connection_id=connection_id,
+            timestamp=timestamp,
+            extras=extras,
+            **decoded_data
+        )
 
 
 class Presence(object):

@@ -27,18 +27,28 @@ def to_text(value):
 
 class Message(EncodeDataMixin):
 
-    def __init__(self, name=None, data=None, client_id=None, extras=None,
-                 id=None, connection_id=None, connection_key=None,
-                 timestamp=None, encoding=''):
+    def __init__(self,
+        name=None, # TM2g
+        data=None, # TM2d
+        client_id=None, # TM2b
+        id=None, # TM2a
+        connection_id=None, # TM2c
+        connection_key=None, # TM2h
+        encoding='', # TM2e
+        timestamp=None, # TM2f
+        extras=None, # TM2i
+    ):
+
+        super(Message, self).__init__(encoding)
+
         self.__name = to_text(name)
-        self.__id = to_text(id)
-        self.__client_id = to_text(client_id)
         self.__data = data
-        self.__timestamp = timestamp
+        self.__client_id = to_text(client_id)
+        self.__id = to_text(id)
         self.__connection_id = connection_id
         self.__connection_key = connection_key
+        self.__timestamp = timestamp
         self.__extras = extras
-        super(Message, self).__init__(encoding)
 
     def __eq__(self, other):
         if isinstance(other, Message):
@@ -60,20 +70,12 @@ class Message(EncodeDataMixin):
         return self.__name
 
     @property
-    def client_id(self):
-        return self.__client_id
-
-    @property
     def data(self):
         return self.__data
 
     @property
-    def connection_id(self):
-        return self.__connection_id
-
-    @property
-    def connection_key(self):
-        return self.__connection_key
+    def client_id(self):
+        return self.__client_id
 
     @property
     def id(self):
@@ -82,6 +84,14 @@ class Message(EncodeDataMixin):
     @id.setter
     def id(self, value):
         self.__id = value
+
+    @property
+    def connection_id(self):
+        return self.__connection_id
+
+    @property
+    def connection_key(self):
+        return self.__connection_key
 
     @property
     def timestamp(self):

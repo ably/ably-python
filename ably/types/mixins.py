@@ -13,6 +13,17 @@ class EncodeDataMixin(object):
     def __init__(self, encoding):
         self.encoding = encoding
 
+    @property
+    def encoding(self):
+        return '/'.join(self._encoding_array).strip('/')
+
+    @encoding.setter
+    def encoding(self, encoding):
+        if not encoding:
+            self._encoding_array = []
+        else:
+            self._encoding_array = encoding.strip('/').split('/')
+
     @staticmethod
     def decode(data, encoding='', cipher=None):
         encoding = encoding.strip('/')
@@ -59,17 +70,6 @@ class EncodeDataMixin(object):
 
         encoding = '/'.join(encoding_list)
         return {'encoding': encoding, 'data': data}
-
-    @property
-    def encoding(self):
-        return '/'.join(self._encoding_array).strip('/')
-
-    @encoding.setter
-    def encoding(self, encoding):
-        if not encoding:
-            self._encoding_array = []
-        else:
-            self._encoding_array = encoding.strip('/').split('/')
 
     @classmethod
     def from_encoded_array(cls, objs, cipher=None):
