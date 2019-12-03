@@ -245,11 +245,3 @@ class TestCryptoWithFixture128(AbstractTestCryptoWithFixture, BaseTestCase):
 
 class TestCryptoWithFixture256(AbstractTestCryptoWithFixture, BaseTestCase):
     fixture_file = 'crypto-data-256.json'
-
-
-class TestCryptoWithCocoaFixture256(AbstractTestCryptoWithFixture, BaseTestCase):
-    fixture_file = 'crypto-data-256-cocoa.json'
-
-
-class TestCryptoWithJavaFixture256(AbstractTestCryptoWithFixture, BaseTestCase):
-    fixture_file = 'crypto-data-256-java.json'
