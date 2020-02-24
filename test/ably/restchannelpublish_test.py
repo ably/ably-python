@@ -108,7 +108,7 @@ class TestRestChannelPublish(BaseTestCase):
         assert post_mock.call_count == 1
 
         if self.use_binary_protocol:
-            messages = msgpack.unpackb(post_mock.call_args[1]['body'], encoding='utf-8')
+            messages = msgpack.unpackb(post_mock.call_args[1]['body'])
         else:
             messages = json.loads(post_mock.call_args[1]['body'])
 
@@ -195,7 +195,7 @@ class TestRestChannelPublish(BaseTestCase):
             assert post_mock.call_count == 1
 
             if self.use_binary_protocol:
-                posted_body = msgpack.unpackb(post_mock.call_args[1]['body'], encoding='utf-8')
+                posted_body = msgpack.unpackb(post_mock.call_args[1]['body'])
             else:
                 posted_body = json.loads(post_mock.call_args[1]['body'])
 
@@ -255,7 +255,7 @@ class TestRestChannelPublish(BaseTestCase):
 
             if self.use_binary_protocol:
                 posted_body = msgpack.unpackb(
-                    post_mock.mock_calls[0][2]['body'], encoding='utf-8')
+                    post_mock.mock_calls[0][2]['body'])
             else:
                 posted_body = json.loads(
                     post_mock.mock_calls[0][2]['body'])

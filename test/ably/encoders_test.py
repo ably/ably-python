@@ -246,7 +246,7 @@ class TestBinaryEncodersNoEncryption(BaseTestCase):
         cls.ably = RestSetup.get_ably_rest()
 
     def decode(self, data):
-        return msgpack.unpackb(data, encoding='utf-8')
+        return msgpack.unpackb(data)
 
     def test_text_utf8(self):
         channel = self.ably.channels["persisted:publish"]
@@ -336,7 +336,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
         return cipher.decrypt(payload)
 
     def decode(self, data):
-        return msgpack.unpackb(data, encoding='utf-8')
+        return msgpack.unpackb(data)
 
     def test_text_utf8(self):
         channel = self.ably.channels.get("persisted:publish_enc",
