@@ -96,7 +96,7 @@ class Response(object):
 
         content_type = self.__response.headers.get('content-type')
         if content_type == 'application/x-msgpack':
-            return msgpack.unpackb(content)
+            return msgpack.unpackb(content, encoding='utf-8')
         elif content_type == 'application/json':
             return self.__response.json()
         else:
