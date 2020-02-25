@@ -71,7 +71,7 @@ def assert_responses_type(protocol):
                 else:
                     assert response.headers['content-type'] == 'application/x-msgpack'
                     if response.content:
-                        msgpack.unpackb(response.content, encoding='utf-8')
+                        msgpack.unpackb(response.content)
 
         return test_decorated
     return test_decorator
