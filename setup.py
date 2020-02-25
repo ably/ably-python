@@ -5,7 +5,7 @@ with open('LONG_DESCRIPTION.rst') as f:
 
 setup(
     name='ably',
-    version='1.1.0',
+    version='1.1.1',
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',
