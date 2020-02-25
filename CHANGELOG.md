@@ -1,5 +1,26 @@
 # Change Log
 
+## [v1.1.1](https://github.com/ably/ably-python/tree/v1.1.1)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.1.0...v1.1.1)
+
+**Implemented enhancements:**
+
+- Improve handling of clock skew [\#145](https://github.com/ably/ably-python/issues/145)
+- Test variable length 256 bit AES CBC fixtures [\#150](https://github.com/ably/ably-python/pull/150) ([QuintinWillison](https://github.com/QuintinWillison))
+
+**Closed issues:**
+
+- Remove develop branch [\#151](https://github.com/ably/ably-python/issues/151)
+
+**Merged pull requests:**
+
+- bump msgpack version to 1.0.0 and update tests [\#152](https://github.com/ably/ably-python/pull/152) ([abordeau](https://github.com/abordeau))
+- Fix flake8 [\#148](https://github.com/ably/ably-python/pull/148) ([jdavid](https://github.com/jdavid))
+- RSA4b1 Detect expired token to avoid extra request [\#147](https://github.com/ably/ably-python/pull/147) ([jdavid](https://github.com/jdavid))
+- push.admin.publish returns None [\#146](https://github.com/ably/ably-python/pull/146) ([jdavid](https://github.com/jdavid))
+- 'Known limitations' section in the README [\#143](https://github.com/ably/ably-python/pull/143) ([Srushtika](https://github.com/Srushtika))
+
 ## [v1.1.0](https://github.com/ably/ably-python/tree/v1.1.0)
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.0.3...v1.1.0)
 
