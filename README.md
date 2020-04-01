@@ -188,7 +188,3 @@ pytest test
 5. Tag the new version such as `git tag v1.0.0`
 6. Visit https://github.com/ably/ably-python/tags and add release notes for the release including links to the changelog entry.
 7. Push the tag to origin `git push origin v1.0.0`
-
-## License
-
-Copyright (c) 2016 Ably Real-time Ltd, Licensed under the Apache License, Version 2.0.  Refer to [LICENSE](LICENSE) for the license terms.
