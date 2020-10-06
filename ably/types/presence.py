@@ -30,16 +30,16 @@ class PresenceAction(object):
 class PresenceMessage(EncodeDataMixin):
 
     def __init__(self,
-        id=None, # TP3a
-        action=None, # TP3b
-        client_id=None, # TP3c
-        connection_id=None, # TP3d
-        data=None, # TP3e
-        encoding=None, # TP3f
-        timestamp=None, # TP3g
-        member_key=None, # TP3h (for RT only)
-        extras=None, # TP3i (functionality not specified)
-    ):
+                 id=None,  # TP3a
+                 action=None,  # TP3b
+                 client_id=None,  # TP3c
+                 connection_id=None,  # TP3d
+                 data=None,  # TP3e
+                 encoding=None,  # TP3f
+                 timestamp=None,  # TP3g
+                 member_key=None,  # TP3h (for RT only)
+                 extras=None,  # TP3i (functionality not specified)
+                 ):
 
         self.__id = id
         self.__action = action
@@ -97,7 +97,7 @@ class PresenceMessage(EncodeDataMixin):
         data = obj.get('data')
         encoding = obj.get('encoding', '')
         timestamp = obj.get('timestamp')
-        #member_key = obj.get('memberKey', None)
+        # member_key = obj.get('memberKey', None)
         extras = obj.get('extras', None)
 
         if timestamp is not None:
