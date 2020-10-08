@@ -93,7 +93,7 @@ class CbcChannelCipher(object):
 
     def encrypt(self, plaintext):
         if isinstance(plaintext, bytearray):
-            plaintext = six.binary_type(plaintext)
+            plaintext = bytes(plaintext)
         padded_plaintext = self.__pad(plaintext)
         encrypted = self.__iv + self.__encryptor.encrypt(padded_plaintext)
         self.__iv = encrypted[-self.__block_size:]
@@ -101,7 +101,7 @@ class CbcChannelCipher(object):
 
     def decrypt(self, ciphertext):
         if isinstance(ciphertext, bytearray):
-            ciphertext = six.binary_type(ciphertext)
+            ciphertext = bytes(ciphertext)
         iv = ciphertext[:self.__block_size]
         ciphertext = ciphertext[self.__block_size:]
         decryptor = AES.new(self.__secret_key, AES.MODE_CBC, iv)
@@ -142,7 +142,7 @@ def generate_random_key(length=DEFAULT_KEYLENGTH):
 
 def get_default_params(params=None):
     # Backwards compatibility
-    if type(params) in [str, six.binary_type]:
+    if type(params) in [str, bytes]:
         log.warn("Calling get_default_params with a key directly is deprecated, it expects a params dict")
         return get_default_params({'key': params})
 

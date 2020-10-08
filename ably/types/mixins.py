@@ -1,9 +1,9 @@
 import base64
 import json
 import logging
-import six
 
 from ably.util.crypto import CipherData
+
 
 log = logging.getLogger(__name__)
 
@@ -41,12 +41,12 @@ class EncodeDataMixin(object):
                     data = bytearray(data)
                 continue
             if encoding == 'json':
-                if isinstance(data, six.binary_type):
+                if isinstance(data, bytes):
                     data = data.decode()
                 if isinstance(data, list) or isinstance(data, dict):
                     continue
                 data = json.loads(data)
-            elif encoding == 'base64' and isinstance(data, six.binary_type):
+            elif encoding == 'base64' and isinstance(data, bytes):
                 data = bytearray(base64.b64decode(data))
             elif encoding == 'base64':
                 data = bytearray(base64.b64decode(data.encode('utf-8')))
@@ -57,8 +57,7 @@ class EncodeDataMixin(object):
                     encoding_list.append(encoding)
                     break
                 data = cipher.decrypt(data)
-            elif encoding == 'utf-8' and isinstance(data, (six.binary_type,
-                                                           bytearray)):
+            elif encoding == 'utf-8' and isinstance(data, (bytes, bytearray)):
                 data = data.decode('utf-8')
             elif encoding == 'utf-8':
                 pass

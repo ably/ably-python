@@ -180,7 +180,7 @@ class Channels(object):
         self.__attached = OrderedDict()
 
     def get(self, name, **kwargs):
-        if isinstance(name, six.binary_type):
+        if isinstance(name, bytes):
             name = name.decode('ascii')
 
         if name not in self.__attached:
@@ -204,7 +204,7 @@ class Channels(object):
     def __contains__(self, item):
         if isinstance(item, Channel):
             name = item.name
-        elif isinstance(item, six.binary_type):
+        elif isinstance(item, bytes):
             name = item.decode('ascii')
         else:
             name = item

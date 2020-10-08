@@ -5,7 +5,6 @@ import time
 import uuid
 import warnings
 
-import six
 import requests
 
 from ably.types.capability import Capability
@@ -171,9 +170,6 @@ class Auth(object):
         elif isinstance(token_request, dict):
             token_request = TokenRequest.from_json(token_request)
         elif isinstance(token_request, str):
-            return TokenDetails(token=token_request)
-        # python2
-        elif isinstance(token_request, six.binary_type) and six.binary_type == str:
             return TokenDetails(token=token_request)
 
         token_path = "/keys/%s/requestToken" % token_request.key_name

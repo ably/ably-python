@@ -2,8 +2,6 @@ import base64
 import json
 import logging
 
-import six
-
 from ably.types.typedbuffer import TypedBuffer
 from ably.types.mixins import EncodeDataMixin
 from ably.util.crypto import CipherData
@@ -17,7 +15,7 @@ def to_text(value):
         return value
     elif isinstance(value, str):
         return value
-    elif isinstance(value, six.binary_type):
+    elif isinstance(value, bytes):
         return value.decode()
     else:
         raise TypeError("expected string or bytes, not %s" % type(value))
@@ -136,26 +134,13 @@ class Message(EncodeDataMixin):
         data_type = None
         encoding = self._encoding_array[:]
 
-        if isinstance(data, six.binary_type) and six.binary_type == str:
-            # If using python 2, assume str payloads are intended as strings
-            # if they decode to unicode. If it doesn't, treat as a binary
-            try:
-                data = str(data)
-            except UnicodeDecodeError:
-                pass
-
         if isinstance(data, dict) or isinstance(data, list):
             encoding.append('json')
             data = json.dumps(data)
             data = str(data)
         elif isinstance(data, str) and not binary:
             pass
-        elif (not binary and
-                (isinstance(data, bytearray) or
-                 # bytearray is always bytes
-                 isinstance(data, six.binary_type))):
-            # at this point binary_type is either a py3k bytes or a py2
-            # str that failed to decode to unicode
+        elif not binary and isinstance(data, (bytearray, bytes)):
             data = base64.b64encode(data).decode('ascii')
             encoding.append('base64')
         elif isinstance(data, CipherData):
@@ -167,10 +152,9 @@ class Message(EncodeDataMixin):
             else:
                 data = data.buffer
         elif binary and isinstance(data, bytearray):
-            data = six.binary_type(data)
+            data = bytes(data)
 
-        if not (isinstance(data, (six.binary_type, str, list, dict,
-                                  bytearray)) or
+        if not (isinstance(data, (bytes, str, list, dict, bytearray)) or
                 data is None):
             raise AblyException("Invalid data payload", 400, 40011)
 
