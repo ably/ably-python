@@ -1,8 +1,6 @@
 # This functionality is depreceated and will be removed
 # Message Pack is the replacement for all binary data messages
 
-from __future__ import absolute_import
-
 import json
 import struct
 

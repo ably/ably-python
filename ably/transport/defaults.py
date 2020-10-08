@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-
 class Defaults(object):
     protocol_version = 1
     fallback_hosts = [
