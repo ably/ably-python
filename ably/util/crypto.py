@@ -125,7 +125,7 @@ class CipherData(TypedBuffer):
 
     def __init__(self, buffer, type, cipher_type=None, **kwargs):
         self.__cipher_type = cipher_type
-        super(CipherData, self).__init__(buffer, type, **kwargs)
+        super().__init__(buffer, type, **kwargs)
 
     @property
     def encoding_str(self):

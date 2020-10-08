@@ -196,7 +196,7 @@ class Channels(object):
 
     def __getattr__(self, name):
         try:
-            return getattr(super(Channels, self), name)
+            return super().__getattr__(name)
         except AttributeError:
             return self.get(name)
 

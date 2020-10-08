@@ -13,7 +13,7 @@ class Options(AuthOptions):
                  fallback_hosts=None, fallback_hosts_use_default=None, fallback_retry_timeout=None,
                  idempotent_rest_publishing=None,
                  **kwargs):
-        super(Options, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         # TODO check these defaults
         if fallback_retry_timeout is None:

@@ -35,7 +35,7 @@ class Message(EncodeDataMixin):
                  extras=None,  # TM2i
                  ):
 
-        super(Message, self).__init__(encoding)
+        super().__init__(encoding)
 
         self.__name = to_text(name)
         self.__data = data
