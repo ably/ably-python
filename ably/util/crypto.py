@@ -1,8 +1,6 @@
 import base64
 import logging
 
-import six
-
 try:
     from Crypto.Cipher import AES
     from Crypto import Random
@@ -64,13 +62,13 @@ class CbcChannelCipher(object):
     def __pad(self, data):
         padding_size = self.__block_size - (len(data) % self.__block_size)
 
-        padding_char = six.int2byte(padding_size)
+        padding_char = bytes((padding_size,))
         padded = data + padding_char * padding_size
 
         return padded
 
     def __unpad(self, data):
-        padding_size = six.indexbytes(data, -1)
+        padding_size = data[-1]
 
         if padding_size > len(data):
             # Too short
@@ -82,7 +80,7 @@ class CbcChannelCipher(object):
 
         for i in range(padding_size):
             # Invalid padding bytes
-            if padding_size != six.indexbytes(data, -i - 1):
+            if padding_size != data[-i - 1]:
                 raise AblyException('invalid-padding', 0, 0)
 
         return data[:-padding_size]

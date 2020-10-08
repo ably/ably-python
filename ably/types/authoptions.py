@@ -1,5 +1,3 @@
-import six
-
 from ably.util.exceptions import AblyException
 
 
