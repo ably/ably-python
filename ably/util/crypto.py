@@ -2,7 +2,6 @@ import base64
 import logging
 
 import six
-from six.moves import range
 
 try:
     from Crypto.Cipher import AES

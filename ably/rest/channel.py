@@ -3,12 +3,12 @@ from collections import OrderedDict
 import logging
 import json
 import os
+from urllib import parse
 import warnings
 
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
 import six
-from six.moves.urllib import parse
 
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.message import Message, make_message_response_handler

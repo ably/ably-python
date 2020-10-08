@@ -3,7 +3,6 @@ import logging
 import pytest
 import responses
 import six
-from six.moves import range
 
 from ably import AblyException
 from ably.http.paginatedresult import PaginatedResult

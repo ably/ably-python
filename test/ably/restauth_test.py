@@ -5,12 +5,12 @@ import uuid
 import base64
 import responses
 import warnings
+from urllib.parse import parse_qs, urlparse
 
 import mock
 import pytest
 from requests import Session
 import six
-from six.moves.urllib.parse import parse_qs, urlparse
 
 import ably
 from ably import AblyRest

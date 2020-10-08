@@ -4,7 +4,7 @@ import time
 import mock
 import pytest
 import requests
-from six.moves.urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse
 
 from ably import AblyRest
 from ably.transport.defaults import Defaults

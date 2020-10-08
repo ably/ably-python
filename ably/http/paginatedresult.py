@@ -1,7 +1,6 @@
 import calendar
 import logging
-
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from ably.http.http import Request
 from ably.util import case

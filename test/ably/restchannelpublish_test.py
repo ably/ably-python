@@ -10,7 +10,6 @@ import msgpack
 import pytest
 import requests
 import six
-from six.moves import range
 
 from ably import api_version
 from ably import AblyException, IncompatibleClientIdException

@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
-
-from six.moves.urllib import parse
+from urllib import parse
 
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.mixins import EncodeDataMixin

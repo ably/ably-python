@@ -1,6 +1,5 @@
 import logging
-
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
