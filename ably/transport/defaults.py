@@ -1,4 +1,4 @@
-class Defaults(object):
+class Defaults:
     protocol_version = 1
     fallback_hosts = [
         "A.ably-realtime.com",

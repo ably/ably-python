@@ -179,7 +179,7 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert params.key_length == 256
 
 
-class AbstractTestCryptoWithFixture(object):
+class AbstractTestCryptoWithFixture:
 
     @classmethod
     def setUpClass(cls):

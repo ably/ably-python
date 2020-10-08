@@ -4,7 +4,7 @@ import hmac
 import json
 
 
-class TokenRequest(object):
+class TokenRequest:
 
     def __init__(self, key_name=None, client_id=None, nonce=None, mac=None,
                  capability=None, ttl=None, timestamp=None):

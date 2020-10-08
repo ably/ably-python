@@ -40,7 +40,7 @@ def format_params(params=None, direction=None, start=None, end=None, limit=None,
     return '?' + urlencode(params) if params else ''
 
 
-class PaginatedResult(object):
+class PaginatedResult:
     def __init__(self, http, items, content_type, rel_first, rel_next,
                  response_processor, response):
         self.__http = http

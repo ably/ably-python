@@ -4,7 +4,7 @@ from ably.types.channelsubscription import PushChannelSubscription, channel_subs
 from ably.types.channelsubscription import channels_response_processor
 
 
-class Push(object):
+class Push:
 
     def __init__(self, ably):
         self.__ably = ably
@@ -15,7 +15,7 @@ class Push(object):
         return self.__admin
 
 
-class PushAdmin(object):
+class PushAdmin:
 
     def __init__(self, ably):
         self.__ably = ably
@@ -58,7 +58,7 @@ class PushAdmin(object):
         self.ably.http.post('/push/publish', body=body, timeout=timeout)
 
 
-class PushDeviceRegistrations(object):
+class PushDeviceRegistrations:
 
     def __init__(self, ably):
         self.__ably = ably
@@ -123,7 +123,7 @@ class PushDeviceRegistrations(object):
         return self.ably.http.delete(path)
 
 
-class PushChannelSubscriptions(object):
+class PushChannelSubscriptions:
 
     def __init__(self, ably):
         self.__ably = ably

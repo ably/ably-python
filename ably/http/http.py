@@ -42,7 +42,7 @@ def reauth_if_expired(func):
     return wrapper
 
 
-class Request(object):
+class Request:
     def __init__(self, method='GET', url='/', headers=None, body=None,
                  skip_auth=False, raise_on_error=True):
         self.__method = method
@@ -78,7 +78,7 @@ class Request(object):
         return self.__skip_auth
 
 
-class Response(object):
+class Response:
     """
     Composition for requests.Response with delegation
     """
@@ -107,7 +107,7 @@ class Response(object):
         return getattr(self.__response, attr)
 
 
-class Http(object):
+class Http:
     CONNECTION_RETRY_DEFAULTS = {
         'http_open_timeout': 4,
         'http_request_timeout': 10,

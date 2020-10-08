@@ -15,7 +15,7 @@ from ably.types.tokendetails import TokenDetails
 log = logging.getLogger(__name__)
 
 
-class AblyRest(object):
+class AblyRest:
     """Ably Rest Client"""
 
     variant = None

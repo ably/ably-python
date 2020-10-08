@@ -1,7 +1,7 @@
 import ably
 
 
-class HttpUtils(object):
+class HttpUtils:
     default_format = "json"
 
     mime_types = {

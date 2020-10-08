@@ -6,7 +6,7 @@ DevicePlatform = {'android', 'ios', 'browser'}
 DeviceFormFactor = {'phone', 'tablet', 'desktop', 'tv', 'watch', 'car', 'embedded', 'other'}
 
 
-class DeviceDetails(object):
+class DeviceDetails:
 
     def __init__(self, id, client_id=None, form_factor=None, metadata=None,
                  platform=None, push=None, update_token=None, app_id=None,

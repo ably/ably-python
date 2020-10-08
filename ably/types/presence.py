@@ -16,7 +16,7 @@ def _dt_from_ms_epoch(ms):
     return epoch + timedelta(milliseconds=ms)
 
 
-class PresenceAction(object):
+class PresenceAction:
     ABSENT = 0
     PRESENT = 1
     ENTER = 2
@@ -113,7 +113,7 @@ class PresenceMessage(EncodeDataMixin):
         )
 
 
-class Presence(object):
+class Presence:
     def __init__(self, channel):
         self.__base_path = '/channels/%s/' % parse.quote_plus(channel.name)
         self.__binary = channel.ably.options.use_binary_protocol

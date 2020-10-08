@@ -4,7 +4,7 @@ from datetime import datetime
 log = logging.getLogger(__name__)
 
 
-class ResourceCount(object):
+class ResourceCount:
     def __init__(self, opened=0, peak=0, mean=0, min=0, refused=0):
         self.opened = opened
         self.peak = peak
@@ -21,7 +21,7 @@ class ResourceCount(object):
         return ResourceCount(**kwargs)
 
 
-class ConnectionTypes(object):
+class ConnectionTypes:
     def __init__(self, all=None, plain=None, tls=None):
         self.all = all or ResourceCount()
         self.plain = plain or ResourceCount()
@@ -38,7 +38,7 @@ class ConnectionTypes(object):
         return ConnectionTypes(**kwargs)
 
 
-class MessageCount(object):
+class MessageCount:
     def __init__(self, count=0, data=0):
         self.count = count
         self.data = data
@@ -51,7 +51,7 @@ class MessageCount(object):
         return MessageCount(**kwargs)
 
 
-class MessageTypes(object):
+class MessageTypes:
     def __init__(self, all=None, messages=None, presence=None):
         self.all = all or MessageCount()
         self.messages = messages or MessageCount()
@@ -68,7 +68,7 @@ class MessageTypes(object):
         return MessageTypes(**kwargs)
 
 
-class MessageTraffic(object):
+class MessageTraffic:
     def __init__(self, all=None, realtime=None, rest=None, webhook=None):
         self.all = all or MessageTypes()
         self.realtime = realtime or MessageTypes()
@@ -87,7 +87,7 @@ class MessageTraffic(object):
         return MessageTraffic(**kwargs)
 
 
-class RequestCount(object):
+class RequestCount:
     def __init__(self, succeeded=0, failed=0, refused=0):
         self.succeeded = succeeded
         self.failed = failed
@@ -101,7 +101,7 @@ class RequestCount(object):
         return RequestCount(**kwargs)
 
 
-class Stats(object):
+class Stats:
 
     def __init__(self, all=None, inbound=None, outbound=None, persisted=None,
                  connections=None, channels=None, api_requests=None,

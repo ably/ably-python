@@ -5,7 +5,7 @@ import json
 import struct
 
 
-class DataType(object):
+class DataType:
     NONE = 0
     TRUE = 1
     FALSE = 2
@@ -18,7 +18,7 @@ class DataType(object):
     JSONOBJECT = 9
 
 
-class Limits(object):
+class Limits:
     INT32_MAX = 2 ** 31
     INT32_MIN = -(2 ** 31 + 1)
     INT64_MAX = 2 ** 63
@@ -37,7 +37,7 @@ _decoders[DataType.JSONARRAY] = lambda b: json.loads(b.decode('utf-8'))
 _decoders[DataType.JSONOBJECT] = lambda b: json.loads(b.decode('utf-8'))
 
 
-class TypedBuffer(object):
+class TypedBuffer:
     def __init__(self, buffer, type):
         self.__buffer = buffer
         self.__type = type

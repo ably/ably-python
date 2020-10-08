@@ -4,7 +4,7 @@ import time
 from ably.types.capability import Capability
 
 
-class TokenDetails(object):
+class TokenDetails:
 
     DEFAULTS = {'ttl': 60 * 60 * 1000}
     # Buffer in milliseconds before a token is considered unusable

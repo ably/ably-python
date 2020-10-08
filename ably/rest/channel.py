@@ -173,7 +173,7 @@ class Channel(SingleDispatch):
             self.__cipher = cipher
 
 
-class Channels(object):
+class Channels:
     def __init__(self, rest):
         self.__ably = rest
         self.__attached = OrderedDict()

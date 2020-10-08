@@ -13,7 +13,7 @@ from ably.util.exceptions import AblyException
 log = logging.getLogger(__name__)
 
 
-class CipherParams(object):
+class CipherParams:
     def __init__(self, algorithm='AES', mode='CBC', secret_key=None, iv=None):
         self.__algorithm = algorithm.upper()
         self.__secret_key = secret_key
@@ -42,7 +42,7 @@ class CipherParams(object):
         return self.__mode
 
 
-class CbcChannelCipher(object):
+class CbcChannelCipher:
     def __init__(self, cipher_params):
         self.__secret_key = (cipher_params.secret_key or
                              self.__random(cipher_params.key_length / 8))

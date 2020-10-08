@@ -1,7 +1,7 @@
 from ably.util.exceptions import AblyException
 
 
-class AuthOptions(object):
+class AuthOptions:
     def __init__(self, auth_callback=None, auth_url=None, auth_method='GET',
                  auth_token=None, auth_headers=None, auth_params=None,
                  key_name=None, key_secret=None, key=None, query_time=False,

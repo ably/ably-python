@@ -14,7 +14,7 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, Ba
 log = logging.getLogger(__name__)
 
 
-class TestRestAppStatsSetup(object):
+class TestRestAppStatsSetup:
 
     @classmethod
     def get_params(cls):

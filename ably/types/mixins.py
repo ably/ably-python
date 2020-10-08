@@ -8,7 +8,7 @@ from ably.util.crypto import CipherData
 log = logging.getLogger(__name__)
 
 
-class EncodeDataMixin(object):
+class EncodeDataMixin:
 
     def __init__(self, encoding):
         self.encoding = encoding

@@ -17,7 +17,7 @@ __all__ = ["Auth"]
 log = logging.getLogger(__name__)
 
 
-class Auth(object):
+class Auth:
 
     class Method:
         BASIC = "BASIC"
