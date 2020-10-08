@@ -8,7 +8,6 @@ import warnings
 
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
-import six
 
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.message import Message, make_message_response_handler
@@ -212,7 +211,7 @@ class Channels(object):
         return name in self.__attached
 
     def __iter__(self):
-        return iter(six.itervalues(self.__attached))
+        return iter(self.__attached.values())
 
     def release(self, key):
         del self.__attached[key]
