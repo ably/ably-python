@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 import pytest
-import six
 import responses
 
 from ably.http.paginatedresult import PaginatedResult
@@ -59,11 +58,11 @@ class TestPresence(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def test_presence_get_encoded(self):
         presence_history = self.channel.presence.history()
-        assert presence_history.items[-1].data == six.u("true")
-        assert presence_history.items[-2].data == six.u("24")
-        assert presence_history.items[-3].data == six.u("This is a string clientData payload")
+        assert presence_history.items[-1].data == "true"
+        assert presence_history.items[-2].data == "24"
+        assert presence_history.items[-3].data == "This is a string clientData payload"
         # this one doesn't have encoding field
-        assert presence_history.items[-4].data == six.u('{ "test": "This is a JSONObject clientData payload"}')
+        assert presence_history.items[-4].data == '{ "test": "This is a JSONObject clientData payload"}'
         assert presence_history.items[-5].data == {"example": {"json": "Object"}}
 
     def test_timestamp_is_datetime(self):

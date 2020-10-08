@@ -9,7 +9,6 @@ import mock
 import msgpack
 import pytest
 import requests
-import six
 
 from ably import api_version
 from ably import AblyException, IncompatibleClientIdException
@@ -40,7 +39,7 @@ class TestRestChannelPublish(BaseTestCase, metaclass=VaryByProtocolTestsMetaclas
         publish0 = self.ably.channels[
             self.get_channel_name('persisted:publish0')]
 
-        publish0.publish("publish0", six.u("This is a string message payload"))
+        publish0.publish("publish0", "This is a string message payload")
         publish0.publish("publish1", b"This is a byte[] message payload")
         publish0.publish("publish2", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish3", ["This is a JSONArray message payload"])
@@ -54,7 +53,7 @@ class TestRestChannelPublish(BaseTestCase, metaclass=VaryByProtocolTestsMetaclas
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        assert message_contents["publish0"] == six.u("This is a string message payload"), \
+        assert message_contents["publish0"] == "This is a string message payload", \
                "Expect publish0 to be expected String)"
 
         assert message_contents["publish1"] == b"This is a byte[] message payload", \
@@ -213,7 +212,7 @@ class TestRestChannelPublish(BaseTestCase, metaclass=VaryByProtocolTestsMetaclas
         assert isinstance(message, Message)
         assert message.id
         assert message.name
-        assert message.data == {six.u('test'): six.u('This is a JSONObject message payload')}
+        assert message.data == {'test': 'This is a JSONObject message payload'}
         assert message.encoding == ''
         assert message.client_id == 'client_id'
         assert isinstance(message.timestamp, int)

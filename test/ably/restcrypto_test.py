@@ -4,7 +4,6 @@ import logging
 import base64
 
 import pytest
-import six
 
 from ably import AblyException
 from ably.types.message import Message
@@ -33,27 +32,26 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @dont_vary_protocol
     def test_cbc_channel_cipher(self):
-        key = six.b(
-                '\x93\xe3\x5c\xc9\x77\x53\xfd\x1a'
-                '\x79\xb4\xd8\x84\xe7\xdc\xfd\xdf'
-        )
-        iv = six.b(
-                '\x28\x4c\xe4\x8d\x4b\xdc\x9d\x42'
-                '\x8a\x77\x6b\x53\x2d\xc7\xb5\xc0'
-        )
+        key = (
+            b'\x93\xe3\x5c\xc9\x77\x53\xfd\x1a'
+            b'\x79\xb4\xd8\x84\xe7\xdc\xfd\xdf')
+
+        iv = (
+            b'\x28\x4c\xe4\x8d\x4b\xdc\x9d\x42'
+            b'\x8a\x77\x6b\x53\x2d\xc7\xb5\xc0')
+
         log.debug("KEY_LEN: %d" % len(key))
         log.debug("IV_LEN: %d" % len(iv))
         cipher = get_cipher({'key': key, 'iv': iv})
 
-        plaintext = six.b("The quick brown fox")
-        expected_ciphertext = six.b(
-                '\x28\x4c\xe4\x8d\x4b\xdc\x9d\x42'
-                '\x8a\x77\x6b\x53\x2d\xc7\xb5\xc0'
-                '\x83\x5c\xcf\xce\x0c\xfd\xbe\x37'
-                '\xb7\x92\x12\x04\x1d\x45\x68\xa4'
-                '\xdf\x7f\x6e\x38\x17\x4a\xff\x50'
-                '\x73\x23\xbb\xca\x16\xb0\xe2\x84'
-        )
+        plaintext = b"The quick brown fox"
+        expected_ciphertext = (
+            b'\x28\x4c\xe4\x8d\x4b\xdc\x9d\x42'
+            b'\x8a\x77\x6b\x53\x2d\xc7\xb5\xc0'
+            b'\x83\x5c\xcf\xce\x0c\xfd\xbe\x37'
+            b'\xb7\x92\x12\x04\x1d\x45\x68\xa4'
+            b'\xdf\x7f\x6e\x38\x17\x4a\xff\x50'
+            b'\x73\x23\xbb\xca\x16\xb0\xe2\x84')
 
         actual_ciphertext = cipher.encrypt(plaintext)
 
@@ -63,8 +61,8 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         channel_name = self.get_channel_name('persisted:crypto_publish_text')
         publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
-        publish0.publish("publish3", six.u("This is a string message payload"))
-        publish0.publish("publish4", six.b("This is a byte[] message payload"))
+        publish0.publish("publish3", "This is a string message payload")
+        publish0.publish("publish4", b"This is a byte[] message payload")
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
@@ -76,7 +74,7 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        assert six.u("This is a string message payload") == message_contents["publish3"], "Expect publish3 to be expected String)"
+        assert "This is a string message payload" == message_contents["publish3"], "Expect publish3 to be expected String)"
         assert b"This is a byte[] message payload" == message_contents["publish4"], "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
         assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], "Expect publish5 to be expected JSONObject"
         assert ["This is a JSONArray message payload"] == message_contents["publish6"], "Expect publish6 to be expected JSONObject"
@@ -89,8 +87,8 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
         publish0 = self.ably.channels.get(channel_name, cipher={'key': key})
 
-        publish0.publish("publish3", six.u("This is a string message payload"))
-        publish0.publish("publish4", six.b("This is a byte[] message payload"))
+        publish0.publish("publish3", "This is a string message payload")
+        publish0.publish("publish4", b"This is a byte[] message payload")
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
@@ -102,7 +100,7 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        assert six.u("This is a string message payload") == message_contents["publish3"], "Expect publish3 to be expected String)"
+        assert "This is a string message payload" == message_contents["publish3"], "Expect publish3 to be expected String)"
         assert b"This is a byte[] message payload" == message_contents["publish4"], "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
         assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], "Expect publish5 to be expected JSONObject"
         assert ["This is a JSONArray message payload"] == message_contents["publish6"], "Expect publish6 to be expected JSONObject"
@@ -112,8 +110,8 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
         publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
-        publish0.publish("publish3", six.u("This is a string message payload"))
-        publish0.publish("publish4", six.b("This is a byte[] message payload"))
+        publish0.publish("publish3", "This is a string message payload")
+        publish0.publish("publish4", b"This is a byte[] message payload")
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
@@ -133,8 +131,8 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         channel_name = self.get_channel_name('persisted:crypto_send_unencrypted')
         publish0 = self.ably.channels[channel_name]
 
-        publish0.publish("publish3", six.u("This is a string message payload"))
-        publish0.publish("publish4", six.b("This is a byte[] message payload"))
+        publish0.publish("publish3", "This is a string message payload")
+        publish0.publish("publish4", b"This is a byte[] message payload")
         publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish6", ["This is a JSONArray message payload"])
 
@@ -148,15 +146,15 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        assert six.u("This is a string message payload") == message_contents["publish3"], "Expect publish3 to be expected String)"
+        assert "This is a string message payload" == message_contents["publish3"], "Expect publish3 to be expected String)"
         assert b"This is a byte[] message payload" == message_contents["publish4"], "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
         assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], "Expect publish5 to be expected JSONObject"
         assert ["This is a JSONArray message payload"] == message_contents["publish6"], "Expect publish6 to be expected JSONObject"
 
     def test_crypto_encrypted_unhandled(self):
         channel_name = self.get_channel_name('persisted:crypto_send_encrypted_unhandled')
-        key = six.b('0123456789abcdef')
-        data = six.u('foobar')
+        key = b'0123456789abcdef'
+        data = 'foobar'
         publish0 = self.ably.channels.get(channel_name, cipher={'key': key})
 
         publish0.publish("publish0", data)
