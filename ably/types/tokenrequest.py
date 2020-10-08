@@ -53,7 +53,7 @@ class TokenRequest(object):
 
     @staticmethod
     def from_json(data):
-        if isinstance(data, six.string_types):
+        if isinstance(data, str):
             data = json.loads(data)
 
         mapping = {

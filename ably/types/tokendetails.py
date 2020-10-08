@@ -1,8 +1,6 @@
 import json
 import time
 
-import six
-
 from ably.types.capability import Capability
 
 
@@ -22,7 +20,7 @@ class TokenDetails(object):
             self.__expires = expires
         self.__token = token
         self.__issued = issued
-        if capability and isinstance(capability, six.string_types):
+        if capability and isinstance(capability, str):
             self.__capability = Capability(json.loads(capability))
         else:
             self.__capability = Capability(capability or {})
@@ -73,7 +71,7 @@ class TokenDetails(object):
 
     @staticmethod
     def from_json(data):
-        if isinstance(data, six.string_types):
+        if isinstance(data, str):
             data = json.loads(data)
 
         mapping = {

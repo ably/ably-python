@@ -39,15 +39,15 @@ class Capability(MutableMapping, UnicodeMixin):
 
     def __setitem__(self, key, value):
         # validate that the value is a list of ops and that the key is a string
-        if not isinstance(key, six.string_types):
+        if not isinstance(key, str):
             raise ValueError('Capability keys must be strings')
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = [value]
 
         operations = set()
         for val in iter(value):
-            if not isinstance(val, six.string_types):
+            if not isinstance(val, str):
                 raise ValueError('Operations must be strings')
             operations.add(val)
 
@@ -62,7 +62,7 @@ class Capability(MutableMapping, UnicodeMixin):
         return self[key]
 
     def add_resource(self, resource, operations=[]):
-        if isinstance(operations, six.string_types):
+        if isinstance(operations, str):
             operations = [operations]
         self[resource] = list(operations)
 

@@ -66,7 +66,7 @@ class TypedBuffer(object):
         elif isinstance(obj, (bytes, bytearray)):
             type = DataType.BUFFER
             buffer = obj
-        elif isinstance(obj, six.string_types):
+        elif isinstance(obj, str):
             type = DataType.STRING
             buffer = obj.encode('utf-8')
         elif isinstance(obj, bool):
