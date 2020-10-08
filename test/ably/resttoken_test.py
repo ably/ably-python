@@ -4,7 +4,6 @@ import logging
 
 from mock import patch
 import pytest
-import six
 
 from ably import AblyException
 from ably import AblyRest
@@ -18,8 +17,7 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, Ba
 log = logging.getLogger(__name__)
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestToken(BaseTestCase):
+class TestRestToken(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def server_time(self):
         return self.ably.time()
@@ -156,8 +154,7 @@ class TestRestToken(BaseTestCase):
         self.ably.auth.request_token({'ttl': lifetime})
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestCreateTokenRequest(BaseTestCase):
+class TestCreateTokenRequest(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def setUp(self):
         self.ably = RestSetup.get_ably_rest()

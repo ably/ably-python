@@ -13,8 +13,7 @@ from test.ably.restsetup import RestSetup
 test_vars = RestSetup.get_test_vars()
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestPresence(BaseTestCase):
+class TestPresence(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def setUpClass(cls):
@@ -193,8 +192,7 @@ class TestPresence(BaseTestCase):
             self.channel.presence.history(start=start, end=end)
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestPresenceCrypt(BaseTestCase):
+class TestPresenceCrypt(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def setUpClass(cls):

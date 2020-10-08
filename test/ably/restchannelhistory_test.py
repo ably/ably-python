@@ -14,8 +14,7 @@ test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestChannelHistory(BaseTestCase):
+class TestRestChannelHistory(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @classmethod
     def setUpClass(cls):
         cls.ably = RestSetup.get_ably_rest()

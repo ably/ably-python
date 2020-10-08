@@ -19,8 +19,7 @@ test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestCrypto(BaseTestCase):
+class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def setUp(self):
         self.ably = RestSetup.get_ably_rest()

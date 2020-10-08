@@ -1,7 +1,6 @@
 from mock import patch
 import pytest
 from requests import Session
-import six
 
 from ably import AblyRest
 from ably import AblyException
@@ -14,8 +13,7 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, Ba
 test_vars = RestSetup.get_test_vars()
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestInit(BaseTestCase):
+class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_key_only(self):
         ably = AblyRest(key=test_vars["keys"][0]["key_str"])

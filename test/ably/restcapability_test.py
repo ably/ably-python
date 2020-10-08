@@ -1,5 +1,4 @@
 import pytest
-import six
 
 from ably.types.capability import Capability
 from ably.util.exceptions import AblyException
@@ -10,8 +9,7 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, Ba
 test_vars = RestSetup.get_test_vars()
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestCapability(BaseTestCase):
+class TestRestCapability(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @classmethod
     def setUpClass(cls):
         cls.ably = RestSetup.get_ably_rest()

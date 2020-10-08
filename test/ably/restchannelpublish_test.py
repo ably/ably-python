@@ -25,8 +25,7 @@ test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestChannelPublish(BaseTestCase):
+class TestRestChannelPublish(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     def setUp(self):
         self.ably = RestSetup.get_ably_rest()
         self.client_id = uuid.uuid4().hex
@@ -426,8 +425,7 @@ class TestRestChannelPublish(BaseTestCase):
         assert 40099 == excinfo.value.code
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestChannelPublishIdempotent(BaseTestCase):
+class TestRestChannelPublishIdempotent(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def setUpClass(cls):

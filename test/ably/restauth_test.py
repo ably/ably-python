@@ -149,8 +149,7 @@ class TestAuth(BaseTestCase):
         assert ably.auth.auth_options.default_token_params == {'ttl': 12345}
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestAuthAuthorize(BaseTestCase):
+class TestAuthAuthorize(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def setUp(self):
         self.ably = RestSetup.get_ably_rest()
@@ -311,8 +310,7 @@ class TestAuthAuthorize(BaseTestCase):
             assert len(ws) == 1
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRequestToken(BaseTestCase):
+class TestRequestToken(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def per_protocol_setup(self, use_binary_protocol):
         self.use_binary_protocol = use_binary_protocol

@@ -3,7 +3,6 @@ from datetime import timedelta
 import logging
 
 import pytest
-import six
 
 from ably.types.stats import Stats
 from ably.util.exceptions import AblyException
@@ -83,8 +82,8 @@ class TestRestAppStatsSetup(object):
         self.stat = self.stats[0]
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestDirectionForwards(TestRestAppStatsSetup, BaseTestCase):
+class TestDirectionForwards(TestRestAppStatsSetup, BaseTestCase,
+                            metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def get_params(cls):
@@ -105,8 +104,8 @@ class TestDirectionForwards(TestRestAppStatsSetup, BaseTestCase):
         assert page3.items[0].inbound.realtime.all.count == 70
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestDirectionBackwards(TestRestAppStatsSetup, BaseTestCase):
+class TestDirectionBackwards(TestRestAppStatsSetup, BaseTestCase,
+                             metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def get_params(cls):
@@ -126,8 +125,8 @@ class TestDirectionBackwards(TestRestAppStatsSetup, BaseTestCase):
         assert page3.items[0].inbound.realtime.all.count == 50
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestOnlyLastYear(TestRestAppStatsSetup, BaseTestCase):
+class TestOnlyLastYear(TestRestAppStatsSetup, BaseTestCase,
+                       metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def get_params(cls):
@@ -142,8 +141,8 @@ class TestOnlyLastYear(TestRestAppStatsSetup, BaseTestCase):
         assert self.stats[-1].inbound.realtime.messages.count == 50
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestPreviousYear(TestRestAppStatsSetup, BaseTestCase):
+class TestPreviousYear(TestRestAppStatsSetup, BaseTestCase,
+                       metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def get_params(cls):
@@ -158,8 +157,8 @@ class TestPreviousYear(TestRestAppStatsSetup, BaseTestCase):
         assert len(next_page) == 20
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestAppStats(TestRestAppStatsSetup, BaseTestCase):
+class TestRestAppStats(TestRestAppStatsSetup, BaseTestCase,
+                       metaclass=VaryByProtocolTestsMetaclass):
 
     @dont_vary_protocol
     def test_protocols(self):
