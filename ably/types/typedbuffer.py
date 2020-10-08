@@ -4,8 +4,6 @@
 import json
 import struct
 
-import six
-
 
 class DataType(object):
     NONE = 0
@@ -72,7 +70,7 @@ class TypedBuffer(object):
         elif isinstance(obj, bool):
             type = DataType.TRUE if obj else DataType.FALSE
             buffer = None
-        elif isinstance(obj, six.integer_types):
+        elif isinstance(obj, int):
             if obj >= Limits.INT32_MIN and obj <= Limits.INT32_MAX:
                 type = DataType.INT32
                 buffer = struct.pack('>i', obj)
