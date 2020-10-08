@@ -97,7 +97,7 @@ class TestRestChannelPublish(BaseTestCase):
         channel = self.ably.channels[
             self.get_channel_name('persisted:message_list_channel_one_request')]
 
-        expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
+        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -111,7 +111,7 @@ class TestRestChannelPublish(BaseTestCase):
 
         for i, message in enumerate(messages):
             assert message['name'] == 'name-' + str(i)
-            assert message['data'] == six.text_type(i)
+            assert message['data'] == str(i)
 
     def test_publish_error(self):
         ably = RestSetup.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
@@ -365,7 +365,7 @@ class TestRestChannelPublish(BaseTestCase):
         auth = (key['key_name'], key['key_secret'])
 
         type_mapping = {
-            'string': six.text_type,
+            'string': str,
             'jsonObject': dict,
             'jsonArray': list,
             'binary': bytearray,

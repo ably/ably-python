@@ -138,7 +138,7 @@ class Auth(object):
         key_secret = key_secret or self.auth_options.key_secret
 
         log.debug("Auth callback: %s" % auth_callback)
-        log.debug("Auth options: %s" % six.text_type(self.auth_options))
+        log.debug("Auth options: %s" % self.auth_options)
         if query_time is None:
             query_time = self.auth_options.query_time
         query_time = bool(query_time)
@@ -170,7 +170,7 @@ class Auth(object):
             return TokenDetails.from_dict(token_request)
         elif isinstance(token_request, dict):
             token_request = TokenRequest.from_json(token_request)
-        elif isinstance(token_request, six.text_type):
+        elif isinstance(token_request, str):
             return TokenDetails(token=token_request)
         # python2
         elif isinstance(token_request, six.binary_type) and six.binary_type == str:
@@ -230,7 +230,7 @@ class Auth(object):
 
         capability = token_params.get('capability')
         if capability is not None:
-            token_request['capability'] = six.text_type(Capability(capability))
+            token_request['capability'] = str(Capability(capability))
 
         token_request["client_id"] = (
             token_params.get('client_id') or self.client_id)

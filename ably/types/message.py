@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 def to_text(value):
     if value is None:
         return value
-    elif isinstance(value, six.text_type):
+    elif isinstance(value, str):
         return value
     elif isinstance(value, six.binary_type):
         return value.decode()
@@ -103,7 +103,7 @@ class Message(EncodeDataMixin):
         if isinstance(self.data, CipherData):
             return
 
-        elif isinstance(self.data, six.text_type):
+        elif isinstance(self.data, str):
             self._encoding_array.append('utf-8')
 
         if isinstance(self.data, dict) or isinstance(self.data, list):
@@ -140,16 +140,15 @@ class Message(EncodeDataMixin):
             # If using python 2, assume str payloads are intended as strings
             # if they decode to unicode. If it doesn't, treat as a binary
             try:
-                data = six.text_type(data)
+                data = str(data)
             except UnicodeDecodeError:
                 pass
 
         if isinstance(data, dict) or isinstance(data, list):
             encoding.append('json')
             data = json.dumps(data)
-            data = six.text_type(data)
-        elif isinstance(data, six.text_type) and not binary:
-            # text_type is always a unicode string
+            data = str(data)
+        elif isinstance(data, str) and not binary:
             pass
         elif (not binary and
                 (isinstance(data, bytearray) or
@@ -170,7 +169,7 @@ class Message(EncodeDataMixin):
         elif binary and isinstance(data, bytearray):
             data = six.binary_type(data)
 
-        if not (isinstance(data, (six.binary_type, six.text_type, list, dict,
+        if not (isinstance(data, (six.binary_type, str, list, dict,
                                   bytearray)) or
                 data is None):
             raise AblyException("Invalid data payload", 400, 40011)

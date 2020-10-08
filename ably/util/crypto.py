@@ -48,7 +48,7 @@ class CbcChannelCipher(object):
     def __init__(self, cipher_params):
         self.__secret_key = (cipher_params.secret_key or
                              self.__random(cipher_params.key_length / 8))
-        if isinstance(self.__secret_key, six.text_type):
+        if isinstance(self.__secret_key, str):
             self.__secret_key = self.__secret_key.encode()
         self.__iv = cipher_params.iv or self.__random(16)
         self.__block_size = len(self.__iv)
@@ -142,7 +142,7 @@ def generate_random_key(length=DEFAULT_KEYLENGTH):
 
 def get_default_params(params=None):
     # Backwards compatibility
-    if type(params) in [six.text_type, six.binary_type]:
+    if type(params) in [str, six.binary_type]:
         log.warn("Calling get_default_params with a key directly is deprecated, it expects a params dict")
         return get_default_params({'key': params})
 
@@ -154,7 +154,7 @@ def get_default_params(params=None):
     if not key:
         raise ValueError("Crypto.get_default_params: a key is required")
 
-    if type(key) == six.text_type:
+    if type(key) == str:
         key = base64.b64decode(key)
 
     cipher_params = CipherParams(algorithm=algorithm, secret_key=key, iv=iv, mode=mode)

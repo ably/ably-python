@@ -88,7 +88,7 @@ class TestTextEncodersNoEncryption(BaseTestCase):
         channel.publish('event', six.u('fóo'))
         message = channel.history().items[0]
         assert message.data == six.u('fóo')
-        assert isinstance(message.data, six.text_type)
+        assert isinstance(message.data, str)
         assert not message.encoding
 
     def test_text_str_decode(self):
@@ -97,7 +97,7 @@ class TestTextEncodersNoEncryption(BaseTestCase):
         channel.publish('event', 'foo')
         message = channel.history().items[0]
         assert message.data == six.u('foo')
-        assert isinstance(message.data, six.text_type)
+        assert isinstance(message.data, str)
         assert not message.encoding
 
     def test_with_binary_type_decode(self):
@@ -206,7 +206,7 @@ class TestTextEncodersEncryption(BaseTestCase):
         channel.publish('event', six.u('foó'))
         message = channel.history().items[0]
         assert message.data == six.u('foó')
-        assert isinstance(message.data, six.text_type)
+        assert isinstance(message.data, str)
         assert not message.encoding
 
     def test_with_binary_type_decode(self):
@@ -294,7 +294,7 @@ class TestBinaryEncodersNoEncryption(BaseTestCase):
         channel.publish('event', six.u('fóo'))
         message = channel.history().items[0]
         assert message.data == six.u('fóo')
-        assert isinstance(message.data, six.text_type)
+        assert isinstance(message.data, str)
         assert not message.encoding
 
     def test_with_binary_type_decode(self):
@@ -391,7 +391,7 @@ class TestBinaryEncodersEncryption(BaseTestCase):
         channel.publish('event', six.u('foó'))
         message = channel.history().items[0]
         assert message.data == six.u('foó')
-        assert isinstance(message.data, six.text_type)
+        assert isinstance(message.data, str)
         assert not message.encoding
 
     def test_with_binary_type_decode(self):

@@ -78,4 +78,4 @@ class Capability(MutableMapping, UnicodeMixin):
     @staticmethod
     def c14n(capability):
         sorted_ops = capability.to_dict()
-        return six.text_type(json.dumps(sorted_ops, sort_keys=True))
+        return json.dumps(sorted_ops, sort_keys=True)

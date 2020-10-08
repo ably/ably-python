@@ -156,4 +156,4 @@ class AuthOptions(object):
         self.__default_token_params = value
 
     def __unicode__(self):
-        return six.text_type(self.__dict__)
+        return str(self.__dict__)

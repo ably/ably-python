@@ -20,7 +20,7 @@ class TokenRequest(object):
         self.__timestamp = timestamp
 
     def sign_request(self, key_secret):
-        sign_text = six.u("\n").join([six.text_type(x) for x in [
+        sign_text = six.u("\n").join([str(x) for x in [
             self.key_name or "",
             self.ttl or "",
             self.capability or "",

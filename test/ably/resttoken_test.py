@@ -26,7 +26,7 @@ class TestRestToken(BaseTestCase):
 
     def setUp(self):
         capability = {"*": ["*"]}
-        self.permit_all = six.text_type(Capability(capability))
+        self.permit_all = str(Capability(capability))
         self.ably = RestSetup.get_ably_rest()
 
     def per_protocol_setup(self, use_binary_protocol):
@@ -40,7 +40,7 @@ class TestRestToken(BaseTestCase):
         assert token_details.token is not None, "Expected token"
         assert token_details.issued >= pre_time, "Unexpected issued time"
         assert token_details.issued <= post_time, "Unexpected issued time"
-        assert self.permit_all == six.text_type(token_details.capability), "Unexpected capability"
+        assert self.permit_all == str(token_details.capability), "Unexpected capability"
 
     def test_request_token_explicit_timestamp(self):
         pre_time = self.server_time()
@@ -49,7 +49,7 @@ class TestRestToken(BaseTestCase):
         assert token_details.token is not None, "Expected token"
         assert token_details.issued >= pre_time, "Unexpected issued time"
         assert token_details.issued <= post_time, "Unexpected issued time"
-        assert self.permit_all == six.text_type(Capability(token_details.capability)), "Unexpected Capability"
+        assert self.permit_all == str(Capability(token_details.capability)), "Unexpected Capability"
 
     def test_request_token_explicit_invalid_timestamp(self):
         request_time = self.server_time()
@@ -65,7 +65,7 @@ class TestRestToken(BaseTestCase):
         assert token_details.token is not None, "Expected token"
         assert token_details.issued >= pre_time, "Unexpected issued time"
         assert token_details.issued <= post_time, "Unexpected issued time"
-        assert self.permit_all == six.text_type(Capability(token_details.capability)), "Unexpected Capability"
+        assert self.permit_all == str(Capability(token_details.capability)), "Unexpected Capability"
 
     def test_request_token_with_duplicate_nonce(self):
         request_time = self.server_time()
