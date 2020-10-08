@@ -3,12 +3,10 @@ import json
 import logging
 
 
-from ably.util.unicodemixin import UnicodeMixin
-
 log = logging.getLogger(__name__)
 
 
-class Capability(MutableMapping, UnicodeMixin):
+class Capability(MutableMapping):
     def __init__(self, obj={}):
         self.__dict = dict(obj)
         for k, v in obj.items():
@@ -68,7 +66,7 @@ class Capability(MutableMapping, UnicodeMixin):
     def add_operation_to_resource(self, operation, resource):
         self.setdefault(resource, []).append(operation)
 
-    def __unicode__(self):
+    def __str__(self):
         return Capability.c14n(self)
 
     def to_dict(self):

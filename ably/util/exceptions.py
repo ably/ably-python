@@ -2,12 +2,11 @@ import functools
 import logging
 import six
 
-from ably.util.unicodemixin import UnicodeMixin
 
 log = logging.getLogger(__name__)
 
 
-class AblyException(Exception, UnicodeMixin):
+class AblyException(Exception):
     def __new__(cls, message, status_code, code):
         if cls == AblyException and status_code == 401:
             return AblyAuthException(message, status_code, code)
@@ -19,11 +18,8 @@ class AblyException(Exception, UnicodeMixin):
         self.code = code
         self.status_code = status_code
 
-    def __unicode__(self):
-        return six.u('%s %s %s') % (self.code, self.status_code, self.message)
-
     def __str__(self):
-        return self.__unicode__()
+        return six.u('%s %s %s') % (self.code, self.status_code, self.message)
 
     @property
     def is_server_error(self):
