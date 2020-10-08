@@ -2,7 +2,6 @@ from collections.abc import MutableMapping
 import json
 import logging
 
-import six
 
 from ably.util.unicodemixin import UnicodeMixin
 
@@ -12,7 +11,7 @@ log = logging.getLogger(__name__)
 class Capability(MutableMapping, UnicodeMixin):
     def __init__(self, obj={}):
         self.__dict = dict(obj)
-        for k, v in six.iteritems(obj):
+        for k, v in obj.items():
             self[k] = v
 
     def __eq__(self, other):
@@ -73,7 +72,7 @@ class Capability(MutableMapping, UnicodeMixin):
         return Capability.c14n(self)
 
     def to_dict(self):
-        return {k: sorted(v) for k, v in six.iteritems(self)}
+        return {k: sorted(v) for k, v in self.items()}
 
     @staticmethod
     def c14n(capability):

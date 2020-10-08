@@ -10,7 +10,6 @@ from urllib.parse import parse_qs, urlparse
 import mock
 import pytest
 from requests import Session
-import six
 
 import ably
 from ably import AblyRest
@@ -199,7 +198,7 @@ class TestAuthAuthorize(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert token_called[0] == token_params
 
         # Authorise may call request_token with some default auth_options.
-        for arg, value in six.iteritems(auth_params):
+        for arg, value in auth_params.items():
             assert auth_called[arg] == value, "%s called with wrong value: %s" % (arg, value)
 
     def test_with_token_str_https(self):
