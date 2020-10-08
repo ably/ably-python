@@ -51,16 +51,14 @@ class TestTextEncodersNoEncryption(BaseTestCase):
             assert json.loads(kwargs['body'])['encoding'].strip('/') == 'base64'
 
     def test_with_bytes_type(self):
-        # this test is only relevant for python3
-        if six.PY3:
-            channel = self.ably.channels["persisted:publish"]
+        channel = self.ably.channels["persisted:publish"]
 
-            with mock.patch('ably.rest.rest.Http.post') as post_mock:
-                channel.publish('event', b'foo')
-                _, kwargs = post_mock.call_args
-                raw_data = json.loads(kwargs['body'])['data']
-                assert base64.b64decode(raw_data.encode('ascii')) == bytearray(b'foo')
-                assert json.loads(kwargs['body'])['encoding'].strip('/') == 'base64'
+        with mock.patch('ably.rest.rest.Http.post') as post_mock:
+            channel.publish('event', b'foo')
+            _, kwargs = post_mock.call_args
+            raw_data = json.loads(kwargs['body'])['data']
+            assert base64.b64decode(raw_data.encode('ascii')) == bytearray(b'foo')
+            assert json.loads(kwargs['body'])['encoding'].strip('/') == 'base64'
 
     def test_with_json_dict_data(self):
         channel = self.ably.channels["persisted:publish"]
