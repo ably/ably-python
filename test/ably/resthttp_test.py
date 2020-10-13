@@ -66,10 +66,10 @@ class TestRestHttp(BaseTestCase):
 
                 assert send_mock.call_count == Defaults.http_max_retry_count
 
-                expected_urls_set = set([
+                expected_urls_set = {
                     make_url(host)
                     for host in Options(http_max_retry_count=10).get_rest_hosts()
-                ])
+                }
                 for ((_, url), _) in request_mock.call_args_list:
                     assert url in expected_urls_set
                     expected_urls_set.remove(url)
