@@ -159,28 +159,28 @@ class Message(EncodeDataMixin):
             raise AblyException("Invalid data payload", 400, 40011)
 
         request_body = {
-            u'name': self.name,
-            u'data': data,
+            'name': self.name,
+            'data': data,
         }
         if self.timestamp:
-            request_body[u'timestamp'] = self.timestamp
+            request_body['timestamp'] = self.timestamp
         request_body = {k: v for (k, v) in request_body.items()
                         if v is not None}  # None values aren't included
 
         if encoding:
-            request_body[u'encoding'] = u'/'.join(encoding).strip(u'/')
+            request_body['encoding'] = '/'.join(encoding).strip('/')
 
         if data_type:
-            request_body[u'type'] = data_type
+            request_body['type'] = data_type
 
         if self.client_id:
-            request_body[u'clientId'] = self.client_id
+            request_body['clientId'] = self.client_id
 
         if self.id:
-            request_body[u'id'] = self.id
+            request_body['id'] = self.id
 
         if self.connection_id:
-            request_body[u'connectionId'] = self.connection_id
+            request_body['connectionId'] = self.connection_id
 
         if self.connection_key:
             request_body['connectionKey'] = self.connection_key
