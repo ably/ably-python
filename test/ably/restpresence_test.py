@@ -211,9 +211,8 @@ class TestPresenceCrypt(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert presence_history.items[0].data == {'foo': 'bar'}
 
     def test_presence_get_encrypted(self):
-        presence_messages = self.channel.presence.get()
-        message = list(filter(
-            lambda message: message.client_id == 'client_encoded',
-            presence_messages.items))[0]
+        messages = self.channel.presence.get()
+        messages = (msg for msg in messages.items if msg.client_id == 'client_encoded')
+        message = next(messages)
 
         assert message.data == {'foo': 'bar'}
