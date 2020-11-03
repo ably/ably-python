@@ -1,10 +1,6 @@
-from __future__ import absolute_import
-
 import base64
 import json
 import logging
-
-import six
 
 from ably.types.typedbuffer import TypedBuffer
 from ably.types.mixins import EncodeDataMixin
@@ -17,9 +13,9 @@ log = logging.getLogger(__name__)
 def to_text(value):
     if value is None:
         return value
-    elif isinstance(value, six.text_type):
+    elif isinstance(value, str):
         return value
-    elif isinstance(value, six.binary_type):
+    elif isinstance(value, bytes):
         return value.decode()
     else:
         raise TypeError("expected string or bytes, not %s" % type(value))
@@ -39,7 +35,7 @@ class Message(EncodeDataMixin):
                  extras=None,  # TM2i
                  ):
 
-        super(Message, self).__init__(encoding)
+        super().__init__(encoding)
 
         self.__name = to_text(name)
         self.__data = data
@@ -105,7 +101,7 @@ class Message(EncodeDataMixin):
         if isinstance(self.data, CipherData):
             return
 
-        elif isinstance(self.data, six.text_type):
+        elif isinstance(self.data, str):
             self._encoding_array.append('utf-8')
 
         if isinstance(self.data, dict) or isinstance(self.data, list):
@@ -138,27 +134,13 @@ class Message(EncodeDataMixin):
         data_type = None
         encoding = self._encoding_array[:]
 
-        if isinstance(data, six.binary_type) and six.binary_type == str:
-            # If using python 2, assume str payloads are intended as strings
-            # if they decode to unicode. If it doesn't, treat as a binary
-            try:
-                data = six.text_type(data)
-            except UnicodeDecodeError:
-                pass
-
         if isinstance(data, dict) or isinstance(data, list):
             encoding.append('json')
             data = json.dumps(data)
-            data = six.text_type(data)
-        elif isinstance(data, six.text_type) and not binary:
-            # text_type is always a unicode string
+            data = str(data)
+        elif isinstance(data, str) and not binary:
             pass
-        elif (not binary and
-                (isinstance(data, bytearray) or
-                 # bytearray is always bytes
-                 isinstance(data, six.binary_type))):
-            # at this point binary_type is either a py3k bytes or a py2
-            # str that failed to decode to unicode
+        elif not binary and isinstance(data, (bytearray, bytes)):
             data = base64.b64encode(data).decode('ascii')
             encoding.append('base64')
         elif isinstance(data, CipherData):
@@ -170,36 +152,35 @@ class Message(EncodeDataMixin):
             else:
                 data = data.buffer
         elif binary and isinstance(data, bytearray):
-            data = six.binary_type(data)
+            data = bytes(data)
 
-        if not (isinstance(data, (six.binary_type, six.text_type, list, dict,
-                                  bytearray)) or
+        if not (isinstance(data, (bytes, str, list, dict, bytearray)) or
                 data is None):
             raise AblyException("Invalid data payload", 400, 40011)
 
         request_body = {
-            u'name': self.name,
-            u'data': data,
+            'name': self.name,
+            'data': data,
         }
         if self.timestamp:
-            request_body[u'timestamp'] = self.timestamp
+            request_body['timestamp'] = self.timestamp
         request_body = {k: v for (k, v) in request_body.items()
                         if v is not None}  # None values aren't included
 
         if encoding:
-            request_body[u'encoding'] = u'/'.join(encoding).strip(u'/')
+            request_body['encoding'] = '/'.join(encoding).strip('/')
 
         if data_type:
-            request_body[u'type'] = data_type
+            request_body['type'] = data_type
 
         if self.client_id:
-            request_body[u'clientId'] = self.client_id
+            request_body['clientId'] = self.client_id
 
         if self.id:
-            request_body[u'id'] = self.id
+            request_body['id'] = self.id
 
         if self.connection_id:
-            request_body[u'connectionId'] = self.connection_id
+            request_body['connectionId'] = self.connection_id
 
         if self.connection_key:
             request_body['connectionKey'] = self.connection_key

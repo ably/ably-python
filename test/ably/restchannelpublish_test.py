@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import base64
 import binascii
 import json
@@ -11,8 +9,6 @@ import mock
 import msgpack
 import pytest
 import requests
-import six
-from six.moves import range
 
 from ably import api_version
 from ably import AblyException, IncompatibleClientIdException
@@ -28,8 +24,7 @@ test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestChannelPublish(BaseTestCase):
+class TestRestChannelPublish(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     def setUp(self):
         self.ably = RestSetup.get_ably_rest()
         self.client_id = uuid.uuid4().hex
@@ -44,7 +39,7 @@ class TestRestChannelPublish(BaseTestCase):
         publish0 = self.ably.channels[
             self.get_channel_name('persisted:publish0')]
 
-        publish0.publish("publish0", six.u("This is a string message payload"))
+        publish0.publish("publish0", "This is a string message payload")
         publish0.publish("publish1", b"This is a byte[] message payload")
         publish0.publish("publish2", {"test": "This is a JSONObject message payload"})
         publish0.publish("publish3", ["This is a JSONArray message payload"])
@@ -58,7 +53,7 @@ class TestRestChannelPublish(BaseTestCase):
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        assert message_contents["publish0"] == six.u("This is a string message payload"), \
+        assert message_contents["publish0"] == "This is a string message payload", \
                "Expect publish0 to be expected String)"
 
         assert message_contents["publish1"] == b"This is a byte[] message payload", \
@@ -100,7 +95,7 @@ class TestRestChannelPublish(BaseTestCase):
         channel = self.ably.channels[
             self.get_channel_name('persisted:message_list_channel_one_request')]
 
-        expected_messages = [Message("name-{}".format(i), six.text_type(i)) for i in range(3)]
+        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -114,7 +109,7 @@ class TestRestChannelPublish(BaseTestCase):
 
         for i, message in enumerate(messages):
             assert message['name'] == 'name-' + str(i)
-            assert message['data'] == six.text_type(i)
+            assert message['data'] == str(i)
 
     def test_publish_error(self):
         ably = RestSetup.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
@@ -217,7 +212,7 @@ class TestRestChannelPublish(BaseTestCase):
         assert isinstance(message, Message)
         assert message.id
         assert message.name
-        assert message.data == {six.u('test'): six.u('This is a JSONObject message payload')}
+        assert message.data == {'test': 'This is a JSONObject message payload'}
         assert message.encoding == ''
         assert message.client_id == 'client_id'
         assert isinstance(message.timestamp, int)
@@ -368,7 +363,7 @@ class TestRestChannelPublish(BaseTestCase):
         auth = (key['key_name'], key['key_secret'])
 
         type_mapping = {
-            'string': six.text_type,
+            'string': str,
             'jsonObject': dict,
             'jsonArray': list,
             'binary': bytearray,
@@ -429,8 +424,7 @@ class TestRestChannelPublish(BaseTestCase):
         assert 40099 == excinfo.value.code
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestChannelPublishIdempotent(BaseTestCase):
+class TestRestChannelPublishIdempotent(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def setUpClass(cls):

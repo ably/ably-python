@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-
 import time
 
 import pytest
-import six
 
 from ably import AblyException
 
@@ -11,8 +8,7 @@ from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestTime(BaseTestCase):
+class TestRestTime(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def per_protocol_setup(self, use_binary_protocol):
         self.use_binary_protocol = use_binary_protocol

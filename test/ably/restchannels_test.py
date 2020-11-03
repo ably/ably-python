@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-
 from collections.abc import Iterable
 
 import pytest
-from six.moves import range
 
 from ably import AblyException
 from ably.rest.channel import Channel, Channels, Presence

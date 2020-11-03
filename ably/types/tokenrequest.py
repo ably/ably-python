@@ -1,13 +1,10 @@
-
 import base64
 import hashlib
 import hmac
 import json
 
-import six
 
-
-class TokenRequest(object):
+class TokenRequest:
 
     def __init__(self, key_name=None, client_id=None, nonce=None, mac=None,
                  capability=None, ttl=None, timestamp=None):
@@ -20,7 +17,7 @@ class TokenRequest(object):
         self.__timestamp = timestamp
 
     def sign_request(self, key_secret):
-        sign_text = six.u("\n").join([six.text_type(x) for x in [
+        sign_text = "\n".join([str(x) for x in [
             self.key_name or "",
             self.ttl or "",
             self.capability or "",
@@ -53,7 +50,7 @@ class TokenRequest(object):
 
     @staticmethod
     def from_json(data):
-        if isinstance(data, six.string_types):
+        if isinstance(data, str):
             data = json.loads(data)
 
         mapping = {

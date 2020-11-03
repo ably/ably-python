@@ -1,6 +1,5 @@
 import pytest
 import requests
-import six
 
 from ably import AblyRest
 from ably.http.paginatedresult import HttpPaginatedResponse
@@ -12,8 +11,7 @@ test_vars = RestSetup.get_test_vars()
 
 
 # RSC19
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestRequest(BaseTestCase):
+class TestRestRequest(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def setUpClass(cls):

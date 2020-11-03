@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import logging
 import time
 import json
@@ -7,12 +5,11 @@ import uuid
 import base64
 import responses
 import warnings
+from urllib.parse import parse_qs, urlparse
 
 import mock
 import pytest
 from requests import Session
-import six
-from six.moves.urllib.parse import parse_qs, urlparse
 
 import ably
 from ably import AblyRest
@@ -151,8 +148,7 @@ class TestAuth(BaseTestCase):
         assert ably.auth.auth_options.default_token_params == {'ttl': 12345}
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestAuthAuthorize(BaseTestCase):
+class TestAuthAuthorize(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def setUp(self):
         self.ably = RestSetup.get_ably_rest()
@@ -202,7 +198,7 @@ class TestAuthAuthorize(BaseTestCase):
         assert token_called[0] == token_params
 
         # Authorise may call request_token with some default auth_options.
-        for arg, value in six.iteritems(auth_params):
+        for arg, value in auth_params.items():
             assert auth_called[arg] == value, "%s called with wrong value: %s" % (arg, value)
 
     def test_with_token_str_https(self):
@@ -313,8 +309,7 @@ class TestAuthAuthorize(BaseTestCase):
             assert len(ws) == 1
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRequestToken(BaseTestCase):
+class TestRequestToken(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def per_protocol_setup(self, use_binary_protocol):
         self.use_binary_protocol = use_binary_protocol

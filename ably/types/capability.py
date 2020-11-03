@@ -1,20 +1,15 @@
-from __future__ import absolute_import
-
 from collections.abc import MutableMapping
 import json
 import logging
 
-import six
-
-from ably.util.unicodemixin import UnicodeMixin
 
 log = logging.getLogger(__name__)
 
 
-class Capability(MutableMapping, UnicodeMixin):
+class Capability(MutableMapping):
     def __init__(self, obj={}):
         self.__dict = dict(obj)
-        for k, v in six.iteritems(obj):
+        for k, v in obj.items():
             self[k] = v
 
     def __eq__(self, other):
@@ -41,15 +36,15 @@ class Capability(MutableMapping, UnicodeMixin):
 
     def __setitem__(self, key, value):
         # validate that the value is a list of ops and that the key is a string
-        if not isinstance(key, six.string_types):
+        if not isinstance(key, str):
             raise ValueError('Capability keys must be strings')
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = [value]
 
         operations = set()
         for val in iter(value):
-            if not isinstance(val, six.string_types):
+            if not isinstance(val, str):
                 raise ValueError('Operations must be strings')
             operations.add(val)
 
@@ -64,20 +59,20 @@ class Capability(MutableMapping, UnicodeMixin):
         return self[key]
 
     def add_resource(self, resource, operations=[]):
-        if isinstance(operations, six.string_types):
+        if isinstance(operations, str):
             operations = [operations]
         self[resource] = list(operations)
 
     def add_operation_to_resource(self, operation, resource):
         self.setdefault(resource, []).append(operation)
 
-    def __unicode__(self):
+    def __str__(self):
         return Capability.c14n(self)
 
     def to_dict(self):
-        return {k: sorted(v) for k, v in six.iteritems(self)}
+        return {k: sorted(v) for k, v in self.items()}
 
     @staticmethod
     def c14n(capability):
         sorted_ops = capability.to_dict()
-        return six.text_type(json.dumps(sorted_ops, sort_keys=True))
+        return json.dumps(sorted_ops, sort_keys=True)

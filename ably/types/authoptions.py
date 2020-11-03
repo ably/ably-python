@@ -1,11 +1,7 @@
-from __future__ import absolute_import
-
-import six
-
 from ably.util.exceptions import AblyException
 
 
-class AuthOptions(object):
+class AuthOptions:
     def __init__(self, auth_callback=None, auth_url=None, auth_method='GET',
                  auth_token=None, auth_headers=None, auth_params=None,
                  key_name=None, key_secret=None, key=None, query_time=False,
@@ -157,5 +153,5 @@ class AuthOptions(object):
     def default_token_params(self, value):
         self.__default_token_params = value
 
-    def __unicode__(self):
-        return six.text_type(self.__dict__)
+    def __str__(self):
+        return str(self.__dict__)

@@ -1,11 +1,7 @@
-from __future__ import absolute_import
-
 import logging
 
 import pytest
 import responses
-import six
-from six.moves import range
 
 from ably import AblyException
 from ably.http.paginatedresult import PaginatedResult
@@ -17,8 +13,7 @@ test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestRestChannelHistory(BaseTestCase):
+class TestRestChannelHistory(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @classmethod
     def setUpClass(cls):
         cls.ably = RestSetup.get_ably_rest()
@@ -29,7 +24,7 @@ class TestRestChannelHistory(BaseTestCase):
     def test_channel_history_types(self):
         history0 = self.get_channel('persisted:channelhistory_types')
 
-        history0.publish('history0', six.u('This is a string message payload'))
+        history0.publish('history0', 'This is a string message payload')
         history0.publish('history1', b'This is a byte[] message payload')
         history0.publish('history2', {'test': 'This is a JSONObject message payload'})
         history0.publish('history3', ['This is a JSONArray message payload'])
@@ -41,7 +36,7 @@ class TestRestChannelHistory(BaseTestCase):
         assert 4 == len(messages), "Expected 4 messages"
 
         message_contents = {m.name: m for m in messages}
-        assert six.u("This is a string message payload") == message_contents["history0"].data, \
+        assert "This is a string message payload" == message_contents["history0"].data, \
                "Expect history0 to be expected String)"
         assert b"This is a byte[] message payload" == message_contents["history1"].data, \
                "Expect history1 to be expected byte[]"

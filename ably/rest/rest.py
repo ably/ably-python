@@ -1,8 +1,5 @@
-from __future__ import absolute_import
-
 import logging
-
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
@@ -18,7 +15,7 @@ from ably.types.tokendetails import TokenDetails
 log = logging.getLogger(__name__)
 
 
-class AblyRest(object):
+class AblyRest:
     """Ably Rest Client"""
 
     variant = None

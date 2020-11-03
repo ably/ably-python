@@ -1,15 +1,11 @@
 # This functionality is depreceated and will be removed
 # Message Pack is the replacement for all binary data messages
 
-from __future__ import absolute_import
-
 import json
 import struct
 
-import six
 
-
-class DataType(object):
+class DataType:
     NONE = 0
     TRUE = 1
     FALSE = 2
@@ -22,7 +18,7 @@ class DataType(object):
     JSONOBJECT = 9
 
 
-class Limits(object):
+class Limits:
     INT32_MAX = 2 ** 31
     INT32_MIN = -(2 ** 31 + 1)
     INT64_MAX = 2 ** 63
@@ -41,7 +37,7 @@ _decoders[DataType.JSONARRAY] = lambda b: json.loads(b.decode('utf-8'))
 _decoders[DataType.JSONOBJECT] = lambda b: json.loads(b.decode('utf-8'))
 
 
-class TypedBuffer(object):
+class TypedBuffer:
     def __init__(self, buffer, type):
         self.__buffer = buffer
         self.__type = type
@@ -65,16 +61,16 @@ class TypedBuffer(object):
 
         if isinstance(obj, TypedBuffer):
             return obj
-        elif isinstance(obj, (six.binary_type, bytearray)):
+        elif isinstance(obj, (bytes, bytearray)):
             type = DataType.BUFFER
             buffer = obj
-        elif isinstance(obj, six.string_types):
+        elif isinstance(obj, str):
             type = DataType.STRING
             buffer = obj.encode('utf-8')
         elif isinstance(obj, bool):
             type = DataType.TRUE if obj else DataType.FALSE
             buffer = None
-        elif isinstance(obj, six.integer_types):
+        elif isinstance(obj, int):
             if obj >= Limits.INT32_MIN and obj <= Limits.INT32_MAX:
                 type = DataType.INT32
                 buffer = struct.pack('>i', obj)

@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-
-
-class Defaults(object):
+class Defaults:
     protocol_version = 1
     fallback_hosts = [
         "A.ably-realtime.com",

@@ -1,16 +1,13 @@
-from __future__ import absolute_import
-
 import base64
 from collections import OrderedDict
 import logging
 import json
 import os
+from urllib import parse
 import warnings
 
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
-import six
-from six.moves.urllib import parse
 
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.message import Message, make_message_response_handler
@@ -50,7 +47,7 @@ class Channel(SingleDispatch):
             if all(message.id is None for message in messages):
                 base_id = base64.b64encode(os.urandom(12)).decode()
                 for serial, message in enumerate(messages):
-                    message.id = u'{}:{}'.format(base_id, serial)
+                    message.id = '{}:{}'.format(base_id, serial)
 
         request_body_list = []
         for m in messages:
@@ -176,13 +173,13 @@ class Channel(SingleDispatch):
             self.__cipher = cipher
 
 
-class Channels(object):
+class Channels:
     def __init__(self, rest):
         self.__ably = rest
         self.__attached = OrderedDict()
 
     def get(self, name, **kwargs):
-        if isinstance(name, six.binary_type):
+        if isinstance(name, bytes):
             name = name.decode('ascii')
 
         if name not in self.__attached:
@@ -199,14 +196,14 @@ class Channels(object):
 
     def __getattr__(self, name):
         try:
-            return getattr(super(Channels, self), name)
+            return super().__getattr__(name)
         except AttributeError:
             return self.get(name)
 
     def __contains__(self, item):
         if isinstance(item, Channel):
             name = item.name
-        elif isinstance(item, six.binary_type):
+        elif isinstance(item, bytes):
             name = item.decode('ascii')
         else:
             name = item
@@ -214,7 +211,7 @@ class Channels(object):
         return name in self.__attached
 
     def __iter__(self):
-        return iter(six.itervalues(self.__attached))
+        return iter(self.__attached.values())
 
     def release(self, key):
         del self.__attached[key]

@@ -1,11 +1,6 @@
-# encoding: utf-8
-
-from __future__ import absolute_import
-
 from datetime import datetime, timedelta
 
 import pytest
-import six
 import responses
 
 from ably.http.paginatedresult import PaginatedResult
@@ -17,8 +12,7 @@ from test.ably.restsetup import RestSetup
 test_vars = RestSetup.get_test_vars()
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestPresence(BaseTestCase):
+class TestPresence(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def setUpClass(cls):
@@ -64,11 +58,11 @@ class TestPresence(BaseTestCase):
 
     def test_presence_get_encoded(self):
         presence_history = self.channel.presence.history()
-        assert presence_history.items[-1].data == six.u("true")
-        assert presence_history.items[-2].data == six.u("24")
-        assert presence_history.items[-3].data == six.u("This is a string clientData payload")
+        assert presence_history.items[-1].data == "true"
+        assert presence_history.items[-2].data == "24"
+        assert presence_history.items[-3].data == "This is a string clientData payload"
         # this one doesn't have encoding field
-        assert presence_history.items[-4].data == six.u('{ "test": "This is a JSONObject clientData payload"}')
+        assert presence_history.items[-4].data == '{ "test": "This is a JSONObject clientData payload"}'
         assert presence_history.items[-5].data == {"example": {"json": "Object"}}
 
     def test_timestamp_is_datetime(self):
@@ -197,8 +191,7 @@ class TestPresence(BaseTestCase):
             self.channel.presence.history(start=start, end=end)
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestPresenceCrypt(BaseTestCase):
+class TestPresenceCrypt(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def setUpClass(cls):
@@ -218,9 +211,8 @@ class TestPresenceCrypt(BaseTestCase):
         assert presence_history.items[0].data == {'foo': 'bar'}
 
     def test_presence_get_encrypted(self):
-        presence_messages = self.channel.presence.get()
-        message = list(filter(
-            lambda message: message.client_id == 'client_encoded',
-            presence_messages.items))[0]
+        messages = self.channel.presence.get()
+        messages = (msg for msg in messages.items if msg.client_id == 'client_encoded')
+        message = next(messages)
 
         assert message.data == {'foo': 'bar'}

@@ -4,7 +4,6 @@ import string
 import time
 
 import pytest
-import six
 
 from ably import AblyException, AblyAuthException
 from ably import DeviceDetails, PushChannelSubscription
@@ -18,8 +17,7 @@ from test.ably.utils import new_dict, random_string, get_random_key
 DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad'
 
 
-@six.add_metaclass(VaryByProtocolTestsMetaclass)
-class TestPush(BaseTestCase):
+class TestPush(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @classmethod
     def setUpClass(cls):
@@ -279,7 +277,7 @@ class TestPush(BaseTestCase):
         response = list_()
         assert type(response) is PaginatedResult
         assert type(response.items) is list
-        assert type(response.items[0]) is six.text_type
+        assert type(response.items[0]) is str
 
         # limit
         assert len(list_(limit=5000).items) == len(self.channels)

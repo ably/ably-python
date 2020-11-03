@@ -1,7 +1,7 @@
 from ably.util import case
 
 
-class PushChannelSubscription(object):
+class PushChannelSubscription:
 
     def __init__(self, channel, device_id=None, client_id=None, app_id=None):
         if not device_id and not client_id:

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function
-
 import json
 import os
 import logging
@@ -57,7 +55,7 @@ class RestSetup:
                 "keys": [{
                     "key_name": "%s.%s" % (app_id, k.get("id", "")),
                     "key_secret": k.get("value", ""),
-                    "key_str": "%s.%s:%s" % (app_id,  k.get("id", ""), k.get("value", "")),
+                    "key_str": "%s.%s:%s" % (app_id, k.get("id", ""), k.get("value", "")),
                     "capability": Capability(json.loads(k.get("capability", "{}"))),
                 } for k in app_spec.get("keys", [])]
             }

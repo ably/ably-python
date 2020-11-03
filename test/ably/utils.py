@@ -101,8 +101,7 @@ class VaryByProtocolTestsMetaclass(type):
                 dct[key + '_text'] = wrapper_text
                 del dct[key]
 
-        return super(VaryByProtocolTestsMetaclass, cls).__new__(cls, clsname,
-                                                                bases, dct)
+        return super().__new__(cls, clsname, bases, dct)
 
     @staticmethod
     def wrap_as(ttype, old_name, old_func):
