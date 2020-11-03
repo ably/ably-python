@@ -60,9 +60,8 @@ class TokenRequest(object):
             'keyName': 'key_name',
             'clientId': 'client_id',
         }
-        for name in data:
-            py_name = mapping.get(name)
-            if py_name:
+        for name, py_name in mapping.items():
+            if name in data:
                 data[py_name] = data.pop(name)
 
         return TokenRequest(**data)

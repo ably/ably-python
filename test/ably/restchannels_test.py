@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-import collections
+from collections.abc import Iterable
 
 import pytest
 from six.moves import range
@@ -66,7 +66,7 @@ class TestChannels(BaseTestCase):
         channel_names = ['channel_{}'.format(i) for i in range(5)]
         [self.ably.channels.get(name) for name in channel_names]
 
-        assert isinstance(self.ably.channels, collections.Iterable)
+        assert isinstance(self.ably.channels, Iterable)
         for name, channel in zip(channel_names, self.ably.channels):
             assert isinstance(channel, Channel)
             assert name == channel.name

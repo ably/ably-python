@@ -28,16 +28,16 @@ def to_text(value):
 class Message(EncodeDataMixin):
 
     def __init__(self,
-        name=None, # TM2g
-        data=None, # TM2d
-        client_id=None, # TM2b
-        id=None, # TM2a
-        connection_id=None, # TM2c
-        connection_key=None, # TM2h
-        encoding='', # TM2e
-        timestamp=None, # TM2f
-        extras=None, # TM2i
-    ):
+                 name=None,  # TM2g
+                 data=None,  # TM2d
+                 client_id=None,  # TM2b
+                 id=None,  # TM2a
+                 connection_id=None,  # TM2c
+                 connection_key=None,  # TM2h
+                 encoding='',  # TM2e
+                 timestamp=None,  # TM2f
+                 extras=None,  # TM2i
+                 ):
 
         super(Message, self).__init__(encoding)
 
