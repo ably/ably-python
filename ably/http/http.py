@@ -200,8 +200,7 @@ class Http:
 
                 # if last try or cumulative timeout is done, throw exception up
                 time_passed = time.time() - requested_at
-                if retry_count == len(hosts) - 1 or \
-                   time_passed > http_max_retry_duration:
+                if retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration:
                     raise e
             else:
                 try:
@@ -216,6 +215,11 @@ class Http:
                     return Response(response)
                 except AblyException as e:
                     if not e.is_server_error:
+                        raise e
+
+                    # if last try or cumulative timeout is done, throw exception up
+                    time_passed = time.time() - requested_at
+                    if retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration:
                         raise e
 
     def delete(self, url, headers=None, skip_auth=False, timeout=None):
