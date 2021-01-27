@@ -11,5 +11,3 @@ install:
   - travis_retry pip install -r requirements-test.txt
 script:
   - py.test --flake8
-after_success:
-  - "if [ $TRAVIS_PYTHON_VERSION == '3.6' ]; then pip install coveralls; coveralls; fi"
