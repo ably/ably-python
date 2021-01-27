@@ -132,9 +132,7 @@ class TestRestHttp(BaseTestCase):
             ably.http.preferred_port)
 
         def raise_ably_exception(*args, **kwagrs):
-            raise AblyException(message="",
-                                status_code=600,
-                                code=50500)
+            raise AblyException(message="", status_code=600, code=50500)
 
         with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
             with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
@@ -144,6 +142,30 @@ class TestRestHttp(BaseTestCase):
 
                 assert send_mock.call_count == 1
                 assert request_mock.call_args == mock.call(mock.ANY, default_url, data=mock.ANY, headers=mock.ANY)
+
+    def test_500_errors(self):
+        """
+        Raise error if all the servers reply with a 5xx error.
+        https://github.com/ably/ably-python/issues/160
+        """
+        default_host = Options().get_rest_host()
+        ably = AblyRest(token="foo")
+
+        default_url = "%s://%s:%d/" % (
+            ably.http.preferred_scheme,
+            default_host,
+            ably.http.preferred_port)
+
+        def raise_ably_exception(*args, **kwagrs):
+            raise AblyException(message="", status_code=500, code=50000)
+
+        with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
+            with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
+                            side_effect=raise_ably_exception) as send_mock:
+                with pytest.raises(AblyException):
+                    ably.http.make_request('GET', '/', skip_auth=True)
+
+                assert send_mock.call_count == 3
 
     def test_custom_http_timeouts(self):
         ably = AblyRest(
