@@ -9,7 +9,7 @@ A Python client library for [www.ably.io](https://www.ably.io), the realtime mes
 
 This SDK supports Python 3.5+.
 
-We regression-test the SDK against a selection of Python versions (which we update over time, but usually consists of mainstream and widely used versions). Please refer to [.travis.yml](./.travis.yml) for the set of versions that currently undergo CI testing.
+We regression-test the SDK against a selection of Python versions (which we update over time, but usually consists of mainstream and widely used versions). Please refer to [check.yml](.github/workflows/check.yml) for the set of versions that currently undergo CI testing.
 
 If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://support.ably.io/) for advice.
 
