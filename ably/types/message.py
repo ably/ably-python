@@ -134,7 +134,7 @@ class Message(EncodeDataMixin):
         data_type = None
         encoding = self._encoding_array[:]
 
-        if isinstance(data, dict) or isinstance(data, list):
+        if isinstance(data, (dict, list)):
             encoding.append('json')
             data = json.dumps(data)
             data = str(data)
@@ -154,39 +154,26 @@ class Message(EncodeDataMixin):
         elif binary and isinstance(data, bytearray):
             data = bytes(data)
 
-        if not (isinstance(data, (bytes, str, list, dict, bytearray)) or
-                data is None):
+        if not (isinstance(data, (bytes, str, list, dict, bytearray)) or data is None):
             raise AblyException("Invalid data payload", 400, 40011)
 
         request_body = {
             'name': self.name,
             'data': data,
+            'timestamp': self.timestamp or None,
+            'type': data_type or None,
+            'clientId': self.client_id or None,
+            'id': self.id or None,
+            'connectionId': self.connection_id or None,
+            'connectionKey': self.connection_key or None,
+            'extras': self.extras,
         }
-        if self.timestamp:
-            request_body['timestamp'] = self.timestamp
-        request_body = {k: v for (k, v) in request_body.items()
-                        if v is not None}  # None values aren't included
 
         if encoding:
             request_body['encoding'] = '/'.join(encoding).strip('/')
 
-        if data_type:
-            request_body['type'] = data_type
-
-        if self.client_id:
-            request_body['clientId'] = self.client_id
-
-        if self.id:
-            request_body['id'] = self.id
-
-        if self.connection_id:
-            request_body['connectionId'] = self.connection_id
-
-        if self.connection_key:
-            request_body['connectionKey'] = self.connection_key
-
-        if self.extras is not None:
-            request_body['extras'] = self.extras
+        # None values aren't included
+        request_body = {k: v for k, v in request_body.items() if v is not None}
 
         return request_body
 
