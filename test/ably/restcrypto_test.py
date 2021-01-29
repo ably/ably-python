@@ -135,11 +135,7 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
             rx_channel.history()
 
         message = excinfo.value.message
-        assert (
-            'invalid-padding' == message or
-            message.startswith("UnicodeDecodeError: 'utf8'") or
-            message.startswith("UnicodeDecodeError: 'utf-8'")
-        )
+        assert 'invalid-padding' == message or "codec can't decode" in message
 
     def test_crypto_send_unencrypted(self):
         channel_name = self.get_channel_name('persisted:crypto_send_unencrypted')
