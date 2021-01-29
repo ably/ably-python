@@ -171,4 +171,6 @@ def validate_cipher_params(cipher_params):
         key_length = cipher_params.key_length
         if key_length == 128 or key_length == 256:
             return
-        raise ValueError('Unsupported key length ' + str(key_length) + ' for aes-cbc encryption. Encryption key must be 128 or 256 bits (16 or 32 ASCII characters)')
+        raise ValueError(
+            'Unsupported key length %s for aes-cbc encryption. Encryption key must be 128 or 256 bits'
+            ' (16 or 32 ASCII characters)' % key_length)

@@ -123,17 +123,20 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_specified_port(self):
         ably = AblyRest(token='foo', port=9998, tls_port=9999)
-        assert 9999 == Defaults.get_port(ably.options), "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+        assert 9999 == Defaults.get_port(ably.options),\
+               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
 
     @dont_vary_protocol
     def test_specified_non_tls_port(self):
         ably = AblyRest(token='foo', port=9998, tls=False)
-        assert 9998 == Defaults.get_port(ably.options), "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+        assert 9998 == Defaults.get_port(ably.options),\
+               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
 
     @dont_vary_protocol
     def test_specified_tls_port(self):
         ably = AblyRest(token='foo', tls_port=9999, tls=True)
-        assert 9999 == Defaults.get_port(ably.options), "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+        assert 9999 == Defaults.get_port(ably.options),\
+               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
 
     @dont_vary_protocol
     def test_tls_defaults_to_true(self):
