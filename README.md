@@ -2,7 +2,6 @@ ably-python
 -----------
 
 [![PyPI version](https://badge.fury.io/py/ably.svg)](https://badge.fury.io/py/ably)
-[![Coverage Status](https://coveralls.io/repos/ably/ably-python/badge.svg?branch=main&service=github)](https://coveralls.io/github/ably/ably-python?branch=main)
 
 A Python client library for [www.ably.io](https://www.ably.io), the realtime messaging service. This library currently targets the [Ably 1.1 client library specification](https://www.ably.io/documentation/client-lib-development-guide/features/). You can jump to the '[Known Limitations](#known-limitations)' section to see the features this client library does not yet support (if any) or [view our client library SDKs feature support matrix](https://www.ably.io/download/sdk-feature-support-matrix) to see the list of all the available features.
 
