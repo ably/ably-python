@@ -45,7 +45,7 @@ class PushAdmin:
             raise TypeError('Unexpected %s recipient, expected a dict' % type(recipient))
 
         if not isinstance(data, dict):
-            raise TypeError('Unexpected %s data, expected a dict' % type(recipient))
+            raise TypeError('Unexpected %s data, expected a dict' % type(data))
 
         if not recipient:
             raise ValueError('recipient is empty')
