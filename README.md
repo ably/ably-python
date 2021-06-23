@@ -155,7 +155,7 @@ client.time()
 
 ## Support, feedback and troubleshooting
 
-Please visit http://support.ably.io/ for access to our knowledgebase and to ask for any assistance.
+Please visit http://support.ably.io/ for access to our knowledge base and to ask for any assistance.
 
 You can also view the [community reported Github issues](https://github.com/ably/ably-python/issues).
 
