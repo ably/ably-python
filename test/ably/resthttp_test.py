@@ -177,7 +177,7 @@ class TestRestHttp(BaseTestCase):
         assert ably.http.http_max_retry_count == 6
         assert ably.http.http_max_retry_duration == 20
 
-    # RSC7a, RSC7b
+    # RSC7a, RSC7d
     def test_request_headers(self):
         ably = RestSetup.get_ably_rest()
         r = ably.http.make_request('HEAD', '/time', skip_auth=True)
@@ -186,13 +186,8 @@ class TestRestHttp(BaseTestCase):
         assert 'X-Ably-Version' in r.request.headers
         assert r.request.headers['X-Ably-Version'] == '1.1'
 
-        # Lib
-        assert 'X-Ably-Lib' in r.request.headers
-        expr = r"^python-1\.1\.\d+(-\w+)?$"
-        assert re.search(expr, r.request.headers['X-Ably-Lib'])
-
-        # Lib Variant
-        ably.set_variant('django')
-        r = ably.http.make_request('HEAD', '/time', skip_auth=True)
-        expr = r"^python.django-1\.1\.\d+(-\w+)?$"
-        assert re.search(expr, r.request.headers['X-Ably-Lib'])
+        # Agent
+        assert 'Ably-Agent' in r.request.headers
+        print(r.request.headers)
+        expr = r"^ably-python\/\d.\d.\d python\/\d.\d.\d ably-python-rest$"
+        assert re.search(expr, r.request.headers['Ably-Agent'])
