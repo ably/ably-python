@@ -188,6 +188,5 @@ class TestRestHttp(BaseTestCase):
 
         # Agent
         assert 'Ably-Agent' in r.request.headers
-        print(r.request.headers)
         expr = r"^ably-python\/\d.\d.\d python\/\d.\d.\d ably-python-rest$"
         assert re.search(expr, r.request.headers['Ably-Agent'])
