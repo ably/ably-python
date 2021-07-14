@@ -5,10 +5,10 @@ import logging
 import os
 import uuid
 
+import httpx
 import mock
 import msgpack
 import pytest
-import requests
 
 from ably import api_version
 from ably import AblyException, IncompatibleClientIdException
@@ -386,7 +386,7 @@ class TestRestChannelPublish(BaseTestCase, metaclass=VaryByProtocolTestsMetaclas
 
                 # 1)
                 channel.publish(data=expected_value)
-                r = requests.get(url, auth=auth)
+                r = httpx.get(url, auth=auth)
                 item = r.json()[0]
                 assert item.get('encoding') == encoding
                 if encoding == 'json':
@@ -514,7 +514,8 @@ class TestRestChannelPublishIdempotent(BaseTestCase, metaclass=VaryByProtocolTes
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}
-        send = requests.sessions.Session.send
+        send = httpx.Client.send
+
         def side_effect(self, *args, **kwargs):
             x = send(self, *args, **kwargs)
             if state['failures'] < 2:
@@ -523,7 +524,7 @@ class TestRestChannelPublishIdempotent(BaseTestCase, metaclass=VaryByProtocolTes
             return x
 
         messages = [Message('name1', 'data1')]
-        with mock.patch('requests.sessions.Session.send', side_effect=side_effect, autospec=True):
+        with mock.patch('httpx.Client.send', side_effect=side_effect, autospec=True):
             channel.publish(messages=messages)
 
         assert state['failures'] == 2

@@ -1,10 +1,13 @@
 import re
 import time
 
+import httpx
 import mock
 import pytest
-import requests
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
+
+import respx
+from httpx import Response
 
 from ably import AblyRest
 from ably.transport.defaults import Defaults
@@ -20,9 +23,8 @@ class TestRestHttp(BaseTestCase):
         assert 'http_open_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
         assert 'http_request_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
 
-        with mock.patch('requests.sessions.Session.send',
-                        side_effect=requests.exceptions.RequestException) as send_mock:
-            with pytest.raises(requests.exceptions.RequestException):
+        with mock.patch('httpx.Client.send', side_effect=httpx.RequestError('')) as send_mock:
+            with pytest.raises(httpx.RequestError):
                 ably.http.make_request('GET', '/', skip_auth=True)
 
             assert send_mock.call_count == Defaults.http_max_retry_count
@@ -40,11 +42,10 @@ class TestRestHttp(BaseTestCase):
 
         def sleep_and_raise(*args, **kwargs):
             time.sleep(0.51)
-            raise requests.exceptions.RequestException
+            raise httpx.TimeoutException('timeout')
 
-        with mock.patch('requests.sessions.Session.send',
-                        side_effect=sleep_and_raise) as send_mock:
-            with pytest.raises(requests.exceptions.RequestException):
+        with mock.patch('httpx.Client.send', side_effect=sleep_and_raise) as send_mock:
+            with pytest.raises(httpx.TimeoutException):
                 ably.http.make_request('GET', '/', skip_auth=True)
 
             assert send_mock.call_count == 1
@@ -58,10 +59,9 @@ class TestRestHttp(BaseTestCase):
                                        ably.http.preferred_port)
             return urljoin(base_url, '/')
 
-        with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
-            with mock.patch('requests.sessions.Session.send',
-                            side_effect=requests.exceptions.RequestException) as send_mock:
-                with pytest.raises(requests.exceptions.RequestException):
+        with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
+            with mock.patch('httpx.Client.send', side_effect=httpx.RequestError('')) as send_mock:
+                with pytest.raises(httpx.RequestError):
                     ably.http.make_request('GET', '/', skip_auth=True)
 
                 assert send_mock.call_count == Defaults.http_max_retry_count
@@ -83,14 +83,13 @@ class TestRestHttp(BaseTestCase):
             custom_host,
             ably.http.preferred_port)
 
-        with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
-            with mock.patch('requests.sessions.Session.send',
-                            side_effect=requests.exceptions.RequestException) as send_mock:
-                with pytest.raises(requests.exceptions.RequestException):
+        with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
+            with mock.patch('httpx.Client.send', side_effect=httpx.RequestError('')) as send_mock:
+                with pytest.raises(httpx.RequestError):
                     ably.http.make_request('GET', '/', skip_auth=True)
 
                 assert send_mock.call_count == 1
-                assert request_mock.call_args == mock.call(mock.ANY, custom_url, data=mock.ANY, headers=mock.ANY)
+                assert request_mock.call_args == mock.call(mock.ANY, custom_url, content=mock.ANY, headers=mock.ANY)
 
     # RSC15f
     def test_cached_fallback(self):
@@ -99,14 +98,15 @@ class TestRestHttp(BaseTestCase):
         host = ably.options.get_rest_host()
 
         state = {'errors': 0}
-        send = requests.sessions.Session.send
-        def side_effect(self, prepped, *args, **kwargs):
-            if urlparse(prepped.url).hostname == host:
+        send = httpx.Client.send
+
+        def side_effect(self, *args, **kwargs):
+            if args[0].url.host == host:
                 state['errors'] += 1
                 raise RuntimeError
-            return send(self, prepped, *args, **kwargs)
+            return send(self, request=args[0], **kwargs)
 
-        with mock.patch('requests.sessions.Session.send', side_effect=side_effect, autospec=True):
+        with mock.patch('httpx.Client.send', side_effect=side_effect, autospec=True):
             # The main host is called and there's an error
             ably.time()
             assert state['errors'] == 1
@@ -134,14 +134,14 @@ class TestRestHttp(BaseTestCase):
         def raise_ably_exception(*args, **kwagrs):
             raise AblyException(message="", status_code=600, code=50500)
 
-        with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
+        with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
             with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
                             side_effect=raise_ably_exception) as send_mock:
                 with pytest.raises(AblyException):
                     ably.http.make_request('GET', '/', skip_auth=True)
 
                 assert send_mock.call_count == 1
-                assert request_mock.call_args == mock.call(mock.ANY, default_url, data=mock.ANY, headers=mock.ANY)
+                assert request_mock.call_args == mock.call(mock.ANY, default_url, content=mock.ANY, headers=mock.ANY)
 
     def test_500_errors(self):
         """
@@ -159,7 +159,7 @@ class TestRestHttp(BaseTestCase):
         def raise_ably_exception(*args, **kwagrs):
             raise AblyException(message="", status_code=500, code=50000)
 
-        with mock.patch('requests.Request', wraps=requests.Request) as request_mock:
+        with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
             with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
                             side_effect=raise_ably_exception) as send_mock:
                 with pytest.raises(AblyException):
@@ -196,3 +196,15 @@ class TestRestHttp(BaseTestCase):
         r = ably.http.make_request('HEAD', '/time', skip_auth=True)
         expr = r"^python.django-1\.1\.\d+(-\w+)?$"
         assert re.search(expr, r.request.headers['X-Ably-Lib'])
+
+    def test_request_over_http2(self):
+        url = 'https://www.example.com'
+        respx.get(url).mock(return_value=Response(status_code=200))
+
+        ably = RestSetup.get_ably_rest(rest_host=url)
+        r = ably.http.make_request('GET', url, skip_auth=True)
+        assert r.http_version == 'HTTP/2'
+
+        ably = RestSetup.get_ably_rest(rest_host=url, http2=False)
+        r = ably.http.make_request('GET', url, skip_auth=True)
+        assert r.http_version == 'HTTP/1.1'

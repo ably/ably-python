@@ -1,6 +1,6 @@
 from mock import patch
 import pytest
-from requests import Session
+from httpx import Client
 
 from ably import AblyRest
 from ably import AblyException
@@ -199,10 +199,9 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert 'Cannot use Basic Auth over non-TLS connections' == excinfo.value.message
 
     @dont_vary_protocol
-    def test_enviroment(self):
+    def test_environment(self):
         ably = AblyRest(token='token', environment='custom')
-        with patch.object(Session, 'prepare_request',
-                          wraps=ably.http._Http__session.prepare_request) as get_mock:
+        with patch.object(Client, 'send', wraps=ably.http._Http__client.send) as get_mock:
             try:
                 ably.time()
             except AblyException:
@@ -220,3 +219,10 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert ably.options.http_open_timeout == 8
         assert ably.options.http_max_retry_count == 6
         assert ably.options.http_max_retry_duration == 20
+
+    @dont_vary_protocol
+    def test_http2_enabled(self):
+        ably = AblyRest(token='foo')
+        assert ably.options.http2
+        ably = AblyRest(token='foo', http2=False)
+        assert not ably.options.http2

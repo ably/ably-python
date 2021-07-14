@@ -1,15 +1,15 @@
 import logging
 import time
-import json
 import uuid
 import base64
-import responses
-import warnings
-from urllib.parse import parse_qs, urlparse
 
+import warnings
+from urllib.parse import parse_qs
 import mock
 import pytest
-from requests import Session
+import respx
+from httpx import Client, Response
+
 
 import ably
 from ably import AblyRest
@@ -21,7 +21,6 @@ from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 test_vars = RestSetup.get_test_vars()
-
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +80,7 @@ class TestAuth(BaseTestCase):
     def test_request_basic_auth_header(self):
         ably = AblyRest(key_secret='foo', key_name='bar')
 
-        with mock.patch.object(Session, 'prepare_request') as get_mock:
+        with mock.patch.object(Client, 'send') as get_mock:
             try:
                 ably.http.get('/time', skip_auth=False)
             except Exception:
@@ -93,7 +92,7 @@ class TestAuth(BaseTestCase):
     def test_request_token_auth_header(self):
         ably = AblyRest(token='not_a_real_token')
 
-        with mock.patch.object(Session, 'prepare_request') as get_mock:
+        with mock.patch.object(Client, 'send') as get_mock:
             try:
                 ably.http.get('/time', skip_auth=False)
             except Exception:
@@ -158,7 +157,6 @@ class TestAuthAuthorize(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         self.use_binary_protocol = use_binary_protocol
 
     def test_if_authorize_changes_auth_mechanism_to_token(self):
-
         assert Auth.Method.BASIC == self.ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
 
         self.ably.auth.authorize()
@@ -329,7 +327,7 @@ class TestRequestToken(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert ably.channels[channel].history().items[0].data == 'foo'
 
     @dont_vary_protocol
-    @responses.activate
+    @respx.mock
     def test_with_auth_url_headers_and_params_POST(self):
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
@@ -337,25 +335,29 @@ class TestRequestToken(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
         auth_params = {'foo': 'auth', 'spam': 'eggs'}
         token_params = {'foo': 'token'}
+        auth_route = respx.post(url)
 
-        responses.add(responses.POST, url, body='token_string')
+        def call_back(request):
+            assert request.headers['content-type'] == 'application/x-www-form-urlencoded'
+            assert headers['foo'] == request.headers['foo']
+            assert parse_qs(request.content.decode('utf-8')) == {'foo': ['token'], 'spam': ['eggs']} # TokenParams has precedence
+            return Response(
+                status_code=200,
+                content="token_string"
+            )
+
+        auth_route.side_effect = call_back
         token_details = self.ably.auth.request_token(
             token_params=token_params, auth_url=url, auth_headers=headers,
             auth_method='POST', auth_params=auth_params)
 
+        assert 1 == auth_route.called
         assert isinstance(token_details, TokenDetails)
-        assert len(responses.calls) == 1
-        request = responses.calls[0].request
-        assert request.headers['content-type'] == 'application/x-www-form-urlencoded'
-        assert headers['foo'] == request.headers['foo']
-        assert urlparse(request.url).query == ''  # No querystring!
-        assert parse_qs(request.body) == {'foo': ['token'], 'spam': ['eggs']}  # TokenParams has precedence
         assert 'token_string' == token_details.token
 
     @dont_vary_protocol
-    @responses.activate
+    @respx.mock
     def test_with_auth_url_headers_and_params_GET(self):
-
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
         self.ably = RestSetup.get_ably_rest(
@@ -365,18 +367,22 @@ class TestRequestToken(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
         auth_params = {'foo': 'auth', 'spam': 'eggs'}
         token_params = {'foo': 'token'}
+        auth_route = respx.get(url, params={'foo': ['token'], 'spam': ['eggs']})
 
-        responses.add(responses.GET, url, json={'issued': 1, 'token':
-                                                'another_token_string'})
+        def call_back(request):
+            assert request.headers['foo'] == 'bar'
+            assert 'this' not in request.headers
+            assert not request.content
+
+            return Response(
+                status_code=200,
+                json={'issued': 1, 'token': 'another_token_string'}
+            )
+        auth_route.side_effect = call_back
         token_details = self.ably.auth.request_token(
             token_params=token_params, auth_url=url, auth_headers=headers,
             auth_params=auth_params)
         assert 'another_token_string' == token_details.token
-        request = responses.calls[0].request
-        assert request.headers['foo'] == 'bar'
-        assert 'this' not in request.headers
-        assert parse_qs(urlparse(request.url).query) == {'foo': ['token'], 'spam': ['eggs']}
-        assert not request.body
 
     @dont_vary_protocol
     def test_with_callback(self):
@@ -401,18 +407,17 @@ class TestRequestToken(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert 'another_token_string' == token_details.token
 
     @dont_vary_protocol
-    @responses.activate
+    @respx.mock
     def test_when_auth_url_has_query_string(self):
         url = 'http://www.example.com?with=query'
         headers = {'foo': 'bar'}
         self.ably = RestSetup.get_ably_rest(key=None, auth_url=url)
-
-        responses.add(responses.GET, 'http://www.example.com',
-                      body='token_string')
+        auth_route = respx.get('http://www.example.com', params={'with': 'query', 'spam': 'eggs'}).mock(
+            return_value=Response(status_code=200, content='token_string'))
         self.ably.auth.request_token(auth_url=url,
                                      auth_headers=headers,
                                      auth_params={'spam': 'eggs'})
-        assert responses.calls[0].request.url.endswith('?with=query&spam=eggs')
+        assert auth_route.called
 
     @dont_vary_protocol
     def test_client_id_null_for_anonymous_auth(self):
@@ -445,61 +450,63 @@ class TestRequestToken(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 class TestRenewToken(BaseTestCase):
 
     def setUp(self):
-        host = test_vars['host']
         self.ably = RestSetup.get_ably_rest(use_binary_protocol=False)
         # with headers
-        self.token_requests = 0
         self.publish_attempts = 0
-        self.tokens = ['a_token', 'another_token']
         self.channel = uuid.uuid4().hex
+        host = test_vars['host']
+        tokens = ['a_token', 'another_token']
+        headers = {'Content-Type': 'application/json'}
+        self.mocked_api = respx.mock(base_url='https://{}'.format(host))
+        self.request_token_route = self.mocked_api.post(
+            "/keys/{}/requestToken".format(test_vars["keys"][0]['key_name']),
+            name="request_token_route")
+        self.request_token_route.return_value = Response(
+            status_code=200,
+            headers=headers,
+            json={
+                'token': tokens[self.request_token_route.call_count - 1],
+                'expires': (time.time() + 60) * 1000
+            },
+        )
 
         def call_back(request):
-            headers = {'Content-Type': 'application/json'}
-            body = {}
-            self.token_requests += 1
-            body['token'] = self.tokens[self.token_requests - 1]
-            body['expires'] = (time.time() + 60) * 1000
-            return (200, headers, json.dumps(body))
-
-        responses.add_callback(
-            responses.POST,
-            'https://{}:443/keys/{}/requestToken'.format(
-                host, test_vars["keys"][0]['key_name']),
-            call_back)
-
-        def call_back(request):
-            headers = {'Content-Type': 'application/json'}
             self.publish_attempts += 1
             if self.publish_attempts in [1, 3]:
-                body = '[]'
-                status = 201
-            else:
-                body = {'error': {'message': 'Authentication failure', 'statusCode': 401, 'code': 40140}}
-                status = 401
+                return Response(
+                    status_code=201,
+                    headers=headers,
+                    json=[],
+                )
+            return Response(
+                status_code=401,
+                headers=headers,
+                json={
+                    'error': {'message': 'Authentication failure', 'statusCode': 401, 'code': 40140}
+                },
+            )
 
-            return (status, headers, json.dumps(body))
-
-        responses.add_callback(
-            responses.POST,
-            'https://{}:443/channels/{}/messages'.format(host, self.channel),
-            call_back)
-        responses.start()
+        self.publish_attempt_route = self.mocked_api.post("/channels/{}/messages".format(self.channel),
+                                                          name="publish_attempt_route")
+        self.publish_attempt_route.side_effect = call_back
+        self.mocked_api.start()
 
     def tearDown(self):
-        responses.stop()
-        responses.reset()
+        # We need to have quiet here in order to do not have check if all endpoints were called
+        self.mocked_api.stop(quiet=True)
+        self.mocked_api.reset()
 
     # RSA4b
     def test_when_renewable(self):
         self.ably.auth.authorize()
         self.ably.channels[self.channel].publish('evt', 'msg')
-        assert 1 == self.token_requests
-        assert 1 == self.publish_attempts
+        assert self.mocked_api["request_token_route"].call_count == 1
+        assert self.publish_attempts == 1
 
         # Triggers an authentication 401 failure which should automatically request a new token
         self.ably.channels[self.channel].publish('evt', 'msg')
-        assert 2 == self.token_requests
-        assert 3 == self.publish_attempts
+        assert self.mocked_api["request_token_route"].call_count == 2
+        assert self.publish_attempts == 3
 
     # RSA4a
     def test_when_not_renewable(self):
@@ -508,7 +515,7 @@ class TestRenewToken(BaseTestCase):
             token='token ID cannot be used to create a new token',
             use_binary_protocol=False)
         self.ably.channels[self.channel].publish('evt', 'msg')
-        assert 1 == self.publish_attempts
+        assert self.publish_attempts == 1
 
         publish = self.ably.channels[self.channel].publish
 
@@ -516,7 +523,7 @@ class TestRenewToken(BaseTestCase):
         with pytest.raises(AblyAuthException, match=match):
             publish('evt', 'msg')
 
-        assert 0 == self.token_requests
+        assert not self.mocked_api["request_token_route"].called
 
     # RSA4a
     def test_when_not_renewable_with_token_details(self):
@@ -526,7 +533,7 @@ class TestRenewToken(BaseTestCase):
             token_details=token_details,
             use_binary_protocol=False)
         self.ably.channels[self.channel].publish('evt', 'msg')
-        assert 1 == self.publish_attempts
+        assert self.mocked_api["publish_attempt_route"].call_count == 1
 
         publish = self.ably.channels[self.channel].publish
 
@@ -534,7 +541,7 @@ class TestRenewToken(BaseTestCase):
         with pytest.raises(AblyAuthException, match=match):
             publish('evt', 'msg')
 
-        assert 0 == self.token_requests
+        assert not self.mocked_api["request_token_route"].called
 
 
 class TestRenewExpiredToken(BaseTestCase):
@@ -545,42 +552,48 @@ class TestRenewExpiredToken(BaseTestCase):
 
         host = test_vars['host']
         key = test_vars["keys"][0]['key_name']
-        base_url = 'https://{}:443'.format(host)
         headers = {'Content-Type': 'application/json'}
 
-        def cb_request_token(request):
-            body = {
+        self.mocked_api = respx.mock(base_url='https://{}'.format(host))
+        self.request_token_route = self.mocked_api.post("/keys/{}/requestToken".format(key), name="request_token_route")
+        self.request_token_route.return_value = Response(
+            status_code=200,
+            headers=headers,
+            json={
                 'token': 'a_token',
                 'expires': int(time.time() * 1000),  # Always expires
             }
-            return (200, headers, json.dumps(body))
+        )
+        self.publish_message_route = self.mocked_api.post("/channels/{}/messages"
+                                                          .format(self.channel), name="publish_message_route")
+        self.time_route = self.mocked_api.get("/time", name="time_route")
+        self.time_route.return_value = Response(
+            status_code=200,
+            headers=headers,
+            json=[int(time.time() * 1000)]
+        )
 
         def cb_publish(request):
             self.publish_attempts += 1
             if self.publish_fail:
                 self.publish_fail = False
-                body = {'error': {'message': 'Authentication failure', 'statusCode': 401, 'code': 40140}}
-                status = 401
-            else:
-                body = '[]'
-                status = 201
+                return Response(
+                    status_code=401,
+                    json={
+                        'error': {'message': 'Authentication failure', 'statusCode': 401, 'code': 40140}
+                    }
+                )
+            return Response(
+                status_code=201,
+                json='[]'
+            )
 
-            return (status, headers, json.dumps(body))
-
-        def cb_time(request):
-            body = [int(time.time() * 1000)]
-            return (200, headers, json.dumps(body))
-
-        add_callback = responses.add_callback
-        add_callback(responses.POST, '{}/keys/{}/requestToken'.format(base_url, key), cb_request_token)
-        add_callback(responses.POST, '{}/channels/{}/messages'.format(base_url, self.channel), cb_publish)
-        add_callback(responses.GET, '{}/time'.format(base_url), cb_time)
-
-        responses.start()
+        self.publish_message_route.side_effect = cb_publish
+        self.mocked_api.start()
 
     def tearDown(self):
-        responses.stop()
-        responses.reset()
+        self.mocked_api.stop(quiet=True)
+        self.mocked_api.reset()
 
     # RSA4b1
     def test_query_time_false(self):

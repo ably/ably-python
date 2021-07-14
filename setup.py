@@ -24,7 +24,8 @@ setup(
               'ably.types', 'ably.util'],
     install_requires=['methoddispatch>=3.0.2,<4',
                       'msgpack>=1.0.0,<2',
-                      'requests>=2.7.0,<3'],
+                      'httpx>=0.18.2,<1',
+                      'h2>=4.0.0,<5'],
     extras_require={
         'oldcrypto': ['pycrypto>=2.6.1'],
         'crypto': ['pycryptodome'],

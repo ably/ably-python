@@ -1,7 +1,6 @@
 import logging
-
 import pytest
-import responses
+import respx
 
 from ably import AblyException
 from ably.http.paginatedresult import PaginatedResult
@@ -97,27 +96,31 @@ class TestRestChannelHistory(BaseTestCase, metaclass=VaryByProtocolTestsMetaclas
         url = '{scheme}://{host}{port_sufix}/channels/{channel_name}/messages'
         return url.format(**kwargs)
 
-    @responses.activate
+    @respx.mock
     @dont_vary_protocol
     def test_channel_history_default_limit(self):
         self.per_protocol_setup(True)
         channel = self.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        self.responses_add_empty_msg_pack(url)
+        self.respx_add_empty_msg_pack(url)
         channel.history()
-        assert 'limit=' not in responses.calls[0].request.url.split('?')[-1]
+        assert 'limit' not in respx.calls[0].request.url.params.keys()
 
-    @responses.activate
+    @respx.mock
     @dont_vary_protocol
     def test_channel_history_with_limits(self):
         self.per_protocol_setup(True)
         channel = self.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        self.responses_add_empty_msg_pack(url)
+        self.respx_add_empty_msg_pack(url)
+
         channel.history(limit=500)
-        assert 'limit=500' in responses.calls[0].request.url.split('?')[-1]
+        assert 'limit' in respx.calls[0].request.url.params.keys()
+        assert '500' in respx.calls[0].request.url.params.values()
+
         channel.history(limit=1000)
-        assert 'limit=1000' in responses.calls[1].request.url.split('?')[-1]
+        assert 'limit' in respx.calls[1].request.url.params.keys()
+        assert '1000' in respx.calls[1].request.url.params.values()
 
     @dont_vary_protocol
     def test_channel_history_max_limit_is_1000(self):
