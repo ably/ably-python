@@ -74,6 +74,11 @@ class TestRestHttp(BaseTestCase):
                     assert url in expected_urls_set
                     expected_urls_set.remove(url)
 
+                expected_hosts_set = set(Options(http_max_retry_count=10).get_rest_hosts())
+                for (prep_request_tuple, _) in send_mock.call_args_list:
+                    assert prep_request_tuple[0].headers.get('Host') in expected_hosts_set
+                    expected_hosts_set.remove(prep_request_tuple[0].headers.get('Host'))
+
     def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
         ably = AblyRest(token="foo", rest_host=custom_host)
