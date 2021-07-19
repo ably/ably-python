@@ -17,7 +17,7 @@ class HttpUtils:
     def default_get_headers(binary=False):
         headers = {
             "X-Ably-Version": ably.api_version,
-            "Ably-Agent": 'ably-python/%s python/%s ably-python-rest' % (ably.lib_version, platform.python_version())
+            "Ably-Agent": 'ably-python/%s python/%s' % (ably.lib_version, platform.python_version())
         }
         if binary:
             headers["Accept"] = HttpUtils.mime_types['binary']
