@@ -66,9 +66,6 @@ class TestPaginatedResult(BaseTestCase):
         self.mocked_api.stop()
         self.mocked_api.reset()
 
-    def test_dummy(self):
-        pass
-
     def test_items(self):
         assert len(self.paginated_result.items) == 2
 

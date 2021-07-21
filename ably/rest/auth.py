@@ -340,7 +340,7 @@ class Auth:
             body = dict(auth_params, **token_params)
 
         from ably.http.http import Response
-        with httpx.Client() as client:
+        with httpx.Client(http2=True) as client:
             response = Response(
                 client.request(method=method, url=url, headers=headers, params=params, data=body)
             )

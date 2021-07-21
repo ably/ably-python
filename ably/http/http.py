@@ -97,7 +97,7 @@ class Response:
         elif content_type == 'application/json':
             return self.__response.json()
         else:
-            raise ValueError("Unsuported content type")
+            raise ValueError("Unsupported content type")
 
     @property
     def response(self):
@@ -114,6 +114,8 @@ class Http:
         'http_max_retry_duration': 15,
     }
 
+    __client = httpx.Client(http2=True)
+
     def __init__(self, ably, options):
         options = options or {}
         self.__ably = ably
@@ -122,7 +124,6 @@ class Http:
         # Cached fallback host (RSC15f)
         self.__host = None
         self.__host_expires = None
-        self.__client = httpx.Client(http2=self.use_http2)
 
     def dump_body(self, body):
         if self.options.use_binary_protocol:
@@ -282,7 +283,3 @@ class Http:
         if self.options.http_max_retry_duration is not None:
             return self.options.http_max_retry_duration
         return self.CONNECTION_RETRY_DEFAULTS['http_max_retry_duration']
-
-    @property
-    def use_http2(self):
-        return Defaults.use_http2(self.options)

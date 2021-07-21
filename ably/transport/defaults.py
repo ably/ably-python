@@ -1,6 +1,5 @@
 class Defaults:
     protocol_version = 1
-    http2 = True
     fallback_hosts = [
         "A.ably-realtime.com",
         "B.ably-realtime.com",
@@ -46,9 +45,3 @@ class Defaults:
             return "https"
         else:
             return "http"
-
-    @staticmethod
-    def use_http2(options):
-        if options.http2 is not None:
-            return options.http2
-        return Defaults.http2

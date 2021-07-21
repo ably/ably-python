@@ -514,10 +514,10 @@ class TestRestChannelPublishIdempotent(BaseTestCase, metaclass=VaryByProtocolTes
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}
-        send = httpx.Client.send
+        send = httpx.Client(http2=True).send
 
-        def side_effect(self, *args, **kwargs):
-            x = send(self, *args, **kwargs)
+        def side_effect(*args, **kwargs):
+            x = send(args[1])
             if state['failures'] < 2:
                 state['failures'] += 1
                 raise Exception('faked exception')

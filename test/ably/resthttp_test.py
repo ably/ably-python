@@ -98,13 +98,13 @@ class TestRestHttp(BaseTestCase):
         host = ably.options.get_rest_host()
 
         state = {'errors': 0}
-        send = httpx.Client.send
+        send = httpx.Client(http2=True).send
 
-        def side_effect(self, *args, **kwargs):
-            if args[0].url.host == host:
+        def side_effect(*args, **kwargs):
+            if args[1].url.host == host:
                 state['errors'] += 1
                 raise RuntimeError
-            return send(self, request=args[0], **kwargs)
+            return send(args[1])
 
         with mock.patch('httpx.Client.send', side_effect=side_effect, autospec=True):
             # The main host is called and there's an error
@@ -186,16 +186,10 @@ class TestRestHttp(BaseTestCase):
         assert 'X-Ably-Version' in r.request.headers
         assert r.request.headers['X-Ably-Version'] == '1.1'
 
-        # Lib
-        assert 'X-Ably-Lib' in r.request.headers
-        expr = r"^python-1\.1\.\d+(-\w+)?$"
-        assert re.search(expr, r.request.headers['X-Ably-Lib'])
-
-        # Lib Variant
-        ably.set_variant('django')
-        r = ably.http.make_request('HEAD', '/time', skip_auth=True)
-        expr = r"^python.django-1\.1\.\d+(-\w+)?$"
-        assert re.search(expr, r.request.headers['X-Ably-Lib'])
+        # Agent
+        assert 'Ably-Agent' in r.request.headers
+        expr = r"^ably-python\/\d.\d.\d python\/\d.\d+.\d+$"
+        assert re.search(expr, r.request.headers['Ably-Agent'])
 
     def test_request_over_http2(self):
         url = 'https://www.example.com'
@@ -204,7 +198,3 @@ class TestRestHttp(BaseTestCase):
         ably = RestSetup.get_ably_rest(rest_host=url)
         r = ably.http.make_request('GET', url, skip_auth=True)
         assert r.http_version == 'HTTP/2'
-
-        ably = RestSetup.get_ably_rest(rest_host=url, http2=False)
-        r = ably.http.make_request('GET', url, skip_auth=True)
-        assert r.http_version == 'HTTP/1.1'

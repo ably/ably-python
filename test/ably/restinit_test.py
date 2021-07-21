@@ -219,10 +219,3 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert ably.options.http_open_timeout == 8
         assert ably.options.http_max_retry_count == 6
         assert ably.options.http_max_retry_duration == 20
-
-    @dont_vary_protocol
-    def test_http2_enabled(self):
-        ably = AblyRest(token='foo')
-        assert ably.options.http2
-        ably = AblyRest(token='foo', http2=False)
-        assert not ably.options.http2
