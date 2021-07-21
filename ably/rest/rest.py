@@ -18,8 +18,6 @@ log = logging.getLogger(__name__)
 class AblyRest:
     """Ably Rest Client"""
 
-    variant = None
-
     def __init__(self, key=None, token=None, token_details=None, **kwargs):
         """Create an AblyRest instance.
 
@@ -69,10 +67,6 @@ class AblyRest:
         self.__channels = Channels(self)
         self.__options = options
         self.__push = Push(self)
-
-    def set_variant(self, variant):
-        """Sets library variant as per RSC7b"""
-        self.variant = variant
 
     @catch_all
     def stats(self, direction=None, start=None, end=None, params=None,

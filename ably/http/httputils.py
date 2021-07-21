@@ -1,3 +1,5 @@
+import platform
+
 import ably
 
 
@@ -12,15 +14,10 @@ class HttpUtils:
     }
 
     @staticmethod
-    def default_get_headers(binary=False, variant=None):
-        if variant is not None:
-            lib_version = 'python.%s-%s' % (variant, ably.lib_version)
-        else:
-            lib_version = 'python-%s' % ably.lib_version
-
+    def default_get_headers(binary=False):
         headers = {
             "X-Ably-Version": ably.api_version,
-            "X-Ably-Lib": lib_version,
+            "Ably-Agent": 'ably-python/%s python/%s' % (ably.lib_version, platform.python_version())
         }
         if binary:
             headers["Accept"] = HttpUtils.mime_types['binary']
@@ -29,7 +26,7 @@ class HttpUtils:
         return headers
 
     @staticmethod
-    def default_post_headers(binary=False, variant=None):
-        headers = HttpUtils.default_get_headers(binary=binary, variant=variant)
+    def default_post_headers(binary=False):
+        headers = HttpUtils.default_get_headers(binary=binary)
         headers["Content-Type"] = headers["Accept"]
         return headers
