@@ -164,11 +164,9 @@ class Http:
             body = self.dump_body(body)
 
         if body:
-            all_headers = HttpUtils.default_post_headers(
-                self.options.use_binary_protocol, self.__ably.variant)
+            all_headers = HttpUtils.default_post_headers(self.options.use_binary_protocol)
         else:
-            all_headers = HttpUtils.default_get_headers(
-                self.options.use_binary_protocol, self.__ably.variant)
+            all_headers = HttpUtils.default_get_headers(self.options.use_binary_protocol)
 
         if not skip_auth:
             if self.auth.auth_mechanism == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
