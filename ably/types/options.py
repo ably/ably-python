@@ -1,4 +1,5 @@
 import random
+import warnings
 
 from ably.transport.defaults import Defaults
 from ably.types.authoptions import AuthOptions
@@ -208,8 +209,24 @@ class Options(AuthOptions):
         if fallback_hosts is None:
             if host == Defaults.rest_host or self.fallback_hosts_use_default:
                 fallback_hosts = Defaults.fallback_hosts
+            elif environment != 'production':
+                fallback_hosts = Defaults.get_environment_fallback_hosts(environment)
             else:
                 fallback_hosts = []
+
+        # Explicit warning about deprecating the option
+        if self.fallback_hosts_use_default:
+            if environment != Defaults.environment:
+                warnings.warn(
+                    "It is no longer required to set 'fallback_hosts_use_default', the correct fallback hosts are now "
+                    "inferred from the environment, 'fallback_hosts': {}"
+                    .format(','.join(fallback_hosts)), DeprecationWarning
+                )
+            else:
+                warnings.warn(
+                    "It is no longer required to set 'fallback_hosts_use_default': 'fallback_hosts': {}"
+                    .format(','.join(fallback_hosts)), DeprecationWarning
+                )
 
         # Shuffle
         fallback_hosts = list(fallback_hosts)

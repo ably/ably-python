@@ -45,3 +45,13 @@ class Defaults:
             return "https"
         else:
             return "http"
+
+    @staticmethod
+    def get_environment_fallback_hosts(environment):
+        return [
+            environment + "-a-fallback.ably-realtime.com",
+            environment + "-b-fallback.ably-realtime.com",
+            environment + "-c-fallback.ably-realtime.com",
+            environment + "-d-fallback.ably-realtime.com",
+            environment + "-e-fallback.ably-realtime.com",
+        ]

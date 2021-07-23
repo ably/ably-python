@@ -188,6 +188,7 @@ class Http:
                                        host,
                                        self.preferred_port)
             url = urljoin(base_url, path)
+            all_headers.update(HttpUtils.get_host_header(host))
             request = requests.Request(method, url, data=body, headers=all_headers)
             prepped = self.__session.prepare_request(request)
             try:

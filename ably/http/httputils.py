@@ -30,3 +30,9 @@ class HttpUtils:
         headers = HttpUtils.default_get_headers(binary=binary)
         headers["Content-Type"] = headers["Accept"]
         return headers
+
+    @staticmethod
+    def get_host_header(host):
+        return {
+            'Host': host,
+        }
