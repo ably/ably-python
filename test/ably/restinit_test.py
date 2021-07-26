@@ -1,3 +1,4 @@
+import warnings
 from mock import patch
 import pytest
 from httpx import Client
@@ -95,17 +96,23 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
             [],
         ]
 
+        # Fallback hosts specified (RSC15g1)
         for aux in fallback_hosts:
             ably = AblyRest(token='foo', fallback_hosts=aux)
             assert sorted(aux) == sorted(ably.options.get_fallback_rest_hosts())
 
-        # Specify environment
-        ably = AblyRest(token='foo', environment='sandbox')
-        assert [] == sorted(ably.options.get_fallback_rest_hosts())
+        # Specify environment (RSC15g2)
+        ably = AblyRest(token='foo', environment='sandbox', http_max_retry_count=10)
+        assert sorted(Defaults.get_environment_fallback_hosts('sandbox')) == sorted(
+            ably.options.get_fallback_rest_hosts())
 
-        # Specify environment and fallback_hosts_use_default
+        # Fallback hosts and environment not specified (RSC15g3)
+        ably = AblyRest(token='foo', http_max_retry_count=10)
+        assert sorted(Defaults.fallback_hosts) == sorted(ably.options.get_fallback_rest_hosts())
+
+        # Specify environment and fallback_hosts_use_default, no fallback hosts (RSC15g4)
         # We specify http_max_retry_count=10 so all the fallback hosts get in the list
-        ably = AblyRest(token='foo', environment='sandbox', fallback_hosts_use_default=True,
+        ably = AblyRest(token='foo', environment='not_considered', fallback_hosts_use_default=True,
                         http_max_retry_count=10)
         assert sorted(Defaults.fallback_hosts) == sorted(ably.options.get_fallback_rest_hosts())
 
@@ -114,6 +121,14 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert 600000 == ably.options.fallback_retry_timeout
         ably = AblyRest(token='foo', fallback_retry_timeout=1000)
         assert 1000 == ably.options.fallback_retry_timeout
+
+        with warnings.catch_warnings(record=True) as ws:
+            # Cause all warnings to always be triggered
+            warnings.simplefilter("always")
+            AblyRest(token='foo', fallback_hosts_use_default=True)
+            # Verify warning is raised for fallback_hosts_use_default
+            ws = [w for w in ws if issubclass(w.category, DeprecationWarning)]
+            assert len(ws) == 1
 
     @dont_vary_protocol
     def test_specified_realtime_host(self):
