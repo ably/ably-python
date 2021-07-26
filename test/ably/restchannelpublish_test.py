@@ -386,7 +386,8 @@ class TestRestChannelPublish(BaseTestCase, metaclass=VaryByProtocolTestsMetaclas
 
                 # 1)
                 channel.publish(data=expected_value)
-                r = httpx.get(url, auth=auth)
+                with httpx.Client(http2=True) as client:
+                    r = client.get(url, auth=auth)
                 item = r.json()[0]
                 assert item.get('encoding') == encoding
                 if encoding == 'json':

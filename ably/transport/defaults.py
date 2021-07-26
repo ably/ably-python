@@ -1,11 +1,11 @@
 class Defaults:
     protocol_version = 1
     fallback_hosts = [
-        "A.ably-realtime.com",
-        "B.ably-realtime.com",
-        "C.ably-realtime.com",
-        "D.ably-realtime.com",
-        "E.ably-realtime.com",
+        "a.ably-realtime.com",
+        "b.ably-realtime.com",
+        "c.ably-realtime.com",
+        "d.ably-realtime.com",
+        "e.ably-realtime.com",
     ]
 
     rest_host = "rest.ably.io"

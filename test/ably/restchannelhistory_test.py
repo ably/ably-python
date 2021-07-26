@@ -115,12 +115,10 @@ class TestRestChannelHistory(BaseTestCase, metaclass=VaryByProtocolTestsMetaclas
         self.respx_add_empty_msg_pack(url)
 
         channel.history(limit=500)
-        assert 'limit' in respx.calls[0].request.url.params.keys()
-        assert '500' in respx.calls[0].request.url.params.values()
+        assert '500' in respx.calls[0].request.url.params.get('limit')
 
         channel.history(limit=1000)
-        assert 'limit' in respx.calls[1].request.url.params.keys()
-        assert '1000' in respx.calls[1].request.url.params.values()
+        assert '1000' in respx.calls[1].request.url.params.get('limit')
 
     @dont_vary_protocol
     def test_channel_history_max_limit_is_1000(self):
