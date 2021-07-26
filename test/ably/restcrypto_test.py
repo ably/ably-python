@@ -12,17 +12,21 @@ from ably.util.crypto import CipherParams, get_cipher, generate_random_key, get_
 from Crypto import Random
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase
+from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase, BaseAsyncTestCase
 
-test_vars = RestSetup.get_test_vars()
 log = logging.getLogger(__name__)
 
 
-class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
+class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    def setUp(self):
-        self.ably = RestSetup.get_ably_rest()
-        self.ably2 = RestSetup.get_ably_rest()
+    async def setUp(self):
+        self.test_vars = await RestSetup.get_test_vars()
+        self.ably = await RestSetup.get_ably_rest()
+        self.ably2 = await RestSetup.get_ably_rest()
+
+    async def tearDown(self):
+        await self.ably.close()
+        await self.ably2.close()
 
     def per_protocol_setup(self, use_binary_protocol):
         # This will be called every test that vary by protocol for each protocol
@@ -57,16 +61,16 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
         assert expected_ciphertext == actual_ciphertext
 
-    def test_crypto_publish(self):
+    async def test_crypto_publish(self):
         channel_name = self.get_channel_name('persisted:crypto_publish_text')
         publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
-        publish0.publish("publish3", "This is a string message payload")
-        publish0.publish("publish4", b"This is a byte[] message payload")
-        publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
-        publish0.publish("publish6", ["This is a JSONArray message payload"])
+        await publish0.publish("publish3", "This is a string message payload")
+        await publish0.publish("publish4", b"This is a byte[] message payload")
+        await publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
+        await publish0.publish("publish6", ["This is a JSONArray message payload"])
 
-        history = publish0.history()
+        history = await publish0.history()
         messages = history.items
         assert messages is not None, "Expected non-None messages"
         assert 4 == len(messages), "Expected 4 messages"
@@ -86,7 +90,7 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert ["This is a JSONArray message payload"] == message_contents["publish6"],\
                "Expect publish6 to be expected JSONObject"
 
-    def test_crypto_publish_256(self):
+    async def test_crypto_publish_256(self):
         rndfile = Random.new()
         key = rndfile.read(32)
         channel_name = 'persisted:crypto_publish_text_256'
@@ -94,12 +98,12 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
         publish0 = self.ably.channels.get(channel_name, cipher={'key': key})
 
-        publish0.publish("publish3", "This is a string message payload")
-        publish0.publish("publish4", b"This is a byte[] message payload")
-        publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
-        publish0.publish("publish6", ["This is a JSONArray message payload"])
+        await publish0.publish("publish3", "This is a string message payload")
+        await publish0.publish("publish4", b"This is a byte[] message payload")
+        await publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
+        await publish0.publish("publish6", ["This is a JSONArray message payload"])
 
-        history = publish0.history()
+        history = await publish0.history()
         messages = history.items
         assert messages is not None, "Expected non-None messages"
         assert 4 == len(messages), "Expected 4 messages"
@@ -119,36 +123,36 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert ["This is a JSONArray message payload"] == message_contents["publish6"],\
                "Expect publish6 to be expected JSONObject"
 
-    def test_crypto_publish_key_mismatch(self):
+    async def test_crypto_publish_key_mismatch(self):
         channel_name = self.get_channel_name('persisted:crypto_publish_key_mismatch')
 
         publish0 = self.ably.channels.get(channel_name, cipher={'key': generate_random_key()})
 
-        publish0.publish("publish3", "This is a string message payload")
-        publish0.publish("publish4", b"This is a byte[] message payload")
-        publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
-        publish0.publish("publish6", ["This is a JSONArray message payload"])
+        await publish0.publish("publish3", "This is a string message payload")
+        await publish0.publish("publish4", b"This is a byte[] message payload")
+        await publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
+        await publish0.publish("publish6", ["This is a JSONArray message payload"])
 
         rx_channel = self.ably2.channels.get(channel_name, cipher={'key': generate_random_key()})
 
         with pytest.raises(AblyException) as excinfo:
-            rx_channel.history()
+            await rx_channel.history()
 
         message = excinfo.value.message
         assert 'invalid-padding' == message or "codec can't decode" in message
 
-    def test_crypto_send_unencrypted(self):
+    async def test_crypto_send_unencrypted(self):
         channel_name = self.get_channel_name('persisted:crypto_send_unencrypted')
         publish0 = self.ably.channels[channel_name]
 
-        publish0.publish("publish3", "This is a string message payload")
-        publish0.publish("publish4", b"This is a byte[] message payload")
-        publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
-        publish0.publish("publish6", ["This is a JSONArray message payload"])
+        await publish0.publish("publish3", "This is a string message payload")
+        await publish0.publish("publish4", b"This is a byte[] message payload")
+        await publish0.publish("publish5", {"test": "This is a JSONObject message payload"})
+        await publish0.publish("publish6", ["This is a JSONArray message payload"])
 
         rx_channel = self.ably2.channels.get(channel_name, cipher={'key': generate_random_key()})
 
-        history = rx_channel.history()
+        history = await rx_channel.history()
         messages = history.items
         assert messages is not None, "Expected non-None messages"
         assert 4 == len(messages), "Expected 4 messages"
@@ -168,16 +172,16 @@ class TestRestCrypto(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert ["This is a JSONArray message payload"] == message_contents["publish6"],\
                "Expect publish6 to be expected JSONObject"
 
-    def test_crypto_encrypted_unhandled(self):
+    async def test_crypto_encrypted_unhandled(self):
         channel_name = self.get_channel_name('persisted:crypto_send_encrypted_unhandled')
         key = b'0123456789abcdef'
         data = 'foobar'
         publish0 = self.ably.channels.get(channel_name, cipher={'key': key})
 
-        publish0.publish("publish0", data)
+        await publish0.publish("publish0", data)
 
         rx_channel = self.ably2.channels[channel_name]
-        history = rx_channel.history()
+        history = await rx_channel.history()
         message = history.items[0]
         cipher = get_cipher(get_default_params({'key': key}))
         assert cipher.decrypt(message.data).decode() == data

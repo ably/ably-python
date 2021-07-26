@@ -4,10 +4,10 @@ from httpx import Response
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseTestCase
+from test.ably.utils import BaseAsyncTestCase
 
 
-class TestPaginatedResult(BaseTestCase):
+class TestPaginatedResult(BaseAsyncTestCase):
 
     def get_response_callback(self, headers, body, status):
         def callback(request):
@@ -27,8 +27,8 @@ class TestPaginatedResult(BaseTestCase):
 
         return callback
 
-    def setUp(self):
-        self.ably = RestSetup.get_ably_rest(use_binary_protocol=False)
+    async def setUp(self):
+        self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
         # Mocked responses
         # without specific headers
         self.mocked_api = respx.mock(base_url='http://rest.ably.io')
@@ -53,25 +53,26 @@ class TestPaginatedResult(BaseTestCase):
         # start intercepting requests
         self.mocked_api.start()
 
-        self.paginated_result = PaginatedResult.paginated_query(
+        self.paginated_result = await PaginatedResult.paginated_query(
             self.ably.http,
             url='http://rest.ably.io/channels/channel_name/ch1',
             response_processor=lambda response: response.to_native())
-        self.paginated_result_with_headers = PaginatedResult.paginated_query(
+        self.paginated_result_with_headers = await PaginatedResult.paginated_query(
             self.ably.http,
             url='http://rest.ably.io/channels/channel_name/ch2',
             response_processor=lambda response: response.to_native())
 
-    def tearDown(self):
+    async def tearDown(self):
         self.mocked_api.stop()
         self.mocked_api.reset()
+        await self.ably.close()
 
     def test_items(self):
         assert len(self.paginated_result.items) == 2
 
-    def test_with_no_headers(self):
-        assert self.paginated_result.first() is None
-        assert self.paginated_result.next() is None
+    async def test_with_no_headers(self):
+        assert await self.paginated_result.first() is None
+        assert await self.paginated_result.next() is None
         assert self.paginated_result.is_last()
 
     def test_with_next(self):
@@ -79,12 +80,12 @@ class TestPaginatedResult(BaseTestCase):
         assert pag.has_next()
         assert not pag.is_last()
 
-    def test_first(self):
+    async def test_first(self):
         pag = self.paginated_result_with_headers
-        pag = pag.first()
+        pag = await pag.first()
         assert pag.items[0]['page'] == 1
 
-    def test_next(self):
+    async def test_next(self):
         pag = self.paginated_result_with_headers
-        pag = pag.next()
+        pag = await pag.next()
         assert pag.items[0]['page'] == 2

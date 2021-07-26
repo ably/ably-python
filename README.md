@@ -42,15 +42,29 @@ Or, if you need encryption features:
 
 ## Using the REST API
 
-All examples assume a client and/or channel has been created as follows:
+All examples assume a client and/or channel has been created in one of the following ways:
 
+With closing the client manually:
 ```python
 from ably import AblyRest
-client = AblyRest('api:key')
-channel = client.channels.get('channel_name')
+
+async def main(): 
+    client = AblyRest('api:key')
+    channel = client.channels.get('channel_name')
+    await client.close()
+```
+With using the client as a context manager, this will ensure that client is properly closed 
+while leaving the `with` block:
+```python
+from ably import AblyRest
+
+async def main():
+    async with AblyRest('api:key') as ably:
+        channel = ably.channels.get("channel_name")
 ```
 
-You can define the logging level for the whole library, and override for an
+
+You can define the logging level for the whole library, and override for a
 specific module:
 
     import logging
@@ -67,22 +81,23 @@ You need to add a handler to see any output:
 ### Publishing a message to a channel
 
 ```python
-channel.publish('event', 'message')
+await channel.publish('event', 'message')
 ```
 
 ### Querying the History
 
 ```python
-message_page = channel.history() # Returns a PaginatedResult
+message_page = await channel.history() # Returns a PaginatedResult
 message_page.items # List with messages from this page
 message_page.has_next() # => True, indicates there is another page
-message_page.next().items # List with messages from the second page
+next_page = await message_page.next() # Returns a next page
+next_page.items # List with messages from the second page
 ```
 
 ### Current presence members on a channel
 
 ```python
-members_page = channel.presence.get() # Returns a PaginatedResult
+members_page = await channel.presence.get() # Returns a PaginatedResult
 members_page.items
 members_page.items[0].client_id # client_id of first member present
 ```
@@ -90,7 +105,7 @@ members_page.items[0].client_id # client_id of first member present
 ### Querying the presence history
 
 ```python
-presence_page = channel.presence.history() # Returns a PaginatedResult
+presence_page = await channel.presence.history() # Returns a PaginatedResult
 presence_page.items
 presence_page.items[0].client_id # client_id of first member
 ```
@@ -99,11 +114,11 @@ presence_page.items[0].client_id # client_id of first member
 
 When a 128 bit or 256 bit key is provided to the library, all payloads are encrypted and decrypted automatically using that key on the channel. The secret key is never transmitted to Ably and thus it is the developer's responsibility to distribute a secret key to both publishers and subscribers.
 
-```ruby
+```python
 key = ably.util.crypto.generate_random_key()
 channel = rest.channels.get('communication', cipher={'key': key})
 channel.publish(u'unencrypted', u'encrypted secret payload')
-messages_page = channel.history()
+messages_page = await channel.history()
 messages_page.items[0].data #=> "sensitive data"
 ```
 
@@ -112,9 +127,10 @@ messages_page.items[0].data #=> "sensitive data"
 Tokens are issued by Ably and are readily usable by any client to connect to Ably:
 
 ```python
-token_details = client.auth.request_token()
+token_details = await client.auth.request_token()
 token_details.token # => "xVLyHw.CLchevH3hF....MDh9ZC_Q"
 new_client = AblyRest(token=token_details)
+await new_client.close()
 ```
 
 ### Generate a TokenRequest
@@ -122,7 +138,7 @@ new_client = AblyRest(token=token_details)
 Token requests are issued by your servers and signed using your private API key. This is the preferred method of authentication as no secrets are ever shared, and the token request can be issued to trusted clients without communicating with Ably.
 
 ```python
-token_request = client.auth.create_token_request(
+token_request = await client.auth.create_token_request(
     {
         'client_id': 'jim',
         'capability': {'channel1': '"*"'},
@@ -143,14 +159,14 @@ new_client = AblyRest(token=token_request)
 ### Fetching your application's stats
 
 ```python
-stats = client.stats() # Returns a PaginatedResult
+stats = await client.stats() # Returns a PaginatedResult
 stats.items
 ```
 
 ### Fetching the Ably service time
 
 ```python
-client.time()
+await client.time()
 ```
 
 ## Support, feedback and troubleshooting

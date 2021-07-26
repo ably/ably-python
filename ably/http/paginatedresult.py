@@ -65,30 +65,30 @@ class PaginatedResult:
     def is_last(self):
         return not self.has_next()
 
-    def first(self):
-        return self.__get_rel(self.__rel_first) if self.__rel_first else None
+    async def first(self):
+        return await self.__get_rel(self.__rel_first) if self.__rel_first else None
 
-    def next(self):
-        return self.__get_rel(self.__rel_next) if self.__rel_next else None
+    async def next(self):
+        return await self.__get_rel(self.__rel_next) if self.__rel_next else None
 
-    def __get_rel(self, rel_req):
+    async def __get_rel(self, rel_req):
         if rel_req is None:
             return None
-        return self.paginated_query_with_request(self.__http, rel_req, self.__response_processor)
+        return await self.paginated_query_with_request(self.__http, rel_req, self.__response_processor)
 
     @classmethod
-    def paginated_query(cls, http, method='GET', url='/', body=None,
-                        headers=None, response_processor=None,
-                        raise_on_error=True):
+    async def paginated_query(cls, http, method='GET', url='/', body=None,
+                              headers=None, response_processor=None,
+                              raise_on_error=True):
         headers = headers or {}
         req = Request(method, url, body=body, headers=headers, skip_auth=False,
                       raise_on_error=raise_on_error)
-        return cls.paginated_query_with_request(http, req, response_processor)
+        return await cls.paginated_query_with_request(http, req, response_processor)
 
     @classmethod
-    def paginated_query_with_request(cls, http, request, response_processor,
-                                     raise_on_error=True):
-        response = http.make_request(
+    async def paginated_query_with_request(cls, http, request, response_processor,
+                                           raise_on_error=True):
+        response = await http.make_request(
             request.method, request.url, headers=request.headers,
             body=request.body, skip_auth=request.skip_auth,
             raise_on_error=request.raise_on_error)

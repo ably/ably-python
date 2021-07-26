@@ -7,16 +7,15 @@ from ably.rest.channel import Channel, Channels, Presence
 from ably.util.crypto import generate_random_key
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseTestCase
-
-test_vars = RestSetup.get_test_vars()
+from test.ably.utils import BaseAsyncTestCase
 
 
 # makes no request, no need to use different protocols
-class TestChannels(BaseTestCase):
+class TestChannels(BaseAsyncTestCase):
 
-    def setUp(self):
-        self.ably = RestSetup.get_ably_rest()
+    async def setUp(self):
+        self.test_vars = await RestSetup.get_test_vars()
+        self.ably = await RestSetup.get_ably_rest()
 
     def test_rest_channels_attr(self):
         assert hasattr(self.ably, 'channels')
@@ -87,10 +86,11 @@ class TestChannels(BaseTestCase):
         assert channel.presence
         assert isinstance(channel.presence, Presence)
 
-    def test_without_permissions(self):
-        key = test_vars["keys"][2]
-        ably = RestSetup.get_ably_rest(key=key["key_str"])
+    async def test_without_permissions(self):
+        key = self.test_vars["keys"][2]
+        ably = await RestSetup.get_ably_rest(key=key["key_str"])
         with pytest.raises(AblyException) as excinfo:
-            ably.channels['test_publish_without_permission'].publish('foo', 'woop')
+            await ably.channels['test_publish_without_permission'].publish('foo', 'woop')
 
         assert 'not permitted' in excinfo.value.message
+        await ably.close()

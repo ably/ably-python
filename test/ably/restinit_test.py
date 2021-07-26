@@ -1,7 +1,7 @@
 import warnings
 from mock import patch
 import pytest
-from httpx import Client
+from httpx import Client, AsyncClient
 
 from ably import AblyRest
 from ably import AblyException
@@ -9,17 +9,19 @@ from ably.transport.defaults import Defaults
 from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase
-
-test_vars = RestSetup.get_test_vars()
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, AsyncMock
 
 
-class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
+class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
+
+    async def setUp(self):
+        self.test_vars = await RestSetup.get_test_vars()
+
     @dont_vary_protocol
     def test_key_only(self):
-        ably = AblyRest(key=test_vars["keys"][0]["key_str"])
-        assert ably.options.key_name == test_vars["keys"][0]["key_name"], "Key name does not match"
-        assert ably.options.key_secret == test_vars["keys"][0]["key_secret"], "Key secret does not match"
+        ably = AblyRest(key=self.test_vars["keys"][0]["key_str"])
+        assert ably.options.key_name == self.test_vars["keys"][0]["key_name"], "Key name does not match"
+        assert ably.options.key_secret == self.test_vars["keys"][0]["key_secret"], "Key secret does not match"
 
     def per_protocol_setup(self, use_binary_protocol):
         self.use_binary_protocol = use_binary_protocol
@@ -44,9 +46,9 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_ambiguous_key_raises_value_error(self):
         with pytest.raises(ValueError, match="mutually exclusive"):
-            AblyRest(key=test_vars["keys"][0]["key_str"], key_name='x')
+            AblyRest(key=self.test_vars["keys"][0]["key_str"], key_name='x')
         with pytest.raises(ValueError, match="mutually exclusive"):
-            AblyRest(key=test_vars["keys"][0]["key_str"], key_secret='x')
+            AblyRest(key=self.test_vars["keys"][0]["key_str"], key_secret='x')
 
     @dont_vary_protocol
     def test_with_key_name_or_secret_only(self):
@@ -176,17 +178,17 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
             AblyRest(port=111)
 
     # RSA10k
-    def test_query_time_param(self):
-        ably = RestSetup.get_ably_rest(query_time=True,
-                                       use_binary_protocol=self.use_binary_protocol)
+    async def test_query_time_param(self):
+        ably = await RestSetup.get_ably_rest(query_time=True,
+                                             use_binary_protocol=self.use_binary_protocol)
 
         timestamp = ably.auth._timestamp
         with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
-            ably.auth.request_token()
+            await ably.auth.request_token()
             assert local_time.call_count == 1
             assert server_time.call_count == 1
-            ably.auth.request_token()
+            await ably.auth.request_token()
             assert local_time.call_count == 2
             assert server_time.call_count == 1
 
@@ -203,22 +205,22 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert ably.http.preferred_port == 80
 
     @dont_vary_protocol
-    def test_request_basic_auth_over_http_fails(self):
+    async def test_request_basic_auth_over_http_fails(self):
         ably = AblyRest(key_secret='foo', key_name='bar', tls=False)
 
         with pytest.raises(AblyException) as excinfo:
-            ably.http.get('/time', skip_auth=False)
+            await ably.http.get('/time', skip_auth=False)
 
         assert 401 == excinfo.value.status_code
         assert 40103 == excinfo.value.code
         assert 'Cannot use Basic Auth over non-TLS connections' == excinfo.value.message
 
     @dont_vary_protocol
-    def test_environment(self):
+    async def test_environment(self):
         ably = AblyRest(token='token', environment='custom')
-        with patch.object(Client, 'send', wraps=ably.http._Http__client.send) as get_mock:
+        with patch.object(AsyncClient, 'send', wraps=ably.http._Http__client.send) as get_mock:
             try:
-                ably.time()
+                await ably.time()
             except AblyException:
                 pass
             request = get_mock.call_args_list[0][0][0]

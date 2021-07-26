@@ -28,13 +28,13 @@ class Channel(SingleDispatch):
         self.__presence = Presence(self)
 
     @catch_all
-    def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
+    async def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
         path = self.__base_path + 'messages' + params
 
         message_handler = make_message_response_handler(self.__cipher)
-        return PaginatedResult.paginated_query(
+        return await PaginatedResult.paginated_query(
             self.ably.http, url=path, response_processor=message_handler)
 
     def __publish_request_body(self, messages):
@@ -80,11 +80,11 @@ class Channel(SingleDispatch):
         raise TypeError('Unexpected type %s' % type(arg))
 
     @_publish.register(Message)
-    def publish_message(self, message, params=None, timeout=None):
-        return self.publish_messages([message], params, timeout=timeout)
+    async def publish_message(self, message, params=None, timeout=None):
+        return await self.publish_messages([message], params, timeout=timeout)
 
     @_publish.register(list)
-    def publish_messages(self, messages, params=None, timeout=None):
+    async def publish_messages(self, messages, params=None, timeout=None):
         request_body = self.__publish_request_body(messages)
         if not self.ably.options.use_binary_protocol:
             request_body = json.dumps(request_body, separators=(',', ':'))
@@ -95,10 +95,10 @@ class Channel(SingleDispatch):
         if params:
             params = {k: str(v).lower() if type(v) is bool else v for k, v in params.items()}
             path += '?' + parse.urlencode(params)
-        return self.ably.http.post(path, body=request_body, timeout=timeout)
+        return await self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @_publish.register(str)
-    def publish_name_data(self, name, data, client_id=None, extras=None, timeout=None):
+    async def publish_name_data(self, name, data, client_id=None, extras=None, timeout=None):
         # RSL1h
         if client_id or extras:
             warnings.warn(
@@ -107,9 +107,9 @@ class Channel(SingleDispatch):
             )
 
         messages = [Message(name, data, client_id, extras=extras)]
-        return self.publish_messages(messages, timeout=timeout)
+        return await self.publish_messages(messages, timeout=timeout)
 
-    def publish(self, *args, **kwargs):
+    async def publish(self, *args, **kwargs):
         """Publishes a message on this channel.
 
         :Parameters:
@@ -124,18 +124,18 @@ class Channel(SingleDispatch):
         # For backwards compatibility
         if len(args) == 0:
             if len(kwargs) == 0:
-                return self.publish_name_data(None, None)
+                return await self.publish_name_data(None, None)
 
             if 'name' in kwargs or 'data' in kwargs:
                 name = kwargs.pop('name', None)
                 data = kwargs.pop('data', None)
-                return self.publish_name_data(name, data, **kwargs)
+                return await self.publish_name_data(name, data, **kwargs)
 
             if 'messages' in kwargs:
                 messages = kwargs.pop('messages')
-                return self.publish_messages(messages, **kwargs)
+                return await self.publish_messages(messages, **kwargs)
 
-        return self._publish(*args, **kwargs)
+        return await self._publish(*args, **kwargs)
 
     @property
     def ably(self):

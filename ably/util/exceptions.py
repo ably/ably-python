@@ -66,9 +66,9 @@ class AblyException(Exception):
 
 def catch_all(func):
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         except Exception as e:
             log.exception(e)
             raise AblyException.from_exception(e)

@@ -126,7 +126,7 @@ class Presence:
             path += ('?' + parse.urlencode(qs))
         return path
 
-    def get(self, limit=None):
+    async def get(self, limit=None):
         qs = {}
         if limit:
             if limit > 1000:
@@ -135,10 +135,10 @@ class Presence:
         path = self._path_with_qs(self.__base_path + 'presence', qs)
 
         presence_handler = make_presence_response_handler(self.__cipher)
-        return PaginatedResult.paginated_query(
+        return await PaginatedResult.paginated_query(
             self.__http, url=path, response_processor=presence_handler)
 
-    def history(self, limit=None, direction=None, start=None, end=None):
+    async def history(self, limit=None, direction=None, start=None, end=None):
         qs = {}
         if limit:
             if limit > 1000:
@@ -163,7 +163,7 @@ class Presence:
         path = self._path_with_qs(self.__base_path + 'presence/history', qs)
 
         presence_handler = make_presence_response_handler(self.__cipher)
-        return PaginatedResult.paginated_query(
+        return await PaginatedResult.paginated_query(
             self.__http, url=path, response_processor=presence_handler)
 
 

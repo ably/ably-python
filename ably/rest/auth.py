@@ -75,7 +75,7 @@ class Auth:
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
+    async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
 
         if token_params is None:
@@ -96,7 +96,7 @@ class Auth:
                       token_details.expires)
             return token_details
 
-        self.__token_details = self.request_token(token_params, **auth_options)
+        self.__token_details = await self.request_token(token_params, **auth_options)
         self._configure_client_id(self.__token_details.client_id)
         return self.__token_details
 
@@ -115,20 +115,20 @@ class Auth:
 
         return expires < timestamp + token_details.TOKEN_EXPIRY_BUFFER
 
-    def authorize(self, token_params=None, auth_options=None):
-        return self.__authorize_when_necessary(token_params, auth_options, force=True)
+    async def authorize(self, token_params=None, auth_options=None):
+        return await self.__authorize_when_necessary(token_params, auth_options, force=True)
 
-    def authorise(self, *args, **kwargs):
+    async def authorise(self, *args, **kwargs):
         warnings.warn(
             "authorise is deprecated and will be removed in v2.0, please use authorize",
             DeprecationWarning)
-        return self.authorize(*args, **kwargs)
+        return await self.authorize(*args, **kwargs)
 
-    def request_token(self, token_params=None,
-                      # auth_options
-                      key_name=None, key_secret=None, auth_callback=None,
-                      auth_url=None, auth_method=None, auth_headers=None,
-                      auth_params=None, query_time=None):
+    async def request_token(self, token_params=None,
+                            # auth_options
+                            key_name=None, key_secret=None, auth_callback=None,
+                            auth_url=None, auth_method=None, auth_headers=None,
+                            auth_params=None, query_time=None):
         token_params = token_params or {}
         token_params = dict(self.auth_options.default_token_params,
                             **token_params)
@@ -152,14 +152,14 @@ class Auth:
         log.debug("Token Params: %s" % token_params)
         if auth_callback:
             log.debug("using token auth with authCallback")
-            token_request = auth_callback(token_params)
+            token_request = await auth_callback(token_params)
         elif auth_url:
             log.debug("using token auth with authUrl")
 
-            token_request = self.token_request_from_auth_url(
+            token_request = await self.token_request_from_auth_url(
                 auth_method, auth_url, token_params, auth_headers, auth_params)
         else:
-            token_request = self.create_token_request(
+            token_request = await self.create_token_request(
                 token_params, key_name=key_name, key_secret=key_secret,
                 query_time=query_time)
         if isinstance(token_request, TokenDetails):
@@ -173,7 +173,7 @@ class Auth:
 
         token_path = "/keys/%s/requestToken" % token_request.key_name
 
-        response = self.ably.http.post(
+        response = await self.ably.http.post(
             token_path,
             headers=auth_headers,
             body=token_request.to_dict(),
@@ -185,8 +185,8 @@ class Auth:
         log.debug("Token: %s" % str(response_dict.get("token")))
         return TokenDetails.from_dict(response_dict)
 
-    def create_token_request(self, token_params=None,
-                             key_name=None, key_secret=None, query_time=None):
+    async def create_token_request(self, token_params=None,
+                                   key_name=None, key_secret=None, query_time=None):
         token_params = token_params or {}
         token_request = {}
 
@@ -205,7 +205,7 @@ class Auth:
 
             if query_time:
                 if self.__time_offset is None:
-                    server_time = self.ably.time()
+                    server_time = await self.ably.time()
                     local_time = self._timestamp()
                     self.__time_offset = server_time - local_time
                     token_request['timestamp'] = server_time
@@ -312,13 +312,13 @@ class Auth:
         else:
             return self.client_id == assumed_client_id
 
-    def _get_auth_headers(self):
+    async def _get_auth_headers(self):
         if self.__auth_mechanism == Auth.Method.BASIC:
             return {
                 'Authorization': 'Basic %s' % self.basic_credentials,
             }
         else:
-            self.__authorize_when_necessary()
+            await self.__authorize_when_necessary()
             return {
                 'Authorization': 'Bearer %s' % self.token_credentials,
             }
@@ -330,8 +330,7 @@ class Auth:
     def _random_nonce(self):
         return uuid.uuid4().hex[:16]
 
-    def token_request_from_auth_url(self, method, url, token_params,
-                                    headers, auth_params):
+    async def token_request_from_auth_url(self, method, url, token_params, headers, auth_params):
         if method == 'GET':
             body = {}
             params = dict(auth_params, **token_params)
@@ -340,10 +339,9 @@ class Auth:
             body = dict(auth_params, **token_params)
 
         from ably.http.http import Response
-        with httpx.Client(http2=True) as client:
-            response = Response(
-                client.request(method=method, url=url, headers=headers, params=params, data=body)
-            )
+        async with httpx.AsyncClient(http2=True) as client:
+            resp = await client.request(method=method, url=url, headers=headers, params=params, data=body)
+            response = Response(resp)
 
         AblyException.raise_for_response(response)
         try:
