@@ -73,12 +73,12 @@ def assert_responses_type(protocol):
             for response in responses:
                 # In HTTP/2 some header fields are optional in case of 204 status code
                 if protocol == 'json':
-                    if response.status_code is not 204:
+                    if response.status_code != 204:
                         assert response.headers['content-type'] == 'application/json'
                     if response.content:
                         response.json()
                 else:
-                    if response.status_code is not 204:
+                    if response.status_code != 204:
                         assert response.headers['content-type'] == 'application/x-msgpack'
                     if response.content:
                         msgpack.unpackb(response.content)
