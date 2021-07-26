@@ -80,7 +80,7 @@ class Request:
 
 class Response:
     """
-    Composition for requests.Response with delegation
+    Composition for respx.Response with delegation
     """
 
     def __init__(self, response):
