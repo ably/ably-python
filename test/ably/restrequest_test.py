@@ -1,5 +1,5 @@
+import httpx
 import pytest
-import requests
 
 from ably import AblyRest
 from ably.http.paginatedresult import HttpPaginatedResponse
@@ -94,7 +94,7 @@ class TestRestRequest(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
         timeout = 0.000001
         ably = AblyRest(token="foo", http_request_timeout=timeout)
         assert ably.http.http_request_timeout == timeout
-        with pytest.raises(requests.exceptions.ReadTimeout):
+        with pytest.raises(httpx.ReadTimeout):
             ably.request('GET', '/time')
 
         # Bad host, use fallback
@@ -115,5 +115,5 @@ class TestRestRequest(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
                         port=test_vars["port"],
                         tls_port=test_vars["tls_port"],
                         tls=test_vars["tls"])
-        with pytest.raises(requests.exceptions.ConnectionError):
+        with pytest.raises(httpx.ConnectError):
             ably.request('GET', '/time')

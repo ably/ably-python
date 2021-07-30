@@ -5,16 +5,20 @@ import unittest
 
 import msgpack
 import mock
-import responses
+import respx
+from httpx import Response
 
 from ably.http.http import Http
 
 
 class BaseTestCase(unittest.TestCase):
 
-    def responses_add_empty_msg_pack(self, url, method=responses.GET):
-        responses.add(responses.GET, url, body=msgpack.packb({}),
-                      content_type='application/x-msgpack')
+    def respx_add_empty_msg_pack(self, url, method='GET'):
+        respx.route(method=method, url=url).return_value = Response(
+            status_code=200,
+            headers={'content-type': 'application/x-msgpack'},
+            content=msgpack.packb({})
+        )
 
     @classmethod
     def get_channel_name(cls, prefix=''):
@@ -67,12 +71,15 @@ def assert_responses_type(protocol):
                    "If your test doesn't make any requests, use the @dont_vary_protocol decorator"
 
             for response in responses:
+                # In HTTP/2 some header fields are optional in case of 204 status code
                 if protocol == 'json':
-                    assert response.headers['content-type'] == 'application/json'
+                    if response.status_code != 204:
+                        assert response.headers['content-type'] == 'application/json'
                     if response.content:
                         response.json()
                 else:
-                    assert response.headers['content-type'] == 'application/x-msgpack'
+                    if response.status_code != 204:
+                        assert response.headers['content-type'] == 'application/x-msgpack'
                     if response.content:
                         msgpack.unpackb(response.content)
 

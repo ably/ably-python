@@ -1,7 +1,7 @@
 import warnings
 from mock import patch
 import pytest
-from requests import Session
+from httpx import Client
 
 from ably import AblyRest
 from ably import AblyException
@@ -216,8 +216,7 @@ class TestRestInit(BaseTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_environment(self):
         ably = AblyRest(token='token', environment='custom')
-        with patch.object(Session, 'prepare_request',
-                          wraps=ably.http._Http__session.prepare_request) as get_mock:
+        with patch.object(Client, 'send', wraps=ably.http._Http__client.send) as get_mock:
             try:
                 ably.time()
             except AblyException:

@@ -4,7 +4,7 @@ import time
 import json
 from urllib.parse import urljoin
 
-import requests
+import httpx
 import msgpack
 
 from ably.rest.auth import Auth
@@ -80,7 +80,7 @@ class Request:
 
 class Response:
     """
-    Composition for requests.Response with delegation
+    Composition for respx.Response with delegation
     """
 
     def __init__(self, response):
@@ -97,7 +97,7 @@ class Response:
         elif content_type == 'application/json':
             return self.__response.json()
         else:
-            raise ValueError("Unsuported content type")
+            raise ValueError("Unsupported content type")
 
     @property
     def response(self):
@@ -114,7 +114,7 @@ class Http:
         'http_max_retry_duration': 15,
     }
 
-    __session = requests.Session()
+    __client = httpx.Client(http2=True)
 
     def __init__(self, ably, options):
         options = options or {}
@@ -188,15 +188,10 @@ class Http:
                                        host,
                                        self.preferred_port)
             url = urljoin(base_url, path)
-            all_headers.update(HttpUtils.get_host_header(host))
-            request = requests.Request(method, url, data=body, headers=all_headers)
-            prepped = self.__session.prepare_request(request)
+            request = httpx.Request(method, url, content=body, headers=all_headers)
             try:
-                response = self.__session.send(prepped, timeout=timeout)
+                response = self.__client.send(request, timeout=timeout)
             except Exception as e:
-                # Need to catch `Exception`, see:
-                # https://github.com/kennethreitz/requests/issues/1236#issuecomment-133312626
-
                 # if last try or cumulative timeout is done, throw exception up
                 time_passed = time.time() - requested_at
                 if retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration:

@@ -4,8 +4,7 @@ import logging
 import time
 import uuid
 import warnings
-
-import requests
+import httpx
 
 from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
@@ -341,8 +340,10 @@ class Auth:
             body = dict(auth_params, **token_params)
 
         from ably.http.http import Response
-        response = Response(requests.request(
-            method, url, headers=headers, params=params, data=body))
+        with httpx.Client(http2=True) as client:
+            response = Response(
+                client.request(method=method, url=url, headers=headers, params=params, data=body)
+            )
 
         AblyException.raise_for_response(response)
         try:
