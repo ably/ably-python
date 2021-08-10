@@ -10,7 +10,7 @@ from ably.util.crypto import get_cipher
 from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseTestCase, BaseAsyncTestCase, AsyncMock
+from test.ably.utils import BaseAsyncTestCase, AsyncMock
 
 log = logging.getLogger(__name__)
 
@@ -141,7 +141,7 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
     async def setUp(self):
         self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
         self.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
-                                         algorithm='aes')
+                                          algorithm='aes')
 
     def decrypt(self, payload, options={}):
         ciphertext = base64.b64decode(payload.encode('ascii'))

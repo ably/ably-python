@@ -8,7 +8,7 @@ from urllib.parse import parse_qs
 import mock
 import pytest
 import respx
-from httpx import Client, Response, AsyncClient
+from httpx import Response, AsyncClient
 
 import ably
 from ably import AblyRest

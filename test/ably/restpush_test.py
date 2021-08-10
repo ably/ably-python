@@ -10,7 +10,7 @@ from ably import DeviceDetails, PushChannelSubscription
 from ably.http.paginatedresult import PaginatedResult
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, BaseAsyncTestCase, dont_vary_protocol
+from test.ably.utils import VaryByProtocolTestsMetaclass, BaseAsyncTestCase
 from test.ably.utils import new_dict, random_string, get_random_key
 
 

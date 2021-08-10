@@ -156,6 +156,7 @@ token_request = await client.auth.create_token_request(
 #     "mac": ...}
 
 new_client = AblyRest(token=token_request)
+await new_client.close()
 ```
 
 ### Fetching your application's stats

@@ -17,6 +17,9 @@ class TestChannels(BaseAsyncTestCase):
         self.test_vars = await RestSetup.get_test_vars()
         self.ably = await RestSetup.get_ably_rest()
 
+    async def tearDown(self):
+        await self.ably.close()
+
     def test_rest_channels_attr(self):
         assert hasattr(self.ably, 'channels')
         assert isinstance(self.ably.channels, Channels)

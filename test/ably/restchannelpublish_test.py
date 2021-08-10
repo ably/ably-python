@@ -18,7 +18,7 @@ from ably.types.tokendetails import TokenDetails
 from ably.util import case
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseTestCase, BaseAsyncTestCase
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
 

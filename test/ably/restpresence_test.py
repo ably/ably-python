@@ -194,9 +194,9 @@ class TestPresenceCrypt(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         key = b'0123456789abcdef'
         self.channel = self.ably.channels.get('persisted:presence_fixtures', cipher={'key': key})
 
-    def tearDown(self):
+    async def tearDown(self):
         self.ably.channels.release('persisted:presence_fixtures')
-        self.ably.close()
+        await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):
         self.ably.options.use_binary_protocol = use_binary_protocol

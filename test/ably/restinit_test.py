@@ -9,7 +9,7 @@ from ably.transport.defaults import Defaults
 from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, AsyncMock
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 
 class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
