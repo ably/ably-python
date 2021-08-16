@@ -36,9 +36,9 @@ class RestSetup:
     __test_vars = None
 
     @staticmethod
-    def get_test_vars(sender=None):
+    async def get_test_vars(sender=None):
         if not RestSetup.__test_vars:
-            r = ably.http.post("/apps", body=app_spec_local, skip_auth=True)
+            r = await ably.http.post("/apps", body=app_spec_local, skip_auth=True)
             AblyException.raise_for_response(r)
 
             app_spec = r.json()
@@ -66,8 +66,8 @@ class RestSetup:
         return RestSetup.__test_vars
 
     @classmethod
-    def get_ably_rest(cls, **kw):
-        test_vars = RestSetup.get_test_vars()
+    async def get_ably_rest(cls, **kw):
+        test_vars = await RestSetup.get_test_vars()
         options = {
             'key': test_vars["keys"][0]["key_str"],
             'rest_host': test_vars["host"],
@@ -80,13 +80,13 @@ class RestSetup:
         return AblyRest(**options)
 
     @classmethod
-    def clear_test_vars(cls):
+    async def clear_test_vars(cls):
         test_vars = RestSetup.__test_vars
         options = Options(key=test_vars["keys"][0]["key_str"])
         options.rest_host = test_vars["host"]
         options.port = test_vars["port"]
         options.tls_port = test_vars["tls_port"]
         options.tls = test_vars["tls"]
-        ably = cls.get_ably_rest()
-        ably.http.delete('/apps/' + test_vars['app_id'])
+        ably = await cls.get_ably_rest()
+        await ably.http.delete('/apps/' + test_vars['app_id'])
         RestSetup.__test_vars = None

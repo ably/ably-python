@@ -68,20 +68,22 @@ class AblyRest:
         self.__options = options
         self.__push = Push(self)
 
+    async def __aenter__(self):
+        return self
+
     @catch_all
-    def stats(self, direction=None, start=None, end=None, params=None,
-              limit=None, paginated=None, unit=None, timeout=None):
+    async def stats(self, direction=None, start=None, end=None, params=None,
+                    limit=None, paginated=None, unit=None, timeout=None):
         """Returns the stats for this application"""
         params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
         url = '/stats' + params
-
-        return PaginatedResult.paginated_query(
+        return await PaginatedResult.paginated_query(
             self.http, url=url, response_processor=stats_response_processor)
 
     @catch_all
-    def time(self, timeout=None):
+    async def time(self, timeout=None):
         """Returns the current server time in ms since the unix epoch"""
-        r = self.http.get('/time', skip_auth=True, timeout=timeout)
+        r = await self.http.get('/time', skip_auth=True, timeout=timeout)
         AblyException.raise_for_response(r)
         return r.to_native()[0]
 
@@ -110,7 +112,7 @@ class AblyRest:
     def push(self):
         return self.__push
 
-    def request(self, method, path, params=None, body=None, headers=None):
+    async def request(self, method, path, params=None, body=None, headers=None):
         url = path
         if params:
             url += '?' + urlencode(params)
@@ -123,7 +125,13 @@ class AblyRest:
                 items = [items]
             return items
 
-        return HttpPaginatedResponse.paginated_query(
+        return await HttpPaginatedResponse.paginated_query(
             self.http, method, url, body=body, headers=headers,
             response_processor=response_processor,
             raise_on_error=False)
+
+    async def __aexit__(self, *excinfo):
+        await self.close()
+
+    async def close(self):
+        await self.http.close()

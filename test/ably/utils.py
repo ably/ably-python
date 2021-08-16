@@ -3,6 +3,7 @@ import random
 import string
 import unittest
 
+import asynctest
 import msgpack
 import mock
 import respx
@@ -30,6 +31,24 @@ class BaseTestCase(unittest.TestCase):
         return cls.ably.channels.get(name)
 
 
+class BaseAsyncTestCase(asynctest.TestCase):
+
+    def respx_add_empty_msg_pack(self, url, method='GET'):
+        respx.route(method=method, url=url).return_value = Response(
+            status_code=200,
+            headers={'content-type': 'application/x-msgpack'},
+            content=msgpack.packb({})
+        )
+
+    @classmethod
+    def get_channel_name(cls, prefix=''):
+        return prefix + random_string(10)
+
+    def get_channel(self, prefix=''):
+        name = self.get_channel_name(prefix)
+        return self.ably.channels.get(name)
+
+
 def assert_responses_type(protocol):
     """
     This is a decorator to check if we retrieved responses with the correct protocol.
@@ -48,8 +67,8 @@ def assert_responses_type(protocol):
     def patch():
         original = Http.make_request
 
-        def fake_make_request(self, *args, **kwargs):
-            response = original(self, *args, **kwargs)
+        async def fake_make_request(self, *args, **kwargs):
+            response = await original(self, *args, **kwargs)
             responses.append(response)
             return response
 
@@ -62,9 +81,9 @@ def assert_responses_type(protocol):
 
     def test_decorator(fn):
         @functools.wraps(fn)
-        def test_decorated(self, *args, **kwargs):
+        async def test_decorated(self, *args, **kwargs):
             patcher = patch()
-            fn(self, *args, **kwargs)
+            await fn(self, *args, **kwargs)
             unpatch(patcher)
 
             assert len(responses) >= 1,\
@@ -116,12 +135,11 @@ class VaryByProtocolTestsMetaclass(type):
     @staticmethod
     def wrap_as(ttype, old_name, old_func):
         expected_content = {'bin': 'msgpack', 'text': 'json'}
-
         @assert_responses_type(expected_content[ttype])
-        def wrapper(self):
+        async def wrapper(self):
             if hasattr(self, 'per_protocol_setup'):
                 self.per_protocol_setup(ttype == 'bin')
-            old_func(self)
+            await old_func(self)
         wrapper.__name__ = old_name + '_' + ttype
         return wrapper
 
@@ -141,3 +159,8 @@ def new_dict(src, **kw):
 
 def get_random_key(d):
     return random.choice(list(d))
+
+
+class AsyncMock(mock.MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super(AsyncMock, self).__call__(*args, **kwargs)

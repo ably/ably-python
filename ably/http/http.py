@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import logging
 import time
@@ -17,25 +18,25 @@ log = logging.getLogger(__name__)
 
 def reauth_if_expired(func):
     @functools.wraps(func)
-    def wrapper(rest, *args, **kwargs):
+    async def wrapper(rest, *args, **kwargs):
         if kwargs.get("skip_auth"):
-            return func(rest, *args, **kwargs)
+            return await func(rest, *args, **kwargs)
 
         # RSA4b1 Detect expired token to avoid round-trip request
         auth = rest.auth
         token_details = auth.token_details
         if token_details and auth.time_offset is not None and auth.token_details_has_expired():
-            rest.reauth()
+            await rest.reauth()
             retried = True
         else:
             retried = False
 
         try:
-            return func(rest, *args, **kwargs)
+            return await func(rest, *args, **kwargs)
         except AblyException as e:
             if 40140 <= e.code < 40150 and not retried:
-                rest.reauth()
-                return func(rest, *args, **kwargs)
+                await rest.reauth()
+                return await func(rest, *args, **kwargs)
 
             raise
 
@@ -80,7 +81,7 @@ class Request:
 
 class Response:
     """
-    Composition for respx.Response with delegation
+    Composition for httpx.Response with delegation
     """
 
     def __init__(self, response):
@@ -114,8 +115,6 @@ class Http:
         'http_max_retry_duration': 15,
     }
 
-    __client = httpx.Client(http2=True)
-
     def __init__(self, ably, options):
         options = options or {}
         self.__ably = ably
@@ -124,6 +123,10 @@ class Http:
         # Cached fallback host (RSC15f)
         self.__host = None
         self.__host_expires = None
+        self.__client = httpx.AsyncClient(http2=True)
+
+    async def close(self):
+        await self.__client.aclose()
 
     def dump_body(self, body):
         if self.options.use_binary_protocol:
@@ -131,9 +134,9 @@ class Http:
         else:
             return json.dumps(body, separators=(',', ':'))
 
-    def reauth(self):
+    async def reauth(self):
         try:
-            self.auth.authorize()
+            await self.auth.authorize()
         except AblyAuthException as e:
             if e.code == 40101:
                 e.message = ("The provided token is not renewable and there is"
@@ -157,8 +160,8 @@ class Http:
         return hosts
 
     @reauth_if_expired
-    def make_request(self, method, path, headers=None, body=None,
-                     skip_auth=False, timeout=None, raise_on_error=True):
+    async def make_request(self, method, path, headers=None, body=None,
+                           skip_auth=False, timeout=None, raise_on_error=True):
 
         if body is not None and type(body) not in (bytes, str):
             body = self.dump_body(body)
@@ -174,7 +177,8 @@ class Http:
                     "Cannot use Basic Auth over non-TLS connections",
                     401,
                     40103)
-            all_headers.update(self.auth._get_auth_headers())
+            auth_headers = await self.auth._get_auth_headers()
+            all_headers.update(auth_headers)
         if headers:
             all_headers.update(headers)
 
@@ -190,7 +194,7 @@ class Http:
             url = urljoin(base_url, path)
             request = httpx.Request(method, url, content=body, headers=all_headers)
             try:
-                response = self.__client.send(request, timeout=timeout)
+                response = await self.__client.send(request, timeout=timeout)
             except Exception as e:
                 # if last try or cumulative timeout is done, throw exception up
                 time_passed = time.time() - requested_at
@@ -216,25 +220,30 @@ class Http:
                     if retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration:
                         raise e
 
-    def delete(self, url, headers=None, skip_auth=False, timeout=None):
-        return self.make_request('DELETE', url, headers=headers,
-                                 skip_auth=skip_auth, timeout=timeout)
+    async def delete(self, url, headers=None, skip_auth=False, timeout=None):
+        result = await self.make_request('DELETE', url, headers=headers,
+                                         skip_auth=skip_auth, timeout=timeout)
+        return result
 
-    def get(self, url, headers=None, skip_auth=False, timeout=None):
-        return self.make_request('GET', url, headers=headers,
-                                 skip_auth=skip_auth, timeout=timeout)
+    async def get(self, url, headers=None, skip_auth=False, timeout=None):
+        result = await self.make_request('GET', url, headers=headers,
+                                         skip_auth=skip_auth, timeout=timeout)
+        return result
 
-    def patch(self, url, headers=None, body=None, skip_auth=False, timeout=None):
-        return self.make_request('PATCH', url, headers=headers, body=body,
-                                 skip_auth=skip_auth, timeout=timeout)
+    async def patch(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        result = await self.make_request('PATCH', url, headers=headers, body=body,
+                                         skip_auth=skip_auth, timeout=timeout)
+        return result
 
-    def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
-        return self.make_request('POST', url, headers=headers, body=body,
-                                 skip_auth=skip_auth, timeout=timeout)
+    async def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        result = await self.make_request('POST', url, headers=headers, body=body,
+                                         skip_auth=skip_auth, timeout=timeout)
+        return result
 
-    def put(self, url, headers=None, body=None, skip_auth=False, timeout=None):
-        return self.make_request('PUT', url, headers=headers, body=body,
-                                 skip_auth=skip_auth, timeout=timeout)
+    async def put(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        result = await self.make_request('PUT', url, headers=headers, body=body,
+                                         skip_auth=skip_auth, timeout=timeout)
+        return result
 
     @property
     def auth(self):

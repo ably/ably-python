@@ -34,7 +34,7 @@ class PushAdmin:
     def channel_subscriptions(self):
         return self.__channel_subscriptions
 
-    def publish(self, recipient, data, timeout=None):
+    async def publish(self, recipient, data, timeout=None):
         """Publish a push notification to a single device.
 
         :Parameters:
@@ -55,7 +55,7 @@ class PushAdmin:
 
         body = data.copy()
         body.update({'recipient': recipient})
-        self.ably.http.post('/push/publish', body=body, timeout=timeout)
+        await self.ably.http.post('/push/publish', body=body, timeout=timeout)
 
 
 class PushDeviceRegistrations:
@@ -67,7 +67,7 @@ class PushDeviceRegistrations:
     def ably(self):
         return self.__ably
 
-    def get(self, device_id):
+    async def get(self, device_id):
         """Returns a DeviceDetails object if the device id is found or results
         in a not found error if the device cannot be found.
 
@@ -75,11 +75,11 @@ class PushDeviceRegistrations:
         - `device_id`: the id of the device
         """
         path = '/push/deviceRegistrations/%s' % device_id
-        response = self.ably.http.get(path)
+        response = await self.ably.http.get(path)
         obj = response.to_native()
         return DeviceDetails.from_dict(obj)
 
-    def list(self, **params):
+    async def list(self, **params):
         """Returns a PaginatedResult object with the list of DeviceDetails
         objects, filtered by the given parameters.
 
@@ -87,11 +87,11 @@ class PushDeviceRegistrations:
         - `**params`: the parameters used to filter the list
         """
         path = '/push/deviceRegistrations' + format_params(params)
-        return PaginatedResult.paginated_query(
+        return await PaginatedResult.paginated_query(
             self.ably.http, url=path,
             response_processor=device_details_response_processor)
 
-    def save(self, device):
+    async def save(self, device):
         """Creates or updates the device. Returns a DeviceDetails object.
 
         :Parameters:
@@ -100,27 +100,27 @@ class PushDeviceRegistrations:
         device_details = DeviceDetails.factory(device)
         path = '/push/deviceRegistrations/%s' % device_details.id
         body = device_details.as_dict()
-        response = self.ably.http.put(path, body=body)
+        response = await self.ably.http.put(path, body=body)
         obj = response.to_native()
         return DeviceDetails.from_dict(obj)
 
-    def remove(self, device_id):
+    async def remove(self, device_id):
         """Deletes the registered device identified by the given device id.
 
         :Parameters:
         - `device_id`: the id of the device
         """
         path = '/push/deviceRegistrations/%s' % device_id
-        return self.ably.http.delete(path)
+        return await self.ably.http.delete(path)
 
-    def remove_where(self, **params):
+    async def remove_where(self, **params):
         """Deletes the registered devices identified by the given parameters.
 
         :Parameters:
         - `**params`: the parameters that identify the devices to remove
         """
         path = '/push/deviceRegistrations' + format_params(params)
-        return self.ably.http.delete(path)
+        return await self.ably.http.delete(path)
 
 
 class PushChannelSubscriptions:
@@ -132,7 +132,7 @@ class PushChannelSubscriptions:
     def ably(self):
         return self.__ably
 
-    def list(self, **params):
+    async def list(self, **params):
         """Returns a PaginatedResult object with the list of
         PushChannelSubscription objects, filtered by the given parameters.
 
@@ -140,11 +140,10 @@ class PushChannelSubscriptions:
         - `**params`: the parameters used to filter the list
         """
         path = '/push/channelSubscriptions' + format_params(params)
-        return PaginatedResult.paginated_query(
-            self.ably.http, url=path,
-            response_processor=channel_subscriptions_response_processor)
+        return await PaginatedResult.paginated_query(self.ably.http, url=path,
+                                                     response_processor=channel_subscriptions_response_processor)
 
-    def list_channels(self, **params):
+    async def list_channels(self, **params):
         """Returns a PaginatedResult object with the list of
         PushChannelSubscription objects, filtered by the given parameters.
 
@@ -152,11 +151,10 @@ class PushChannelSubscriptions:
         - `**params`: the parameters used to filter the list
         """
         path = '/push/channels' + format_params(params)
-        return PaginatedResult.paginated_query(
-            self.ably.http, url=path,
-            response_processor=channels_response_processor)
+        return await PaginatedResult.paginated_query(self.ably.http, url=path,
+                                                     response_processor=channels_response_processor)
 
-    def save(self, subscription):
+    async def save(self, subscription):
         """Creates or updates the subscription. Returns a
         PushChannelSubscription object.
 
@@ -166,11 +164,11 @@ class PushChannelSubscriptions:
         subscription = PushChannelSubscription.factory(subscription)
         path = '/push/channelSubscriptions'
         body = subscription.as_dict()
-        response = self.ably.http.post(path, body=body)
+        response = await self.ably.http.post(path, body=body)
         obj = response.to_native()
         return PushChannelSubscription.from_dict(obj)
 
-    def remove(self, subscription):
+    async def remove(self, subscription):
         """Deletes the given subscription.
 
         :Parameters:
@@ -178,13 +176,13 @@ class PushChannelSubscriptions:
         """
         subscription = PushChannelSubscription.factory(subscription)
         params = subscription.as_dict()
-        return self.remove_where(**params)
+        return await self.remove_where(**params)
 
-    def remove_where(self, **params):
+    async def remove_where(self, **params):
         """Deletes the subscriptions identified by the given parameters.
 
         :Parameters:
         - `**params`: the parameters that identify the subscriptions to remove
         """
         path = '/push/channelSubscriptions' + format_params(**params)
-        return self.ably.http.delete(path)
+        return await self.ably.http.delete(path)
