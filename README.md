@@ -4,29 +4,30 @@ ably-python
 ![.github/workflows/check.yml](https://github.com/ably/ably-python/workflows/.github/workflows/check.yml/badge.svg)
 [![PyPI version](https://badge.fury.io/py/ably.svg)](https://badge.fury.io/py/ably)
 
-_[Ably](https://ably.com) is the platform that powers synchronized digital experiences in realtime. Whether attending an event in a virtual venue, receiving realtime financial information, or monitoring live car performance data – consumers simply expect realtime digital experiences as standard. Ably provides a suite of APIs to build, extend, and deliver powerful digital experiences in realtime for more than 250 million devices across 80 countries each month. Organizations like Bloomberg, HubSpot, Verizon, and Hopin depend on Ably’s platform to offload the growing complexity of business-critical realtime data synchronization at global scale. For more information, see the [Ably documentation](https://ably.com/documentation)._
 
-This is a Python client library for Ably. The library currently targets the [Ably 1.1 client library specification](https://www.ably.io/documentation/client-lib-development-guide/features/). You can jump to the '[Known Limitations](#known-limitations)' section to see the features this client library does not yet support (if any) or [view our client library SDKs feature support matrix](https://www.ably.io/download/sdk-feature-support-matrix) to see the list of all the available features.
+## Overview
 
-## Supported platforms
+This is a Python client library for Ably. The library currently targets the [Ably 1.1 client library specification](https://www.ably.io/documentation/client-lib-development-guide/features/).
 
-This SDK supports Python 3.5+.
+## Running example
 
-We regression-test the SDK against a selection of Python versions (which we update over time, but usually consists of mainstream and widely used versions). Please refer to [check.yml](.github/workflows/check.yml) for the set of versions that currently undergo CI testing.
+```python
+import asyncio
+from ably import AblyRest
 
-If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://support.ably.io/) for advice.
+async def main():
+    async with AblyRest('api:key') as ably:
+        channel = ably.channels.get("channel_name")
 
-## Known Limitations
-
-Currently, this SDK only supports [Ably REST](https://www.ably.io/documentation/rest). However, you can use the [MQTT adapter](https://www.ably.io/documentation/mqtt) to implement [Ably's Realtime](https://www.ably.io/documentation/realtime) features using Python. 
-
-## Documentation
-
-Visit https://www.ably.io/documentation for a complete API reference and more examples.
+if __name__ == "__main__":
+    asyncio.run(main())
+```
 
 ## Installation
 
 The client library is available as a [PyPI package](https://pypi.python.org/pypi/ably).
+
+[Requirements](https://github.com/ably/ably-python#requirements)
 
 ### From PyPI
 
@@ -42,11 +43,17 @@ Or, if you need encryption features:
     cd ably-python
     python setup.py install
 
-## Using the REST API
+## Breaking API Changes in Version 1.2.x
+
+Please see our Upgrade / Migration Guide for notes on changes you need to make to your code to update it to use the new API
+introduced by version 1.2.x
+
+## Usage
 
 All examples assume a client and/or channel has been created in one of the following ways:
 
 With closing the client manually:
+
 ```python
 from ably import AblyRest
 
@@ -55,8 +62,10 @@ async def main():
     channel = client.channels.get('channel_name')
     await client.close()
 ```
-With using the client as a context manager, this will ensure that client is properly closed 
+
+When using the client as a context manager, this will ensure that client is properly closed 
 while leaving the `with` block:
+
 ```python
 from ably import AblyRest
 
@@ -64,7 +73,6 @@ async def main():
     async with AblyRest('api:key') as ably:
         channel = ably.channels.get("channel_name")
 ```
-
 
 You can define the logging level for the whole library, and override for a
 specific module:
@@ -164,13 +172,36 @@ await new_client.close()
 ```python
 stats = await client.stats() # Returns a PaginatedResult
 stats.items
+await client.close()
 ```
 
 ### Fetching the Ably service time
 
 ```python
 await client.time()
+await client.close()
 ```
+
+## Resources
+
+Visit https://www.ably.io/documentation for a complete API reference and more examples.
+
+## Requirements
+
+This SDK supports Python 3.5+.
+
+We regression-test the SDK against a selection of Python versions (which we update over time, 
+but usually consists of mainstream and widely used versions). Please refer to [check.yml](.github/workflows/check.yml) 
+for the set of versions that currently undergo CI testing.
+
+## Known Limitations
+
+Currently, this SDK only supports [Ably REST](https://www.ably.io/documentation/rest). 
+However, you can use the [MQTT adapter](https://www.ably.io/documentation/mqtt) to implement [Ably's Realtime](https://www.ably.io/documentation/realtime) features using Python.
+
+## Support, Feedback and Troubleshooting
+
+If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://support.ably.io/) for advice.
 
 ## Support, feedback and troubleshooting
 
@@ -180,30 +211,6 @@ You can also view the [community reported Github issues](https://github.com/ably
 
 To see what has changed in recent versions of Bundler, see the [CHANGELOG](CHANGELOG.md).
 
-## Running the test suite
-
-```python
-git submodule init
-git submodule update
-pip install -r requirements-test.txt
-pytest test
-```
-
 ## Contributing
 
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Ensure you have added suitable tests and the test suite is passing(`py.test`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
-
-## Release Process
-
-1. Update [`setup.py`](./setup.py) and [`ably/__init__.py`](./ably/__init__.py) with the new version number
-2. Run [`github_changelog_generator`](https://github.com/skywinder/Github-Changelog-Generator) to automate the update of the [CHANGELOG](./CHANGELOG.md). Once the CHANGELOG has completed, manually change the `Unreleased` heading and link with the current version number such as `v1.0.0`. Also ensure that the `Full Changelog` link points to the new version tag instead of the `HEAD`.
-3. Commit
-4. Run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
-5. Tag the new version such as `git tag v1.0.0`
-6. Visit https://github.com/ably/ably-python/tags and add release notes for the release including links to the changelog entry.
-7. Push the tag to origin `git push origin v1.0.0`
+For guidance on how to contribute to this project, see [CONTRIBUTING.md](https://github.com/ably/ably-python/blob/main/CONTRIBUTING.md)
