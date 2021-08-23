@@ -90,3 +90,4 @@ class RestSetup:
         ably = await cls.get_ably_rest()
         await ably.http.delete('/apps/' + test_vars['app_id'])
         RestSetup.__test_vars = None
+        await ably.close()

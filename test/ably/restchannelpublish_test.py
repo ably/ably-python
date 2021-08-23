@@ -29,7 +29,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         self.test_vars = await RestSetup.get_test_vars()
         self.ably = await RestSetup.get_ably_rest()
         self.client_id = uuid.uuid4().hex
-        self.ably_with_client_id = await RestSetup.get_ably_rest(client_id=self.client_id)
+        self.ably_with_client_id = await RestSetup.get_ably_rest(client_id=self.client_id, use_token_auth=True)
 
     async def tearDown(self):
         await self.ably.close()

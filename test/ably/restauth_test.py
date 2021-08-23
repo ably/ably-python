@@ -68,7 +68,7 @@ class TestAuth(BaseAsyncTestCase):
     def test_auth_init_with_key_and_client_id(self):
         ably = AblyRest(key=self.test_vars["keys"][0]["key_str"], client_id='testClientId')
 
-        assert Auth.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        assert Auth.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
         assert ably.auth.client_id == 'testClientId'
 
     async def test_auth_init_with_token(self):
@@ -87,6 +87,19 @@ class TestAuth(BaseAsyncTestCase):
         request = get_mock.call_args_list[0][0][0]
         authorization = request.headers['Authorization']
         assert authorization == 'Basic %s' % base64.b64encode('bar:foo'.encode('ascii')).decode('utf-8')
+
+    # RSA7e2
+    async def test_request_basic_auth_header_with_client_id(self):
+        ably = AblyRest(key_secret='foo', key_name='bar', client_id='client_id')
+
+        with mock.patch.object(AsyncClient, 'send') as get_mock:
+            try:
+                await ably.http.get('/time', skip_auth=False)
+            except Exception:
+                pass
+        request = get_mock.call_args_list[0][0][0]
+        client_id = request.headers['x-ably-clientid']
+        assert client_id == base64.b64encode('client_id'.encode('ascii')).decode('utf-8')
 
     async def test_request_token_auth_header(self):
         ably = AblyRest(token='not_a_real_token')
@@ -109,7 +122,7 @@ class TestAuth(BaseAsyncTestCase):
         assert ably.auth.auth_mechanism == Auth.Method.TOKEN
 
     def test_with_client_id(self):
-        ably = AblyRest(client_id='client_id', key=self.test_vars["keys"][0]["key_str"])
+        ably = AblyRest(use_token_auth=True, client_id='client_id', key=self.test_vars["keys"][0]["key_str"])
         assert ably.auth.auth_mechanism == Auth.Method.TOKEN
 
     def test_with_auth_url(self):
@@ -464,6 +477,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         assert token.client_id == client_id
         assert token_ably.auth.client_id == client_id
         await token_ably.close()
+
 
 class TestRenewToken(BaseAsyncTestCase):
 
