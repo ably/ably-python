@@ -33,7 +33,7 @@ The release process must include the following steps:
 6. Open a PR for the release against the release branch you just pushed
 7. Gain approval(s) for the release PR from maintainer(s)
 8. Land the release PR to `main`
-9. Run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
+9. From the `main` branch, run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
 10. Create a tag named like `v1.2.3` and push it to GitHub - e.g. `git tag v1.2.3 && git push origin v1.2.3`
 11. Create the release on Github including populating the release notes
 
