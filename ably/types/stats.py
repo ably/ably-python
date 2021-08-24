@@ -168,7 +168,7 @@ def granularity_from_interval_id(interval_id):
             return key
         except ValueError:
             pass
-    raise ValueError("Unsuported intervalId")
+    raise ValueError("Unsupported intervalId")
 
 
 def interval_from_interval_id(interval_id):

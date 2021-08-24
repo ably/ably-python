@@ -38,7 +38,7 @@ class Auth:
 
         must_use_token_auth = options.use_token_auth is True
         must_not_use_token_auth = options.use_token_auth is False
-        can_use_basic_auth = options.key_secret is not None and options.client_id is None
+        can_use_basic_auth = options.key_secret is not None
         if not must_use_token_auth and can_use_basic_auth:
             # We have the key, no need to authenticate the client
             # default to using basic auth
@@ -314,6 +314,12 @@ class Auth:
 
     async def _get_auth_headers(self):
         if self.__auth_mechanism == Auth.Method.BASIC:
+            # RSA7e2
+            if self.client_id:
+                return {
+                    'Authorization': 'Basic %s' % self.basic_credentials,
+                    'X-Ably-ClientId': base64.b64encode(self.client_id.encode('utf-8'))
+                }
             return {
                 'Authorization': 'Basic %s' % self.basic_credentials,
             }

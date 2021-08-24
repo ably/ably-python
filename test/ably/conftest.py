@@ -1,9 +1,12 @@
+import asyncio
+
 import pytest
 from test.ably.restsetup import RestSetup
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup():
-    await RestSetup.get_test_vars()
-    yield
-    await RestSetup.clear_test_vars()
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    loop.run_until_complete(RestSetup.get_test_vars())
+    yield loop
+    loop.run_until_complete(RestSetup.clear_test_vars())
