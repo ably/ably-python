@@ -328,3 +328,15 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             token_params, key_secret='a_secret', key_name='a_key_name')
         assert token_request.mac == 'sYkCH0Un+WgzI7/Nhy0BoQIKq9HmjKynCRs4E3qAbGQ='
         await ably.close()
+
+    # AO2g
+    @dont_vary_protocol
+    async def test_query_server_time(self):
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time:
+            await self.ably.auth.create_token_request(
+                key_name=self.key_name, key_secret=self.key_secret, query_time=True)
+            assert server_time.call_count == 1
+
+            await self.ably.auth.create_token_request(
+                key_name=self.key_name, key_secret=self.key_secret, query_time=False)
+            assert server_time.call_count == 1
