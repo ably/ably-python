@@ -15,5 +15,5 @@ from ably.types.options import Options
 from ably.util.crypto import CipherParams
 from ably.util.exceptions import AblyException, AblyAuthException, IncompatibleClientIdException
 
-api_version = '1.1'
-lib_version = '1.1.1'
+api_version = '1.2'
+lib_version = '1.2.0'
