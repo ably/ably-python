@@ -28,7 +28,7 @@ class Channel(SingleDispatch):
         self.__presence = Presence(self)
 
     @catch_all
-    async def history(self, direction=None, limit=None, start=None, end=None, timeout=None):
+    async def history(self, direction=None, limit=None, start=None, end=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
         path = self.__base_path + 'messages' + params
