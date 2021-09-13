@@ -48,7 +48,6 @@ venv*
 .notes
 test.sh
 test_vars_out
-.notes
 pytest
 app_spec
 app_spec.pkl
