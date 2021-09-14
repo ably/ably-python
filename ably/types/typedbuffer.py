@@ -25,16 +25,15 @@ class Limits:
     INT64_MIN = - (2 ** 63 + 1)
 
 
-_decoders = {}
-_decoders[DataType.TRUE] = lambda b: True
-_decoders[DataType.FALSE] = lambda b: False
-_decoders[DataType.INT32] = lambda b: struct.unpack('>i', b)[0]
-_decoders[DataType.INT64] = lambda b: struct.unpack('>q', b)[0]
-_decoders[DataType.DOUBLE] = lambda b: struct.unpack('>d', b)[0]
-_decoders[DataType.STRING] = lambda b: b.decode('utf-8')
-_decoders[DataType.BUFFER] = lambda b: b
-_decoders[DataType.JSONARRAY] = lambda b: json.loads(b.decode('utf-8'))
-_decoders[DataType.JSONOBJECT] = lambda b: json.loads(b.decode('utf-8'))
+_decoders = {DataType.TRUE: lambda b: True,
+             DataType.FALSE: lambda b: False,
+             DataType.INT32: lambda b: struct.unpack('>i', b)[0],
+             DataType.INT64: lambda b: struct.unpack('>q', b)[0],
+             DataType.DOUBLE: lambda b: struct.unpack('>d', b)[0],
+             DataType.STRING: lambda b: b.decode('utf-8'),
+             DataType.BUFFER: lambda b: b,
+             DataType.JSONARRAY: lambda b: json.loads(b.decode('utf-8')),
+             DataType.JSONOBJECT: lambda b: json.loads(b.decode('utf-8'))}
 
 
 class TypedBuffer:
