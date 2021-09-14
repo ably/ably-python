@@ -366,7 +366,9 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         def call_back(request):
             assert request.headers['content-type'] == 'application/x-www-form-urlencoded'
             assert headers['foo'] == request.headers['foo']
-            assert parse_qs(request.content.decode('utf-8')) == {'foo': ['token'], 'spam': ['eggs']} # TokenParams has precedence
+
+            # TokenParams has precedence
+            assert parse_qs(request.content.decode('utf-8')) == {'foo': ['token'], 'spam': ['eggs']}
             return Response(
                 status_code=200,
                 content="token_string"
@@ -415,6 +417,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
     @dont_vary_protocol
     async def test_with_callback(self):
         called_token_params = {'ttl': '3600000'}
+
         async def callback(token_params):
             assert token_params == called_token_params
             return 'token_string'
@@ -444,8 +447,8 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         auth_route = respx.get('http://www.example.com', params={'with': 'query', 'spam': 'eggs'}).mock(
             return_value=Response(status_code=200, content='token_string'))
         await ably.auth.request_token(auth_url=url,
-                                           auth_headers=headers,
-                                           auth_params={'spam': 'eggs'})
+                                      auth_headers=headers,
+                                      auth_params={'spam': 'eggs'})
         assert auth_route.called
         await ably.close()
 

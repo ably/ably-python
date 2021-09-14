@@ -277,7 +277,6 @@ class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         list_response = await list_(channel=channel, limit=5000)
         assert len(list_response.items) == len(subscriptions)
 
-
         # Filter by device id
         device_id = subscriptions[0].device_id
         list_response = await list_(channel=channel, deviceId=device_id)
