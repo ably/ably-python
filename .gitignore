@@ -53,3 +53,6 @@ app_spec
 app_spec.pkl
 ably/types/options.py.orig
 test/ably/restsetup.py.orig
+
+.idea
+.vscode
