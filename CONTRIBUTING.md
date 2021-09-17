@@ -35,7 +35,7 @@ The release process must include the following steps:
 8. Land the release PR to `main`
 9. From the `main` branch, run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
 10. Create a tag named like `v1.2.3` and push it to GitHub - e.g. `git tag v1.2.3 && git push origin v1.2.3`
-11. Create the release on Github including populating the release notes
+11. Create the release on GitHub including populating the release notes
 
 We tend to use [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator) to collate the information required for a change log update.
 Your mileage may vary, but it seems the most reliable method to invoke the generator is something like:
