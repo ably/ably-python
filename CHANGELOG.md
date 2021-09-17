@@ -1,5 +1,39 @@
 # Change Log
 
+## [v1.2.0](https://github.com/ably/ably-python/tree/v1.2.0)
+
+**Breaking API Changes**: Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API introduced by version 1.2.x.
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.1.1...v1.2.0)
+
+**Implemented enhancements:**
+
+- Support HTTP/2 [\#197](https://github.com/ably/ably-python/issues/197)
+- Support Async HTTP [\#171](https://github.com/ably/ably-python/issues/171)
+- Implement RSC7d \(Ably-Agent header\) [\#168](https://github.com/ably/ably-python/issues/168)
+- Defaults: Generate environment fallbacks [\#155](https://github.com/ably/ably-python/issues/155)
+- Support for environments fallbacks [\#198](https://github.com/ably/ably-python/pull/198) ([d8x](https://github.com/d8x))
+- Add support for TO3m [\#172](https://github.com/ably/ably-python/issues/172)
+
+**Fixed bugs:**
+
+- Token issue potential bug [\#54](https://github.com/ably/ably-python/issues/54)
+- Channel.publish sometimes returns None after exhausting retries [\#160](https://github.com/ably/ably-python/issues/160)
+- Using a clientId should no longer be forcing token auth in the 1.1 spec [\#149](https://github.com/ably/ably-python/issues/149)
+
+**Merged pull requests:**
+
+- \[\#187\] Query time parameter for getting current time from Ably system [\#206](https://github.com/ably/ably-python/pull/206) ([d8x](https://github.com/d8x))
+- \[\#149\] Specifying clientId does not force token auth [\#204](https://github.com/ably/ably-python/pull/204) ([d8x](https://github.com/d8x))
+- Support for async [\#202](https://github.com/ably/ably-python/pull/202) ([d8x](https://github.com/d8x))
+- Support for HTTP/2 Protocol [\#200](https://github.com/ably/ably-python/pull/200) ([d8x](https://github.com/d8x))
+- Add missing `modified` property in DeviceDetails [\#196](https://github.com/ably/ably-python/pull/196) ([d8x](https://github.com/d8x))
+- RSC7d - Support for Ably-Agent header [\#195](https://github.com/ably/ably-python/pull/195) ([d8x](https://github.com/d8x))
+- fix error message for invalid push data type [\#169](https://github.com/ably/ably-python/pull/169) ([netspencer](https://github.com/netspencer))
+- Raise error if all servers reply with a 5xx response [\#161](https://github.com/ably/ably-python/pull/161) ([jdavid](https://github.com/jdavid))
+- Python 2.7 cleanup [\#157](https://github.com/ably/ably-python/pull/157) ([jdavid](https://github.com/jdavid))
+- Support Python 3.5+ [\#156](https://github.com/ably/ably-python/pull/156) ([jdavid](https://github.com/jdavid))
+
 ## [v1.1.1](https://github.com/ably/ably-python/tree/v1.1.1)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.1.0...v1.1.1)

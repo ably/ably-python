@@ -199,7 +199,7 @@ class TestRestHttp(BaseAsyncTestCase):
 
         # API
         assert 'X-Ably-Version' in r.request.headers
-        assert r.request.headers['X-Ably-Version'] == '1.1'
+        assert r.request.headers['X-Ably-Version'] == '1.2'
 
         # Agent
         assert 'Ably-Agent' in r.request.headers
