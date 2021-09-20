@@ -143,6 +143,9 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
         self.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
                                           algorithm='aes')
 
+    async def tearDown(self):
+        await self.ably.close()
+
     def decrypt(self, payload, options={}):
         ciphertext = base64.b64decode(payload.encode('ascii'))
         cipher = get_cipher({'key': b'keyfordecrypt_16'})
