@@ -59,16 +59,16 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         log.debug("message_contents: %s" % str(message_contents))
 
         assert message_contents["publish0"] == "This is a string message payload", \
-               "Expect publish0 to be expected String)"
+            "Expect publish0 to be expected String)"
 
         assert message_contents["publish1"] == b"This is a byte[] message payload", \
-               "Expect publish1 to be expected byte[]. Actual: %s" % str(message_contents['publish1'])
+            "Expect publish1 to be expected byte[]. Actual: %s" % str(message_contents['publish1'])
 
         assert message_contents["publish2"] == {"test": "This is a JSONObject message payload"}, \
-               "Expect publish2 to be expected JSONObject"
+            "Expect publish2 to be expected JSONObject"
 
         assert message_contents["publish3"] == ["This is a JSONArray message payload"], \
-               "Expect publish3 to be expected JSONObject"
+            "Expect publish3 to be expected JSONObject"
 
     @dont_vary_protocol
     async def test_unsuporsed_payload_must_raise_exception(self):
@@ -277,8 +277,9 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         # works if same
         channel = self.ably_with_client_id.channels[
             self.get_channel_name('persisted:with_client_id_identified_client')]
-        await channel.publish(name='publish', data='test',
-                        client_id=self.ably_with_client_id.client_id)
+        await channel.publish(name='publish',
+                              data='test',
+                              client_id=self.ably_with_client_id.client_id)
 
         history = await channel.history()
         messages = history.items
@@ -293,10 +294,11 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             await channel.publish(name='publish', data='test', client_id='invalid')
 
     async def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
-        new_token = await self.ably.auth.authorize(
-            token_params={'client_id': uuid.uuid4().hex})
-        new_ably = await RestSetup.get_ably_rest(key=None, token=new_token.token,
-                                           use_binary_protocol=self.use_binary_protocol)
+        new_token = await self.ably.auth.authorize(token_params={'client_id': uuid.uuid4().hex})
+        new_ably = await RestSetup.get_ably_rest(key=None,
+                                                 token=new_token.token,
+                                                 use_binary_protocol=self.use_binary_protocol)
+
         channel = new_ably.channels[
             self.get_channel_name('persisted:wrong_client_id_implicit_client')]
 

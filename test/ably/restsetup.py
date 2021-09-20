@@ -62,7 +62,8 @@ class RestSetup:
 
             RestSetup.__test_vars = test_vars
             log.debug([(app_id, k.get("id", ""), k.get("value", ""))
-                  for k in app_spec.get("keys", [])])
+                      for k in app_spec.get("keys", [])])
+
         return RestSetup.__test_vars
 
     @classmethod
