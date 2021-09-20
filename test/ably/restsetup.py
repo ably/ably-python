@@ -9,7 +9,6 @@ from ably.util.exceptions import AblyException
 
 log = logging.getLogger(__name__)
 
-app_spec_local = None
 with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
     app_spec_local = json.loads(f.read())
 
