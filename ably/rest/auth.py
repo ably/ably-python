@@ -337,6 +337,8 @@ class Auth:
         return uuid.uuid4().hex[:16]
 
     async def token_request_from_auth_url(self, method, url, token_params, headers, auth_params):
+        body = None
+        params = None
         if method == 'GET':
             body = {}
             params = dict(auth_params, **token_params)
