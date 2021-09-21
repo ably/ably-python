@@ -334,6 +334,8 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert messages[0].client_id == some_client_id
         assert messages[1].client_id is None
 
+        await wildcard_ably.close()
+
     # TM2h
     @dont_vary_protocol
     async def test_invalid_connection_key(self):
