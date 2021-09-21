@@ -55,42 +55,39 @@ class TypedBuffer:
 
     @staticmethod
     def from_obj(obj):
-        type = DataType.NONE
-        buffer = None
-
         if isinstance(obj, TypedBuffer):
             return obj
         elif isinstance(obj, (bytes, bytearray)):
-            type = DataType.BUFFER
+            data_type = DataType.BUFFER
             buffer = obj
         elif isinstance(obj, str):
-            type = DataType.STRING
+            data_type = DataType.STRING
             buffer = obj.encode('utf-8')
         elif isinstance(obj, bool):
-            type = DataType.TRUE if obj else DataType.FALSE
+            data_type = DataType.TRUE if obj else DataType.FALSE
             buffer = None
         elif isinstance(obj, int):
             if obj >= Limits.INT32_MIN and obj <= Limits.INT32_MAX:
-                type = DataType.INT32
+                data_type = DataType.INT32
                 buffer = struct.pack('>i', obj)
             elif obj >= Limits.INT64_MIN and obj <= Limits.INT64_MAX:
-                type = DataType.INT64
+                data_type = DataType.INT64
                 buffer = struct.pack('>q', obj)
             else:
                 raise ValueError('Number too large %d' % obj)
         elif isinstance(obj, float):
-            type = DataType.DOUBLE
+            data_type = DataType.DOUBLE
             buffer = struct.pack('>d', obj)
         elif isinstance(obj, list):
-            type = DataType.JSONARRAY
+            data_type = DataType.JSONARRAY
             buffer = json.dumps(obj, separators=(',', ':')).encode('utf-8')
         elif isinstance(obj, dict):
-            type = DataType.JSONOBJECT
+            data_type = DataType.JSONOBJECT
             buffer = json.dumps(obj, separators=(',', ':')).encode('utf-8')
         else:
             raise TypeError('Unexpected object type %s' % type(obj))
 
-        return TypedBuffer(buffer, type)
+        return TypedBuffer(buffer, data_type)
 
     @property
     def buffer(self):
