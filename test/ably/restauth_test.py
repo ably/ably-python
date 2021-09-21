@@ -547,6 +547,8 @@ class TestRenewToken(BaseAsyncTestCase):
 
     # RSA4a
     async def test_when_not_renewable(self):
+        await self.ably.close()
+
         self.ably = await RestSetup.get_ably_rest(
             key=None,
             token='token ID cannot be used to create a new token',
