@@ -9,7 +9,6 @@ from ably.util.exceptions import AblyException
 
 log = logging.getLogger(__name__)
 
-app_spec_local = None
 with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
     app_spec_local = json.loads(f.read())
 
@@ -62,7 +61,8 @@ class RestSetup:
 
             RestSetup.__test_vars = test_vars
             log.debug([(app_id, k.get("id", ""), k.get("value", ""))
-                  for k in app_spec.get("keys", [])])
+                      for k in app_spec.get("keys", [])])
+
         return RestSetup.__test_vars
 
     @classmethod

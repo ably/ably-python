@@ -146,7 +146,9 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
     async def tearDown(self):
         await self.ably.close()
 
-    def decrypt(self, payload, options={}):
+    def decrypt(self, payload, options=None):
+        if options is None:
+            options = {}
         ciphertext = base64.b64decode(payload.encode('ascii'))
         cipher = get_cipher({'key': b'keyfordecrypt_16'})
         return cipher.decrypt(ciphertext)
@@ -348,7 +350,9 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
     async def tearDown(self):
         await self.ably.close()
 
-    def decrypt(self, payload, options={}):
+    def decrypt(self, payload, options=None):
+        if options is None:
+            options = {}
         cipher = get_cipher({'key': b'keyfordecrypt_16'})
         return cipher.decrypt(payload)
 

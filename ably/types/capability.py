@@ -7,7 +7,9 @@ log = logging.getLogger(__name__)
 
 
 class Capability(MutableMapping):
-    def __init__(self, obj={}):
+    def __init__(self, obj=None):
+        if obj is None:
+            obj = {}
         self.__dict = dict(obj)
         for k, v in obj.items():
             self[k] = v
@@ -58,7 +60,9 @@ class Capability(MutableMapping):
             self[key] = default
         return self[key]
 
-    def add_resource(self, resource, operations=[]):
+    def add_resource(self, resource, operations=None):
+        if operations is None:
+            operations = []
         if isinstance(operations, str):
             operations = [operations]
         self[resource] = list(operations)

@@ -131,12 +131,15 @@ class CipherData(TypedBuffer):
     def encoding_str(self):
         return self.ENCODING_ID + '+' + self.__cipher_type
 
+
 DEFAULT_KEYLENGTH = 256
 DEFAULT_BLOCKLENGTH = 16
+
 
 def generate_random_key(length=DEFAULT_KEYLENGTH):
     rndfile = Random.new()
     return rndfile.read(length // 8)
+
 
 def get_default_params(params=None):
     # Backwards compatibility
@@ -159,12 +162,14 @@ def get_default_params(params=None):
     validate_cipher_params(cipher_params)
     return cipher_params
 
+
 def get_cipher(params):
     if isinstance(params, CipherParams):
         cipher_params = params
     else:
         cipher_params = get_default_params(params)
     return CbcChannelCipher(cipher_params)
+
 
 def validate_cipher_params(cipher_params):
     if cipher_params.algorithm == 'AES' and cipher_params.mode == 'CBC':

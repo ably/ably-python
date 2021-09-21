@@ -135,6 +135,7 @@ class VaryByProtocolTestsMetaclass(type):
     @staticmethod
     def wrap_as(ttype, old_name, old_func):
         expected_content = {'bin': 'msgpack', 'text': 'json'}
+
         @assert_responses_type(expected_content[ttype])
         async def wrapper(self):
             if hasattr(self, 'per_protocol_setup'):
@@ -152,10 +153,12 @@ def dont_vary_protocol(func):
 def random_string(length, alphabet=string.ascii_letters):
     return ''.join([random.choice(alphabet) for x in range(length)])
 
+
 def new_dict(src, **kw):
     new = src.copy()
     new.update(kw)
     return new
+
 
 def get_random_key(d):
     return random.choice(list(d))
