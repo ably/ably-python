@@ -182,6 +182,8 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         with pytest.raises(AblyException, match="40101 401 No key specified"):
             await ably.auth.create_token_request(key_secret=self.key_secret)
 
+        await ably.close()
+
     @dont_vary_protocol
     async def test_with_local_time(self):
         timestamp = self.ably.auth._timestamp

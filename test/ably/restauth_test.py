@@ -65,6 +65,8 @@ class TestAuth(BaseAsyncTestCase):
         assert callback_called, "Token callback not called"
         assert Auth.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
 
+        await ably.close()
+
     def test_auth_init_with_key_and_client_id(self):
         ably = AblyRest(key=self.test_vars["keys"][0]["key_str"], client_id='testClientId')
 
@@ -74,6 +76,7 @@ class TestAuth(BaseAsyncTestCase):
     async def test_auth_init_with_token(self):
         ably = await RestSetup.get_ably_rest(key=None, token="this_is_not_really_a_token")
         assert Auth.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        await ably.close()
 
     # RSA11
     async def test_request_basic_auth_header(self):

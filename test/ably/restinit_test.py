@@ -192,6 +192,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
             assert local_time.call_count == 2
             assert server_time.call_count == 1
 
+        await ably.close()
+
     @dont_vary_protocol
     def test_requests_over_https_production(self):
         ably = AblyRest(token='token')
