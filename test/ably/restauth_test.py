@@ -337,10 +337,11 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         self.use_binary_protocol = use_binary_protocol
 
     async def test_with_key(self):
-        self.ably = await RestSetup.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
+        ably = await RestSetup.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
 
-        token_details = await self.ably.auth.request_token()
+        token_details = await ably.auth.request_token()
         assert isinstance(token_details, TokenDetails)
+        await ably.close()
 
         ably = await RestSetup.get_ably_rest(key=None, token_details=token_details,
                                              use_binary_protocol=self.use_binary_protocol)
