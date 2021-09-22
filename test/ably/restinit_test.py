@@ -192,6 +192,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
             assert local_time.call_count == 2
             assert server_time.call_count == 1
 
+        await ably.close()
+
     @dont_vary_protocol
     def test_requests_over_https_production(self):
         ably = AblyRest(token='token')
@@ -225,6 +227,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
                 pass
             request = get_mock.call_args_list[0][0][0]
             assert request.url == 'https://custom-rest.ably.io:443/time'
+
+        await ably.close()
 
     @dont_vary_protocol
     def test_accepts_custom_http_timeouts(self):
