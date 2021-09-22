@@ -550,6 +550,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         history = await channel.history()
         assert len(history.items) == 1
         await client.aclose()
+        await ably.close()
 
     # RSL1k5
     async def test_idempotent_client_supplied_publish(self):
