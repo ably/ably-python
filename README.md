@@ -207,7 +207,7 @@ If you find any compatibility issues, please [do raise an issue](https://github.
 
 Please visit http://support.ably.io/ for access to our knowledge base and to ask for any assistance.
 
-You can also view the [community reported Github issues](https://github.com/ably/ably-python/issues).
+You can also view the [community reported GitHub issues](https://github.com/ably/ably-python/issues).
 
 To see what has changed in recent versions of Bundler, see the [CHANGELOG](CHANGELOG.md).
 
