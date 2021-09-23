@@ -71,7 +71,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             "Expect publish3 to be expected JSONObject"
 
     @dont_vary_protocol
-    async def test_unsuporsed_payload_must_raise_exception(self):
+    async def test_unsupported_payload_must_raise_exception(self):
         channel = self.ably.channels["persisted:publish0"]
         for data in [1, 1.1, True]:
             with pytest.raises(AblyException):
