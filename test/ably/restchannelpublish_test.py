@@ -535,8 +535,8 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         client = httpx.AsyncClient(http2=True)
         send = client.send
 
-        def side_effect(*args, **kwargs):
-            x = send(args[1])
+        async def side_effect(*args, **kwargs):
+            x = await send(args[1])
             if state['failures'] < 2:
                 state['failures'] += 1
                 raise Exception('faked exception')
