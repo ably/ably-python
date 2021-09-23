@@ -162,13 +162,8 @@ class TestRestHttp(BaseAsyncTestCase):
         Raise error if all the servers reply with a 5xx error.
         https://github.com/ably/ably-python/issues/160
         """
-        default_host = Options().get_rest_host()
-        ably = AblyRest(token="foo")
 
-        default_url = "%s://%s:%d/" % (
-            ably.http.preferred_scheme,
-            default_host,
-            ably.http.preferred_port)
+        ably = AblyRest(token="foo")
 
         def raise_ably_exception(*args, **kwargs):
             raise AblyException(message="", status_code=500, code=50000)
