@@ -1,7 +1,7 @@
 import warnings
 from mock import patch
 import pytest
-from httpx import Client, AsyncClient
+from httpx import AsyncClient
 
 from ably import AblyRest
 from ably import AblyException
