@@ -67,10 +67,10 @@ class TypedBuffer:
             data_type = DataType.TRUE if obj else DataType.FALSE
             buffer = None
         elif isinstance(obj, int):
-            if obj >= Limits.INT32_MIN and obj <= Limits.INT32_MAX:
+            if Limits.INT32_MIN <= obj <= Limits.INT32_MAX:
                 data_type = DataType.INT32
                 buffer = struct.pack('>i', obj)
-            elif obj >= Limits.INT64_MIN and obj <= Limits.INT64_MAX:
+            elif Limits.INT64_MIN <= obj <= Limits.INT64_MAX:
                 data_type = DataType.INT64
                 buffer = struct.pack('>q', obj)
             else:

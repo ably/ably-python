@@ -119,7 +119,7 @@ class HttpPaginatedResponse(PaginatedResult):
     @property
     def success(self):
         status_code = self.status_code
-        return status_code >= 200 and status_code < 300
+        return 200 <= status_code < 300
 
     @property
     def error_code(self):
