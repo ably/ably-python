@@ -1,4 +1,3 @@
-import unittest
 from datetime import datetime
 from datetime import timedelta
 import logging
