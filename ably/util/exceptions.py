@@ -26,7 +26,7 @@ class AblyException(Exception):
 
     @staticmethod
     def raise_for_response(response):
-        if response.status_code >= 200 and response.status_code < 300:
+        if 200 <= response.status_code < 300:
             # Valid response
             return
 
