@@ -168,7 +168,7 @@ class TestRestHttp(BaseAsyncTestCase):
         def raise_ably_exception(*args, **kwargs):
             raise AblyException(message="", status_code=500, code=50000)
 
-        with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
+        with mock.patch('httpx.Request', wraps=httpx.Request):
             with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
                             side_effect=raise_ably_exception) as send_mock:
                 with pytest.raises(AblyException):
