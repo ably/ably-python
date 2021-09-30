@@ -123,9 +123,9 @@ class CbcChannelCipher:
 class CipherData(TypedBuffer):
     ENCODING_ID = 'cipher'
 
-    def __init__(self, buffer, type, cipher_type=None, **kwargs):
+    def __init__(self, buffer, type, cipher_type=None):
         self.__cipher_type = cipher_type
-        super().__init__(buffer, type, **kwargs)
+        super().__init__(buffer, type)
 
     @property
     def encoding_str(self):
