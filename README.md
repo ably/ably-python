@@ -77,16 +77,16 @@ async def main():
 You can define the logging level for the whole library, and override for a
 specific module:
 ```python
-    import logging
-    import ably
+import logging
+import ably
 
-    logging.getLogger('ably').setLevel(logging.WARNING)
-    logging.getLogger('ably.rest.auth').setLevel(logging.INFO)
+logging.getLogger('ably').setLevel(logging.WARNING)
+logging.getLogger('ably.rest.auth').setLevel(logging.INFO)
 ```
 You need to add a handler to see any output:
 ```python
-    logger = logging.getLogger('ably')
-    logger.addHandler(logging.StreamHandler())
+logger = logging.getLogger('ably')
+logger.addHandler(logging.StreamHandler())
 ```
 ### Publishing a message to a channel
 
