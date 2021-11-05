@@ -92,12 +92,13 @@ class Response:
             return None
 
         content_type = self.__response.headers.get('content-type')
-        if content_type == 'application/x-msgpack':
-            return msgpack.unpackb(content)
-        elif content_type == 'application/json':
-            return self.__response.json()
-        else:
-            raise ValueError("Unsupported content type")
+        if isinstance(content_type, str):
+            if content_type.startswith('application/x-msgpack'):
+                return msgpack.unpackb(content)
+            elif content_type.startswith('application/json'):
+                return self.__response.json()
+
+        raise ValueError("Unsupported content type")
 
     @property
     def response(self):
