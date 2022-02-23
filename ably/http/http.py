@@ -191,9 +191,16 @@ class Http:
                                        host,
                                        self.preferred_port)
             url = urljoin(base_url, path)
-            request = httpx.Request(method, url, content=body, headers=all_headers)
+
+            request = self.__client.build_request(
+                method=method,
+                url=url,
+                content=body,
+                headers=all_headers,
+                timeout=timeout,
+            )
             try:
-                response = await self.__client.send(request, timeout=timeout)
+                response = await self.__client.send(request)
             except Exception as e:
                 # if last try or cumulative timeout is done, throw exception up
                 time_passed = time.time() - requested_at
