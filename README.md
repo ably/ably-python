@@ -188,7 +188,7 @@ Visit https://www.ably.io/documentation for a complete API reference and more ex
 
 ## Requirements
 
-This SDK supports Python 3.6+.
+This SDK supports Python 3.7+.
 
 We regression-test the SDK against a selection of Python versions (which we update over time, 
 but usually consists of mainstream and widely used versions). Please refer to [check.yml](.github/workflows/check.yml) 
