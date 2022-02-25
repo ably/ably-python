@@ -1,30 +1,27 @@
 # Upgrade / Migration Guide
 
-## Version 1.1.1 to 1.2.0
+## Version 1.1.1 to 1.2.1
 
 We have made **breaking changes** in the version 1.2 release of this SDK.
 
-In this guide we aim to highlight the main differences you will encounter when migrating your code from the interfaces we were offering
-prior to the version 1.2.0 release.
+In this guide we aim to highlight the main differences you will encounter when migrating your code from the interfaces we were offering prior to the version 1.2.1 release.
 
 These include:
- - Deprecating Python 3.4
+ - Deprecating Python 3.4, 3.5 and 3.6
  - Introduction of Asynchronous way of using the SDK
 
 ### Using the SDK API in synchronous way
 
 This way using it is still possible. In order to use SDK in synchronous way please use the <= 1.1.0 version of this SDK.
 
-### Deprecating Python 3.4
+### Deprecating Python 3.4, 3.5 and 3.6
 
-This python version is already not supported, hence we decided to drop support of this version. Please upgrade your environment in order
-to use the 1.2.x version.
+The minimum version of Python has increased from 3.7. At this time we test against 3.7, 3.8, 3.9 and 3.10. Please upgrade your environment in order to use the 1.2.x version.
 
 
 ### Introduction of Asynchronous way of using the SDK
 
-The 1.2.x version introduces breaking change, which aims to change way of interacting with the SDK from Synchronous way to Asynchronous. Because of that
-every call that is interacting with the Ably Rest API must be done in asynchronous way.
+The 1.2.x version introduces breaking change, which aims to change way of interacting with the SDK from Synchronous way to Asynchronous. Because of that every call that interacts with the Ably Rest API must be done in asynchronous way.
 
 #### Synchronous way of using the sdk with publishing sample message
 

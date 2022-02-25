@@ -2,12 +2,14 @@
 
 ## [v1.2.1](https://github.com/ably/ably-python/tree/v1.2.1)
 
-**Breaking API Changes**: Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API introduced by version 1.2.x.
+**Breaking API Changes**: Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API introduced by version 1.2.1.
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.1.1...v1.2.1)
 
 **Implemented enhancements:**
 
+- Respect content-type with charset [\#256](https://github.com/ably/ably-python/issues/256)
+- Release a new version for python 3.10 support [\#249](https://github.com/ably/ably-python/issues/249)
 - Support HTTP/2 [\#197](https://github.com/ably/ably-python/issues/197)
 - Support Async HTTP [\#171](https://github.com/ably/ably-python/issues/171)
 - Implement RSC7d \(Ably-Agent header\) [\#168](https://github.com/ably/ably-python/issues/168)
@@ -30,6 +32,9 @@
 
 **Merged pull requests:**
 
+- Add support for Python 3.10, age out 3.6 [\#253](https://github.com/ably/ably-python/pull/253) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- Compat with 'httpx' public API changes. [\#252](https://github.com/ably/ably-python/pull/252) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- Respect content-type with charset [\#248](https://github.com/ably/ably-python/pull/248) ([tomkirbygreen](https://github.com/tomkirbygreen))
 - Simplify chained comparisons [\#241](https://github.com/ably/ably-python/pull/241) ([tomkirbygreen](https://github.com/tomkirbygreen))
 - 'TestRestChannelPublishIdempotent' fixes missing 'await' on 'send' [\#240](https://github.com/ably/ably-python/pull/240) ([tomkirbygreen](https://github.com/tomkirbygreen))
 - 'TestRestChannelPublish' fix test name [\#239](https://github.com/ably/ably-python/pull/239) ([tomkirbygreen](https://github.com/tomkirbygreen))
