@@ -30,7 +30,7 @@ The release process must include the following steps:
 3. Add a commit to bump the version number, updating [`setup.py`](./setup.py) and [`ably/__init__.py`](./ably/__init__.py)
 4. Add a commit to update the change log
 5. Push the release branch to GitHub
-6. Open a PR for the release against the release branch you just pushed
+6. Open a PR for the release against the release branch you just pushed. Ensure you add `@QuintinWillison`, `@AndyNicks` and `@stmoreau` to the release PR
 7. Gain approval(s) for the release PR from maintainer(s)
 8. Land the release PR to `main`
 9. From the `main` branch, run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
