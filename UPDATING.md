@@ -1,10 +1,10 @@
 # Upgrade / Migration Guide
 
-## Version 1.1.1 to 1.2.1
+## Version 1.1.1 to 1.2.0
 
 We have made **breaking changes** in the version 1.2 release of this SDK.
 
-In this guide we aim to highlight the main differences you will encounter when migrating your code from the interfaces we were offering prior to the version 1.2.1 release.
+In this guide we aim to highlight the main differences you will encounter when migrating your code from the interfaces we were offering prior to the version 1.2.0 release.
 
 These include:
  - Deprecating Python 3.4, 3.5 and 3.6

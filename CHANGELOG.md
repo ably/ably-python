@@ -1,10 +1,10 @@
 # Change Log
 
-## [v1.2.1](https://github.com/ably/ably-python/tree/v1.2.1)
+## [v1.2.0](https://github.com/ably/ably-python/tree/v1.2.0)
 
-**Breaking API Changes**: Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API introduced by version 1.2.1.
+**Breaking API Changes**: Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API introduced by version 1.2.0.
 
-[Full Changelog](https://github.com/ably/ably-python/compare/v1.1.1...v1.2.1)
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.1.1...v1.2.0)
 
 **Implemented enhancements:**
 
