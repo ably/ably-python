@@ -2,28 +2,44 @@
 
 ## [v1.2.0](https://github.com/ably/ably-python/tree/v1.2.0)
 
-**Breaking API Changes**: Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API introduced by version 1.2.x.
+**Breaking API Changes**: Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API introduced by version 1.2.0.
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.1.1...v1.2.0)
 
 **Implemented enhancements:**
 
+- Respect content-type with charset [\#256](https://github.com/ably/ably-python/issues/256)
+- Release a new version for python 3.10 support [\#249](https://github.com/ably/ably-python/issues/249)
 - Support HTTP/2 [\#197](https://github.com/ably/ably-python/issues/197)
 - Support Async HTTP [\#171](https://github.com/ably/ably-python/issues/171)
 - Implement RSC7d \(Ably-Agent header\) [\#168](https://github.com/ably/ably-python/issues/168)
 - Defaults: Generate environment fallbacks [\#155](https://github.com/ably/ably-python/issues/155)
+- Clarify string encoding when sending push notifications [\#119](https://github.com/ably/ably-python/issues/119)
 - Support for environments fallbacks [\#198](https://github.com/ably/ably-python/pull/198) ([d8x](https://github.com/d8x))
-- Add support for TO3m [\#172](https://github.com/ably/ably-python/issues/172)
 
 **Fixed bugs:**
 
-- Token issue potential bug [\#54](https://github.com/ably/ably-python/issues/54)
 - Channel.publish sometimes returns None after exhausting retries [\#160](https://github.com/ably/ably-python/issues/160)
+- Token issue potential bug [\#54](https://github.com/ably/ably-python/issues/54)
+
+**Closed issues:**
+
+- Conform ReadMe and create Contributing Document [\#199](https://github.com/ably/ably-python/issues/199)
+- Add support for DataTypes TokenParams AO2g [\#187](https://github.com/ably/ably-python/issues/187)
+- Add support for TO3m [\#172](https://github.com/ably/ably-python/issues/172
 - Using a clientId should no longer be forcing token auth in the 1.1 spec [\#149](https://github.com/ably/ably-python/issues/149)
 
 **Merged pull requests:**
 
-- \[\#187\] Query time parameter for getting current time from Ably system [\#206](https://github.com/ably/ably-python/pull/206) ([d8x](https://github.com/d8x))
+- Add support for Python 3.10, age out 3.6 [\#253](https://github.com/ably/ably-python/pull/253) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- Compat with 'httpx' public API changes. [\#252](https://github.com/ably/ably-python/pull/252) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- Respect content-type with charset [\#248](https://github.com/ably/ably-python/pull/248) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- 'TypedBuffer' fix attempt to call a non-callable object [\#226](https://github.com/ably/ably-python/pull/226) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- 'auth' module, fix possible unbound local variables warning [\#225](https://github.com/ably/ably-python/pull/225) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- rest setup - fix redeclared name without usage [\#217](https://github.com/ably/ably-python/pull/217) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- Fixes mutable-value used as argument default value [\#215](https://github.com/ably/ably-python/pull/215) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- Fixes most of the PEP 8 coding style violations [\#214](https://github.com/ably/ably-python/pull/214) ([tomkirbygreen](https://github.com/tomkirbygreen))
+- 'Channel' remove unused 'history' parameter 'timeout'. [\#209](https://github.com/ably/ably-python/pull/209) ([tomkirbygreen](https://github.com/tomkirbygreen))
 - \[\#149\] Specifying clientId does not force token auth [\#204](https://github.com/ably/ably-python/pull/204) ([d8x](https://github.com/d8x))
 - Support for async [\#202](https://github.com/ably/ably-python/pull/202) ([d8x](https://github.com/d8x))
 - Support for HTTP/2 Protocol [\#200](https://github.com/ably/ably-python/pull/200) ([d8x](https://github.com/d8x))
@@ -31,8 +47,6 @@
 - RSC7d - Support for Ably-Agent header [\#195](https://github.com/ably/ably-python/pull/195) ([d8x](https://github.com/d8x))
 - fix error message for invalid push data type [\#169](https://github.com/ably/ably-python/pull/169) ([netspencer](https://github.com/netspencer))
 - Raise error if all servers reply with a 5xx response [\#161](https://github.com/ably/ably-python/pull/161) ([jdavid](https://github.com/jdavid))
-- Python 2.7 cleanup [\#157](https://github.com/ably/ably-python/pull/157) ([jdavid](https://github.com/jdavid))
-- Support Python 3.5+ [\#156](https://github.com/ably/ably-python/pull/156) ([jdavid](https://github.com/jdavid))
 
 ## [v1.1.1](https://github.com/ably/ably-python/tree/v1.1.1)
 

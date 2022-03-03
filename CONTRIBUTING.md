@@ -30,12 +30,10 @@ The release process must include the following steps:
 3. Add a commit to bump the version number, updating [`setup.py`](./setup.py) and [`ably/__init__.py`](./ably/__init__.py)
 4. Add a commit to update the change log
 5. Push the release branch to GitHub
-6. Open a PR for the release against the release branch you just pushed
-7. Gain approval(s) for the release PR from maintainer(s)
-8. Land the release PR to `main`
-9. From the `main` branch, run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
-10. Create a tag named like `v1.2.3` and push it to GitHub - e.g. `git tag v1.2.3 && git push origin v1.2.3`
-11. Create the release on GitHub including populating the release notes
+6. Create a release PR (ensure you include an SDK Team Engineering Lead and the SDK Team Product Manager as reviewers) and gain approvals for it, then merge that to `main`
+7. From the `main` branch, run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
+8. Create a tag named like `v1.2.3` and push it to GitHub - e.g. `git tag v1.2.3 && git push origin v1.2.3`
+9. Create the release on GitHub including populating the release notes
 
 We tend to use [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator) to collate the information required for a change log update.
 Your mileage may vary, but it seems the most reliable method to invoke the generator is something like:
