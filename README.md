@@ -43,10 +43,10 @@ Or, if you need encryption features:
     cd ably-python
     python setup.py install
 
-## Breaking API Changes in Version 1.2.x
+## Breaking API Changes in Version 1.2.0
 
-Please see our Upgrade / Migration Guide for notes on changes you need to make to your code to update it to use the new API
-introduced by version 1.2.x
+Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API
+introduced by version 1.2.0.
 
 ## Usage
 
