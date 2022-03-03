@@ -7,7 +7,7 @@ ably-python
 
 ## Overview
 
-This is a Python client library for Ably. The library currently targets the [Ably 1.1 client library specification](https://www.ably.io/documentation/client-lib-development-guide/features/).
+This is a Python client library for Ably. The library currently targets the [Ably 1.1 client library specification](https://ably.com/documentation/client-lib-development-guide/features).
 
 ## Running example
 
@@ -184,7 +184,7 @@ await client.close()
 
 ## Resources
 
-Visit https://www.ably.io/documentation for a complete API reference and more examples.
+Visit https://ably.com/documentation for a complete API reference and more examples.
 
 ## Requirements
 
@@ -196,16 +196,16 @@ for the set of versions that currently undergo CI testing.
 
 ## Known Limitations
 
-Currently, this SDK only supports [Ably REST](https://www.ably.io/documentation/rest). 
-However, you can use the [MQTT adapter](https://www.ably.io/documentation/mqtt) to implement [Ably's Realtime](https://www.ably.io/documentation/realtime) features using Python.
+Currently, this SDK only supports [Ably REST](https://ably.com/documentation/rest). 
+However, you can use the [MQTT adapter](https://ably.com/documentation/mqtt) to implement [Ably's Realtime](https://ably.com/documentation/realtime) features using Python.
 
 ## Support, Feedback and Troubleshooting
 
-If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://support.ably.io/) for advice.
+If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://ably.com/support) for advice.
 
 ## Support, feedback and troubleshooting
 
-Please visit http://support.ably.io/ for access to our knowledge base and to ask for any assistance.
+Please visit https://ably.com/support for access to our knowledge base and to ask for any assistance.
 
 You can also view the [community reported GitHub issues](https://github.com/ably/ably-python/issues).
 
