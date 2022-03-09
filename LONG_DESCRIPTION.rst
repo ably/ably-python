@@ -1,4 +1,4 @@
-Official Ably Bindings for Python
+00 Official Ably Bindings for Python
 ==================================
 
 A Python client library for Ably Realtime messaging.
