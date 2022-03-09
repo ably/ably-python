@@ -98,7 +98,10 @@ class TestRestHttp(BaseAsyncTestCase):
                     await ably.http.make_request('GET', '/', skip_auth=True)
 
                 assert send_mock.call_count == 1
-                assert request_mock.call_args == mock.call(mock.ANY, custom_url, content=mock.ANY, headers=mock.ANY)
+                assert request_mock.call_args == mock.call(mock.ANY,
+                                                           custom_url,
+                                                           content=mock.ANY,
+                                                           headers=mock.ANY)
         await ably.close()
 
     # RSC15f
@@ -156,7 +159,10 @@ class TestRestHttp(BaseAsyncTestCase):
                     await ably.http.make_request('GET', '/', skip_auth=True)
 
                 assert send_mock.call_count == 1
-                assert request_mock.call_args == mock.call(mock.ANY, default_url, content=mock.ANY, headers=mock.ANY)
+                assert request_mock.call_args == mock.call(mock.ANY,
+                                                           default_url,
+                                                           content=mock.ANY,
+                                                           headers=mock.ANY)
         await ably.close()
 
     async def test_500_errors(self):
