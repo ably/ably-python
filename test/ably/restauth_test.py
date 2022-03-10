@@ -596,7 +596,8 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
         headers = {'Content-Type': 'application/json'}
 
         self.mocked_api = respx.mock(base_url='https://{}'.format(host))
-        self.request_token_route = self.mocked_api.post("/keys/{}/requestToken".format(key), name="request_token_route")
+        self.request_token_route = self.mocked_api.post("/keys/{}/requestToken".format(key),
+                                                        name="request_token_route")
         self.request_token_route.return_value = Response(
             status_code=200,
             headers=headers,
@@ -605,8 +606,8 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
                 'expires': int(time.time() * 1000),  # Always expires
             }
         )
-        self.publish_message_route = self.mocked_api.post("/channels/{}/messages"
-                                                          .format(self.channel), name="publish_message_route")
+        self.publish_message_route = self.mocked_api.post("/channels/{}/messages".format(self.channel),
+                                                          name="publish_message_route")
         self.time_route = self.mocked_api.get("/time", name="time_route")
         self.time_route.return_value = Response(
             status_code=200,

@@ -218,8 +218,8 @@ class Options(AuthOptions):
         if self.fallback_hosts_use_default:
             if environment != Defaults.environment:
                 warnings.warn(
-                    "It is no longer required to set 'fallback_hosts_use_default', the correct fallback hosts are now "
-                    "inferred from the environment, 'fallback_hosts': {}"
+                    "It is no longer required to set 'fallback_hosts_use_default', the correct fallback hosts "
+                    "are now inferred from the environment, 'fallback_hosts': {}"
                     .format(','.join(fallback_hosts)), DeprecationWarning
                 )
             else:
