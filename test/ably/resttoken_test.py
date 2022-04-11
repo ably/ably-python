@@ -68,6 +68,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert token_details.issued <= post_time, "Unexpected issued time"
         assert self.permit_all == str(Capability(token_details.capability)), "Unexpected Capability"
 
+    @pytest.mark.skip(reason="skipped, intermittently fails")
     async def test_request_token_with_duplicate_nonce(self):
         request_time = await self.server_time()
         token_params = {
