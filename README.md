@@ -25,23 +25,27 @@ if __name__ == "__main__":
 
 ## Installation
 
-The client library is available as a [PyPI package](https://pypi.python.org/pypi/ably).
+### Via PyPI
 
-[Requirements](https://github.com/ably/ably-python#requirements)
+The client library is available as a [PyPI](https://pypi.python.org/pypi/ably) package.
 
-### From PyPI
-
-    pip install ably
+```
+pip install ably
+```
 
 Or, if you need encryption features:
 
-    pip install 'ably[crypto]'
+```
+pip install 'ably[crypto]'
+```
 
-### Locally
+### Via GitHub
 
-    git clone https://github.com/ably/ably-python.git
-    cd ably-python
-    python setup.py install
+```
+git clone --recurse-submodules https://github.com/ably/ably-python.git
+cd ably-python
+python setup.py install
+```
 
 ## Breaking API Changes in Version 1.2.0
 
