@@ -17,4 +17,4 @@ Using Ably for Python
 
 - Sign up for Ably at https://ably.com/sign-up
 - Get usage examples at https://github.com/ably/ably-python
-- Visit https://ably.com/documentation for a complete API reference and more examples
+- Visit https://ably.com/docs for a complete API reference and more examples

@@ -7,7 +7,7 @@ ably-python
 
 ## Overview
 
-This is a Python client library for Ably. The library currently targets the [Ably 1.1 client library specification](https://ably.com/documentation/client-lib-development-guide/features).
+This is a Python client library for Ably. The library currently targets the [Ably 1.1 client library specification](https://ably.com/docs/client-lib-development-guide/features).
 
 ## Running example
 
@@ -188,7 +188,7 @@ await client.close()
 
 ## Resources
 
-Visit https://ably.com/documentation for a complete API reference and more examples.
+Visit https://ably.com/docs for a complete API reference and more examples.
 
 ## Requirements
 
@@ -200,8 +200,8 @@ for the set of versions that currently undergo CI testing.
 
 ## Known Limitations
 
-Currently, this SDK only supports [Ably REST](https://ably.com/documentation/rest). 
-However, you can use the [MQTT adapter](https://ably.com/documentation/mqtt) to implement [Ably's Realtime](https://ably.com/documentation/realtime) features using Python.
+Currently, this SDK only supports [Ably REST](https://ably.com/docs/rest). 
+However, you can use the [MQTT adapter](https://ably.com/docs/mqtt) to implement [Ably's Realtime](https://ably.com/docs/realtime) features using Python.
 
 ## Support, Feedback and Troubleshooting
 
