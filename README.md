@@ -203,10 +203,6 @@ for the set of versions that currently undergo CI testing.
 Currently, this SDK only supports [Ably REST](https://ably.com/docs/rest). 
 However, you can use the [MQTT adapter](https://ably.com/docs/mqtt) to implement [Ably's Realtime](https://ably.com/docs/realtime) features using Python.
 
-## Support, Feedback and Troubleshooting
-
-If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://ably.com/support) for advice.
-
 ## Support, feedback and troubleshooting
 
 Please visit https://ably.com/support for access to our knowledge base and to ask for any assistance.
@@ -214,6 +210,8 @@ Please visit https://ably.com/support for access to our knowledge base and to as
 You can also view the [community reported GitHub issues](https://github.com/ably/ably-python/issues).
 
 To see what has changed in recent versions of Bundler, see the [CHANGELOG](CHANGELOG.md).
+
+If you find any compatibility issues, please [do raise an issue](https://github.com/ably/ably-python/issues/new) in this repository or [contact Ably customer support](https://ably.com/support) for advice.
 
 ## Contributing
 
