@@ -10,6 +10,7 @@ from methoddispatch import SingleDispatch, singledispatch
 import msgpack
 
 from ably.http.paginatedresult import PaginatedResult, format_params
+from ably.types.channeldetails import ChannelDetails
 from ably.types.message import Message, make_message_response_handler
 from ably.types.presence import Presence
 from ably.util.crypto import get_cipher
@@ -136,6 +137,14 @@ class Channel(SingleDispatch):
                 return await self.publish_messages(messages, **kwargs)
 
         return await self._publish(*args, **kwargs)
+
+    async def status(self):
+        """Retrieves current channel active status with no. of publishers, subscribers, presence_members etc"""
+
+        path = '/channels/%s' % self.name
+        response = await self.ably.http.get(path)
+        obj = response.to_native()
+        return ChannelDetails.from_dict(obj)
 
     @property
     def ably(self):
