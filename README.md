@@ -124,6 +124,16 @@ presence_page.items
 presence_page.items[0].client_id # client_id of first member
 ```
 
+### Getting the channel status
+
+```python
+channel_status = await channel.status() # Returns a ChannelDetails object
+channel_status.channel_id # Channel identifier
+channel_status.status # ChannelStatus object
+channel_status.status.occupancy # ChannelOccupancy object
+channel_status.status.occupancy.metrics # ChannelMetrics object
+```
+
 ### Symmetric end-to-end encrypted payloads on a channel
 
 When a 128 bit or 256 bit key is provided to the library, all payloads are encrypted and decrypted automatically using that key on the channel. The secret key is never transmitted to Ably and thus it is the developer's responsibility to distribute a secret key to both publishers and subscribers.
