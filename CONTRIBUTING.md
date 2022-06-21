@@ -1,5 +1,4 @@
-Contributing to ably-python
------------
+# Contributing to ably-python
 
 ## Contributing
 
