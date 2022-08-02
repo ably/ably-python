@@ -39,6 +39,12 @@ Or, if you need encryption features:
 pip install 'ably[crypto]'
 ```
 
+If you already have the client library installed, then you can upgrade your package to the latest version using:
+
+```
+pip install -U ably
+```
+
 ### Via GitHub
 
 ```
