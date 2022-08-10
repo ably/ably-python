@@ -7,6 +7,18 @@ This document outlines our plans for the evolution of this SDK.
 Once we've completed the scope and objectives detailed in this milestone,
 we'll be in a good position to make a release in order to start getting feedback from customers.
 
+That release will allow applications built against it to:
+
+- Create a persistent Realtime connection to the Ably service
+- Subscribe to Ably channels in order to receive messages over that connection
+
+That release will come with the following known limitations:
+
+- No resilience to single Ably endpoint failure. To be implemented under [Milestone 2: Realtime Connectivity Hardening](#milestone-2-realtime-connectivity-hardening).
+- No support for [Token authentication](https://ably.com/docs/core-features/authentication#token-authentication), meaning that it only supports authentication by directly using a 'raw' Ably API key ([Basic authentication](https://ably.com/docs/core-features/authentication#basic-authentication)). To be implemented under [Milestone 3: Token Authentication](#milestone-3-token-authentication).
+- No capability to publish over the Realtime connection. To be implemented under [Milestone 4: Realtime Channel Publish](#milestone-4-realtime-channel-publish).
+- No capability to receive or publish member presence messages for a channel over the Realtime connection. To be implemented under [Milestone 5: Realtime Channel Presence](#milestone-5-realtime-channel-presence).
+
 ### Milestone 1a: Solidify Existing Foundations
 
 Ensure the current source code is in a good enough state to build upon.
