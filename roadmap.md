@@ -83,10 +83,10 @@ _T.B.D. but will include environments and connection resume._
 
 _T.B.D. but necessary in order to utilise capabilities embedded within signed JWTs for production applications._
 
-## Milestone 3: Realtime Channel Publish
+## Milestone 4: Realtime Channel Publish
 
 _T.B.D._
 
-## Milestone 4: Realtime Channel Presence
+## Milestone 5: Realtime Channel Presence
 
 _T.B.D._
