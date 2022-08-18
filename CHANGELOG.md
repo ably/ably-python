@@ -1,14 +1,8 @@
 # Change Log
 
-## [v1.3.0](https://github.com/ably/ably-python/tree/v1.3.0.)
+## [v1.2.1](https://github.com/ably/ably-python/tree/v1.2.1)
 
-[Full Changelog](https://github.com/ably/ably-python/compare/v1.2.0...v1.3.0)
-
-**Breaking API Change**: This release marks a semantically significant change in how the `ably-python` SDK's [SemVer](https://semver.org/) should be interpreted. Prior to version `1.3.0` the `ably-python` SDK's version number was overloaded to _broadly_ indicate the version of the Ably Protocol supported. This meant that both bug-fixes _and_ enhancements had to be shoehorned into the third (least significant) `SemVer` field whilst the first two fields reflected the Ably Protocol version. 
-
-With the `1.3.0` release we break away from this, there is a small enhancement when it comes to `1.2` Ably Protocol support with the addition of '[Channel Lifecycle Status](https://github.com/ably/ably-python/pull/276)'. 
-
-Note:  With version `1.3.0` the `ably-python` SDK still lacks the realtime components of the `1.2` Ably Protocol.
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.2.0...v1.2.1)
 
 **Implemented enhancements:**
 
