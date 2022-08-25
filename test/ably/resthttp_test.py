@@ -28,10 +28,6 @@ class TestRestHttp(BaseAsyncTestCase):
                 await ably.http.make_request('GET', '/', skip_auth=True)
 
             assert send_mock.call_count == Defaults.http_max_retry_count
-            timeout = (
-                ably.http.CONNECTION_RETRY_DEFAULTS['http_open_timeout'],
-                ably.http.CONNECTION_RETRY_DEFAULTS['http_request_timeout'],
-            )
             assert send_mock.call_args == mock.call(mock.ANY)
         await ably.close()
 

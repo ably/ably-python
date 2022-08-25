@@ -36,8 +36,7 @@ class TestRestAppStatsSetup:
         previous_year_stats = 120
         stats = [
             {
-                'intervalId': Stats.to_interval_id(self.last_interval -
-                                                   timedelta(minutes=2),
+                'intervalId': Stats.to_interval_id(self.last_interval - timedelta(minutes=2),
                                                    'minute'),
                 'inbound': {'realtime': {'messages': {'count': 50, 'data': 5000}}},
                 'outbound': {'realtime': {'messages': {'count': 20, 'data': 2000}}}
@@ -53,7 +52,7 @@ class TestRestAppStatsSetup:
                 'inbound': {'realtime': {'messages': {'count': 70, 'data': 7000}}},
                 'outbound': {'realtime': {'messages': {'count': 40, 'data': 4000}}},
                 'persisted': {'presence': {'count': 20, 'data': 2000}},
-                'connections': {'tls':   {'peak': 20, 'opened': 10}},
+                'connections': {'tls': {'peak': 20, 'opened': 10}},
                 'channels': {'peak': 50, 'opened': 30},
                 'apiRequests': {'succeeded': 50, 'failed': 10},
                 'tokenRequests': {'succeeded': 60, 'failed': 20},
@@ -64,10 +63,9 @@ class TestRestAppStatsSetup:
         for i in range(previous_year_stats):
             previous_stats.append(
                 {
-                    'intervalId': Stats.to_interval_id(self.previous_interval -
-                                                       timedelta(minutes=i),
+                    'intervalId': Stats.to_interval_id(self.previous_interval - timedelta(minutes=i),
                                                        'minute'),
-                    'inbound':  {'realtime': {'messages': {'count': i}}}
+                    'inbound': {'realtime': {'messages': {'count': i}}}
                 }
             )
         # asynctest does not support setUpClass method
