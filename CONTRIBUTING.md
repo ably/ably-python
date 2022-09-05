@@ -4,18 +4,21 @@
 
 ### Initialising
 
+ably-python uses [Poetry](https://python-poetry.org/) for packaging and dependency management. Please refer to the [Poetry documentation](https://python-poetry.org/docs/#installation) for up to date instructions on how to install Poetry.
+
 Perform the following operations after cloning the repository contents:
 
 ```shell
 git submodule init
 git submodule update
-pip install -r requirements-test.txt
+# Install the crypto extra if you wish to be able to run all of the tests
+poetry install -E crypto
 ```
 
 ### Running the test suite
 
 ```shell
-python -m pytest test
+poetry run pytest
 ```
 
 ## Release Process
