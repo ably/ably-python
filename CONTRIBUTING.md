@@ -29,11 +29,11 @@ The release process must include the following steps:
 
 1. Ensure that all work intended for this release has landed to `main`
 2. Create a release branch named like `release/1.2.3`
-3. Add a commit to bump the version number, updating [`setup.py`](./setup.py) and [`ably/__init__.py`](./ably/__init__.py)
+3. Add a commit to bump the version number, updating [`pyproject.toml`](./pyproject.toml) and [`ably/__init__.py`](./ably/__init__.py)
 4. Add a commit to update the change log
 5. Push the release branch to GitHub
 6. Create a release PR (ensure you include an SDK Team Engineering Lead and the SDK Team Product Manager as reviewers) and gain approvals for it, then merge that to `main`
-7. From the `main` branch, run `python setup.py sdist upload -r ably` to build and upload this new package to PyPi
+7. From the `main` branch, run `poetry build && poetry publish` to build and upload this new package to PyPi
 8. Create a tag named like `v1.2.3` and push it to GitHub - e.g. `git tag v1.2.3 && git push origin v1.2.3`
 9. Create the release on GitHub including populating the release notes
 
