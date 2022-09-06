@@ -7,6 +7,7 @@
 **Implemented enhancements:**
 
 - Add support to get channel lifecycle status [\#271](https://github.com/ably/ably-python/issues/271)
+- Migrate project to poetry [\#305](https://github.com/ably/ably-python/issues/305)
 
 ## [v1.2.0](https://github.com/ably/ably-python/tree/v1.2.0)
 
