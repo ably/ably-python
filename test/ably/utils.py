@@ -12,6 +12,10 @@ from httpx import Response
 from ably.http.http import Http
 
 
+def get_channel_name(prefix=''):
+    return prefix + random_string(10)
+
+
 class BaseTestCase(unittest.TestCase):
 
     def respx_add_empty_msg_pack(self, url, method='GET'):
