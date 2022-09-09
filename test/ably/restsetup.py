@@ -82,12 +82,13 @@ class RestSetup:
     @classmethod
     async def clear_test_vars(cls):
         test_vars = RestSetup.__test_vars
-        options = Options(key=test_vars["keys"][0]["key_str"])
-        options.rest_host = test_vars["host"]
-        options.port = test_vars["port"]
-        options.tls_port = test_vars["tls_port"]
-        options.tls = test_vars["tls"]
-        ably = await cls.get_ably_rest()
-        await ably.http.delete('/apps/' + test_vars['app_id'])
-        RestSetup.__test_vars = None
-        await ably.close()
+        if test_vars:
+            options = Options(key=test_vars["keys"][0]["key_str"])
+            options.rest_host = test_vars["host"]
+            options.port = test_vars["port"]
+            options.tls_port = test_vars["tls_port"]
+            options.tls = test_vars["tls"]
+            ably = await cls.get_ably_rest()
+            await ably.http.delete('/apps/' + test_vars['app_id'])
+            RestSetup.__test_vars = None
+            await ably.close()

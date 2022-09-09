@@ -20,3 +20,10 @@ async def rest(request):
     ably = await RestSetup.get_ably_rest(use_binary_protocol=use_binary_protocol)
     yield ably
     await ably.close()
+
+
+@pytest_asyncio.fixture(scope='session')
+async def test_vars():
+    result = await RestSetup.get_test_vars()
+    yield result
+    await RestSetup.clear_test_vars()
