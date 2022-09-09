@@ -22,8 +22,31 @@ async def rest(request):
     await ably.close()
 
 
+@pytest_asyncio.fixture(name="new_rest")
+async def new_rest_fixture():
+    async def rest_factory(**kwargs):
+        ably = await RestSetup.get_ably_rest(**kwargs)
+        return ably
+
+    yield rest_factory
+
+
 @pytest_asyncio.fixture(scope='session')
 async def test_vars():
     result = await RestSetup.get_test_vars()
     yield result
     await RestSetup.clear_test_vars()
+
+
+@pytest_asyncio.fixture(name="json_rest")
+async def json_rest_fixture(new_rest):
+    ably = await new_rest(use_binary_protocol=False)
+    yield ably
+    await ably.close()
+
+
+@pytest_asyncio.fixture(name="msgpack_rest")
+async def msgpack_rest_fixture(new_rest):
+    ably = await new_rest(use_binary_protocol=True)
+    yield ably
+    await ably.close()
