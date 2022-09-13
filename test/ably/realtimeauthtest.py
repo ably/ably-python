@@ -36,4 +36,4 @@ class TestRealtimeAuth(BaseAsyncTestCase):
     async def test_auth_invalid_key(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
         with pytest.raises(AblyAuthException):
-            await ably.connection.connect()
+            await ably.connect()
