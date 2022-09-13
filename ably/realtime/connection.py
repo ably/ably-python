@@ -12,7 +12,7 @@ class RealtimeConnection:
     async def connect(self):
         self.connected_future = asyncio.Future()
         asyncio.create_task(self.connect_impl())
-        return await self.connected_future
+        await self.connected_future
 
     async def connect_impl(self):
         async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}') as websocket:
@@ -26,7 +26,7 @@ class RealtimeConnection:
             msg = json.loads(raw)
             action = msg['action']
             if (action == 4): # CONNECTED
-                self.connected_future.set_result(msg)
+                self.connected_future.set_result(None)
             if (action == 9): # ERROR
                 error = msg["error"]
                 self.connected_future.set_exception(AblyAuthException(error["message"], error["statusCode"], error["code"]))
