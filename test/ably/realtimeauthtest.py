@@ -27,11 +27,9 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.auth.auth_options.key_name == key[0]
         assert ably.auth.auth_options.key_secret == key[1]
 
-    # async def test_auth_connection(self):
-    #     ably = AblyRealtime(self.test_vars["keys"][0]["key_str"])
-    #     conn = await ably.connection.connect()
-    #     assert conn["action"] == 4
-    #     assert "connectionDetails" in conn
+    async def test_auth_connection(self):
+        ably = await RestSetup.get_ably_realtime()
+        await ably.connect()
 
     async def test_auth_invalid_key(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
