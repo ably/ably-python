@@ -6,6 +6,7 @@ from ably.types.options import Options
 
 log = logging.getLogger(__name__)
 
+
 class AblyRealtime:
     """Ably Realtime Client"""
 
@@ -26,7 +27,10 @@ class AblyRealtime:
         self.__options = options
         self.key = key
         self.__connection = RealtimeConnection(self)
-    
+
+    async def connect(self):
+        await self.connection.connect()
+
     @property
     def auth(self):
         return self.__auth
@@ -34,7 +38,7 @@ class AblyRealtime:
     @property
     def options(self):
         return self.__options
-    
+
     @property
     def connection(self):
         """Returns the channels container object"""
