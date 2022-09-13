@@ -31,6 +31,9 @@ class AblyRealtime:
     async def connect(self):
         await self.connection.connect()
 
+    async def close(self):
+        await self.connection.close()
+
     @property
     def auth(self):
         return self.__auth

@@ -33,8 +33,11 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.INITIALIZED
         await ably.connect()
         assert ably.connection.state == ConnectionState.CONNECTED
+        await ably.close()
+        assert ably.connection.state == ConnectionState.CLOSED
 
     async def test_auth_invalid_key(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
         with pytest.raises(AblyAuthException):
             await ably.connect()
+        await ably.close()
