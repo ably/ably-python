@@ -25,15 +25,27 @@ class RealtimeConnection:
         self.websocket = None
 
     async def connect(self):
-        self.__state = ConnectionState.CONNECTING
-        self.connected_future = asyncio.Future()
-        asyncio.create_task(self.connect_impl())
-        await self.connected_future
-        self.__state = ConnectionState.CONNECTED
+        if self.__state == ConnectionState.CONNECTED:
+            return
+
+        if self.__state == ConnectionState.CONNECTING:
+            if self.connected_future is None:
+                log.fatal('Connection state is CONNECTING but connected_future does not exits')
+                return
+            await self.connected_future
+        else:
+            self.__state = ConnectionState.CONNECTING
+            self.connected_future = asyncio.Future()
+            asyncio.create_task(self.connect_impl())
+            await self.connected_future
+            self.__state = ConnectionState.CONNECTED
 
     async def close(self):
         self.__state = ConnectionState.CLOSING
-        await self.websocket.close()
+        if self.websocket:
+            await self.websocket.close()
+        else:
+            log.warn('Connection.closed called while connection already closed')
         self.__state = ConnectionState.CLOSED
 
     async def connect_impl(self):
