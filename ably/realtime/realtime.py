@@ -1,4 +1,5 @@
 import logging
+from ably.realtime.connection import RealtimeConnection
 from ably.rest.auth import Auth
 from ably.types.options import Options
 
@@ -8,7 +9,7 @@ log = logging.getLogger(__name__)
 class AblyRealtime:
     """Ably Realtime Client"""
 
-    def __init__(self, key=None, **kwargs):
+    def __init__(self, key=None, token=None, token_details=None, **kwargs):
         """Create an AblyRealtime instance.
 
         :Parameters:
@@ -22,8 +23,9 @@ class AblyRealtime:
             options = Options(**kwargs)
 
         self.__auth = Auth(self, options)
-
         self.__options = options
+        self.key = key
+        self.__connection = RealtimeConnection(self)
     
     @property
     def auth(self):
@@ -32,3 +34,8 @@ class AblyRealtime:
     @property
     def options(self):
         return self.__options
+    
+    @property
+    def connection(self):
+        """Returns the channels container object"""
+        return self.__connection
