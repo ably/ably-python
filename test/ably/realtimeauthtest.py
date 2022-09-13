@@ -1,3 +1,4 @@
+from ably.realtime.connection import ConnectionState
 import pytest
 from ably import Auth, AblyRealtime
 from ably.util.exceptions import AblyAuthException
@@ -29,7 +30,9 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
     async def test_auth_connection(self):
         ably = await RestSetup.get_ably_realtime()
+        assert ably.connection.state == ConnectionState.INITIALIZED
         await ably.connect()
+        assert ably.connection.state == ConnectionState.CONNECTED
 
     async def test_auth_invalid_key(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
