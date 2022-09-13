@@ -1,4 +1,5 @@
 import logging
+import os
 from ably.realtime.connection import RealtimeConnection
 from ably.rest.auth import Auth
 from ably.types.options import Options
@@ -9,7 +10,7 @@ log = logging.getLogger(__name__)
 class AblyRealtime:
     """Ably Realtime Client"""
 
-    def __init__(self, key=None, token=None, token_details=None, **kwargs):
+    def __init__(self, key=None, **kwargs):
         """Create an AblyRealtime instance.
 
         :Parameters:
@@ -22,6 +23,7 @@ class AblyRealtime:
         else:
             options = Options(**kwargs)
 
+        options.realtime_host = os.environ.get('ABLY_REALTIME_HOST')
         self.__auth = Auth(self, options)
         self.__options = options
         self.key = key
