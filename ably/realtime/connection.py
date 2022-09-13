@@ -1,8 +1,11 @@
+import logging
 import asyncio
 import websockets
 import json
 from ably.util.exceptions import AblyAuthException
 from enum import Enum
+
+log = logging.getLogger(__name__)
 
 
 class ConnectionState(Enum):
@@ -18,6 +21,8 @@ class RealtimeConnection:
         self.options = realtime.options
         self.__ably = realtime
         self.__state = ConnectionState.INITIALIZED
+        self.connected_future = None
+        self.websocket = None
 
     async def connect(self):
         self.__state = ConnectionState.CONNECTING
@@ -42,11 +47,18 @@ class RealtimeConnection:
             raw = await self.websocket.recv()
             msg = json.loads(raw)
             action = msg['action']
-            if (action == 4): # CONNECTED
-                self.connected_future.set_result(None)
-            if (action == 9): # ERROR
+            if action == 4:  # CONNECTED
+                if self.connected_future:
+                    self.connected_future.set_result(None)
+                    self.connected_future = None
+                else:
+                    log.warn('CONNECTED message receieved but connected_future not set')
+            if action == 9:  # ERROR
                 error = msg["error"]
-                self.connected_future.set_exception(AblyAuthException(error["message"], error["statusCode"], error["code"]))
+                if error['nonfatal'] is False:
+                    if self.connected_future:
+                        self.connected_future.set_exception(AblyAuthException(error["message"], error["statusCode"], error["code"]))
+                        self.connected_future = None
 
     @property
     def ably(self):
