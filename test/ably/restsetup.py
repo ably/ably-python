@@ -14,6 +14,7 @@ with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
 
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST', 'sandbox-rest.ably.io')
+realtime_host = os.environ.get('ABLY_REALTIME_HOST', 'sandbox-realtime.ably.io')
 environment = os.environ.get('ABLY_ENV')
 
 port = 80
@@ -51,6 +52,7 @@ class RestSetup:
                 "tls_port": tls_port,
                 "tls": tls,
                 "environment": environment,
+                "realtime_host": realtime_host,
                 "keys": [{
                     "key_name": "%s.%s" % (app_id, k.get("id", "")),
                     "key_secret": k.get("value", ""),

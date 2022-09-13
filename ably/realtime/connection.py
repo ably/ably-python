@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 import json
+from ably.util.exceptions import AblyAuthException
 
 
 class RealtimeConnection:
@@ -13,8 +14,9 @@ class RealtimeConnection:
         asyncio.create_task(self.connect_impl())
         return await self.connected_future
 
+
     async def connect_impl(self):
-        async with websockets.connect(f'wss://realtime.ably.io?key={self.ably.key}') as websocket:
+        async with websockets.connect(f'{self.options.realtime_host}?key={self.ably.key}') as websocket:
             self.websocket = websocket
             task = asyncio.create_task(self.ws_read_loop())
             await task
@@ -26,7 +28,10 @@ class RealtimeConnection:
             action = msg['action']
             if (action == 4): # CONNECTED
                 self.connected_future.set_result(msg)
-                return msg
+            if (action == 9): # ERROR
+                error = msg["error"]
+                self.connected_future.set_exception(AblyAuthException(error["message"], error["statusCode"], error["code"]))
+                    
 
     @property
     def ably(self):
