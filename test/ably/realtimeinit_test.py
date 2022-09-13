@@ -1,6 +1,6 @@
 from ably.realtime.connection import ConnectionState
 import pytest
-from ably import Auth, AblyRealtime
+from ably import Auth
 from ably.util.exceptions import AblyAuthException
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
