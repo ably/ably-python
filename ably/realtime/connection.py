@@ -14,9 +14,8 @@ class RealtimeConnection:
         asyncio.create_task(self.connect_impl())
         return await self.connected_future
 
-
     async def connect_impl(self):
-        async with websockets.connect(f'{self.options.realtime_host}?key={self.ably.key}') as websocket:
+        async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}') as websocket:
             self.websocket = websocket
             task = asyncio.create_task(self.ws_read_loop())
             await task
