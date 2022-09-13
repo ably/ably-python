@@ -94,7 +94,15 @@ Start receiving messages from the Ably service.
 
 ## Milestone 2: Realtime Connectivity Hardening
 
-_T.B.D. but will include environments and connection resume._
+Give users visibility of connection errors and enable the library to continue operating during tempoary loss of connection.
+
+- connection errors
+  - add the `DISCONNECTED` and `SUSPENDED` channel states
+  - handle connection opening errors `RTN14`
+  - handle `DISCONNECTED` protocol messages `RTN15h`
+  - send resume requests `RTN15b`
+  - respond to connection resume responses `RTN15c`
+- fallbacks (`RTN17`)
 
 ## Milestone 3: Token Authentication
 
