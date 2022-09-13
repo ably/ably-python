@@ -38,7 +38,8 @@ This means solving currently known pain points (development environment stabilis
 
 - pick a WebSocket library
 - pick an event model (async/await vs dedicated thread)
-- establish connection with basic credentials (Ably API key)
+- establish connection with basic credentials (Ably API key passed in through Authorization header)
+  - triggering on explicit call to `client.connect()` rather than autoConnect
 
 **Objective**: Successfully connect to Ably Realtime.
 
@@ -52,6 +53,7 @@ The basic foundations of Realtime connectivity, plus client identification (`Age
 - loop to read protocol messages from the WebSocket
 - handle basic connectivity messages: `CONNECTED`, `DISCONNECTED`, `CLOSED`, `ERROR`
 - handle `HEARTBEAT` messages
+- Connection state machine
 - queryable connection state
   - consider whether there is a Python-idiomatic alternative to blindly implementing `EventEmitter`
 
@@ -80,6 +82,9 @@ Start receiving messages from the Ably service.
 **Scope**:
 
 - channels, including:
+  - Channels.get (`RTS3c`)
+  - Channels.release (`RTS34`)
+  - RealtimeChannel state machine
   - attach ([`RTL4`](https://docs.ably.io/client-lib-development-guide/features/#RTL4))
   - detach ([`RTL5`](https://docs.ably.io/client-lib-development-guide/features/#RTL5))
   - subscribe ([RTL7](https://docs.ably.io/client-lib-development-guide/features/#RTL7)) / unsubscribe ([RTL8](https://docs.ably.io/client-lib-development-guide/features/#RTL8))
