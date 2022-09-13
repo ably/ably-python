@@ -9,6 +9,8 @@ class ConnectionState(Enum):
     INITIALIZED = 'initialized'
     CONNECTING = 'connecting'
     CONNECTED = 'connected'
+    CLOSING = 'closing'
+    CLOSED = 'closed'
 
 
 class RealtimeConnection:
@@ -23,6 +25,11 @@ class RealtimeConnection:
         asyncio.create_task(self.connect_impl())
         await self.connected_future
         self.__state = ConnectionState.CONNECTED
+
+    async def close(self):
+        self.__state = ConnectionState.CLOSING
+        await self.websocket.close()
+        self.__state = ConnectionState.CLOSED
 
     async def connect_impl(self):
         async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}') as websocket:
