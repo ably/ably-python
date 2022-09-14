@@ -21,57 +21,57 @@ class RealtimeConnection:
         self.options = realtime.options
         self.__ably = realtime
         self.__state = ConnectionState.INITIALIZED
-        self.connected_future = None
-        self.websocket = None
+        self.__connected_future = None
+        self.__websocket = None
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
             return
 
         if self.__state == ConnectionState.CONNECTING:
-            if self.connected_future is None:
+            if self.__connected_future is None:
                 log.fatal('Connection state is CONNECTING but connected_future does not exits')
                 return
-            await self.connected_future
+            await self.__connected_future
         else:
             self.__state = ConnectionState.CONNECTING
-            self.connected_future = asyncio.Future()
+            self.__connected_future = asyncio.Future()
             asyncio.create_task(self.connect_impl())
-            await self.connected_future
+            await self.__connected_future
             self.__state = ConnectionState.CONNECTED
 
     async def close(self):
         self.__state = ConnectionState.CLOSING
-        if self.websocket:
-            await self.websocket.close()
+        if self.__websocket:
+            await self.__websocket.close()
         else:
             log.warn('Connection.closed called while connection already closed')
         self.__state = ConnectionState.CLOSED
 
     async def connect_impl(self):
         async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}') as websocket:
-            self.websocket = websocket
+            self.__websocket = websocket
             task = asyncio.create_task(self.ws_read_loop())
             await task
 
     async def ws_read_loop(self):
         while True:
-            raw = await self.websocket.recv()
+            raw = await self.__websocket.recv()
             msg = json.loads(raw)
             action = msg['action']
             if action == 4:  # CONNECTED
-                if self.connected_future:
-                    self.connected_future.set_result(None)
-                    self.connected_future = None
+                if self.__connected_future:
+                    self.__connected_future.set_result(None)
+                    self.__connected_future = None
                 else:
                     log.warn('CONNECTED message receieved but connected_future not set')
             if action == 9:  # ERROR
                 error = msg["error"]
                 if error['nonfatal'] is False:
-                    if self.connected_future:
-                        self.connected_future.set_exception(
+                    if self.__connected_future:
+                        self.__connected_future.set_exception(
                             AblyAuthException(error["message"], error["statusCode"], error["code"]))
-                        self.connected_future = None
+                        self.__connected_future = None
 
     @property
     def ably(self):
