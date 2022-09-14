@@ -21,7 +21,7 @@ class AblyRealtime:
         if key is not None:
             options = Options(key=key, **kwargs)
         else:
-            raise ValueError("Key is missing. Provide an API key")
+            raise ValueError("Key is missing. Provide an API key.")
 
         self.__auth = Auth(self, options)
         self.__options = options
