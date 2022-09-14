@@ -38,7 +38,8 @@ This means solving currently known pain points (development environment stabilis
 
 - pick a WebSocket library
 - pick an event model (async/await vs dedicated thread)
-- establish connection with basic credentials (Ably API key)
+- establish connection with basic credentials (Ably API key passed in through Authorization header)
+  - triggering on explicit call to `client.connect()` rather than autoConnect
 
 **Objective**: Successfully connect to Ably Realtime.
 
@@ -52,6 +53,7 @@ The basic foundations of Realtime connectivity, plus client identification (`Age
 - loop to read protocol messages from the WebSocket
 - handle basic connectivity messages: `CONNECTED`, `DISCONNECTED`, `CLOSED`, `ERROR`
 - handle `HEARTBEAT` messages
+- Connection state machine
 - queryable connection state
   - consider whether there is a Python-idiomatic alternative to blindly implementing `EventEmitter`
 
@@ -80,16 +82,27 @@ Start receiving messages from the Ably service.
 **Scope**:
 
 - channels, including:
+  - Channels.get ([`RTS3c`](https://docs.ably.io/client-lib-development-guide/features/#RTS3c))
+  - Channels.release ([`RTS34`](https://docs.ably.io/client-lib-development-guide/features/RTS34))
+  - RealtimeChannel state machine
   - attach ([`RTL4`](https://docs.ably.io/client-lib-development-guide/features/#RTL4))
   - detach ([`RTL5`](https://docs.ably.io/client-lib-development-guide/features/#RTL5))
-  - subscribe ([RTL7](https://docs.ably.io/client-lib-development-guide/features/#RTL7)) / unsubscribe ([RTL8](https://docs.ably.io/client-lib-development-guide/features/#RTL8))
+  - subscribe ([`RTL7`](https://docs.ably.io/client-lib-development-guide/features/#RTL7)) / unsubscribe ([`RTL8`](https://docs.ably.io/client-lib-development-guide/features/#RTL8))
     - consider whether there is a Python-idiomatic alternative to blindly implementing `EventEmitter`
 
 **Objective**: Receive application level messages from the network.
 
 ## Milestone 2: Realtime Connectivity Hardening
 
-_T.B.D. but will include environments and connection resume._
+Give users visibility of connection errors and enable the library to continue operating during tempoary loss of connection.
+
+- connection errors
+  - add the `DISCONNECTED` and `SUSPENDED` channel states
+  - handle connection opening errors ([`RTN14`](https://docs.ably.io/client-lib-development-guide/features/#RTN14))
+  - handle `DISCONNECTED` protocol messages ([`RTN15h`](https://docs.ably.io/client-lib-development-guide/features/#RTN15h))
+  - send resume requests ([`RTN15b`](https://docs.ably.io/client-lib-development-guide/features/#RTN15b))
+  - respond to connection resume responses ([`RTN15c`](https://docs.ably.io/client-lib-development-guide/features/#RTN15c))
+- fallbacks ([`RTN17`](https://docs.ably.io/client-lib-development-guide/features/#RTN17))
 
 ## Milestone 3: Token Authentication
 
