@@ -69,7 +69,8 @@ class RealtimeConnection:
                 error = msg["error"]
                 if error['nonfatal'] is False:
                     if self.connected_future:
-                        self.connected_future.set_exception(AblyAuthException(error["message"], error["statusCode"], error["code"]))
+                        self.connected_future.set_exception(
+                            AblyAuthException(error["message"], error["statusCode"], error["code"]))
                         self.connected_future = None
 
     @property
