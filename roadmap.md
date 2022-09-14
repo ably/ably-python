@@ -82,12 +82,12 @@ Start receiving messages from the Ably service.
 **Scope**:
 
 - channels, including:
-  - Channels.get (`RTS3c`)
-  - Channels.release (`RTS34`)
+  - Channels.get ([`RTS3c`](https://docs.ably.io/client-lib-development-guide/features/#RTS3c))
+  - Channels.release ([`RTS34`](https://docs.ably.io/client-lib-development-guide/features/RTS34))
   - RealtimeChannel state machine
   - attach ([`RTL4`](https://docs.ably.io/client-lib-development-guide/features/#RTL4))
   - detach ([`RTL5`](https://docs.ably.io/client-lib-development-guide/features/#RTL5))
-  - subscribe ([RTL7](https://docs.ably.io/client-lib-development-guide/features/#RTL7)) / unsubscribe ([RTL8](https://docs.ably.io/client-lib-development-guide/features/#RTL8))
+  - subscribe ([`RTL7`](https://docs.ably.io/client-lib-development-guide/features/#RTL7)) / unsubscribe ([`RTL8`](https://docs.ably.io/client-lib-development-guide/features/#RTL8))
     - consider whether there is a Python-idiomatic alternative to blindly implementing `EventEmitter`
 
 **Objective**: Receive application level messages from the network.
@@ -98,11 +98,11 @@ Give users visibility of connection errors and enable the library to continue op
 
 - connection errors
   - add the `DISCONNECTED` and `SUSPENDED` channel states
-  - handle connection opening errors `RTN14`
-  - handle `DISCONNECTED` protocol messages `RTN15h`
-  - send resume requests `RTN15b`
-  - respond to connection resume responses `RTN15c`
-- fallbacks (`RTN17`)
+  - handle connection opening errors ([`RTN14`](https://docs.ably.io/client-lib-development-guide/features/#RTN14))
+  - handle `DISCONNECTED` protocol messages ([`RTN15h`](https://docs.ably.io/client-lib-development-guide/features/#RTN15h))
+  - send resume requests ([`RTN15b`](https://docs.ably.io/client-lib-development-guide/features/#RTN15b))
+  - respond to connection resume responses ([`RTN15c`](https://docs.ably.io/client-lib-development-guide/features/#RTN15c))
+- fallbacks ([`RTN17`](https://docs.ably.io/client-lib-development-guide/features/#RTN17))
 
 ## Milestone 3: Token Authentication
 
