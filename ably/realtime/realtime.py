@@ -21,7 +21,7 @@ class AblyRealtime:
         if key is not None:
             options = Options(key=key, **kwargs)
         else:
-            options = Options(**kwargs)
+            raise ValueError("Key is missing. Provide an API key")
 
         self.__auth = Auth(self, options)
         self.__options = options
@@ -44,5 +44,5 @@ class AblyRealtime:
 
     @property
     def connection(self):
-        """Returns the channels container object"""
+        """Establish realtime connection"""
         return self.__connection
