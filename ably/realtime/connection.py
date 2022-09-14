@@ -14,6 +14,7 @@ class ConnectionState(Enum):
     CONNECTED = 'connected'
     CLOSING = 'closing'
     CLOSED = 'closed'
+    FAILED = 'failed'
 
 
 class RealtimeConnection:
@@ -68,6 +69,7 @@ class RealtimeConnection:
             if action == 9:  # ERROR
                 error = msg["error"]
                 if error['nonfatal'] is False:
+                    self.__state = ConnectionState.FAILED
                     if self.__connected_future:
                         self.__connected_future.set_exception(
                             AblyAuthException(error["message"], error["statusCode"], error["code"]))
