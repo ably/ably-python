@@ -2,6 +2,7 @@ import logging
 import asyncio
 import websockets
 import json
+from ably.http.httputils import HttpUtils
 from ably.util.exceptions import AblyAuthException
 from enum import Enum, IntEnum
 
@@ -55,7 +56,9 @@ class RealtimeConnection:
         self.__state = ConnectionState.CLOSED
 
     async def connect_impl(self):
-        async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}') as websocket:
+        headers = HttpUtils.default_get_headers()
+        async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}',
+                                      extra_headers=headers) as websocket:
             self.__websocket = websocket
             task = asyncio.create_task(self.ws_read_loop())
             await task
