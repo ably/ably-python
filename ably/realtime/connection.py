@@ -56,7 +56,7 @@ class RealtimeConnection:
         self.__state = ConnectionState.CLOSED
 
     async def connect_impl(self):
-        headers = HttpUtils.default_get_headers()
+        headers = HttpUtils.default_headers()
         async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}',
                                       extra_headers=headers) as websocket:
             self.__websocket = websocket
