@@ -6,6 +6,7 @@ from ably.rest.rest import AblyRest
 from ably.types.capability import Capability
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
+from ably.realtime.realtime import AblyRealtime
 
 log = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
 
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
 host = os.environ.get('ABLY_HOST', 'sandbox-rest.ably.io')
+realtime_host = 'sandbox-realtime.ably.io'
 environment = os.environ.get('ABLY_ENV')
 
 port = 80
@@ -51,6 +53,7 @@ class RestSetup:
                 "tls_port": tls_port,
                 "tls": tls,
                 "environment": environment,
+                "realtime_host": realtime_host,
                 "keys": [{
                     "key_name": "%s.%s" % (app_id, k.get("id", "")),
                     "key_secret": k.get("value", ""),
@@ -78,6 +81,20 @@ class RestSetup:
         }
         options.update(kw)
         return AblyRest(**options)
+
+    @classmethod
+    async def get_ably_realtime(cls, **kw):
+        test_vars = await RestSetup.get_test_vars()
+        options = {
+            'key': test_vars["keys"][0]["key_str"],
+            'realtime_host': realtime_host,
+            'port': test_vars["port"],
+            'tls_port': test_vars["tls_port"],
+            'tls': test_vars["tls"],
+            'environment': test_vars["environment"],
+        }
+        options.update(kw)
+        return AblyRealtime(**options)
 
     @classmethod
     async def clear_test_vars(cls):

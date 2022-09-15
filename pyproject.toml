@@ -33,6 +33,7 @@ h2 = "^4.0.0"
 # Optional dependencies
 pycrypto = { version = "^2.6.1", optional = true }
 pycryptodome = { version = "*", optional = true }
+websockets = "^10.3"
 
 [tool.poetry.extras]
 oldcrypto = ["pycrypto"]

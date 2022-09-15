@@ -1,4 +1,5 @@
 from ably.rest.rest import AblyRest
+from ably.realtime.realtime import AblyRealtime
 from ably.rest.auth import Auth
 from ably.rest.push import Push
 from ably.types.capability import Capability

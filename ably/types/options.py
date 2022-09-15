@@ -27,6 +27,9 @@ class Options(AuthOptions):
             from ably import api_version
             idempotent_rest_publishing = api_version >= '1.2'
 
+        if realtime_host is None:
+            realtime_host = Defaults.realtime_host
+
         self.__client_id = client_id
         self.__log_level = log_level
         self.__tls = tls
