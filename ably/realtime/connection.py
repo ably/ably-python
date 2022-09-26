@@ -21,6 +21,8 @@ class ConnectionState(Enum):
 class ProtocolMessageAction(IntEnum):
     CONNECTED = 4
     ERROR = 9
+    CLOSE = 7
+    CLOSED = 8
 
 
 class RealtimeConnection:
@@ -29,6 +31,7 @@ class RealtimeConnection:
         self.__ably = realtime
         self.__state = ConnectionState.INITIALIZED
         self.__connected_future = None
+        self.__closed_future = None
         self.__websocket = None
 
     async def connect(self):
@@ -49,11 +52,19 @@ class RealtimeConnection:
 
     async def close(self):
         self.__state = ConnectionState.CLOSING
-        if self.__websocket:
-            await self.__websocket.close()
+        self.__closed_future = asyncio.Future()
+        if self.__websocket and self.__state == ConnectionState.CONNECTED:
+            await self.send_close_message()
+            await self.__closed_future
         else:
-            log.warn('Connection.closed called while connection already closed')
+            log.warn('Connection.closed called while connection already closed or not established')
         self.__state = ConnectionState.CLOSED
+
+    async def send_close_message(self):
+        await self.sendProtocolMessage({"action": ProtocolMessageAction.CLOSE})
+
+    async def sendProtocolMessage(self, protocolMessage):
+        await self.__websocket.send(json.dumps(protocolMessage))
 
     async def connect_impl(self):
         headers = HttpUtils.default_headers()
@@ -82,6 +93,10 @@ class RealtimeConnection:
                         self.__connected_future.set_exception(
                             AblyAuthException(error["message"], error["statusCode"], error["code"]))
                         self.__connected_future = None
+            if action == ProtocolMessageAction.CLOSED:
+                await self.__websocket.close()
+                self.__closed_future.set_result(None)
+                break
 
     @property
     def ably(self):
