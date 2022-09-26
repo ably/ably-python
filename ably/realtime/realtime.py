@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from ably.realtime.connection import Connection
 from ably.rest.auth import Auth
 from ably.types.options import Options
@@ -10,7 +11,7 @@ log = logging.getLogger(__name__)
 class AblyRealtime:
     """Ably Realtime Client"""
 
-    def __init__(self, key=None, **kwargs):
+    def __init__(self, key=None, loop=None, **kwargs):
         """Create an AblyRealtime instance.
 
         :Parameters:
@@ -18,8 +19,14 @@ class AblyRealtime:
           - `key`: a valid ably key string
         """
 
+        if loop is None:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                log.warning('Realtime client created outside event loop')
+
         if key is not None:
-            options = Options(key=key, **kwargs)
+            options = Options(key=key, loop=loop, **kwargs)
         else:
             raise ValueError("Key is missing. Provide an API key.")
 

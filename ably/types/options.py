@@ -1,8 +1,11 @@
 import random
 import warnings
+import logging
 
 from ably.transport.defaults import Defaults
 from ably.types.authoptions import AuthOptions
+
+log = logging.getLogger(__name__)
 
 
 class Options(AuthOptions):
@@ -12,7 +15,7 @@ class Options(AuthOptions):
                  http_open_timeout=None, http_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None,
                  fallback_hosts=None, fallback_hosts_use_default=None, fallback_retry_timeout=None,
-                 idempotent_rest_publishing=None,
+                 idempotent_rest_publishing=None, loop=None,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -49,6 +52,7 @@ class Options(AuthOptions):
         self.__fallback_hosts_use_default = fallback_hosts_use_default
         self.__fallback_retry_timeout = fallback_retry_timeout
         self.__idempotent_rest_publishing = idempotent_rest_publishing
+        self.__loop = loop
 
         self.__rest_hosts = self.__get_rest_hosts()
 
@@ -183,6 +187,10 @@ class Options(AuthOptions):
     @property
     def idempotent_rest_publishing(self):
         return self.__idempotent_rest_publishing
+
+    @property
+    def loop(self):
+        return self.__loop
 
     def __get_rest_hosts(self):
         """
