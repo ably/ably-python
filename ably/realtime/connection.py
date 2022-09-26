@@ -25,7 +25,27 @@ class ProtocolMessageAction(IntEnum):
     CLOSED = 8
 
 
-class RealtimeConnection:
+class Connection:
+    def __init__(self, realtime):
+        self.__realtime = realtime
+        self.__connection_manager = ConnectionManager(realtime)
+        self.__state = ConnectionState.INITIALIZED
+
+    async def connect(self):
+        await self.__connection_manager.connect()
+
+    async def close(self):
+        await self.__connection_manager.close()
+
+    def on_state_update(self, state):
+        self.__state = state
+
+    @property
+    def state(self):
+        return self.__state
+
+
+class ConnectionManager:
     def __init__(self, realtime):
         self.options = realtime.options
         self.__ably = realtime
@@ -33,6 +53,10 @@ class RealtimeConnection:
         self.__connected_future = None
         self.__closed_future = None
         self.__websocket = None
+
+    def enact_state_change(self, state):
+        self.__state = state
+        self.ably.connection.on_state_update(state)
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
@@ -44,21 +68,21 @@ class RealtimeConnection:
                 return
             await self.__connected_future
         else:
-            self.__state = ConnectionState.CONNECTING
+            self.enact_state_change(ConnectionState.CONNECTING)
             self.__connected_future = asyncio.Future()
             asyncio.create_task(self.connect_impl())
             await self.__connected_future
-            self.__state = ConnectionState.CONNECTED
+            self.enact_state_change(ConnectionState.CONNECTED)
 
     async def close(self):
-        self.__state = ConnectionState.CLOSING
+        self.enact_state_change(ConnectionState.CLOSING)
         self.__closed_future = asyncio.Future()
         if self.__websocket and self.__state == ConnectionState.CONNECTED:
             await self.send_close_message()
             await self.__closed_future
         else:
             log.warn('Connection.closed called while connection already closed or not established')
-        self.__state = ConnectionState.CLOSED
+        self.enact_state_change(ConnectionState.CLOSED)
 
     async def send_close_message(self):
         await self.sendProtocolMessage({"action": ProtocolMessageAction.CLOSE})
@@ -88,7 +112,7 @@ class RealtimeConnection:
             if action == ProtocolMessageAction.ERROR:  # ERROR
                 error = msg["error"]
                 if error['nonfatal'] is False:
-                    self.__state = ConnectionState.FAILED
+                    self.enact_state_change(ConnectionState.FAILED)
                     if self.__connected_future:
                         self.__connected_future.set_exception(
                             AblyAuthException(error["message"], error["statusCode"], error["code"]))

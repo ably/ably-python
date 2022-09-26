@@ -1,5 +1,5 @@
 import logging
-from ably.realtime.connection import RealtimeConnection
+from ably.realtime.connection import Connection
 from ably.rest.auth import Auth
 from ably.types.options import Options
 
@@ -26,7 +26,7 @@ class AblyRealtime:
         self.__auth = Auth(self, options)
         self.__options = options
         self.key = key
-        self.__connection = RealtimeConnection(self)
+        self.__connection = Connection(self)
 
     async def connect(self):
         await self.connection.connect()
