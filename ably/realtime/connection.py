@@ -54,13 +54,13 @@ class RealtimeConnection:
         self.__state = ConnectionState.CLOSING
         self.__closed_future = asyncio.Future()
         if self.__websocket and self.__state == ConnectionState.CONNECTED:
-            task = asyncio.create_task(self.close_connection())
-            await task
+            await self.send_close_message()
+            await self.__closed_future
         else:
             log.warn('Connection.closed called while connection already closed or not established')
         self.__state = ConnectionState.CLOSED
 
-    async def close_connection(self):
+    async def send_close_message(self):
         await self.sendProtocolMessage({"action": ProtocolMessageAction.CLOSE})
 
     async def sendProtocolMessage(self, protocolMessage):
