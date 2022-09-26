@@ -62,6 +62,7 @@ class ConnectionManager(AsyncIOEventEmitter):
         self.__connected_future = None
         self.__closed_future = None
         self.__websocket = None
+        self.connect_impl_task = None
         super().__init__()
 
     def enact_state_change(self, state):
@@ -80,7 +81,7 @@ class ConnectionManager(AsyncIOEventEmitter):
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
             self.__connected_future = asyncio.Future()
-            asyncio.create_task(self.connect_impl())
+            self.connect_impl_task = self.ably.options.loop.create_task(self.connect_impl())
             await self.__connected_future
             self.enact_state_change(ConnectionState.CONNECTED)
 
@@ -89,12 +90,14 @@ class ConnectionManager(AsyncIOEventEmitter):
             log.warn('Connection.closed called while connection state not connected')
         self.enact_state_change(ConnectionState.CLOSING)
         self.__closed_future = asyncio.Future()
-        if self.__websocket:
+        if self.__websocket and self.__state != ConnectionState.FAILED:
             await self.send_close_message()
             await self.__closed_future
         else:
             log.warn('Connection.closed called while connection already closed or not established')
         self.enact_state_change(ConnectionState.CLOSED)
+        if self.connect_impl_task:
+            await self.connect_impl_task
 
     async def send_close_message(self):
         await self.sendProtocolMessage({"action": ProtocolMessageAction.CLOSE})
@@ -107,8 +110,11 @@ class ConnectionManager(AsyncIOEventEmitter):
         async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}',
                                       extra_headers=headers) as websocket:
             self.__websocket = websocket
-            task = asyncio.create_task(self.ws_read_loop())
-            await task
+            task = self.ably.options.loop.create_task(self.ws_read_loop())
+            try:
+                await task
+            except AblyAuthException:
+                return
 
     async def ws_read_loop(self):
         while True:
@@ -125,11 +131,12 @@ class ConnectionManager(AsyncIOEventEmitter):
                 error = msg["error"]
                 if error['nonfatal'] is False:
                     self.enact_state_change(ConnectionState.FAILED)
+                    exception = AblyAuthException(error["message"], error["statusCode"], error["code"])
                     if self.__connected_future:
-                        self.__connected_future.set_exception(
-                            AblyAuthException(error["message"], error["statusCode"], error["code"]))
+                        self.__connected_future.set_exception(exception)
                         self.__connected_future = None
                     self.__websocket = None
+                    raise exception
             if action == ProtocolMessageAction.CLOSED:
                 await self.__websocket.close()
                 self.__websocket = None
