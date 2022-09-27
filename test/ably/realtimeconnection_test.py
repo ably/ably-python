@@ -1,7 +1,7 @@
 import asyncio
 from ably.realtime.connection import ConnectionState
 import pytest
-from ably.util.exceptions import AblyAuthException
+from ably.util.exceptions import AblyAuthException, AblyException
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
 
@@ -52,21 +52,21 @@ class TestRealtimeAuth(BaseAsyncTestCase):
     async def test_connection_ping_initialized(self):
         ably = await RestSetup.get_ably_realtime()
         assert ably.connection.state == ConnectionState.INITIALIZED
-        response_time_ms = await ably.ping()
-        assert response_time_ms is None
+        with pytest.raises(AblyException):
+            await ably.ping()
 
     async def test_connection_ping_failed(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
         with pytest.raises(AblyAuthException):
             await ably.connect()
         assert ably.connection.state == ConnectionState.FAILED
-        response_time_ms = await ably.ping()
-        assert response_time_ms is None
+        with pytest.raises(AblyException):
+            await ably.ping()
 
     async def test_connection_ping_closed(self):
         ably = await RestSetup.get_ably_realtime()
         await ably.connect()
         assert ably.connection.state == ConnectionState.CONNECTED
         await ably.close()
-        response_time_ms = await ably.ping()
-        assert response_time_ms is None
+        with pytest.raises(AblyException):
+            await ably.ping()

@@ -4,7 +4,7 @@ import asyncio
 import websockets
 import json
 from ably.http.httputils import HttpUtils
-from ably.util.exceptions import AblyAuthException
+from ably.util.exceptions import AblyAuthException, AblyException
 from enum import Enum, IntEnum
 from pyee.asyncio import AsyncIOEventEmitter
 from datetime import datetime
@@ -44,6 +44,9 @@ class Connection(AsyncIOEventEmitter):
     async def close(self):
         await self.__connection_manager.close()
 
+    async def ping(self):
+        return await self.__connection_manager.ping()
+
     def on_state_update(self, state):
         self.__state = state
         self.__realtime.options.loop.call_soon(functools.partial(self.emit, state))
@@ -66,12 +69,12 @@ class ConnectionManager(AsyncIOEventEmitter):
         self.__closed_future = None
         self.__websocket = None
         self.connect_impl_task = None
+        self.__ping_future = None
         super().__init__()
 
     def enact_state_change(self, state):
         self.__state = state
         self.emit('connectionstate', state)
-        self.__ping_future = None
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
@@ -125,13 +128,14 @@ class ConnectionManager(AsyncIOEventEmitter):
     async def ping(self):
         self.__ping_future = asyncio.Future()
         if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
+            self.__ping_id = helper.get_random_id()
             ping_start_time = datetime.now().timestamp()
             await self.sendProtocolMessage({"action": ProtocolMessageAction.HEARTBEAT,
-                                            "id": helper.get_random_id()})
+                                            "id": self.__ping_id})
         else:
-            log.error("Cannot send ping request. Connection not in connected or connecting")
-            return
-        await self.__ping_future
+            raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
+        if self.__ping_future:
+            await self.__ping_future
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
@@ -164,7 +168,10 @@ class ConnectionManager(AsyncIOEventEmitter):
                 break
             if action == ProtocolMessageAction.HEARTBEAT:
                 if self.__ping_future:
-                    self.__ping_future.set_result(None)
+                    # Resolve on heartbeat from ping request.
+                    # TODO: Handle Normal heartbeat if required
+                    if self.__ping_id == msg["id"]:
+                        self.__ping_future.set_result(None)
                 self.__ping_future = None
 
     @property
