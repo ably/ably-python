@@ -1,3 +1,4 @@
+from ably.realtime.realtime_channel import ChannelState
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
 
@@ -18,4 +19,22 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         ably.channels.get('my_channel')
         ably.channels.release('my_channel')
         assert ably.channels.all.get('my_channel') is None
+        await ably.close()
+
+    async def test_channel_attach(self):
+        ably = await RestSetup.get_ably_realtime()
+        await ably.connect()
+        channel = ably.channels.get('my_channel')
+        assert channel.state == ChannelState.INITIALIZED
+        await channel.attach()
+        assert channel.state == ChannelState.ATTACHED
+        await ably.close()
+
+    async def test_channel_detach(self):
+        ably = await RestSetup.get_ably_realtime()
+        await ably.connect()
+        channel = ably.channels.get('my_channel')
+        await channel.attach()
+        await channel.detach()
+        assert channel.state == ChannelState.DETACHED
         await ably.close()
