@@ -28,6 +28,10 @@ class ProtocolMessageAction(IntEnum):
     ERROR = 9
     CLOSE = 7
     CLOSED = 8
+    ATTACH = 10
+    ATTACHED = 11
+    DETACH = 12
+    DETACHED = 13
 
 
 class Connection(AsyncIOEventEmitter):
@@ -58,6 +62,10 @@ class Connection(AsyncIOEventEmitter):
     @state.setter
     def state(self, value):
         self.__state = value
+
+    @property
+    def connection_manager(self):
+        return self.__connection_manager
 
 
 class ConnectionManager(AsyncIOEventEmitter):
@@ -173,6 +181,8 @@ class ConnectionManager(AsyncIOEventEmitter):
                     if self.__ping_id == msg.get("id"):
                         self.__ping_future.set_result(None)
                 self.__ping_future = None
+            if action in [ProtocolMessageAction.ATTACHED, ProtocolMessageAction.DETACHED]:
+                self.ably.channels.on_channel_message(msg)
 
     @property
     def ably(self):
