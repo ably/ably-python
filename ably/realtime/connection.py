@@ -7,6 +7,8 @@ from ably.http.httputils import HttpUtils
 from ably.util.exceptions import AblyAuthException
 from enum import Enum, IntEnum
 from pyee.asyncio import AsyncIOEventEmitter
+from datetime import datetime
+from ably.util import helper
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +23,7 @@ class ConnectionState(Enum):
 
 
 class ProtocolMessageAction(IntEnum):
+    HEARTBEAT = 0
     CONNECTED = 4
     ERROR = 9
     CLOSE = 7
@@ -68,16 +71,19 @@ class ConnectionManager(AsyncIOEventEmitter):
     def enact_state_change(self, state):
         self.__state = state
         self.emit('connectionstate', state)
+        self.__ping_future = None
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
+            await self.ping()
             return
 
         if self.__state == ConnectionState.CONNECTING:
             if self.__connected_future is None:
-                log.fatal('Connection state is CONNECTING but connected_future does not exits')
+                log.fatal('Connection state is CONNECTING but connected_future does not exist')
                 return
             await self.__connected_future
+            await self.ping()
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
             self.__connected_future = asyncio.Future()
@@ -116,6 +122,20 @@ class ConnectionManager(AsyncIOEventEmitter):
             except AblyAuthException:
                 return
 
+    async def ping(self):
+        self.__ping_future = asyncio.Future()
+        if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
+            ping_start_time = datetime.now().timestamp()
+            await self.sendProtocolMessage({"action": ProtocolMessageAction.HEARTBEAT,
+                                            "id": helper.get_random_id()})
+        else:
+            log.error("Cannot send ping request. Connection not in connected or connecting")
+            return
+        await self.__ping_future
+        ping_end_time = datetime.now().timestamp()
+        response_time_ms = (ping_end_time - ping_start_time) * 1000
+        return round(response_time_ms, 2)
+
     async def ws_read_loop(self):
         while True:
             raw = await self.__websocket.recv()
@@ -142,6 +162,10 @@ class ConnectionManager(AsyncIOEventEmitter):
                 self.__websocket = None
                 self.__closed_future.set_result(None)
                 break
+            if action == ProtocolMessageAction.HEARTBEAT:
+                if self.__ping_future:
+                    self.__ping_future.set_result(None)
+                self.__ping_future = None
 
     @property
     def ably(self):
