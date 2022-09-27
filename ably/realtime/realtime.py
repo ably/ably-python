@@ -35,7 +35,7 @@ class AblyRealtime:
         self.__options = options
         self.key = key
         self.__connection = Connection(self)
-        self.__channels = Channels()
+        self.__channels = Channels(self)
 
     async def connect(self):
         await self.connection.connect()
@@ -65,15 +65,22 @@ class AblyRealtime:
 
 
 class Channels:
-    def __init__(self):
+    def __init__(self, realtime):
         self.all = {}
+        self.__realtime = realtime
 
     def get(self, name):
         if not self.all.get(name):
-            self.all[name] = RealtimeChannel(name)
+            self.all[name] = RealtimeChannel(self.__realtime, name)
         return self.all[name]
 
     def release(self, name):
         if not self.all.get(name):
             return
         del self.all[name]
+
+    def on_channel_message(self, msg):
+        channel = self.all.get(msg.get('channel'))
+        if not channel:
+            log.warning('Channel message recieved but no channel instance found')
+        channel.on_message(msg)
