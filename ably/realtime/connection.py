@@ -4,9 +4,11 @@ import asyncio
 import websockets
 import json
 from ably.http.httputils import HttpUtils
-from ably.util.exceptions import AblyAuthException
+from ably.util.exceptions import AblyAuthException, AblyException
 from enum import Enum, IntEnum
 from pyee.asyncio import AsyncIOEventEmitter
+from datetime import datetime
+from ably.util import helper
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +23,7 @@ class ConnectionState(Enum):
 
 
 class ProtocolMessageAction(IntEnum):
+    HEARTBEAT = 0
     CONNECTED = 4
     ERROR = 9
     CLOSE = 7
@@ -40,6 +43,9 @@ class Connection(AsyncIOEventEmitter):
 
     async def close(self):
         await self.__connection_manager.close()
+
+    async def ping(self):
+        return await self.__connection_manager.ping()
 
     def on_state_update(self, state):
         self.__state = state
@@ -63,6 +69,7 @@ class ConnectionManager(AsyncIOEventEmitter):
         self.__closed_future = None
         self.__websocket = None
         self.connect_impl_task = None
+        self.__ping_future = None
         super().__init__()
 
     def enact_state_change(self, state):
@@ -71,13 +78,15 @@ class ConnectionManager(AsyncIOEventEmitter):
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
+            await self.ping()
             return
 
         if self.__state == ConnectionState.CONNECTING:
             if self.__connected_future is None:
-                log.fatal('Connection state is CONNECTING but connected_future does not exits')
+                log.fatal('Connection state is CONNECTING but connected_future does not exist')
                 return
             await self.__connected_future
+            await self.ping()
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
             self.__connected_future = asyncio.Future()
@@ -116,6 +125,21 @@ class ConnectionManager(AsyncIOEventEmitter):
             except AblyAuthException:
                 return
 
+    async def ping(self):
+        self.__ping_future = asyncio.Future()
+        if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
+            self.__ping_id = helper.get_random_id()
+            ping_start_time = datetime.now().timestamp()
+            await self.sendProtocolMessage({"action": ProtocolMessageAction.HEARTBEAT,
+                                            "id": self.__ping_id})
+        else:
+            raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
+        if self.__ping_future:
+            await self.__ping_future
+        ping_end_time = datetime.now().timestamp()
+        response_time_ms = (ping_end_time - ping_start_time) * 1000
+        return round(response_time_ms, 2)
+
     async def ws_read_loop(self):
         while True:
             raw = await self.__websocket.recv()
@@ -142,6 +166,13 @@ class ConnectionManager(AsyncIOEventEmitter):
                 self.__websocket = None
                 self.__closed_future.set_result(None)
                 break
+            if action == ProtocolMessageAction.HEARTBEAT:
+                if self.__ping_future:
+                    # Resolve on heartbeat from ping request.
+                    # TODO: Handle Normal heartbeat if required
+                    if self.__ping_id == msg.get("id"):
+                        self.__ping_future.set_result(None)
+                self.__ping_future = None
 
     @property
     def ably(self):
