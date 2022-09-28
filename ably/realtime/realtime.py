@@ -3,6 +3,7 @@ import asyncio
 from ably.realtime.connection import Connection
 from ably.rest.auth import Auth
 from ably.types.options import Options
+from ably.realtime.realtime_channel import RealtimeChannel
 
 
 log = logging.getLogger(__name__)
@@ -34,6 +35,7 @@ class AblyRealtime:
         self.__options = options
         self.key = key
         self.__connection = Connection(self)
+        self.__channels = Channels(self)
 
     async def connect(self):
         await self.connection.connect()
@@ -56,3 +58,29 @@ class AblyRealtime:
     def connection(self):
         """Establish realtime connection"""
         return self.__connection
+
+    @property
+    def channels(self):
+        return self.__channels
+
+
+class Channels:
+    def __init__(self, realtime):
+        self.all = {}
+        self.__realtime = realtime
+
+    def get(self, name):
+        if not self.all.get(name):
+            self.all[name] = RealtimeChannel(self.__realtime, name)
+        return self.all[name]
+
+    def release(self, name):
+        if not self.all.get(name):
+            return
+        del self.all[name]
+
+    def on_channel_message(self, msg):
+        channel = self.all.get(msg.get('channel'))
+        if not channel:
+            log.warning('Channel message recieved but no channel instance found')
+        channel.on_message(msg)
