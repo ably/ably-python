@@ -170,7 +170,7 @@ class ConnectionManager(AsyncIOEventEmitter):
                 if self.__ping_future:
                     # Resolve on heartbeat from ping request.
                     # TODO: Handle Normal heartbeat if required
-                    if self.__ping_id == msg["id"]:
+                    if self.__ping_id == msg.get("id"):
                         self.__ping_future.set_result(None)
                 self.__ping_future = None
 
