@@ -86,7 +86,6 @@ class ConnectionManager(AsyncIOEventEmitter):
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
-            await self.ping()
             return
 
         if self.__state == ConnectionState.CONNECTING:
@@ -94,7 +93,6 @@ class ConnectionManager(AsyncIOEventEmitter):
                 log.fatal('Connection state is CONNECTING but connected_future does not exist')
                 return
             await self.__connected_future
-            await self.ping()
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
             self.__connected_future = asyncio.Future()
@@ -134,6 +132,10 @@ class ConnectionManager(AsyncIOEventEmitter):
                 return
 
     async def ping(self):
+        if self.__ping_future:
+            response = await self.__ping_future
+            return response
+
         self.__ping_future = asyncio.Future()
         if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
             self.__ping_id = helper.get_random_id()
@@ -142,8 +144,6 @@ class ConnectionManager(AsyncIOEventEmitter):
                                             "id": self.__ping_id})
         else:
             raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
-        if self.__ping_future:
-            await self.__ping_future
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
@@ -180,7 +180,7 @@ class ConnectionManager(AsyncIOEventEmitter):
                     # TODO: Handle Normal heartbeat if required
                     if self.__ping_id == msg.get("id"):
                         self.__ping_future.set_result(None)
-                self.__ping_future = None
+                        self.__ping_future = None
             if action in [ProtocolMessageAction.ATTACHED, ProtocolMessageAction.DETACHED]:
                 self.ably.channels.on_channel_message(msg)
 
