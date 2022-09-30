@@ -38,7 +38,7 @@ class Connection(AsyncIOEventEmitter):
     def __init__(self, realtime):
         self.__realtime = realtime
         self.__connection_manager = ConnectionManager(realtime)
-        self.__state = ConnectionState.INITIALIZED
+        self.__connection_manager = ConnectionManager(realtime, self.state)
         self.__connection_manager.on('connectionstate', self.on_state_update)
         super().__init__()
 
@@ -69,10 +69,10 @@ class Connection(AsyncIOEventEmitter):
 
 
 class ConnectionManager(AsyncIOEventEmitter):
-    def __init__(self, realtime):
+    def __init__(self, realtime, initial_state):
         self.options = realtime.options
         self.__ably = realtime
-        self.__state = ConnectionState.INITIALIZED
+        self.__state = initial_state
         self.__connected_future = None
         self.__closed_future = None
         self.__websocket = None
