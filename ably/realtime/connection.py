@@ -76,7 +76,7 @@ class ConnectionManager(AsyncIOEventEmitter):
         self.__connected_future = None
         self.__closed_future = None
         self.__websocket = None
-        self.connect_impl_task = None
+        self.setup_ws_task = None
         self.__ping_future = None
         super().__init__()
 
@@ -93,12 +93,11 @@ class ConnectionManager(AsyncIOEventEmitter):
                 log.fatal('Connection state is CONNECTING but connected_future does not exist')
                 return
             await self.__connected_future
+            self.enact_state_change(ConnectionState.CONNECTED)
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
             self.__connected_future = asyncio.Future()
-            self.connect_impl_task = self.ably.options.loop.create_task(self.connect_impl())
-            await self.__connected_future
-            self.enact_state_change(ConnectionState.CONNECTED)
+            await self.connect_impl()
 
     async def close(self):
         if self.__state != ConnectionState.CONNECTED:
@@ -111,8 +110,13 @@ class ConnectionManager(AsyncIOEventEmitter):
         else:
             log.warn('Connection.closed called while connection already closed or not established')
         self.enact_state_change(ConnectionState.CLOSED)
-        if self.connect_impl_task:
-            await self.connect_impl_task
+        if self.setup_ws_task:
+            await self.setup_ws_task
+
+    async def connect_impl(self):
+        self.setup_ws_task = self.ably.options.loop.create_task(self.setup_ws())
+        await self.__connected_future
+        self.enact_state_change(ConnectionState.CONNECTED)
 
     async def send_close_message(self):
         await self.sendProtocolMessage({"action": ProtocolMessageAction.CLOSE})
@@ -120,7 +124,7 @@ class ConnectionManager(AsyncIOEventEmitter):
     async def sendProtocolMessage(self, protocolMessage):
         await self.__websocket.send(json.dumps(protocolMessage))
 
-    async def connect_impl(self):
+    async def setup_ws(self):
         headers = HttpUtils.default_headers()
         async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}',
                                       extra_headers=headers) as websocket:
