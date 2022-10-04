@@ -12,24 +12,24 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         self.valid_key_format = "api:key"
 
     async def test_auth_with_valid_key(self):
-        ably = await RestSetup.get_ably_realtime(key=self.test_vars["keys"][0]["key_str"])
+        ably = await RestSetup.get_ably_realtime(key=self.test_vars["keys"][0]["key_str"], auto_connect=False)
         assert Auth.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
         assert ably.auth.auth_options.key_name == self.test_vars["keys"][0]['key_name']
         assert ably.auth.auth_options.key_secret == self.test_vars["keys"][0]['key_secret']
 
     async def test_auth_incorrect_key(self):
         with pytest.raises(AblyAuthException):
-            await RestSetup.get_ably_realtime(key="some invalid key")
+            await RestSetup.get_ably_realtime(key="some invalid key", auto_connect=False)
 
     async def test_auth_with_valid_key_format(self):
         key = self.valid_key_format.split(":")
-        ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
+        ably = await RestSetup.get_ably_realtime(key=self.valid_key_format, auto_connect=False)
         assert Auth.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
         assert ably.auth.auth_options.key_name == key[0]
         assert ably.auth.auth_options.key_secret == key[1]
 
     async def test_auth_connection(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await RestSetup.get_ably_realtime(auto_connect=False)
         assert ably.connection.state == ConnectionState.INITIALIZED
         await ably.connect()
         assert ably.connection.state == ConnectionState.CONNECTED
@@ -37,7 +37,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.CLOSED
 
     async def test_auth_invalid_key(self):
-        ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
+        ably = await RestSetup.get_ably_realtime(key=self.valid_key_format, auto_connect=False)
         with pytest.raises(AblyAuthException):
             await ably.connect()
         await ably.close()
