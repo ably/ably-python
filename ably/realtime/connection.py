@@ -37,7 +37,7 @@ class ProtocolMessageAction(IntEnum):
 class Connection(AsyncIOEventEmitter):
     def __init__(self, realtime):
         self.__realtime = realtime
-        self.__connection_manager = ConnectionManager(realtime)
+        self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
         self.__connection_manager = ConnectionManager(realtime, self.state)
         self.__connection_manager.on('connectionstate', self.on_state_update)
         super().__init__()
@@ -73,7 +73,7 @@ class ConnectionManager(AsyncIOEventEmitter):
         self.options = realtime.options
         self.__ably = realtime
         self.__state = initial_state
-        self.__connected_future = None
+        self.__connected_future = asyncio.Future() if initial_state == ConnectionState.CONNECTING else None
         self.__closed_future = None
         self.__websocket = None
         self.setup_ws_task = None
