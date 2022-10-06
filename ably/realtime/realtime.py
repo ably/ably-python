@@ -37,6 +37,9 @@ class AblyRealtime:
         self.__connection = Connection(self)
         self.__channels = Channels(self)
 
+        if options.auto_connect:
+            asyncio.ensure_future(self.connection.connection_manager.connect_impl())
+
     async def connect(self):
         await self.connection.connect()
 
