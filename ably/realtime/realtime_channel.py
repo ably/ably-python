@@ -131,6 +131,27 @@ class RealtimeChannel(AsyncIOEventEmitter):
 
         await self.attach()
 
+    def unsubscribe(self, *args):
+        if len(args) == 0:
+            event = None
+            listener = None
+        elif isinstance(args[0], str):
+            event = args[0]
+            listener = args[1]
+        elif isinstance(args[0], types.FunctionType) or asyncio.iscoroutinefunction(args[0]):
+            listener = args[0]
+            event = None
+        else:
+            raise ValueError('invalid unsubscribe arguments')
+
+        if listener is None:
+            self.__message_emitter.remove_all_listeners()
+            self.__all_messages_emitter.remove_all_listeners()
+        elif event is not None:
+            self.__message_emitter.remove_listener(event, listener)
+        else:
+            self.__all_messages_emitter.remove_listener('message', listener)
+
     def on_message(self, msg):
         action = msg.get('action')
         if action == ProtocolMessageAction.ATTACHED:
