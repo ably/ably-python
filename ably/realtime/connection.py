@@ -32,6 +32,7 @@ class ProtocolMessageAction(IntEnum):
     ATTACHED = 11
     DETACH = 12
     DETACHED = 13
+    MESSAGE = 15
 
 
 class Connection(AsyncIOEventEmitter):
@@ -185,7 +186,11 @@ class ConnectionManager(AsyncIOEventEmitter):
                     if self.__ping_id == msg.get("id"):
                         self.__ping_future.set_result(None)
                         self.__ping_future = None
-            if action in [ProtocolMessageAction.ATTACHED, ProtocolMessageAction.DETACHED]:
+            if action in (
+                ProtocolMessageAction.ATTACHED,
+                ProtocolMessageAction.DETACHED,
+                ProtocolMessageAction.MESSAGE
+            ):
                 self.ably.channels.on_channel_message(msg)
 
     @property
