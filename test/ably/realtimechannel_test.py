@@ -143,3 +143,60 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         assert channel.state == ChannelState.ATTACHED
 
         await ably.close()
+
+    # RTL8b
+    async def test_unsubscribe(self):
+        ably = await RestSetup.get_ably_realtime()
+        await ably.connect()
+        channel = ably.channels.get('my_channel')
+        await channel.attach()
+
+        message_future = asyncio.Future()
+        listener = Mock(side_effect=lambda msg: message_future.set_result(msg))
+        await channel.subscribe('event', listener)
+
+        # publish a message using rest client
+        rest = await RestSetup.get_ably_rest()
+        rest_channel = rest.channels.get('my_channel')
+        await rest_channel.publish('event', 'data')
+        await message_future
+        listener.assert_called_once()
+
+        # unsubscribe the listener from the channel
+        channel.unsubscribe('event', listener)
+
+        # test that the listener is not called again for further publishes
+        await rest_channel.publish('event', 'data')
+        await asyncio.sleep(1)
+        assert listener.call_count == 1
+
+        await ably.close()
+        await rest.close()
+
+    # RTL8c
+    async def test_unsubscribe_all(self):
+        ably = await RestSetup.get_ably_realtime()
+        await ably.connect()
+        channel = ably.channels.get('my_channel')
+        await channel.attach()
+        message_future = asyncio.Future()
+        listener = Mock(side_effect=lambda msg: message_future.set_result(msg))
+        await channel.subscribe('event', listener)
+
+        # publish a message using rest client
+        rest = await RestSetup.get_ably_rest()
+        rest_channel = rest.channels.get('my_channel')
+        await rest_channel.publish('event', 'data')
+        await message_future
+        listener.assert_called_once()
+
+        # unsubscribe all listeners from the channel
+        channel.unsubscribe()
+
+        # test that the listener is not called again for further publishes
+        await rest_channel.publish('event', 'data')
+        await asyncio.sleep(1)
+        assert listener.call_count == 1
+
+        await ably.close()
+        await rest.close()
