@@ -1,6 +1,9 @@
 import asyncio
 import logging
+import types
+
 from ably.realtime.connection import ConnectionState, ProtocolMessageAction
+from ably.types.message import Message
 from ably.util.exceptions import AblyException
 from pyee.asyncio import AsyncIOEventEmitter
 from enum import Enum
@@ -23,6 +26,8 @@ class RealtimeChannel(AsyncIOEventEmitter):
         self.__detach_future = None
         self.__realtime = realtime
         self.__state = ChannelState.INITIALIZED
+        self.__message_emitter = AsyncIOEventEmitter()
+        self.__all_messages_emitter = AsyncIOEventEmitter()
         super().__init__()
 
     async def attach(self):
@@ -97,6 +102,35 @@ class RealtimeChannel(AsyncIOEventEmitter):
         await self.__detach_future
         self.set_state(ChannelState.DETACHED)
 
+    async def subscribe(self, *args):
+        if isinstance(args[0], str):
+            event = args[0]
+            listener = args[1]
+        elif isinstance(args[0], types.FunctionType) or asyncio.iscoroutinefunction(args[0]):
+            listener = args[0]
+            event = None
+        else:
+            raise ValueError('invalid subscribe arguments')
+
+        if self.__realtime.connection.state == ConnectionState.CONNECTING:
+            await self.__realtime.connection.connect()
+        elif self.__realtime.connection.state != ConnectionState.CONNECTED:
+            raise AblyException(
+                'Cannot subscribe to channel, invalid connection state: {self.__realtime.connection.state}',
+                400,
+                40000
+            )
+
+        if self.state in (ChannelState.INITIALIZED, ChannelState.ATTACHING, ChannelState.DETACHED):
+            await self.attach()
+
+        if event is not None:
+            self.__message_emitter.on(event, listener)
+        else:
+            self.__all_messages_emitter.on('message', listener)
+
+        await self.attach()
+
     def on_message(self, msg):
         action = msg.get('action')
         if action == ProtocolMessageAction.ATTACHED:
@@ -107,6 +141,11 @@ class RealtimeChannel(AsyncIOEventEmitter):
             if self.__detach_future:
                 self.__detach_future.set_result(None)
             self.__detach_future = None
+        elif action == ProtocolMessageAction.MESSAGE:
+            messages = Message.from_encoded_array(msg.get('messages'))
+            for message in messages:
+                self.__message_emitter.emit(message.name, message)
+                self.__all_messages_emitter.emit('message', message)
 
     def set_state(self, state):
         self.__state = state
