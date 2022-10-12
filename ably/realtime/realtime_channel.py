@@ -105,6 +105,8 @@ class RealtimeChannel(AsyncIOEventEmitter):
     async def subscribe(self, *args):
         if isinstance(args[0], str):
             event = args[0]
+            if not args[1]:
+                raise ValueError("channel.subscribe called without listener")
             listener = args[1]
         elif isinstance(args[0], types.FunctionType) or asyncio.iscoroutinefunction(args[0]):
             listener = args[0]
@@ -137,6 +139,8 @@ class RealtimeChannel(AsyncIOEventEmitter):
             listener = None
         elif isinstance(args[0], str):
             event = args[0]
+            if not args[1]:
+                raise ValueError("channel.unsubscribe called without listener")
             listener = args[1]
         elif isinstance(args[0], types.FunctionType) or asyncio.iscoroutinefunction(args[0]):
             listener = args[0]
