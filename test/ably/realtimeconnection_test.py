@@ -82,7 +82,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
     async def test_auto_connect(self):
         ably = await RestSetup.get_ably_realtime()
         connect_future = asyncio.Future()
-        ably.connection.on(ConnectionState.CONNECTED, lambda: connect_future.set_result(None))
+        ably.connection.on(ConnectionState.CONNECTED, lambda change: connect_future.set_result(change))
         await connect_future
         assert ably.connection.state == ConnectionState.CONNECTED
         await ably.close()

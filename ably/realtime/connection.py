@@ -9,6 +9,8 @@ from enum import Enum, IntEnum
 from pyee.asyncio import AsyncIOEventEmitter
 from datetime import datetime
 from ably.util import helper
+from dataclasses import dataclass
+from typing import Optional
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +22,13 @@ class ConnectionState(Enum):
     CLOSING = 'closing'
     CLOSED = 'closed'
     FAILED = 'failed'
+
+
+@dataclass
+class ConnectionStateChange:
+    previous: ConnectionState
+    current: ConnectionState
+    reason: Optional[AblyException] = None
 
 
 class ProtocolMessageAction(IntEnum):
@@ -51,9 +60,9 @@ class Connection(AsyncIOEventEmitter):
     async def ping(self):
         return await self.__connection_manager.ping()
 
-    def on_state_update(self, state):
-        self.__state = state
-        self.__realtime.options.loop.call_soon(functools.partial(self.emit, state))
+    def on_state_update(self, state_change):
+        self.__state = state_change.current
+        self.__realtime.options.loop.call_soon(functools.partial(self.emit, state_change.current, state_change))
 
     @property
     def state(self):
@@ -80,9 +89,10 @@ class ConnectionManager(AsyncIOEventEmitter):
         self.__ping_future = None
         super().__init__()
 
-    def enact_state_change(self, state):
+    def enact_state_change(self, state, reason=None):
+        current_state = self.__state
         self.__state = state
-        self.emit('connectionstate', state)
+        self.emit('connectionstate', ConnectionStateChange(current_state, state, reason))
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
@@ -166,8 +176,8 @@ class ConnectionManager(AsyncIOEventEmitter):
             if action == ProtocolMessageAction.ERROR:  # ERROR
                 error = msg["error"]
                 if error['nonfatal'] is False:
-                    self.enact_state_change(ConnectionState.FAILED)
                     exception = AblyAuthException(error["message"], error["statusCode"], error["code"])
+                    self.enact_state_change(ConnectionState.FAILED, exception)
                     if self.__connected_future:
                         self.__connected_future.set_exception(exception)
                         self.__connected_future = None
