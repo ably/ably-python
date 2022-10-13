@@ -137,7 +137,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         channel = ably.channels.get('my_channel')
         assert channel.state == ChannelState.INITIALIZED
 
-        listener = Mock()
+        listener = Mock(spec=types.FunctionType)
         await channel.subscribe('event', listener)
 
         assert channel.state == ChannelState.ATTACHED
@@ -152,7 +152,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.attach()
 
         message_future = asyncio.Future()
-        listener = Mock(side_effect=lambda msg: message_future.set_result(msg))
+        listener = Mock(spec=types.FunctionType, side_effect=lambda msg: message_future.set_result(msg))
         await channel.subscribe('event', listener)
 
         # publish a message using rest client
@@ -180,7 +180,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         channel = ably.channels.get('my_channel')
         await channel.attach()
         message_future = asyncio.Future()
-        listener = Mock(side_effect=lambda msg: message_future.set_result(msg))
+        listener = Mock(spec=types.FunctionType, side_effect=lambda msg: message_future.set_result(msg))
         await channel.subscribe('event', listener)
 
         # publish a message using rest client

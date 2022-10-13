@@ -108,6 +108,8 @@ class RealtimeChannel(AsyncIOEventEmitter):
             event = args[0]
             if not args[1]:
                 raise ValueError("channel.subscribe called without listener")
+            if not is_function_or_coroutine(args[1]):
+                raise ValueError("subscribe listener must be function or coroutine function")
             listener = args[1]
         elif is_function_or_coroutine(args[0]):
             listener = args[0]
@@ -142,6 +144,8 @@ class RealtimeChannel(AsyncIOEventEmitter):
             event = args[0]
             if not args[1]:
                 raise ValueError("channel.unsubscribe called without listener")
+            if not is_function_or_coroutine(args[1]):
+                raise ValueError("unsubscribe listener must be a function or coroutine function")
             listener = args[1]
         elif is_function_or_coroutine(args[0]):
             listener = args[0]
