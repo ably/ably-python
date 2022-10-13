@@ -1,12 +1,13 @@
 import asyncio
 import logging
-import types
 
 from ably.realtime.connection import ConnectionState, ProtocolMessageAction
 from ably.types.message import Message
 from ably.util.exceptions import AblyException
 from pyee.asyncio import AsyncIOEventEmitter
 from enum import Enum
+
+from ably.util.helper import is_function_or_coroutine
 
 log = logging.getLogger(__name__)
 
@@ -108,7 +109,7 @@ class RealtimeChannel(AsyncIOEventEmitter):
             if not args[1]:
                 raise ValueError("channel.subscribe called without listener")
             listener = args[1]
-        elif isinstance(args[0], types.FunctionType) or asyncio.iscoroutinefunction(args[0]):
+        elif is_function_or_coroutine(args[0]):
             listener = args[0]
             event = None
         else:
@@ -142,7 +143,7 @@ class RealtimeChannel(AsyncIOEventEmitter):
             if not args[1]:
                 raise ValueError("channel.unsubscribe called without listener")
             listener = args[1]
-        elif isinstance(args[0], types.FunctionType) or asyncio.iscoroutinefunction(args[0]):
+        elif is_function_or_coroutine(args[0]):
             listener = args[0]
             event = None
         else:
