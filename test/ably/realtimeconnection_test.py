@@ -82,7 +82,43 @@ class TestRealtimeAuth(BaseAsyncTestCase):
     async def test_auto_connect(self):
         ably = await RestSetup.get_ably_realtime()
         connect_future = asyncio.Future()
-        ably.connection.on(ConnectionState.CONNECTED, lambda: connect_future.set_result(None))
+        ably.connection.on(ConnectionState.CONNECTED, lambda change: connect_future.set_result(change))
         await connect_future
         assert ably.connection.state == ConnectionState.CONNECTED
+        await ably.close()
+
+    async def test_connection_state_change(self):
+        ably = await RestSetup.get_ably_realtime()
+
+        connected_future = asyncio.Future()
+
+        def on_state_change(change):
+            connected_future.set_result(change)
+
+        ably.connection.on(ConnectionState.CONNECTED, on_state_change)
+
+        state_change = await connected_future
+        assert state_change.previous == ConnectionState.CONNECTING
+        assert state_change.current == ConnectionState.CONNECTED
+        await ably.close()
+
+    async def test_connection_state_change_reason(self):
+        ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
+
+        failed_changes = []
+
+        def on_state_change(change):
+            failed_changes.append(change)
+
+        ably.connection.on(ConnectionState.FAILED, on_state_change)
+
+        with pytest.raises(AblyAuthException) as exception:
+            await ably.connect()
+
+        assert len(failed_changes) == 1
+        state_change = failed_changes[0]
+        assert state_change is not None
+        assert state_change.previous == ConnectionState.CONNECTING
+        assert state_change.current == ConnectionState.FAILED
+        assert state_change.reason == exception.value
         await ably.close()
