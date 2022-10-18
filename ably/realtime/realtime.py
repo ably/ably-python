@@ -97,6 +97,11 @@ class AblyRealtime:
         the callback with any error and the response time in milliseconds when
         a heartbeat ping request is echoed from the server.
 
+        Raises
+        ------
+        AblyException
+            If ping request cannot be sent due to invalid state
+
         Returns
         -------
         float
