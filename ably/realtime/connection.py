@@ -107,6 +107,7 @@ class Connection(AsyncIOEventEmitter):
         return await self.__connection_manager.ping()
 
     def _on_state_update(self, state_change):
+        log.info(f'Connection state changing from {self.state} to {state_change.current}')
         self.__state = state_change.current
         self.__realtime.options.loop.call_soon(functools.partial(self.emit, state_change.current, state_change))
 
@@ -158,14 +159,14 @@ class ConnectionManager(AsyncIOEventEmitter):
 
     async def close(self):
         if self.__state != ConnectionState.CONNECTED:
-            log.warn('Connection.closed called while connection state not connected')
+            log.warning('Connection.closed called while connection state not connected')
         self.enact_state_change(ConnectionState.CLOSING)
         self.__closed_future = asyncio.Future()
         if self.__websocket and self.__state != ConnectionState.FAILED:
             await self.send_close_message()
             await self.__closed_future
         else:
-            log.warn('Connection.closed called while connection already closed or not established')
+            log.warning('Connection.closed called while connection already closed or not established')
         self.enact_state_change(ConnectionState.CLOSED)
         if self.setup_ws_task:
             await self.setup_ws_task
@@ -178,13 +179,17 @@ class ConnectionManager(AsyncIOEventEmitter):
     async def send_close_message(self):
         await self.send_protocol_message({"action": ProtocolMessageAction.CLOSE})
 
-    async def send_protocol_message(self, protocol_message):
-        await self.__websocket.send(json.dumps(protocol_message))
+    async def send_protocol_message(self, protocolMessage):
+        raw_msg = json.dumps(protocolMessage)
+        log.info('send_protocol_message(): sending {raw_msg}')
+        await self.__websocket.send(raw_msg)
 
     async def setup_ws(self):
         headers = HttpUtils.default_headers()
-        async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.__ably.key}',
-                                      extra_headers=headers) as websocket:
+        ws_url = f'wss://{self.options.realtime_host}?key={self.__ably.key}'
+        log.info(f'setup_ws(): attempting to connect to {ws_url}')
+        async with websockets.connect(ws_url, extra_headers=headers) as websocket:
+            log.info(f'setup_ws(): connection established to {ws_url}')
             self.__websocket = websocket
             task = self.__ably.options.loop.create_task(self.ws_read_loop())
             try:
@@ -213,6 +218,7 @@ class ConnectionManager(AsyncIOEventEmitter):
         while True:
             raw = await self.__websocket.recv()
             msg = json.loads(raw)
+            log.info(f'ws_read_loop(): receieved protocol message: {msg}')
             action = msg['action']
             if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
                 if self.__connected_future:
