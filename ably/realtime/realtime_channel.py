@@ -64,6 +64,9 @@ class RealtimeChannel(AsyncIOEventEmitter):
         AblyException
             If unable to attach channel
         """
+
+        log.info(f'RealtimeChannel.attach() called, channel = {self.name}')
+
         # RTL4a - if channel is attached do nothing
         if self.state == ChannelState.ATTACHED:
             return
@@ -111,6 +114,9 @@ class RealtimeChannel(AsyncIOEventEmitter):
         AblyException
             If unable to detach channel
         """
+
+        log.info(f'RealtimeChannel.detach() called, channel = {self.name}')
+
         # RTL5g - raise exception if state invalid
         if self.__realtime.connection.state in [ConnectionState.CLOSING, ConnectionState.FAILED]:
             raise AblyException(
@@ -188,6 +194,8 @@ class RealtimeChannel(AsyncIOEventEmitter):
         else:
             raise ValueError('invalid subscribe arguments')
 
+        log.info(f'RealtimeChannel.subscribe called, channel = {self.name}, event = {event}')
+
         if self.__realtime.connection.state == ConnectionState.CONNECTING:
             await self.__realtime.connection.connect()
         elif self.__realtime.connection.state != ConnectionState.CONNECTED:
@@ -247,6 +255,8 @@ class RealtimeChannel(AsyncIOEventEmitter):
             event = None
         else:
             raise ValueError('invalid unsubscribe arguments')
+
+        log.info(f'RealtimeChannel.unsubscribe called, channel = {self.name}, event = {event}')
 
         if listener is None:
             self.__message_emitter.remove_all_listeners()
