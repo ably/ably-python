@@ -51,12 +51,8 @@ class Connection(AsyncIOEventEmitter):
 
     Attributes
     ----------
-    realtime: any
-        Realtime client
     state: str
         Connection state
-    connection_manager: ConnectionManager
-        Connection manager
 
 
     Methods
@@ -70,13 +66,6 @@ class Connection(AsyncIOEventEmitter):
     """
 
     def __init__(self, realtime):
-        """Constructs a Connection object.
-
-        Parameters
-        ----------
-        realtime: any
-            Ably realtime client
-        """
         self.__realtime = realtime
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
         self.__connection_manager = ConnectionManager(realtime, self.state)
@@ -110,12 +99,11 @@ class Connection(AsyncIOEventEmitter):
 
     @property
     def state(self):
-        """The current Channel state of the channel"""
+        """The current connection state of the connection"""
         return self.__state
 
     @state.setter
     def state(self, value):
-        """Sets connection state"""
         self.__state = value
 
     @property
@@ -246,7 +234,7 @@ class ConnectionManager(AsyncIOEventEmitter):
                 ProtocolMessageAction.DETACHED,
                 ProtocolMessageAction.MESSAGE
             ):
-                self.ably.channels.on_channel_message(msg)
+                self.ably.channels._on_channel_message(msg)
 
     @property
     def ably(self):

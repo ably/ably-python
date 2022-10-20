@@ -39,7 +39,7 @@ class AblyRealtime:
     """
 
     def __init__(self, key=None, loop=None, **kwargs):
-        """Constructs a RealtimeClient object using an Ably API key or token string.
+        """Constructs a RealtimeClient object using an Ably API key.
 
         Parameters
         ----------
@@ -131,13 +131,7 @@ class AblyRealtime:
 
 
 class Channels:
-    """
-    Establish ably realtime channel
-
-    Attributes
-    ----------
-    realtime: any
-        Ably realtime client object
+    """Creates and destroys RealtimeChannel objects.
 
     Methods
     -------
@@ -145,18 +139,9 @@ class Channels:
         Gets a channel
     release(name)
         Releases a channel
-    on_channel_message(msg)
-        Receives message on a channel
     """
 
     def __init__(self, realtime):
-        """Initial a realtime channel using the realtime object
-
-        Parameters
-        ----------
-        realtime: any
-            Ably realtime client object
-        """
         self.all = {}
         self.__realtime = realtime
 
@@ -189,15 +174,8 @@ class Channels:
             return
         del self.all[name]
 
-    def on_channel_message(self, msg):
-        """Receives message on a realtime channel
-
-        Parameters
-        ----------
-        msg: str
-            Channel message to receive
-        """
+    def _on_channel_message(self, msg):
         channel = self.all.get(msg.get('channel'))
         if not channel:
             log.warning('Channel message received but no channel instance found')
-        channel.on_message(msg)
+        channel._on_message(msg)
