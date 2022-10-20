@@ -38,9 +38,9 @@ class RealtimeChannel(AsyncIOEventEmitter):
     detach()
         Detach from channel
     subscribe(*args)
-        Subscribe to a channel
-    unsubscribe()
-        Unsubscribe from a channel
+        Subscribe to messages on a channel
+    unsubscribe(*args)
+        Unsubscribe to messages from a channel
     """
 
     def __init__(self, realtime, name):
@@ -157,14 +157,16 @@ class RealtimeChannel(AsyncIOEventEmitter):
 
         Parameters
         ----------
-        *args: event, listener, optional
+        *args: event, listener
             Subscribe event and listener
 
-            arg1(event): str
+            arg1(event): str, optional
                 Subscribe to messages with the given event name
 
-            arg2(listener): any
+            arg2(listener): callable
                 Subscribe to all messages on the channel
+
+            When no event is provided, arg1 is used as the listener.
 
         Raises
         ------
@@ -213,14 +215,16 @@ class RealtimeChannel(AsyncIOEventEmitter):
 
         Parameters
         ----------
-        *args: event, listener, optional
+        *args: event, listener
             Unsubscribe event and listener
 
-            arg1(event): str
+            arg1(event): str, optional
                 Unsubscribe to messages with the given event name
 
-            arg2(listener): any
+            arg2(listener): callable
                 Unsubscribe to all messages on the channel
+
+            When no event is provided, arg1 is used as the listener.
 
         Raises
         ------

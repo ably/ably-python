@@ -45,7 +45,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
     async def test_connection_ping_connected(self):
         ably = await RestSetup.get_ably_realtime()
         await ably.connect()
-        response_time_ms = await ably.ping()
+        response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert type(response_time_ms) is float
         await ably.close()
@@ -54,7 +54,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         ably = await RestSetup.get_ably_realtime(auto_connect=False)
         assert ably.connection.state == ConnectionState.INITIALIZED
         with pytest.raises(AblyException) as exception:
-            await ably.ping()
+            await ably.connection.ping()
         assert exception.value.code == 400
         assert exception.value.status_code == 40000
 
@@ -64,7 +64,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             await ably.connect()
         assert ably.connection.state == ConnectionState.FAILED
         with pytest.raises(AblyException) as exception:
-            await ably.ping()
+            await ably.connection.ping()
         assert exception.value.code == 400
         assert exception.value.status_code == 40000
         await ably.close()
@@ -75,7 +75,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.CONNECTED
         await ably.close()
         with pytest.raises(AblyException) as exception:
-            await ably.ping()
+            await ably.connection.ping()
         assert exception.value.code == 400
         assert exception.value.status_code == 40000
 
