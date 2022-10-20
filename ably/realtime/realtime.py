@@ -43,6 +43,10 @@ class AblyRealtime:
             A valid ably API key string
         loop: AbstractEventLoop, optional
             asyncio running event loop
+        auto_connect: bool
+            When true, the client connects to Ably as soon as it is instantiated.
+            You can set this to false and explicitly connect to Ably using the
+            connect() method. The default is true.
 
         Raises
         ------
