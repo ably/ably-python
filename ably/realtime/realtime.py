@@ -15,14 +15,12 @@ class AblyRealtime:
 
     Attributes
     ----------
-    key: str
-        A valid ably key string
     loop: AbstractEventLoop
         asyncio running event loop
     auth: Auth
         authentication object
     options: Options
-        auth options
+        auth options object
     connection: Connection
         realtime connection object
     channels: Channels
@@ -31,11 +29,9 @@ class AblyRealtime:
     Methods
     -------
     connect()
-        Establishes a realtime connection
+        Establishes the realtime connection
     close()
-        Closes a realtime connection
-    ping()
-        Pings a realtime connection
+        Closes the realtime connection
     """
 
     def __init__(self, key=None, loop=None, **kwargs):
@@ -44,7 +40,7 @@ class AblyRealtime:
         Parameters
         ----------
         key: str
-            A valid ably key string
+            A valid ably API key string
         loop: AbstractEventLoop, optional
             asyncio running event loop
 
@@ -89,25 +85,6 @@ class AblyRealtime:
         connection without an explicit call to connect()
         """
         await self.connection.close()
-
-    async def ping(self):
-        """Send a ping to the realtime connection
-
-        When connected, sends a heartbeat ping to the Ably server and executes
-        the callback with any error and the response time in milliseconds when
-        a heartbeat ping request is echoed from the server.
-
-        Raises
-        ------
-        AblyException
-            If ping request cannot be sent due to invalid state
-
-        Returns
-        -------
-        float
-            The response time in milliseconds
-        """
-        return await self.connection.ping()
 
     @property
     def auth(self):

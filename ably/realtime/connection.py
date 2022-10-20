@@ -68,8 +68,8 @@ class Connection(AsyncIOEventEmitter):
     def __init__(self, realtime):
         self.__realtime = realtime
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
-        self.__connection_manager = ConnectionManager(realtime, self.state)
-        self.__connection_manager.on('connectionstate', self.__on_state_update)
+        self.__connection_manager = ConnectionManager(self.__realtime, self.state)
+        self.__connection_manager.on('connectionstate', self._on_state_update)
         super().__init__()
 
     async def connect(self):
@@ -88,12 +88,25 @@ class Connection(AsyncIOEventEmitter):
         await self.__connection_manager.close()
 
     async def ping(self):
-        """
-        Send a ping to the realtime connection
+        """Send a ping to the realtime connection
+
+        When connected, sends a heartbeat ping to the Ably server and executes
+        the callback with any error and the response time in milliseconds when
+        a heartbeat ping request is echoed from the server.
+
+        Raises
+        ------
+        AblyException
+            If ping request cannot be sent due to invalid state
+
+        Returns
+        -------
+        float
+            The response time in milliseconds
         """
         return await self.__connection_manager.ping()
 
-    def __on_state_update(self, state_change):
+    def _on_state_update(self, state_change):
         self.__state = state_change.current
         self.__realtime.options.loop.call_soon(functools.partial(self.emit, state_change.current, state_change))
 
@@ -158,7 +171,7 @@ class ConnectionManager(AsyncIOEventEmitter):
             await self.setup_ws_task
 
     async def connect_impl(self):
-        self.setup_ws_task = self.ably.options.loop.create_task(self.setup_ws())
+        self.setup_ws_task = self.__ably.options.loop.create_task(self.setup_ws())
         await self.__connected_future
         self.enact_state_change(ConnectionState.CONNECTED)
 
@@ -170,10 +183,10 @@ class ConnectionManager(AsyncIOEventEmitter):
 
     async def setup_ws(self):
         headers = HttpUtils.default_headers()
-        async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}',
+        async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.__ably.key}',
                                       extra_headers=headers) as websocket:
             self.__websocket = websocket
-            task = self.ably.options.loop.create_task(self.ws_read_loop())
+            task = self.__ably.options.loop.create_task(self.ws_read_loop())
             try:
                 await task
             except AblyAuthException:
@@ -234,7 +247,7 @@ class ConnectionManager(AsyncIOEventEmitter):
                 ProtocolMessageAction.DETACHED,
                 ProtocolMessageAction.MESSAGE
             ):
-                self.ably.channels._on_channel_message(msg)
+                self.__ably.channels._on_channel_message(msg)
 
     @property
     def ably(self):
