@@ -26,8 +26,6 @@ class RealtimeChannel(AsyncIOEventEmitter):
 
     Attributes
     ----------
-    realtime: any
-        Ably realtime client
     name: str
         Channel name
     state: str
@@ -43,24 +41,9 @@ class RealtimeChannel(AsyncIOEventEmitter):
         Subscribe to a channel
     unsubscribe()
         Unsubscribe from a channel
-    on_message(msg)
-        Emit channel message
-    set_state(state)
-        Set channel state
     """
 
     def __init__(self, realtime, name):
-        """Constructs a Realtime channel object.
-
-        Parameters
-        ----------
-        realtime: any
-            Ably realtime client
-        name: str
-            Channel name
-        state: str
-            Channel state
-        """
         self.__name = name
         self.__attach_future = None
         self.__detach_future = None
@@ -167,11 +150,21 @@ class RealtimeChannel(AsyncIOEventEmitter):
         """Subscribe to a channel
 
         Registers a listener for messages on the channel.
+        The caller supplies a listener function, which is called
+        each time one or more messages arrives on the channel.
+
+        The function resolves once the channel is attached.
 
         Parameters
         ----------
         *args: event, listener, optional
             Subscribe event and listener
+
+            arg1(event): str
+                Subscribe to messages with the given event name
+
+            arg2(listener): any
+                Subscribe to all messages on the channel
 
         Raises
         ------
@@ -221,7 +214,13 @@ class RealtimeChannel(AsyncIOEventEmitter):
         Parameters
         ----------
         *args: event, listener, optional
-            Subscribe event and listener
+            Unsubscribe event and listener
+
+            arg1(event): str
+                Unsubscribe to messages with the given event name
+
+            arg2(listener): any
+                Unsubscribe to all messages on the channel
 
         Raises
         ------
@@ -253,14 +252,7 @@ class RealtimeChannel(AsyncIOEventEmitter):
         else:
             self.__all_messages_emitter.remove_listener('message', listener)
 
-    def on_message(self, msg):
-        """Emit channel message
-
-        Parameters
-        ----------
-        msg: str
-            Channel message
-        """
+    def _on_message(self, msg):
         action = msg.get('action')
         if action == ProtocolMessageAction.ATTACHED:
             if self.__attach_future:
@@ -277,13 +269,6 @@ class RealtimeChannel(AsyncIOEventEmitter):
                 self.__all_messages_emitter.emit('message', message)
 
     def set_state(self, state):
-        """Set channel state
-
-        Parameters
-        ----------
-        state: str
-            New channel state
-        """
         self.__state = state
         self.emit(state)
 
