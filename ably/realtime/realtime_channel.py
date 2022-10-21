@@ -21,6 +21,28 @@ class ChannelState(Enum):
 
 
 class RealtimeChannel(AsyncIOEventEmitter):
+    """
+    Ably Realtime Channel
+
+    Attributes
+    ----------
+    name: str
+        Channel name
+    state: str
+        Channel state
+
+    Methods
+    -------
+    attach()
+        Attach to channel
+    detach()
+        Detach from channel
+    subscribe(*args)
+        Subscribe to messages on a channel
+    unsubscribe(*args)
+        Unsubscribe to messages from a channel
+    """
+
     def __init__(self, realtime, name):
         self.__name = name
         self.__attach_future = None
@@ -32,6 +54,16 @@ class RealtimeChannel(AsyncIOEventEmitter):
         super().__init__()
 
     async def attach(self):
+        """Attach to channel
+
+        Attach to this channel ensuring the channel is created in the Ably system and all messages published
+        on the channel are received by any channel listeners registered using subscribe
+
+        Raises
+        ------
+        AblyException
+            If unable to attach channel
+        """
         # RTL4a - if channel is attached do nothing
         if self.state == ChannelState.ATTACHED:
             return
@@ -58,7 +90,7 @@ class RealtimeChannel(AsyncIOEventEmitter):
             await self.__realtime.connect()
 
         self.__attach_future = asyncio.Future()
-        await self.__realtime.connection.connection_manager.sendProtocolMessage(
+        await self.__realtime.connection.connection_manager.send_protocol_message(
             {
                 "action": ProtocolMessageAction.ATTACH,
                 "channel": self.name,
@@ -68,6 +100,17 @@ class RealtimeChannel(AsyncIOEventEmitter):
         self.set_state(ChannelState.ATTACHED)
 
     async def detach(self):
+        """Detach from channel
+
+        Any resulting channel state change is emitted to any listeners registered
+        Once all clients globally have detached from the channel, the channel will be released
+        in the Ably service within two minutes.
+
+        Raises
+        ------
+        AblyException
+            If unable to detach channel
+        """
         # RTL5g - raise exception if state invalid
         if self.__realtime.connection.state in [ConnectionState.CLOSING, ConnectionState.FAILED]:
             raise AblyException(
@@ -94,7 +137,7 @@ class RealtimeChannel(AsyncIOEventEmitter):
             await self.__realtime.connect()
 
         self.__detach_future = asyncio.Future()
-        await self.__realtime.connection.connection_manager.sendProtocolMessage(
+        await self.__realtime.connection.connection_manager.send_protocol_message(
             {
                 "action": ProtocolMessageAction.DETACH,
                 "channel": self.name,
@@ -104,6 +147,34 @@ class RealtimeChannel(AsyncIOEventEmitter):
         self.set_state(ChannelState.DETACHED)
 
     async def subscribe(self, *args):
+        """Subscribe to a channel
+
+        Registers a listener for messages on the channel.
+        The caller supplies a listener function, which is called
+        each time one or more messages arrives on the channel.
+
+        The function resolves once the channel is attached.
+
+        Parameters
+        ----------
+        *args: event, listener
+            Subscribe event and listener
+
+            arg1(event): str, optional
+                Subscribe to messages with the given event name
+
+            arg2(listener): callable
+                Subscribe to all messages on the channel
+
+            When no event is provided, arg1 is used as the listener.
+
+        Raises
+        ------
+        AblyException
+            If unable to subscribe to a channel due to invalid connection state
+        ValueError
+            If no valid subscribe arguments are passed
+        """
         if isinstance(args[0], str):
             event = args[0]
             if not args[1]:
@@ -137,6 +208,30 @@ class RealtimeChannel(AsyncIOEventEmitter):
         await self.attach()
 
     def unsubscribe(self, *args):
+        """Unsubscribe from a channel
+
+        Deregister the given listener for (for any/all event names).
+        This removes an earlier event-specific subscription.
+
+        Parameters
+        ----------
+        *args: event, listener
+            Unsubscribe event and listener
+
+            arg1(event): str, optional
+                Unsubscribe to messages with the given event name
+
+            arg2(listener): callable
+                Unsubscribe to all messages on the channel
+
+            When no event is provided, arg1 is used as the listener.
+
+        Raises
+        ------
+        ValueError
+            If no valid unsubscribe arguments are passed, no listener or listener is not a function
+            or coroutine
+        """
         if len(args) == 0:
             event = None
             listener = None
@@ -161,7 +256,7 @@ class RealtimeChannel(AsyncIOEventEmitter):
         else:
             self.__all_messages_emitter.remove_listener('message', listener)
 
-    def on_message(self, msg):
+    def _on_message(self, msg):
         action = msg.get('action')
         if action == ProtocolMessageAction.ATTACHED:
             if self.__attach_future:
@@ -183,8 +278,10 @@ class RealtimeChannel(AsyncIOEventEmitter):
 
     @property
     def name(self):
+        """Returns channel name"""
         return self.__name
 
     @property
     def state(self):
+        """Returns channel state"""
         return self.__state

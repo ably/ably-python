@@ -45,28 +45,74 @@ class ProtocolMessageAction(IntEnum):
 
 
 class Connection(AsyncIOEventEmitter):
+    """Ably Realtime Connection
+
+    Enables the management of a connection to Ably
+
+    Attributes
+    ----------
+    state: str
+        Connection state
+
+
+    Methods
+    -------
+    connect()
+        Establishes a realtime connection
+    close()
+        Closes a realtime connection
+    ping()
+        Pings a realtime connection
+    """
+
     def __init__(self, realtime):
         self.__realtime = realtime
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
-        self.__connection_manager = ConnectionManager(realtime, self.state)
-        self.__connection_manager.on('connectionstate', self.on_state_update)
+        self.__connection_manager = ConnectionManager(self.__realtime, self.state)
+        self.__connection_manager.on('connectionstate', self._on_state_update)
         super().__init__()
 
     async def connect(self):
+        """Establishes a realtime connection.
+
+        Causes the connection to open, entering the connecting state
+        """
         await self.__connection_manager.connect()
 
     async def close(self):
+        """Causes the connection to close, entering the closing state.
+
+        Once closed, the library will not attempt to re-establish the
+        connection without an explicit call to connect()
+        """
         await self.__connection_manager.close()
 
     async def ping(self):
+        """Send a ping to the realtime connection
+
+        When connected, sends a heartbeat ping to the Ably server and executes
+        the callback with any error and the response time in milliseconds when
+        a heartbeat ping request is echoed from the server.
+
+        Raises
+        ------
+        AblyException
+            If ping request cannot be sent due to invalid state
+
+        Returns
+        -------
+        float
+            The response time in milliseconds
+        """
         return await self.__connection_manager.ping()
 
-    def on_state_update(self, state_change):
+    def _on_state_update(self, state_change):
         self.__state = state_change.current
         self.__realtime.options.loop.call_soon(functools.partial(self.emit, state_change.current, state_change))
 
     @property
     def state(self):
+        """The current connection state of the connection"""
         return self.__state
 
     @state.setter
@@ -125,22 +171,22 @@ class ConnectionManager(AsyncIOEventEmitter):
             await self.setup_ws_task
 
     async def connect_impl(self):
-        self.setup_ws_task = self.ably.options.loop.create_task(self.setup_ws())
+        self.setup_ws_task = self.__ably.options.loop.create_task(self.setup_ws())
         await self.__connected_future
         self.enact_state_change(ConnectionState.CONNECTED)
 
     async def send_close_message(self):
-        await self.sendProtocolMessage({"action": ProtocolMessageAction.CLOSE})
+        await self.send_protocol_message({"action": ProtocolMessageAction.CLOSE})
 
-    async def sendProtocolMessage(self, protocolMessage):
-        await self.__websocket.send(json.dumps(protocolMessage))
+    async def send_protocol_message(self, protocol_message):
+        await self.__websocket.send(json.dumps(protocol_message))
 
     async def setup_ws(self):
         headers = HttpUtils.default_headers()
-        async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.ably.key}',
+        async with websockets.connect(f'wss://{self.options.realtime_host}?key={self.__ably.key}',
                                       extra_headers=headers) as websocket:
             self.__websocket = websocket
-            task = self.ably.options.loop.create_task(self.ws_read_loop())
+            task = self.__ably.options.loop.create_task(self.ws_read_loop())
             try:
                 await task
             except AblyAuthException:
@@ -155,8 +201,8 @@ class ConnectionManager(AsyncIOEventEmitter):
         if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
             self.__ping_id = helper.get_random_id()
             ping_start_time = datetime.now().timestamp()
-            await self.sendProtocolMessage({"action": ProtocolMessageAction.HEARTBEAT,
-                                            "id": self.__ping_id})
+            await self.send_protocol_message({"action": ProtocolMessageAction.HEARTBEAT,
+                                              "id": self.__ping_id})
         else:
             raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
         ping_end_time = datetime.now().timestamp()
@@ -201,7 +247,7 @@ class ConnectionManager(AsyncIOEventEmitter):
                 ProtocolMessageAction.DETACHED,
                 ProtocolMessageAction.MESSAGE
             ):
-                self.ably.channels.on_channel_message(msg)
+                self.__ably.channels._on_channel_message(msg)
 
     @property
     def ably(self):
