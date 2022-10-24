@@ -54,10 +54,11 @@ introduced by version 1.2.0.
 
 ## Usage
 
+### Using the Rest API
+
 All examples assume a client and/or channel has been created in one of the following ways:
 
 With closing the client manually:
-
 ```python
 from ably import AblyRest
 
@@ -196,6 +197,60 @@ await client.time()
 await client.close()
 ```
 
+### Using the Realtime API
+The python realtime API currently only supports authentication with ably API key.
+#### Creating a client
+```python
+from ably import AblyRealtime
+
+async def main():
+    client = AblyRealtime('api:key')
+    channel = client.channels.get('channel_name)
+```
+
+#### Subscribing to a channel for event
+```python
+message_future = asyncio.Future()
+
+def listener(message):
+    message_future.set_result(message)
+
+channel.subscribe('event', listener)
+
+# Subscribe using only listener
+await channel.subscribe(listener)
+```
+
+#### Unsubscribing from a channel for event
+```python
+# unsubscribe the listener from the channel
+channel.unsubscribe('event', listener)
+
+# unsubscribe all listeners from the channel
+channel.unsubscribe()
+```
+
+#### Attach a channel
+```python
+await channel.attach()
+```
+#### Detach from a channel
+```python
+await channel.detach()
+```
+
+#### Managing a connection
+```python
+# Establish a realtime connection.
+# Explicitly calling connect() is unnecessary unless the autoConnect attribute of the ClientOptions object is false
+await client.connect()
+
+# Close a connection
+await client.close()
+
+# Ping a connection
+await client.connection.ping()
+```
 ## Resources
 
 Visit https://ably.com/docs for a complete API reference and more examples.
@@ -210,7 +265,7 @@ for the set of versions that currently undergo CI testing.
 
 ## Known Limitations
 
-Currently, this SDK only supports [Ably REST](https://ably.com/docs/rest). 
+Currently, this SDK only supports [Ably REST](https://ably.com/docs/rest) and subscribe/unsubscribe functionality of [Ably Realtime](https://ably.com/docs/realtime) as documented above.
 However, you can use the [MQTT adapter](https://ably.com/docs/mqtt) to implement [Ably's Realtime](https://ably.com/docs/realtime) features using Python.
 
 See [our roadmap for this SDK](roadmap.md) for more information.
