@@ -64,6 +64,8 @@ class AblyRealtime:
         else:
             raise ValueError("Key is missing. Provide an API key.")
 
+        log.info(f'Realtime client initialised with options: {vars(options)}')
+
         self.__auth = Auth(self, options)
         self.__options = options
         self.key = key
@@ -80,14 +82,15 @@ class AblyRealtime:
         is false. Unless already connected or connecting, this method causes the connection to open, entering the
         CONNECTING state.
         """
+        log.info('Realtime.connect() called')
         await self.connection.connect()
 
     async def close(self):
         """Causes the connection to close, entering the closing state.
-
         Once closed, the library will not attempt to re-establish the
         connection without an explicit call to connect()
         """
+        log.info('Realtime.close() called')
         await self.connection.close()
 
     @property
@@ -156,7 +159,20 @@ class Channels:
         del self.all[name]
 
     def _on_channel_message(self, msg):
+        channel_name = msg.get('channel')
+        if not channel_name:
+            log.error(
+                'Channels.on_channel_message()',
+                f'received event without channel, action = {msg.get("action")}'
+            )
+            return
+
         channel = self.all.get(msg.get('channel'))
         if not channel:
-            log.warning('Channel message received but no channel instance found')
+            log.warning(
+                'Channels.on_channel_message()',
+                f'receieved event for non-existent channel: {channel_name}'
+            )
+            return
+
         channel._on_message(msg)
