@@ -205,23 +205,27 @@ from ably import AblyRealtime
 
 async def main():
     client = AblyRealtime('api:key')
-    channel = client.channels.get('channel_name)
 ```
 
-#### Subscribing to a channel for event
+#### Connecting to a channel
 ```python
-message_future = asyncio.Future()
+channel = client.channels.get('channel_name)
+```
+#### Subscribing to messages on a channel
+```python
 
 def listener(message):
-    message_future.set_result(message)
+    print(message.data)
 
-channel.subscribe('event', listener)
+# Subscribe to messages with the 'event' name
+await channel.subscribe('event', listener)
 
-# Subscribe using only listener
+# Subscribe to all messages on a channel
 await channel.subscribe(listener)
 ```
+Note that `channel.subscribe` is a coroutine function and will resolve when the channel is attached
 
-#### Unsubscribing from a channel for event
+#### Unsubscribing from messages on a channel
 ```python
 # unsubscribe the listener from the channel
 channel.unsubscribe('event', listener)
@@ -230,7 +234,7 @@ channel.unsubscribe('event', listener)
 channel.unsubscribe()
 ```
 
-#### Attach a channel
+#### Attach to a channel
 ```python
 await channel.attach()
 ```
@@ -248,8 +252,8 @@ await client.connect()
 # Close a connection
 await client.close()
 
-# Ping a connection
-await client.connection.ping()
+# Send a ping
+time_in_ms = await client.connection.ping()
 ```
 ## Resources
 
@@ -265,7 +269,7 @@ for the set of versions that currently undergo CI testing.
 
 ## Known Limitations
 
-Currently, this SDK only supports [Ably REST](https://ably.com/docs/rest) and subscribe/unsubscribe functionality of [Ably Realtime](https://ably.com/docs/realtime) as documented above.
+Currently, this SDK only supports [Ably REST](https://ably.com/docs/rest) and realtime message subscription as documented above.
 However, you can use the [MQTT adapter](https://ably.com/docs/mqtt) to implement [Ably's Realtime](https://ably.com/docs/realtime) features using Python.
 
 See [our roadmap for this SDK](roadmap.md) for more information.
