@@ -94,15 +94,59 @@ Start receiving messages from the Ably service.
 
 ## Milestone 2: Realtime Connectivity Hardening
 
-Give users visibility of connection errors and enable the library to continue operating during tempoary loss of connection.
+This milestone will add connection error handling to the realtime client,
+allowing it to continue operating in the event of a recoverable connection error.
+It will also improve the visibility of what went wrong in the event of a fatal connection error.
 
-- connection errors
-  - add the `DISCONNECTED` and `SUSPENDED` channel states
-  - handle connection opening errors ([`RTN14`](https://docs.ably.io/client-lib-development-guide/features/#RTN14))
-  - handle `DISCONNECTED` protocol messages ([`RTN15h`](https://docs.ably.io/client-lib-development-guide/features/#RTN15h))
-  - send resume requests ([`RTN15b`](https://docs.ably.io/client-lib-development-guide/features/#RTN15b))
-  - respond to connection resume responses ([`RTN15c`](https://docs.ably.io/client-lib-development-guide/features/#RTN15c))
-- fallbacks ([`RTN17`](https://docs.ably.io/client-lib-development-guide/features/#RTN17))
+### Milestone 2a: Handle connection opening errors
+
+Implement the correct behaviour for all potential errors that may occur when establishing a new realtime connection.
+
+**Scope**:
+
+- Implement configurable `realtimeRequestTimeout` and transition to `DISCONNECTED` if the initial `CONNECTED` message is not received in time ([`RTN14c`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14c))
+- Populate the `Connection.errorReason` field when a connection error is encountered ([`RTN14a`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14a))
+- Transition to `DISCONNECTED` upon recoverable errors as defined by [`RTN14d`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14d) (network failure, disconnected response)
+
+**Objective**: Acheieve confidence that the library has defined behaviour for all errors it may encounter upon establishing a realtime connection.
+
+### Milestone 2b: Retry failed connection attempts
+
+Attempt to re-establish connection upon a recoverable connection attempt failure and give users visibility of the connection state when the library is doing so.
+
+**Scope**:
+
+- Implement configurable `disconnectedRetryTimeout` and retry connection periodically while the connection state is `DISCONNECTED` ([`RTN14d`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14d))
+- Implement configurable `connectionStateTtl` and transition connection to `SUSPENDED` when `connectionStateTtl` is exceeded ([`RTN14e`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14e))
+- Fallback hosts are outside of the scope of this milestone: each retry should be against the primary realtime endpoint
+- Incrmental backoff and jitter is outside of the scope of this milestone
+
+**Objective**: Allow the library to re-establish connection in the event of a recoverable connection opening failure.
+
+### Milestone 2c: Use fallback hosts
+
+Use fallback hosts in the case of a connection error, allowing the library to still connect to Ably when connection to the primary host is unavailable.
+
+**Scope**:
+
+- Implement the `fallbackHosts` client option ([`RTN17b2`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN17b2))
+- Use a new fallback host when encountering an appropriate error ([`RTN17d`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN17d))
+- Implement connectivity check and check connectivity before using a new fallback host ([`RTN17c`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN17c))
+
+**Objective**: Make the realtime client resilient when one or more realtime endpoints are unavailable.
+
+### Milestone 2d: Handle connection errors once connected
+
+Handle errors which the realtime client may encounter once already in the `CONNECTED` state, resuming the connection and reattaching to channels when appropriate.
+
+**Scope**:
+
+- Implement `maxIdleInterval` and handle `HEARTBEAT` messages and disconnect transport once `maxIdleInterval` is exceeded ([`RTN23`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN23))
+- Handle `CONNECTED` messages once connected ([`RTN24`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN24))
+- Attempt to resume connection when a connection is disconnected unexpectedly ([`RTN15a`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15a), [`RTN15b`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15b), [`RTN15c`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15a), [`RTN16`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN16))
+- Resend protocol messages for pending channels upon resume ([`RTN19b`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN19b))
+
+**Objective**: Detect connection errors while connected and handle them appropriately.
 
 ## Milestone 3: Token Authentication
 
