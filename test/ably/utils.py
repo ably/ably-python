@@ -2,8 +2,12 @@ import functools
 import random
 import string
 import unittest
+import sys
+if sys.version_info >= (3, 8):
+    from unittest import IsolatedAsyncioTestCase
+else:
+    from async_case import IsolatedAsyncioTestCase
 
-import asynctest
 import msgpack
 import mock
 import respx
@@ -35,7 +39,7 @@ class BaseTestCase(unittest.TestCase):
         return cls.ably.channels.get(name)
 
 
-class BaseAsyncTestCase(asynctest.TestCase):
+class BaseAsyncTestCase(IsolatedAsyncioTestCase):
 
     def respx_add_empty_msg_pack(self, url, method='GET'):
         respx.route(method=method, url=url).return_value = Response(
