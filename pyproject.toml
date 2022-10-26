@@ -46,7 +46,6 @@ pytest-cov = "^2.4"
 pytest-flake8 = "^1.1"
 pytest-xdist = "^1.15"
 respx = "^0.17.1"
-asynctest = "^0.13"
 importlib-metadata = "^4.12"
 pytest-timeout = "^2.1.0"
 
