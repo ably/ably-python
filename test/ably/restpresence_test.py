@@ -12,13 +12,13 @@ from test.ably.restsetup import RestSetup
 
 class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.ably = await RestSetup.get_ably_rest()
         self.channel = self.ably.channels.get('persisted:presence_fixtures')
         self.ably.options.use_binary_protocol = True
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         self.ably.channels.release('persisted:presence_fixtures')
         await self.ably.close()
 
@@ -189,12 +189,12 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
 class TestPresenceCrypt(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
         key = b'0123456789abcdef'
         self.channel = self.ably.channels.get('persisted:presence_fixtures', cipher={'key': key})
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         self.ably.channels.release('persisted:presence_fixtures')
         await self.ably.close()
 

@@ -13,11 +13,11 @@ log = logging.getLogger(__name__)
 
 class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
         self.test_vars = await RestSetup.get_test_vars()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):

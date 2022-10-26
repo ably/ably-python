@@ -13,11 +13,11 @@ from test.ably.utils import BaseAsyncTestCase
 # makes no request, no need to use different protocols
 class TestChannels(BaseAsyncTestCase):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.ably = await RestSetup.get_ably_rest()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def test_rest_channels_attr(self):
