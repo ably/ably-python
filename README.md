@@ -198,7 +198,7 @@ await client.close()
 ```
 
 ### Using the Realtime API
-The python realtime API currently only supports authentication with ably API key.
+The python realtime client currently only supports basic authentication.
 #### Creating a client
 ```python
 from ably import AblyRealtime
@@ -207,9 +207,9 @@ async def main():
     client = AblyRealtime('api:key')
 ```
 
-#### Connecting to a channel
+#### Get a realtime channel instance
 ```python
-channel = client.channels.get('channel_name)
+channel = client.channels.get('channel_name')
 ```
 #### Subscribing to messages on a channel
 ```python
@@ -232,6 +232,16 @@ channel.unsubscribe('event', listener)
 
 # unsubscribe all listeners from the channel
 channel.unsubscribe()
+```
+
+#### Subscribe to connection state change
+```python
+from ably.realtime.connection import ConnectionState
+# subscribe to failed connection state
+client.connection.on(ConnectionState.FAILED, listener)
+
+# subscribe to connected connection state
+client.connection.on(ConnectionState.CONNECTED, listener)
 ```
 
 #### Attach to a channel
