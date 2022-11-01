@@ -1,6 +1,5 @@
 import asyncio
 from ably.realtime.connection import ConnectionState
-from unittest.mock import Mock
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
 
@@ -11,41 +10,56 @@ class TestEventEmitter(BaseAsyncTestCase):
 
     async def test_connection_events(self):
         realtime = await RestSetup.get_ably_realtime()
-        listener = Mock()
-        realtime.connection.add_listener(ConnectionState.CONNECTED, listener)
+        call_count = 0
+
+        def listener(_):
+            nonlocal call_count
+            call_count += 1
+
+        realtime.connection.on(ConnectionState.CONNECTED, listener)
 
         await realtime.connect()
 
         # Listener is only called once event loop is free
-        listener.assert_not_called()
+        assert call_count == 0
         await asyncio.sleep(0)
-        listener.assert_called_once()
+        assert call_count == 1
         await realtime.close()
 
     async def test_event_listener_error(self):
         realtime = await RestSetup.get_ably_realtime()
-        listener = Mock()
+        call_count = 0
+
+        def listener(_):
+            nonlocal call_count
+            call_count += 1
+            raise Exception()
 
         # If a listener throws an exception it should not propagate (#RTE6)
         listener.side_effect = Exception()
-        realtime.connection.add_listener(ConnectionState.CONNECTED, listener)
+        realtime.connection.on(ConnectionState.CONNECTED, listener)
 
         await realtime.connect()
 
-        listener.assert_not_called()
+        assert call_count == 0
         await asyncio.sleep(0)
-        listener.assert_called_once()
+        assert call_count == 1
         await realtime.close()
 
     async def test_event_emitter_off(self):
         realtime = await RestSetup.get_ably_realtime()
-        listener = Mock()
-        realtime.connection.add_listener(ConnectionState.CONNECTED, listener)
-        realtime.connection.remove_listener(ConnectionState.CONNECTED, listener)
+        call_count = 0
+
+        def listener(_):
+            nonlocal call_count
+            call_count += 1
+
+        realtime.connection.on(ConnectionState.CONNECTED, listener)
+        realtime.connection.off(ConnectionState.CONNECTED, listener)
 
         await realtime.connect()
 
-        listener.assert_not_called()
+        assert call_count == 0
         await asyncio.sleep(0)
-        listener.assert_not_called()
+        assert call_count == 0
         await realtime.close()
