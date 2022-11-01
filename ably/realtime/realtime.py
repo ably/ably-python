@@ -47,6 +47,11 @@ class AblyRealtime:
             When true, the client connects to Ably as soon as it is instantiated.
             You can set this to false and explicitly connect to Ably using the
             connect() method. The default is true.
+        **kwargs: client options
+            realtime_host: str
+                The host to connect to. Defaults to `realtime.ably.io`
+            environment: str
+                The environment to use. Defaults to `production`
 
         Raises
         ------
