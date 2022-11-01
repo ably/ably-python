@@ -101,6 +101,7 @@ class TestRestHttp(BaseAsyncTestCase):
         await ably.close()
 
     # RSC15f
+    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_cached_fallback(self):
         timeout = 2000
         ably = await RestSetup.get_ably_rest(fallback_hosts_use_default=True, fallback_retry_timeout=timeout)

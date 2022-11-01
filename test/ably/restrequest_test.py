@@ -96,6 +96,7 @@ async def test_headers(rest):
 
 # RSC19e
 @pytest.mark.asyncio
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 async def test_timeout(test_vars):
     # Timeout
     timeout = 0.000001
