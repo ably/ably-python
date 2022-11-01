@@ -12,7 +12,7 @@ from ably.util.helper import is_function_or_coroutine
 log = logging.getLogger(__name__)
 
 
-class ChannelState(Enum):
+class ChannelState(str, Enum):
     INITIALIZED = 'initialized'
     ATTACHING = 'attaching'
     ATTACHED = 'attached'
