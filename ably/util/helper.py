@@ -1,6 +1,6 @@
+import inspect
 import random
 import string
-import types
 import asyncio
 
 
@@ -11,5 +11,5 @@ def get_random_id():
     return random_id
 
 
-def is_function_or_coroutine(value):
-    return isinstance(value, types.FunctionType) or asyncio.iscoroutinefunction(value)
+def is_callable_or_coroutine(value):
+    return asyncio.iscoroutinefunction(value) or inspect.isfunction(value) or inspect.ismethod(value)
