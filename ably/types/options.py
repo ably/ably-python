@@ -26,6 +26,9 @@ class Options(AuthOptions):
         if environment is not None and rest_host is not None:
             raise ValueError('specify rest_host or environment, not both')
 
+        if environment is not None and realtime_host is not None:
+            raise ValueError('specify realtime_host or environment, not both')
+
         if idempotent_rest_publishing is None:
             from ably import api_version
             idempotent_rest_publishing = api_version >= '1.2'
