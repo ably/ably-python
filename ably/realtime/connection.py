@@ -15,7 +15,7 @@ from typing import Optional
 log = logging.getLogger(__name__)
 
 
-class ConnectionState(Enum):
+class ConnectionState(str, Enum):
     INITIALIZED = 'initialized'
     CONNECTING = 'connecting'
     CONNECTED = 'connected'
