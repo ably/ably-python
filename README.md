@@ -236,12 +236,11 @@ channel.unsubscribe()
 
 #### Subscribe to connection state change
 ```python
-from ably.realtime.connection import ConnectionState
-# subscribe to failed connection state
-client.connection.on(ConnectionState.FAILED, listener)
+# subscribe to 'failed' connection state
+client.connection.on('failed', listener)
 
-# subscribe to connected connection state
-client.connection.on(ConnectionState.CONNECTED, listener)
+# subscribe to 'connected' connection state
+client.connection.on('connected', listener)
 ```
 
 #### Attach to a channel
