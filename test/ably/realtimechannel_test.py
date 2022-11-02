@@ -1,6 +1,4 @@
 import asyncio
-from unittest.mock import Mock
-import types
 from ably.realtime.realtime_channel import ChannelState
 from ably.types.message import Message
 from test.ably.restsetup import RestSetup
@@ -113,7 +111,10 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.attach()
 
         message_future = asyncio.Future()
-        listener = Mock(spec=types.FunctionType, side_effect=lambda msg: message_future.set_result(msg))
+
+        def listener(msg):
+            message_future.set_result(msg)
+
         await channel.subscribe(listener)
 
         # publish a message using rest client
@@ -122,7 +123,6 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await rest_channel.publish('event', 'data')
         message = await message_future
 
-        listener.assert_called_once()
         assert isinstance(message, Message)
         assert message.name == 'event'
         assert message.data == 'data'
@@ -137,7 +137,9 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         channel = ably.channels.get('my_channel')
         assert channel.state == ChannelState.INITIALIZED
 
-        listener = Mock(spec=types.FunctionType)
+        def listener(_):
+            pass
+
         await channel.subscribe('event', listener)
 
         assert channel.state == ChannelState.ATTACHED
@@ -152,7 +154,13 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.attach()
 
         message_future = asyncio.Future()
-        listener = Mock(spec=types.FunctionType, side_effect=lambda msg: message_future.set_result(msg))
+        call_count = 0
+
+        def listener(msg):
+            nonlocal call_count
+            call_count += 1
+            message_future.set_result(msg)
+
         await channel.subscribe('event', listener)
 
         # publish a message using rest client
@@ -160,7 +168,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         rest_channel = rest.channels.get('my_channel')
         await rest_channel.publish('event', 'data')
         await message_future
-        listener.assert_called_once()
+        assert call_count == 1
 
         # unsubscribe the listener from the channel
         channel.unsubscribe('event', listener)
@@ -168,7 +176,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         # test that the listener is not called again for further publishes
         await rest_channel.publish('event', 'data')
         await asyncio.sleep(1)
-        assert listener.call_count == 1
+        assert call_count == 1
 
         await ably.close()
         await rest.close()
@@ -179,8 +187,15 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await ably.connect()
         channel = ably.channels.get('my_channel')
         await channel.attach()
+
         message_future = asyncio.Future()
-        listener = Mock(spec=types.FunctionType, side_effect=lambda msg: message_future.set_result(msg))
+        call_count = 0
+
+        def listener(msg):
+            nonlocal call_count
+            call_count += 1
+            message_future.set_result(msg)
+
         await channel.subscribe('event', listener)
 
         # publish a message using rest client
@@ -188,7 +203,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         rest_channel = rest.channels.get('my_channel')
         await rest_channel.publish('event', 'data')
         await message_future
-        listener.assert_called_once()
+        assert call_count == 1
 
         # unsubscribe all listeners from the channel
         channel.unsubscribe()
@@ -196,7 +211,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         # test that the listener is not called again for further publishes
         await rest_channel.publish('event', 'data')
         await asyncio.sleep(1)
-        assert listener.call_count == 1
+        assert call_count == 1
 
         await ably.close()
         await rest.close()

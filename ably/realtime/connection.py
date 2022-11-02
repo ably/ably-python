@@ -5,8 +5,8 @@ import websockets
 import json
 from ably.http.httputils import HttpUtils
 from ably.util.exceptions import AblyAuthException, AblyException
+from ably.util.eventemitter import EventEmitter
 from enum import Enum, IntEnum
-from pyee.asyncio import AsyncIOEventEmitter
 from datetime import datetime
 from ably.util import helper
 from dataclasses import dataclass
@@ -44,7 +44,7 @@ class ProtocolMessageAction(IntEnum):
     MESSAGE = 15
 
 
-class Connection(AsyncIOEventEmitter):
+class Connection(EventEmitter):
     """Ably Realtime Connection
 
     Enables the management of a connection to Ably
@@ -109,7 +109,7 @@ class Connection(AsyncIOEventEmitter):
     def _on_state_update(self, state_change):
         log.info(f'Connection state changing from {self.state} to {state_change.current}')
         self.__state = state_change.current
-        self.__realtime.options.loop.call_soon(functools.partial(self.emit, state_change.current, state_change))
+        self.__realtime.options.loop.call_soon(functools.partial(self._emit, state_change.current, state_change))
 
     @property
     def state(self):
@@ -125,7 +125,7 @@ class Connection(AsyncIOEventEmitter):
         return self.__connection_manager
 
 
-class ConnectionManager(AsyncIOEventEmitter):
+class ConnectionManager(EventEmitter):
     def __init__(self, realtime, initial_state):
         self.options = realtime.options
         self.__ably = realtime
@@ -140,7 +140,7 @@ class ConnectionManager(AsyncIOEventEmitter):
     def enact_state_change(self, state, reason=None):
         current_state = self.__state
         self.__state = state
-        self.emit('connectionstate', ConnectionStateChange(current_state, state, reason))
+        self._emit('connectionstate', ConnectionStateChange(current_state, state, reason))
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:

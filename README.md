@@ -241,6 +241,9 @@ client.connection.on('failed', listener)
 
 # subscribe to 'connected' connection state
 client.connection.on('connected', listener)
+
+# subscribe to all connection state changes
+client.connection.on(listener)
 ```
 
 #### Attach to a channel

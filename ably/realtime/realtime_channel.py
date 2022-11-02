@@ -3,11 +3,11 @@ import logging
 
 from ably.realtime.connection import ConnectionState, ProtocolMessageAction
 from ably.types.message import Message
+from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
-from pyee.asyncio import AsyncIOEventEmitter
 from enum import Enum
 
-from ably.util.helper import is_function_or_coroutine
+from ably.util.helper import is_callable_or_coroutine
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class ChannelState(str, Enum):
     DETACHED = 'detached'
 
 
-class RealtimeChannel(AsyncIOEventEmitter):
+class RealtimeChannel(EventEmitter):
     """
     Ably Realtime Channel
 
@@ -49,8 +49,7 @@ class RealtimeChannel(AsyncIOEventEmitter):
         self.__detach_future = None
         self.__realtime = realtime
         self.__state = ChannelState.INITIALIZED
-        self.__message_emitter = AsyncIOEventEmitter()
-        self.__all_messages_emitter = AsyncIOEventEmitter()
+        self.__message_emitter = EventEmitter()
         super().__init__()
 
     async def attach(self):
@@ -185,10 +184,10 @@ class RealtimeChannel(AsyncIOEventEmitter):
             event = args[0]
             if not args[1]:
                 raise ValueError("channel.subscribe called without listener")
-            if not is_function_or_coroutine(args[1]):
+            if not is_callable_or_coroutine(args[1]):
                 raise ValueError("subscribe listener must be function or coroutine function")
             listener = args[1]
-        elif is_function_or_coroutine(args[0]):
+        elif is_callable_or_coroutine(args[0]):
             listener = args[0]
             event = None
         else:
@@ -211,7 +210,7 @@ class RealtimeChannel(AsyncIOEventEmitter):
         if event is not None:
             self.__message_emitter.on(event, listener)
         else:
-            self.__all_messages_emitter.on('message', listener)
+            self.__message_emitter.on(listener)
 
         await self.attach()
 
@@ -247,10 +246,10 @@ class RealtimeChannel(AsyncIOEventEmitter):
             event = args[0]
             if not args[1]:
                 raise ValueError("channel.unsubscribe called without listener")
-            if not is_function_or_coroutine(args[1]):
+            if not is_callable_or_coroutine(args[1]):
                 raise ValueError("unsubscribe listener must be a function or coroutine function")
             listener = args[1]
-        elif is_function_or_coroutine(args[0]):
+        elif is_callable_or_coroutine(args[0]):
             listener = args[0]
             event = None
         else:
@@ -259,12 +258,11 @@ class RealtimeChannel(AsyncIOEventEmitter):
         log.info(f'RealtimeChannel.unsubscribe called, channel = {self.name}, event = {event}')
 
         if listener is None:
-            self.__message_emitter.remove_all_listeners()
-            self.__all_messages_emitter.remove_all_listeners()
+            self.__message_emitter.off()
         elif event is not None:
-            self.__message_emitter.remove_listener(event, listener)
+            self.__message_emitter.off(event, listener)
         else:
-            self.__all_messages_emitter.remove_listener('message', listener)
+            self.__message_emitter.off(listener)
 
     def _on_message(self, msg):
         action = msg.get('action')
@@ -279,12 +277,11 @@ class RealtimeChannel(AsyncIOEventEmitter):
         elif action == ProtocolMessageAction.MESSAGE:
             messages = Message.from_encoded_array(msg.get('messages'))
             for message in messages:
-                self.__message_emitter.emit(message.name, message)
-                self.__all_messages_emitter.emit('message', message)
+                self.__message_emitter._emit(message.name, message)
 
     def set_state(self, state):
         self.__state = state
-        self.emit(state)
+        self._emit(state)
 
     @property
     def name(self):
