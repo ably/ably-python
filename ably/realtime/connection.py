@@ -53,7 +53,7 @@ class Connection(EventEmitter):
     ----------
     state: str
         Connection state
-    errorReason: error
+    error_reason: ErrorInfo
         An ErrorInfo object describing the last error which occurred on the channel, if any.
 
 
