@@ -37,9 +37,10 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
     async def test_auth_invalid_key(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
-        with pytest.raises(AblyAuthException):
+        with pytest.raises(AblyAuthException) as exception:
             await ably.connect()
         assert ably.connection.state == ConnectionState.FAILED
+        assert ably.connection.error_reason == exception.value
         await ably.close()
 
     async def test_connection_ping_connected(self):
@@ -60,9 +61,10 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
     async def test_connection_ping_failed(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
-        with pytest.raises(AblyAuthException):
+        with pytest.raises(AblyAuthException) as exception:
             await ably.connect()
         assert ably.connection.state == ConnectionState.FAILED
+        assert ably.connection.error_reason == exception.value
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
         assert exception.value.code == 400
@@ -121,4 +123,5 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.previous == ConnectionState.CONNECTING
         assert state_change.current == ConnectionState.FAILED
         assert state_change.reason == exception.value
+        assert ably.connection.error_reason == exception.value
         await ably.close()

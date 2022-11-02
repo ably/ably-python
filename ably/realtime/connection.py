@@ -53,6 +53,8 @@ class Connection(EventEmitter):
     ----------
     state: str
         Connection state
+    error_reason: ErrorInfo
+        An ErrorInfo object describing the last error which occurred on the channel, if any.
 
 
     Methods
@@ -67,6 +69,7 @@ class Connection(EventEmitter):
 
     def __init__(self, realtime):
         self.__realtime = realtime
+        self.__error_reason = None
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
         self.__connection_manager = ConnectionManager(self.__realtime, self.state)
         self.__connection_manager.on('connectionstate', self._on_state_update)
@@ -109,12 +112,18 @@ class Connection(EventEmitter):
     def _on_state_update(self, state_change):
         log.info(f'Connection state changing from {self.state} to {state_change.current}')
         self.__state = state_change.current
+        self.__error_reason = state_change.reason
         self.__realtime.options.loop.call_soon(functools.partial(self._emit, state_change.current, state_change))
 
     @property
     def state(self):
         """The current connection state of the connection"""
         return self.__state
+
+    @property
+    def error_reason(self):
+        """An object describing the last error which occurred on the channel, if any."""
+        return self.__error_reason
 
     @state.setter
     def state(self, value):
