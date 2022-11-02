@@ -2,6 +2,8 @@
 
 ## [v2.0.0-beta.1](https://github.com/ably/ably-python/tree/v2.0.0-beta.1)
 
+**New ably-python realtime client**: This beta release features our first ever python realtime client! Currently the realtime client only supports basic authentication and realtime message subscription. Check out the README for usage examples.
+
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.2.1...2.0.0-beta.1)
 
 - Create Basic Api Key connection [\#311](https://github.com/ably/ably-python/pull/311)
