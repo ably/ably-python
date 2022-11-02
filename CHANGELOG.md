@@ -1,5 +1,27 @@
 # Change Log
 
+## [v2.0.0-beta.1](https://github.com/ably/ably-python/tree/v2.0.0-beta.1)
+
+**New ably-python realtime client**: This beta release features our first ever python realtime client! Currently the realtime client only supports basic authentication and realtime message subscription. Check out the README for usage examples.
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v1.2.1...2.0.0-beta.1)
+
+- Create Basic Api Key connection [\#311](https://github.com/ably/ably-python/pull/311)
+- Send Ably-Agent header in realtime connection [\#314](https://github.com/ably/ably-python/pull/314)
+- Close client service [\#315](https://github.com/ably/ably-python/pull/315)
+- Implement EventEmitter interface on Connection [\#316](https://github.com/ably/ably-python/pull/316)
+- Finish tasks gracefully on failed connection [\#317](https://github.com/ably/ably-python/pull/317)
+- Implement realtime ping [\#318](https://github.com/ably/ably-python/pull/318)
+- Realtime channel attach/detach [\#319](https://github.com/ably/ably-python/pull/319)
+- Add `auto_connect` implementation and client option [\#325](https://github.com/ably/ably-python/pull/325)
+- RealtimeChannel subscribe/unsubscribe [\#326](https://github.com/ably/ably-python/pull/326)
+- ConnectionStateChange [\#327](https://github.com/ably/ably-python/pull/327)
+- Improve realtime logging [\#330](https://github.com/ably/ably-python/pull/330)
+- Update readme with realtime documentation [\#334](334](https://github.com/ably/ably-python/pull/334)
+- Use string-based enums [\#351](https://github.com/ably/ably-python/pull/351)
+- Add environment client option for realtime [\#335](https://github.com/ably/ably-python/pull/335)
+- EventEmitter: allow signatures with no event arg [\#350](https://github.com/ably/ably-python/pull/350)
+
 ## [v1.2.1](https://github.com/ably/ably-python/tree/v1.2.1)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.2.0...v1.2.1)
