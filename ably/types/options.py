@@ -26,12 +26,12 @@ class Options(AuthOptions):
         if environment is not None and rest_host is not None:
             raise ValueError('specify rest_host or environment, not both')
 
+        if environment is not None and realtime_host is not None:
+            raise ValueError('specify realtime_host or environment, not both')
+
         if idempotent_rest_publishing is None:
             from ably import api_version
             idempotent_rest_publishing = api_version >= '1.2'
-
-        if realtime_host is None:
-            realtime_host = Defaults.realtime_host
 
         self.__client_id = client_id
         self.__log_level = log_level
@@ -56,6 +56,7 @@ class Options(AuthOptions):
         self.__auto_connect = auto_connect
 
         self.__rest_hosts = self.__get_rest_hosts()
+        self.__realtime_hosts = self.__get_realtime_hosts()
 
     @property
     def client_id(self):
@@ -253,11 +254,22 @@ class Options(AuthOptions):
         hosts = hosts[:http_max_retry_count]
         return hosts
 
+    def __get_realtime_hosts(self):
+        if self.realtime_host is not None:
+            return self.realtime_host
+        elif self.environment is not None:
+            return f'{self.environment}-{Defaults.realtime_host}'
+        else:
+            return Defaults.realtime_host
+
     def get_rest_hosts(self):
         return self.__rest_hosts
 
     def get_rest_host(self):
         return self.__rest_hosts[0]
+
+    def get_realtime_host(self):
+        return self.__realtime_hosts
 
     def get_fallback_rest_hosts(self):
         return self.__rest_hosts[1:]
