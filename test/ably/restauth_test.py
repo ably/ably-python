@@ -17,7 +17,8 @@ from ably import AblyAuthException
 from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, AsyncMock
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from unittest.mock import AsyncMock
 
 log = logging.getLogger(__name__)
 
@@ -202,7 +203,6 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         assert isinstance(token, TokenDetails)
 
     @dont_vary_protocol
-    @pytest.mark.filterwarnings('ignore::RuntimeWarning')
     async def test_authorize_adheres_to_request_token(self):
         token_params = {'ttl': 10, 'client_id': 'client_id'}
         auth_params = {'auth_url': 'somewhere.com', 'query_time': True}
