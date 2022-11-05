@@ -111,11 +111,11 @@ class TestRestHttp(BaseAsyncTestCase):
         client = httpx.AsyncClient(http2=True)
         send = client.send
 
-        def side_effect(*args, **kwargs):
+        async def side_effect(*args, **kwargs):
             if args[1].url.host == host:
                 state['errors'] += 1
                 raise RuntimeError
-            return send(args[1])
+            return await send(args[1])
 
         with mock.patch('httpx.AsyncClient.send', side_effect=side_effect, autospec=True):
             # The main host is called and there's an error
