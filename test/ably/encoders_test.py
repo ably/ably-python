@@ -10,7 +10,10 @@ from ably import CipherParams
 from ably.util.crypto import get_cipher
 from ably.types.message import Message
 
-from unittest.mock import AsyncMock
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from mock import AsyncMock
 
 log = logging.getLogger(__name__)
 
