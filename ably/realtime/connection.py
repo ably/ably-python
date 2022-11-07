@@ -225,7 +225,12 @@ class ConnectionManager(EventEmitter):
 
     async def ws_read_loop(self):
         while True:
-            raw = await self.__websocket.recv()
+            try:
+                raw = await asyncio.wait_for(self.__websocket.recv(), self.options.realtime_request_timeout)
+            except asyncio.TimeoutError:
+                exception = AblyException("Realtime request timeout", 504, 50003)
+                self.enact_state_change(ConnectionState.FAILED, exception)
+                raise exception
             msg = json.loads(raw)
             log.info(f'ws_read_loop(): receieved protocol message: {msg}')
             action = msg['action']

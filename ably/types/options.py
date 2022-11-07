@@ -12,7 +12,7 @@ class Options(AuthOptions):
     def __init__(self, client_id=None, log_level=0, tls=True, rest_host=None,
                  realtime_host=None, port=0, tls_port=0, use_binary_protocol=True,
                  queue_messages=False, recover=False, environment=None,
-                 http_open_timeout=None, http_request_timeout=None,
+                 http_open_timeout=None, http_request_timeout=None, realtime_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None,
                  fallback_hosts=None, fallback_hosts_use_default=None, fallback_retry_timeout=None,
                  idempotent_rest_publishing=None, loop=None, auto_connect=True,
@@ -22,6 +22,9 @@ class Options(AuthOptions):
         # TODO check these defaults
         if fallback_retry_timeout is None:
             fallback_retry_timeout = Defaults.fallback_retry_timeout
+
+        if realtime_request_timeout is None:
+            realtime_request_timeout = Defaults.realtime_request_timeout
 
         if environment is not None and rest_host is not None:
             raise ValueError('specify rest_host or environment, not both')
@@ -46,6 +49,7 @@ class Options(AuthOptions):
         self.__environment = environment
         self.__http_open_timeout = http_open_timeout
         self.__http_request_timeout = http_request_timeout
+        self.__realtime_request_timeout = realtime_request_timeout
         self.__http_max_retry_count = http_max_retry_count
         self.__http_max_retry_duration = http_max_retry_duration
         self.__fallback_hosts = fallback_hosts
@@ -153,6 +157,10 @@ class Options(AuthOptions):
     @property
     def http_request_timeout(self):
         return self.__http_request_timeout
+
+    @property
+    def realtime_request_timeout(self):
+        return self.__realtime_request_timeout
 
     @http_request_timeout.setter
     def http_request_timeout(self, value):
