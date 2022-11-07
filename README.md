@@ -205,10 +205,10 @@ Check out the [roadmap](./roadmap.md) to see our plan for the realtime client.
 
 ### Installing the realtime client
 
-The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b1/) package.
+The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b2/) package.
 
 ```
-pip install ably==2.0.0b1
+pip install ably==2.0.0b2
 ```
 
 ### Using the realtime client
