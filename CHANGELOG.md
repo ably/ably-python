@@ -1,5 +1,10 @@
 # Change Log
 
+## [v2.0.0-beta.2](https://github.com/ably/ably-python/tree/v2.0.0-beta.2)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.0-beta.1...v2.0.0-beta.2)
+- Fix a bug with realtime_host configuration [\#358](https://github.com/ably/ably-python/pull/358)
+
 ## [v2.0.0-beta.1](https://github.com/ably/ably-python/tree/v2.0.0-beta.1)
 
 **New ably-python realtime client**: This beta release features our first ever python realtime client! Currently the realtime client only supports basic authentication and realtime message subscription. Check out the README for usage examples.
