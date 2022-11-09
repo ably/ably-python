@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import pytest
 
 import mock
 import msgpack
@@ -9,21 +10,22 @@ from ably import CipherParams
 from ably.util.crypto import get_cipher
 from ably.types.message import Message
 
-from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseAsyncTestCase, AsyncMock
+from test.ably.utils import AsyncMock
+
 
 log = logging.getLogger(__name__)
 
 
-class TestTextEncodersNoEncryption(BaseAsyncTestCase):
-    async def setUp(self):
-        self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
+@pytest.fixture(name="cipher_params")
+def cipher_params_fixture():
+    yield CipherParams(secret_key='keyfordecrypt_16',
+                       algorithm='aes')
 
-    async def tearDown(self):
-        await self.ably.close()
 
-    async def test_text_utf8(self):
-        channel = self.ably.channels["persisted:publish"]
+class TestTextEncodersNoEncryption:
+    @pytest.mark.asyncio
+    async def test_text_utf8(self, json_rest):
+        channel = json_rest.channels["persisted:publish"]
 
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', 'foó')
@@ -31,9 +33,10 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
             assert json.loads(kwargs['body'])['data'] == 'foó'
             assert not json.loads(kwargs['body']).get('encoding', '')
 
-    async def test_str(self):
+    @pytest.mark.asyncio
+    async def test_str(self, json_rest):
         # This test only makes sense for py2
-        channel = self.ably.channels["persisted:publish"]
+        channel = json_rest.channels["persisted:publish"]
 
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', 'foo')
@@ -41,8 +44,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
             assert json.loads(kwargs['body'])['data'] == 'foo'
             assert not json.loads(kwargs['body']).get('encoding', '')
 
-    async def test_with_binary_type(self):
-        channel = self.ably.channels["persisted:publish"]
+    @pytest.mark.asyncio
+    async def test_with_binary_type(self, json_rest):
+        channel = json_rest.channels["persisted:publish"]
 
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', bytearray(b'foo'))
@@ -51,8 +55,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
             assert base64.b64decode(raw_data.encode('ascii')) == bytearray(b'foo')
             assert json.loads(kwargs['body'])['encoding'].strip('/') == 'base64'
 
-    async def test_with_bytes_type(self):
-        channel = self.ably.channels["persisted:publish"]
+    @pytest.mark.asyncio
+    async def test_with_bytes_type(self, json_rest):
+        channel = json_rest.channels["persisted:publish"]
 
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', b'foo')
@@ -61,8 +66,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
             assert base64.b64decode(raw_data.encode('ascii')) == bytearray(b'foo')
             assert json.loads(kwargs['body'])['encoding'].strip('/') == 'base64'
 
-    async def test_with_json_dict_data(self):
-        channel = self.ably.channels["persisted:publish"]
+    @pytest.mark.asyncio
+    async def test_with_json_dict_data(self, json_rest):
+        channel = json_rest.channels["persisted:publish"]
         data = {'foó': 'bár'}
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', data)
@@ -71,8 +77,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
             assert raw_data == data
             assert json.loads(kwargs['body'])['encoding'].strip('/') == 'json'
 
-    async def test_with_json_list_data(self):
-        channel = self.ably.channels["persisted:publish"]
+    @pytest.mark.asyncio
+    async def test_with_json_list_data(self, json_rest):
+        channel = json_rest.channels["persisted:publish"]
         data = ['foó', 'bár']
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', data)
@@ -81,8 +88,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
             assert raw_data == data
             assert json.loads(kwargs['body'])['encoding'].strip('/') == 'json'
 
-    async def test_text_utf8_decode(self):
-        channel = self.ably.channels["persisted:stringdecode"]
+    @pytest.mark.asyncio
+    async def test_text_utf8_decode(self, json_rest):
+        channel = json_rest.channels["persisted:stringdecode"]
 
         await channel.publish('event', 'fóo')
         history = await channel.history()
@@ -91,8 +99,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
         assert isinstance(message.data, str)
         assert not message.encoding
 
-    async def test_text_str_decode(self):
-        channel = self.ably.channels["persisted:stringnonutf8decode"]
+    @pytest.mark.asyncio
+    async def test_text_str_decode(self, json_rest):
+        channel = json_rest.channels["persisted:stringnonutf8decode"]
 
         await channel.publish('event', 'foo')
         history = await channel.history()
@@ -101,8 +110,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
         assert isinstance(message.data, str)
         assert not message.encoding
 
-    async def test_with_binary_type_decode(self):
-        channel = self.ably.channels["persisted:binarydecode"]
+    @pytest.mark.asyncio
+    async def test_with_binary_type_decode(self, json_rest):
+        channel = json_rest.channels["persisted:binarydecode"]
 
         await channel.publish('event', bytearray(b'foob'))
         history = await channel.history()
@@ -111,8 +121,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
         assert isinstance(message.data, bytearray)
         assert not message.encoding
 
-    async def test_with_json_dict_data_decode(self):
-        channel = self.ably.channels["persisted:jsondict"]
+    @pytest.mark.asyncio
+    async def test_with_json_dict_data_decode(self, json_rest):
+        channel = json_rest.channels["persisted:jsondict"]
         data = {'foó': 'bár'}
         await channel.publish('event', data)
         history = await channel.history()
@@ -120,8 +131,9 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
         assert message.data == data
         assert not message.encoding
 
-    async def test_with_json_list_data_decode(self):
-        channel = self.ably.channels["persisted:jsonarray"]
+    @pytest.mark.asyncio
+    async def test_with_json_list_data_decode(self, json_rest):
+        channel = json_rest.channels["persisted:jsonarray"]
         data = ['foó', 'bár']
         await channel.publish('event', data)
         history = await channel.history()
@@ -137,15 +149,7 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
         assert decoded_data['encoding'] == 'foo/bar'
 
 
-class TestTextEncodersEncryption(BaseAsyncTestCase):
-    async def setUp(self):
-        self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
-        self.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
-                                          algorithm='aes')
-
-    async def tearDown(self):
-        await self.ably.close()
-
+class TestTextEncodersEncryption:
     def decrypt(self, payload, options=None):
         if options is None:
             options = {}
@@ -153,9 +157,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
         cipher = get_cipher({'key': b'keyfordecrypt_16'})
         return cipher.decrypt(ciphertext)
 
-    async def test_text_utf8(self):
-        channel = self.ably.channels.get("persisted:publish_enc",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_text_utf8(self, json_rest, cipher_params):
+        channel = json_rest.channels.get("persisted:publish_enc",
+                                         cipher=cipher_params)
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', 'fóo')
             _, kwargs = post_mock.call_args
@@ -163,9 +168,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
             data = self.decrypt(json.loads(kwargs['body'])['data']).decode('utf-8')
             assert data == 'fóo'
 
-    async def test_str(self):
+    @pytest.mark.asyncio
+    async def test_str(self, json_rest):
         # This test only makes sense for py2
-        channel = self.ably.channels["persisted:publish"]
+        channel = json_rest.channels["persisted:publish"]
 
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', 'foo')
@@ -173,9 +179,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
             assert json.loads(kwargs['body'])['data'] == 'foo'
             assert not json.loads(kwargs['body']).get('encoding', '')
 
-    async def test_with_binary_type(self):
-        channel = self.ably.channels.get("persisted:publish_enc",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_binary_type(self, json_rest, cipher_params):
+        channel = json_rest.channels.get("persisted:publish_enc",
+                                         cipher=cipher_params)
 
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', bytearray(b'foo'))
@@ -186,9 +193,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
             assert data == bytearray(b'foo')
             assert isinstance(data, bytearray)
 
-    async def test_with_json_dict_data(self):
-        channel = self.ably.channels.get("persisted:publish_enc",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_json_dict_data(self, json_rest, cipher_params):
+        channel = json_rest.channels.get("persisted:publish_enc",
+                                         cipher=cipher_params)
         data = {'foó': 'bár'}
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', data)
@@ -197,9 +205,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
             raw_data = self.decrypt(json.loads(kwargs['body'])['data']).decode('ascii')
             assert json.loads(raw_data) == data
 
-    async def test_with_json_list_data(self):
-        channel = self.ably.channels.get("persisted:publish_enc",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_json_list_data(self, json_rest, cipher_params):
+        channel = json_rest.channels.get("persisted:publish_enc",
+                                         cipher=cipher_params)
         data = ['foó', 'bár']
         with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', data)
@@ -208,9 +217,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
             raw_data = self.decrypt(json.loads(kwargs['body'])['data']).decode('ascii')
             assert json.loads(raw_data) == data
 
-    async def test_text_utf8_decode(self):
-        channel = self.ably.channels.get("persisted:enc_stringdecode",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_text_utf8_decode(self, json_rest, cipher_params):
+        channel = json_rest.channels.get("persisted:enc_stringdecode",
+                                         cipher=cipher_params)
         await channel.publish('event', 'foó')
         history = await channel.history()
         message = history.items[0]
@@ -218,9 +228,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
         assert isinstance(message.data, str)
         assert not message.encoding
 
-    async def test_with_binary_type_decode(self):
-        channel = self.ably.channels.get("persisted:enc_binarydecode",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_binary_type_decode(self, json_rest, cipher_params):
+        channel = json_rest.channels.get("persisted:enc_binarydecode",
+                                         cipher=cipher_params)
 
         await channel.publish('event', bytearray(b'foob'))
         history = await channel.history()
@@ -229,9 +240,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
         assert isinstance(message.data, bytearray)
         assert not message.encoding
 
-    async def test_with_json_dict_data_decode(self):
-        channel = self.ably.channels.get("persisted:enc_jsondict",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_json_dict_data_decode(self, json_rest, cipher_params):
+        channel = json_rest.channels.get("persisted:enc_jsondict",
+                                         cipher=cipher_params)
         data = {'foó': 'bár'}
         await channel.publish('event', data)
         history = await channel.history()
@@ -239,9 +251,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
         assert message.data == data
         assert not message.encoding
 
-    async def test_with_json_list_data_decode(self):
-        channel = self.ably.channels.get("persisted:enc_list",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_json_list_data_decode(self, json_rest, cipher_params):
+        channel = json_rest.channels.get("persisted:enc_list",
+                                         cipher=cipher_params)
         data = ['foó', 'bár']
         await channel.publish('event', data)
         history = await channel.history()
@@ -250,19 +263,13 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
         assert not message.encoding
 
 
-class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
-
-    async def setUp(self):
-        self.ably = await RestSetup.get_ably_rest()
-
-    async def tearDown(self):
-        await self.ably.close()
-
+class TestBinaryEncodersNoEncryption:
     def decode(self, data):
         return msgpack.unpackb(data)
 
-    async def test_text_utf8(self):
-        channel = self.ably.channels["persisted:publish"]
+    @pytest.mark.asyncio
+    async def test_text_utf8(self, msgpack_rest):
+        channel = msgpack_rest.channels["persisted:publish"]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -271,8 +278,9 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
             assert self.decode(kwargs['body'])['data'] == 'foó'
             assert self.decode(kwargs['body']).get('encoding', '').strip('/') == ''
 
-    async def test_with_binary_type(self):
-        channel = self.ably.channels["persisted:publish"]
+    @pytest.mark.asyncio
+    async def test_with_binary_type(self, msgpack_rest):
+        channel = msgpack_rest.channels["persisted:publish"]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -281,8 +289,9 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
             assert self.decode(kwargs['body'])['data'] == bytearray(b'foo')
             assert self.decode(kwargs['body']).get('encoding', '').strip('/') == ''
 
-    async def test_with_json_dict_data(self):
-        channel = self.ably.channels["persisted:publish"]
+    @pytest.mark.asyncio
+    async def test_with_json_dict_data(self, msgpack_rest):
+        channel = msgpack_rest.channels["persisted:publish"]
         data = {'foó': 'bár'}
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -292,8 +301,9 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
             assert raw_data == data
             assert self.decode(kwargs['body'])['encoding'].strip('/') == 'json'
 
-    async def test_with_json_list_data(self):
-        channel = self.ably.channels["persisted:publish"]
+    @pytest.mark.asyncio
+    async def test_with_json_list_data(self, msgpack_rest):
+        channel = msgpack_rest.channels["persisted:publish"]
         data = ['foó', 'bár']
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -303,8 +313,9 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
             assert raw_data == data
             assert self.decode(kwargs['body'])['encoding'].strip('/') == 'json'
 
-    async def test_text_utf8_decode(self):
-        channel = self.ably.channels["persisted:stringdecode-bin"]
+    @pytest.mark.asyncio
+    async def test_text_utf8_decode(self, msgpack_rest):
+        channel = msgpack_rest.channels["persisted:stringdecode-bin"]
 
         await channel.publish('event', 'fóo')
         history = await channel.history()
@@ -313,8 +324,9 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
         assert isinstance(message.data, str)
         assert not message.encoding
 
-    async def test_with_binary_type_decode(self):
-        channel = self.ably.channels["persisted:binarydecode-bin"]
+    @pytest.mark.asyncio
+    async def test_with_binary_type_decode(self, msgpack_rest):
+        channel = msgpack_rest.channels["persisted:binarydecode-bin"]
 
         await channel.publish('event', bytearray(b'foob'))
         history = await channel.history()
@@ -322,8 +334,9 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
         assert message.data == bytearray(b'foob')
         assert not message.encoding
 
-    async def test_with_json_dict_data_decode(self):
-        channel = self.ably.channels["persisted:jsondict-bin"]
+    @pytest.mark.asyncio
+    async def test_with_json_dict_data_decode(self, msgpack_rest):
+        channel = msgpack_rest.channels["persisted:jsondict-bin"]
         data = {'foó': 'bár'}
         await channel.publish('event', data)
         history = await channel.history()
@@ -331,8 +344,9 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
         assert message.data == data
         assert not message.encoding
 
-    async def test_with_json_list_data_decode(self):
-        channel = self.ably.channels["persisted:jsonarray-bin"]
+    @pytest.mark.asyncio
+    async def test_with_json_list_data_decode(self, msgpack_rest):
+        channel = msgpack_rest.channels["persisted:jsonarray-bin"]
         data = ['foó', 'bár']
         await channel.publish('event', data)
         history = await channel.history()
@@ -341,14 +355,7 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
         assert not message.encoding
 
 
-class TestBinaryEncodersEncryption(BaseAsyncTestCase):
-
-    async def setUp(self):
-        self.ably = await RestSetup.get_ably_rest()
-        self.cipher_params = CipherParams(secret_key='keyfordecrypt_16', algorithm='aes')
-
-    async def tearDown(self):
-        await self.ably.close()
+class TestBinaryEncodersEncryption:
 
     def decrypt(self, payload, options=None):
         if options is None:
@@ -359,9 +366,10 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
     def decode(self, data):
         return msgpack.unpackb(data)
 
-    async def test_text_utf8(self):
-        channel = self.ably.channels.get("persisted:publish_enc",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_text_utf8(self, msgpack_rest, cipher_params):
+        channel = msgpack_rest.channels.get("persisted:publish_enc",
+                                            cipher=cipher_params)
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
             await channel.publish('event', 'fóo')
@@ -370,12 +378,12 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
             data = self.decrypt(self.decode(kwargs['body'])['data']).decode('utf-8')
             assert data == 'fóo'
 
-    async def test_with_binary_type(self):
-        channel = self.ably.channels.get("persisted:publish_enc",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_binary_type(self, msgpack_rest, cipher_params):
+        channel = msgpack_rest.channels.get("persisted:publish_enc",
+                                            cipher=cipher_params)
 
-        with mock.patch('ably.rest.rest.Http.post',
-                        wraps=channel.ably.http.post) as post_mock:
+        with mock.patch('ably.rest.rest.Http.post', new_callable=AsyncMock) as post_mock:
             await channel.publish('event', bytearray(b'foo'))
             _, kwargs = post_mock.call_args
 
@@ -384,9 +392,10 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
             assert data == bytearray(b'foo')
             assert isinstance(data, bytearray)
 
-    async def test_with_json_dict_data(self):
-        channel = self.ably.channels.get("persisted:publish_enc",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_json_dict_data(self, msgpack_rest, cipher_params):
+        channel = msgpack_rest.channels.get("persisted:publish_enc",
+                                            cipher=cipher_params)
         data = {'foó': 'bár'}
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -396,9 +405,10 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
             raw_data = self.decrypt(self.decode(kwargs['body'])['data']).decode('ascii')
             assert json.loads(raw_data) == data
 
-    async def test_with_json_list_data(self):
-        channel = self.ably.channels.get("persisted:publish_enc",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_json_list_data(self, msgpack_rest, cipher_params):
+        channel = msgpack_rest.channels.get("persisted:publish_enc",
+                                            cipher=cipher_params)
         data = ['foó', 'bár']
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -408,9 +418,10 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
             raw_data = self.decrypt(self.decode(kwargs['body'])['data']).decode('ascii')
             assert json.loads(raw_data) == data
 
-    async def test_text_utf8_decode(self):
-        channel = self.ably.channels.get("persisted:enc_stringdecode-bin",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_text_utf8_decode(self, msgpack_rest, cipher_params):
+        channel = msgpack_rest.channels.get("persisted:enc_stringdecode-bin",
+                                            cipher=cipher_params)
         await channel.publish('event', 'foó')
         history = await channel.history()
         message = history.items[0]
@@ -418,9 +429,10 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
         assert isinstance(message.data, str)
         assert not message.encoding
 
-    async def test_with_binary_type_decode(self):
-        channel = self.ably.channels.get("persisted:enc_binarydecode-bin",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_binary_type_decode(self, msgpack_rest, cipher_params):
+        channel = msgpack_rest.channels.get("persisted:enc_binarydecode-bin",
+                                            cipher=cipher_params)
 
         await channel.publish('event', bytearray(b'foob'))
         history = await channel.history()
@@ -429,9 +441,10 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
         assert isinstance(message.data, bytearray)
         assert not message.encoding
 
-    async def test_with_json_dict_data_decode(self):
-        channel = self.ably.channels.get("persisted:enc_jsondict-bin",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_json_dict_data_decode(self, msgpack_rest, cipher_params):
+        channel = msgpack_rest.channels.get("persisted:enc_jsondict-bin",
+                                            cipher=cipher_params)
         data = {'foó': 'bár'}
         await channel.publish('event', data)
         history = await channel.history()
@@ -439,9 +452,10 @@ class TestBinaryEncodersEncryption(BaseAsyncTestCase):
         assert message.data == data
         assert not message.encoding
 
-    async def test_with_json_list_data_decode(self):
-        channel = self.ably.channels.get("persisted:enc_list-bin",
-                                         cipher=self.cipher_params)
+    @pytest.mark.asyncio
+    async def test_with_json_list_data_decode(self, msgpack_rest, cipher_params):
+        channel = msgpack_rest.channels.get("persisted:enc_list-bin",
+                                            cipher=cipher_params)
         data = ['foó', 'bár']
         await channel.publish('event', data)
         history = await channel.history()
