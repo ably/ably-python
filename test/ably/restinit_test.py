@@ -91,6 +91,7 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     # RSC15
     @dont_vary_protocol
+    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     def test_fallback_hosts(self):
         # Specify the fallback_hosts (RSC15a)
         fallback_hosts = [

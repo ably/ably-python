@@ -23,6 +23,7 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, Ba
 log = logging.getLogger(__name__)
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def setUp(self):

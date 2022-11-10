@@ -90,6 +90,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
     # RSC19e
     @dont_vary_protocol
+    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_timeout(self):
         # Timeout
         timeout = 0.000001
