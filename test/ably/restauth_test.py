@@ -17,7 +17,8 @@ from ably import AblyAuthException
 from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, AsyncMock
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from unittest.mock import AsyncMock
 
 log = logging.getLogger(__name__)
 

@@ -10,7 +10,8 @@ from ably.util.crypto import get_cipher
 from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseAsyncTestCase, AsyncMock
+from test.ably.utils import BaseAsyncTestCase
+from unittest.mock import AsyncMock
 
 log = logging.getLogger(__name__)
 
