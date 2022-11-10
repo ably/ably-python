@@ -162,8 +162,3 @@ def new_dict(src, **kw):
 
 def get_random_key(d):
     return random.choice(list(d))
-
-
-class AsyncMock(mock.MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super(AsyncMock, self).__call__(*args, **kwargs)
