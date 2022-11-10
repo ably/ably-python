@@ -18,7 +18,10 @@ from ably.types.tokendetails import TokenDetails
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
-from unittest.mock import AsyncMock
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from mock import AsyncMock
 
 log = logging.getLogger(__name__)
 
