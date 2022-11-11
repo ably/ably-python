@@ -132,3 +132,6 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             await ably.connect()
         assert exception.value.code == 50003
         assert exception.value.status_code == 504
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+        assert ably.connection.error_reason == exception.value
+        ably.close()

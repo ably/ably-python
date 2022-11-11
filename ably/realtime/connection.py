@@ -19,6 +19,7 @@ class ConnectionState(str, Enum):
     INITIALIZED = 'initialized'
     CONNECTING = 'connecting'
     CONNECTED = 'connected'
+    DISCONNECTED = 'disconnected'
     CLOSING = 'closing'
     CLOSED = 'closed'
     FAILED = 'failed'
@@ -162,7 +163,9 @@ class ConnectionManager(EventEmitter):
             try:
                 await asyncio.wait_for(self.__connected_future, self.options.realtime_request_timeout)
             except asyncio.TimeoutError:
-                raise AblyException("Realtime request timeout", 504, 50003)
+                exception = AblyException("Realtime request timeout", 504, 50003)
+                self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+                raise exception
             self.enact_state_change(ConnectionState.CONNECTED)
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
