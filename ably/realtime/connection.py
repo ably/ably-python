@@ -159,7 +159,10 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future is None:
                 log.fatal('Connection state is CONNECTING but connected_future does not exist')
                 return
-            await self.__connected_future
+            try:
+                await asyncio.wait_for(self.__connected_future, self.options.realtime_request_timeout)
+            except asyncio.TimeoutError:
+                raise AblyException("Realtime request timeout", 504, 50003)
             self.enact_state_change(ConnectionState.CONNECTED)
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
@@ -173,7 +176,10 @@ class ConnectionManager(EventEmitter):
         self.__closed_future = asyncio.Future()
         if self.__websocket and self.__state != ConnectionState.FAILED:
             await self.send_close_message()
-            await self.__closed_future
+            try:
+                await asyncio.wait_for(self.__closed_future, self.options.realtime_request_timeout)
+            except asyncio.TimeoutError:
+                raise AblyException("Realtime request timeout", 504, 50003)
         else:
             log.warning('Connection.closed called while connection already closed or not established')
         self.enact_state_change(ConnectionState.CLOSED)
@@ -219,24 +225,25 @@ class ConnectionManager(EventEmitter):
                                               "id": self.__ping_id})
         else:
             raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
+        try:
+            await asyncio.wait_for(self.__ping_future, self.options.realtime_request_timeout)
+        except asyncio.TimeoutError:
+            raise AblyException("Realtime request timeout", 504, 50003)
+
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
 
     async def ws_read_loop(self):
         while True:
-            try:
-                raw = await asyncio.wait_for(self.__websocket.recv(), self.options.realtime_request_timeout)
-            except asyncio.TimeoutError:
-                exception = AblyException("Realtime request timeout", 504, 50003)
-                self.enact_state_change(ConnectionState.FAILED, exception)
-                raise exception
+            raw = await self.__websocket.recv()
             msg = json.loads(raw)
             log.info(f'ws_read_loop(): receieved protocol message: {msg}')
             action = msg['action']
             if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
                 if self.__connected_future:
-                    self.__connected_future.set_result(None)
+                    if not self.__connected_future.cancelled():
+                        self.__connected_future.set_result(None)
                     self.__connected_future = None
                 else:
                     log.warn('CONNECTED message received but connected_future not set')
@@ -260,7 +267,8 @@ class ConnectionManager(EventEmitter):
                     # Resolve on heartbeat from ping request.
                     # TODO: Handle Normal heartbeat if required
                     if self.__ping_id == msg.get("id"):
-                        self.__ping_future.set_result(None)
+                        if not self.__ping_future.cancelled():
+                            self.__ping_future.set_result(None)
                         self.__ping_future = None
             if action in (
                 ProtocolMessageAction.ATTACHED,
