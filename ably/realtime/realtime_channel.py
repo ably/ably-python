@@ -80,10 +80,12 @@ class RealtimeChannel(EventEmitter):
 
         # RTL4h - wait for pending attach/detach
         if self.state == ChannelState.ATTACHING:
-            await self.__attach_future
+            if self.__attach_future and not self.__attach_future.cancelled():
+                await self.__attach_future
             return
         elif self.state == ChannelState.DETACHING:
-            await self.__detach_future
+            if self.__detach_future and not self.__detach_future.cancelled():
+                await self.__detach_future
 
         self.set_state(ChannelState.ATTACHING)
 
@@ -98,7 +100,10 @@ class RealtimeChannel(EventEmitter):
                 "channel": self.name,
             }
         )
-        await self.__attach_future
+        try:
+            await asyncio.wait_for(self.__attach_future, self.__realtime.options.realtime_request_timeout)
+        except asyncio.TimeoutError:
+            raise AblyException("Realtime request timeout", 504, 50003)
         self.set_state(ChannelState.ATTACHED)
 
     async def detach(self):
@@ -130,10 +135,12 @@ class RealtimeChannel(EventEmitter):
 
         # RTL5i - wait for pending attach/detach
         if self.state == ChannelState.DETACHING:
-            await self.__detach_future
+            if self.__attach_future and not self.__detach_future.cancelled():
+                await self.__detach_future
             return
         elif self.state == ChannelState.ATTACHING:
-            await self.__attach_future
+            if self.__attach_future and not self.__attach_future.cancelled():
+                await self.__attach_future
 
         self.set_state(ChannelState.DETACHING)
 
@@ -148,7 +155,10 @@ class RealtimeChannel(EventEmitter):
                 "channel": self.name,
             }
         )
-        await self.__detach_future
+        try:
+            await asyncio.wait_for(self.__detach_future, self.__realtime.options.realtime_request_timeout)
+        except asyncio.TimeoutError:
+            raise AblyException("Realtime request timeout", 504, 50003)
         self.set_state(ChannelState.DETACHED)
 
     async def subscribe(self, *args):
