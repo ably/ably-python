@@ -42,6 +42,8 @@ class ProtocolMessageAction(IntEnum):
     DETACH = 12
     DETACHED = 13
     MESSAGE = 15
+    TEST = 13
+    CHANGE = 15
 
 
 class Connection(EventEmitter):
