@@ -182,7 +182,7 @@ class ConnectionManager(EventEmitter):
             try:
                 await asyncio.wait_for(self.__closed_future, self.options.realtime_request_timeout)
             except asyncio.TimeoutError:
-                raise AblyException("Realtime request timeout", 504, 50003)
+                raise AblyException("Timeout waiting for connection close response", 504, 50003)
         else:
             log.warning('Connection.closed called while connection already closed or not established')
         self.enact_state_change(ConnectionState.CLOSED)
@@ -194,7 +194,7 @@ class ConnectionManager(EventEmitter):
         try:
             await asyncio.wait_for(self.__connected_future, self.options.realtime_request_timeout)
         except asyncio.TimeoutError:
-            exception = AblyException("Realtime request timeout", 504, 50003)
+            exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
             self.enact_state_change(ConnectionState.DISCONNECTED, exception)
             raise exception
         self.enact_state_change(ConnectionState.CONNECTED)
@@ -236,7 +236,7 @@ class ConnectionManager(EventEmitter):
         try:
             await asyncio.wait_for(self.__ping_future, self.options.realtime_request_timeout)
         except asyncio.TimeoutError:
-            raise AblyException("Realtime request timeout", 504, 50003)
+            raise AblyException("Timeout waiting for ping response", 504, 50003)
 
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000
