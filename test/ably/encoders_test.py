@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import sys
 
 import mock
 import msgpack
@@ -11,9 +12,10 @@ from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
-try:
+
+if sys.version_info >= (3, 8):
     from unittest.mock import AsyncMock
-except ImportError:
+else:
     from mock import AsyncMock
 
 log = logging.getLogger(__name__)
