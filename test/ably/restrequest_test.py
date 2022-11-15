@@ -90,6 +90,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
     # RSC19e
     @dont_vary_protocol
+    # Ignore library warning regarding fallback_hosts_use_default
     @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_timeout(self):
         # Timeout
