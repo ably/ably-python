@@ -152,3 +152,19 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert exception.value.code == 50003
         assert exception.value.status_code == 504
         await ably.close()
+
+    async def test_realtime_request_timeout_close(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        await ably.connect()
+        original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
+
+        async def new_send_protocol_message(msg):
+            if msg.get('action') == ProtocolMessageAction.CLOSE:
+                return
+            await original_send_protocol_message(msg)
+        ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
+
+        with pytest.raises(AblyException) as exception:
+            await ably.close()
+        assert exception.value.code == 50003
+        assert exception.value.status_code == 504
