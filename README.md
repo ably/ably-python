@@ -196,6 +196,103 @@ await client.time()
 await client.close()
 ```
 
+## Realtime client (beta)
+
+We currently have a preview version of our first ever Python realtime client available for beta testing.
+Currently the realtime client only supports authentication using basic auth and message subscription.
+Realtime publishing, token authentication, and realtime presence are upcoming but not yet supported.
+Check out the [roadmap](./roadmap.md) to see our plan for the realtime client.
+
+### Installing the realtime client
+
+The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b2/) package.
+
+```
+pip install ably==2.0.0b2
+```
+
+### Using the realtime client
+
+#### Creating a client
+
+```python
+from ably import AblyRealtime
+
+async def main():
+    client = AblyRealtime('api:key')
+```
+
+#### Get a realtime channel instance
+
+```python
+channel = client.channels.get('channel_name')
+```
+
+#### Subscribing to messages on a channel
+
+```python
+
+def listener(message):
+    print(message.data)
+
+# Subscribe to messages with the 'event' name
+await channel.subscribe('event', listener)
+
+# Subscribe to all messages on a channel
+await channel.subscribe(listener)
+```
+
+Note that `channel.subscribe` is a coroutine function and will resolve when the channel is attached
+
+#### Unsubscribing from messages on a channel
+
+```python
+# unsubscribe the listener from the channel
+channel.unsubscribe('event', listener)
+
+# unsubscribe all listeners from the channel
+channel.unsubscribe()
+```
+
+#### Subscribe to connection state change
+
+```python
+# subscribe to 'failed' connection state
+client.connection.on('failed', listener)
+
+# subscribe to 'connected' connection state
+client.connection.on('connected', listener)
+
+# subscribe to all connection state changes
+client.connection.on(listener)
+```
+
+#### Attach to a channel
+
+```python
+await channel.attach()
+```
+
+#### Detach from a channel
+
+```python
+await channel.detach()
+```
+
+#### Managing a connection
+
+```python
+# Establish a realtime connection.
+# Explicitly calling connect() is unnecessary unless the autoConnect attribute of the ClientOptions object is false
+await client.connect()
+
+# Close a connection
+await client.close()
+
+# Send a ping
+time_in_ms = await client.connection.ping()
+```
+
 ## Resources
 
 Visit https://ably.com/docs for a complete API reference and more examples.
