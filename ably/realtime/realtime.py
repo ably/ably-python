@@ -2,6 +2,7 @@ import logging
 import asyncio
 from ably.realtime.connection import Connection
 from ably.rest.auth import Auth
+from ably.rest.rest import AblyRest
 from ably.types.options import Options
 from ably.realtime.realtime_channel import RealtimeChannel
 
@@ -9,7 +10,7 @@ from ably.realtime.realtime_channel import RealtimeChannel
 log = logging.getLogger(__name__)
 
 
-class AblyRealtime:
+class AblyRealtime(AblyRest):
     """
     Ably Realtime Client
 
@@ -63,6 +64,8 @@ class AblyRealtime:
         ValueError
             If no authentication key is not provided
         """
+        super().__init__(key, **kwargs)
+
         if loop is None:
             try:
                 loop = asyncio.get_running_loop()
@@ -102,6 +105,7 @@ class AblyRealtime:
         """
         log.info('Realtime.close() called')
         await self.connection.close()
+        await super().close()
 
     @property
     def auth(self):
