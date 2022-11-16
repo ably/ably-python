@@ -270,6 +270,15 @@ class ConnectionManager(EventEmitter):
                     self.__connected_future = None
                 else:
                     log.warn('CONNECTED message received but connected_future not set')
+            if action == ProtocolMessageAction.DISCONNECTED:
+                exception = AblyException.from_exception(msg.get('error'))
+                self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+                if self.__connected_future:
+                    if not self.__connected_future.cancelled():
+                        self.__connected_future.set_result(exception)
+                    self.__connected_future = None
+                else:
+                    log.warn('CONNECTED message received but connected_future not set')
             if action == ProtocolMessageAction.ERROR:  # ERROR
                 error = msg["error"]
                 if error['nonfatal'] is False:
