@@ -190,8 +190,15 @@ class ConnectionManager(EventEmitter):
         if self.setup_ws_task:
             await self.setup_ws_task
 
+    def on_setup_ws_done(self, task):
+        exception = task.exception()
+        if exception is not None:
+            if self.__connected_future:
+                self.__connected_future.set_exception(exception)
+
     async def connect_impl(self):
         self.setup_ws_task = self.__ably.options.loop.create_task(self.setup_ws())
+        self.setup_ws_task.add_done_callback(self.on_setup_ws_done)
         try:
             await asyncio.wait_for(self.__connected_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
