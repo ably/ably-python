@@ -145,7 +145,7 @@ class ConnectionManager(EventEmitter):
         self.__websocket = None
         self.setup_ws_task = None
         self.__ping_future = None
-        self.timeout_in_secs = self.options.realtime_request_timeout / 1000
+        self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -181,7 +181,7 @@ class ConnectionManager(EventEmitter):
         if self.__websocket and self.__state != ConnectionState.FAILED:
             await self.send_close_message()
             try:
-                await asyncio.wait_for(self.__closed_future, self.timeout_in_secs)
+                await asyncio.wait_for(self.__closed_future, self.__timeout_in_secs)
             except asyncio.TimeoutError:
                 raise AblyException("Timeout waiting for connection close response", 504, 50003)
         else:
@@ -193,7 +193,7 @@ class ConnectionManager(EventEmitter):
     async def connect_impl(self):
         self.setup_ws_task = self.__ably.options.loop.create_task(self.setup_ws())
         try:
-            await asyncio.wait_for(self.__connected_future, self.timeout_in_secs)
+            await asyncio.wait_for(self.__connected_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
             exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
             self.enact_state_change(ConnectionState.DISCONNECTED, exception)
@@ -238,7 +238,7 @@ class ConnectionManager(EventEmitter):
         else:
             raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
         try:
-            await asyncio.wait_for(self.__ping_future, self.timeout_in_secs)
+            await asyncio.wait_for(self.__ping_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for ping response", 504, 50003)
 

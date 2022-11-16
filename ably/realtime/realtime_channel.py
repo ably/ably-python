@@ -50,7 +50,7 @@ class RealtimeChannel(EventEmitter):
         self.__realtime = realtime
         self.__state = ChannelState.INITIALIZED
         self.__message_emitter = EventEmitter()
-        self.timeout_in_secs = self.__realtime.options.realtime_request_timeout / 1000
+        self.__timeout_in_secs = self.__realtime.options.realtime_request_timeout / 1000
         super().__init__()
 
     async def attach(self):
@@ -107,7 +107,7 @@ class RealtimeChannel(EventEmitter):
             }
         )
         try:
-            await asyncio.wait_for(self.__attach_future, self.timeout_in_secs)
+            await asyncio.wait_for(self.__attach_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for channel attach", 504, 50003)
         self.set_state(ChannelState.ATTACHED)
@@ -166,7 +166,7 @@ class RealtimeChannel(EventEmitter):
             }
         )
         try:
-            await asyncio.wait_for(self.__detach_future, self.timeout_in_secs)
+            await asyncio.wait_for(self.__detach_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for channel detach", 504, 50003)
         self.set_state(ChannelState.DETACHED)
