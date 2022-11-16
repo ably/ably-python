@@ -87,7 +87,8 @@ class RestSetup:
         test_vars = await RestSetup.get_test_vars()
         options = {
             'key': test_vars["keys"][0]["key_str"],
-            'realtime_host': realtime_host,
+            'realtime_host': test_vars["realtime_host"],
+            'rest_host': test_vars["host"],
             'port': test_vars["port"],
             'tls_port': test_vars["tls_port"],
             'tls': test_vars["tls"],
