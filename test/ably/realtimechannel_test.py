@@ -1,8 +1,11 @@
 import asyncio
+import pytest
 from ably.realtime.realtime_channel import ChannelState
 from ably.types.message import Message
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
+from ably.realtime.connection import ProtocolMessageAction
+from ably.util.exceptions import AblyException
 
 
 class TestRealtimeChannel(BaseAsyncTestCase):
@@ -215,3 +218,40 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
         await ably.close()
         await rest.close()
+
+    async def test_realtime_request_timeout_attach(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        await ably.connect()
+        original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
+
+        async def new_send_protocol_message(msg):
+            if msg.get('action') == ProtocolMessageAction.ATTACH:
+                return
+            await original_send_protocol_message(msg)
+        ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
+
+        channel = ably.channels.get('channel_name')
+        with pytest.raises(AblyException) as exception:
+            await channel.attach()
+        assert exception.value.code == 50003
+        assert exception.value.status_code == 504
+        await ably.close()
+
+    async def test_realtime_request_timeout_detach(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        await ably.connect()
+        original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
+
+        async def new_send_protocol_message(msg):
+            if msg.get('action') == ProtocolMessageAction.DETACH:
+                return
+            await original_send_protocol_message(msg)
+        ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
+
+        channel = ably.channels.get('channel_name')
+        await channel.attach()
+        with pytest.raises(AblyException) as exception:
+            await channel.detach()
+        assert exception.value.code == 50003
+        assert exception.value.status_code == 504
+        await ably.close()

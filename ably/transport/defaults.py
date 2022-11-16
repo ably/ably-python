@@ -19,6 +19,7 @@ class Defaults:
     suspended_timeout = 60000
     comet_recv_timeout = 90000
     comet_send_timeout = 10000
+    realtime_request_timeout = 10000
 
     transports = []  # ["web_socket", "comet"]
 

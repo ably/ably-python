@@ -53,6 +53,10 @@ class AblyRealtime:
                 For development environments only. The default value is realtime.ably.io.
             environment: str
                 Enables a custom environment to be used with the Ably service. Defaults to `production`
+            realtime_request_timeout: float
+                Timeout (in milliseconds) for the wait of acknowledgement for operations performed via a realtime
+                connection. Operations include establishing a connection with Ably, or sending a HEARTBEAT,
+                CONNECT, ATTACH, DETACH or CLOSE request. The default is 10 seconds(10000 milliseconds).
 
         Raises
         ------

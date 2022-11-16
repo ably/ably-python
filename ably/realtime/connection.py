@@ -19,6 +19,7 @@ class ConnectionState(str, Enum):
     INITIALIZED = 'initialized'
     CONNECTING = 'connecting'
     CONNECTED = 'connected'
+    DISCONNECTED = 'disconnected'
     CLOSING = 'closing'
     CLOSED = 'closed'
     FAILED = 'failed'
@@ -144,6 +145,7 @@ class ConnectionManager(EventEmitter):
         self.__websocket = None
         self.setup_ws_task = None
         self.__ping_future = None
+        self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -159,7 +161,12 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future is None:
                 log.fatal('Connection state is CONNECTING but connected_future does not exist')
                 return
-            await self.__connected_future
+            try:
+                await self.__connected_future
+            except asyncio.CancelledError:
+                exception = AblyException("Connection cancelled due to request timeout", 504, 50003)
+                self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+                raise exception
             self.enact_state_change(ConnectionState.CONNECTED)
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
@@ -173,7 +180,10 @@ class ConnectionManager(EventEmitter):
         self.__closed_future = asyncio.Future()
         if self.__websocket and self.__state != ConnectionState.FAILED:
             await self.send_close_message()
-            await self.__closed_future
+            try:
+                await asyncio.wait_for(self.__closed_future, self.__timeout_in_secs)
+            except asyncio.TimeoutError:
+                raise AblyException("Timeout waiting for connection close response", 504, 50003)
         else:
             log.warning('Connection.closed called while connection already closed or not established')
         self.enact_state_change(ConnectionState.CLOSED)
@@ -182,7 +192,12 @@ class ConnectionManager(EventEmitter):
 
     async def connect_impl(self):
         self.setup_ws_task = self.__ably.options.loop.create_task(self.setup_ws())
-        await self.__connected_future
+        try:
+            await asyncio.wait_for(self.__connected_future, self.__timeout_in_secs)
+        except asyncio.TimeoutError:
+            exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
+            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+            raise exception
         self.enact_state_change(ConnectionState.CONNECTED)
 
     async def send_close_message(self):
@@ -208,7 +223,10 @@ class ConnectionManager(EventEmitter):
 
     async def ping(self):
         if self.__ping_future:
-            response = await self.__ping_future
+            try:
+                response = await self.__ping_future
+            except asyncio.CancelledError:
+                raise AblyException("Ping request cancelled due to request timeout", 504, 50003)
             return response
 
         self.__ping_future = asyncio.Future()
@@ -219,6 +237,11 @@ class ConnectionManager(EventEmitter):
                                               "id": self.__ping_id})
         else:
             raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
+        try:
+            await asyncio.wait_for(self.__ping_future, self.__timeout_in_secs)
+        except asyncio.TimeoutError:
+            raise AblyException("Timeout waiting for ping response", 504, 50003)
+
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
@@ -231,7 +254,8 @@ class ConnectionManager(EventEmitter):
             action = msg['action']
             if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
                 if self.__connected_future:
-                    self.__connected_future.set_result(None)
+                    if not self.__connected_future.cancelled():
+                        self.__connected_future.set_result(None)
                     self.__connected_future = None
                 else:
                     log.warn('CONNECTED message received but connected_future not set')
@@ -255,7 +279,8 @@ class ConnectionManager(EventEmitter):
                     # Resolve on heartbeat from ping request.
                     # TODO: Handle Normal heartbeat if required
                     if self.__ping_id == msg.get("id"):
-                        self.__ping_future.set_result(None)
+                        if not self.__ping_future.cancelled():
+                            self.__ping_future.set_result(None)
                         self.__ping_future = None
             if action in (
                 ProtocolMessageAction.ATTACHED,

@@ -1,5 +1,5 @@
 import asyncio
-from ably.realtime.connection import ConnectionState
+from ably.realtime.connection import ConnectionState, ProtocolMessageAction
 import pytest
 from ably.util.exceptions import AblyAuthException, AblyException
 from test.ably.restsetup import RestSetup
@@ -125,3 +125,46 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.reason == exception.value
         assert ably.connection.error_reason == exception.value
         await ably.close()
+
+    async def test_realtime_request_timeout_connect(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=0.000001)
+        with pytest.raises(AblyException) as exception:
+            await ably.connect()
+        assert exception.value.code == 50003
+        assert exception.value.status_code == 504
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+        assert ably.connection.error_reason == exception.value
+        ably.close()
+
+    async def test_realtime_request_timeout_ping(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        await ably.connect()
+        original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
+
+        async def new_send_protocol_message(msg):
+            if msg.get('action') == ProtocolMessageAction.HEARTBEAT:
+                return
+            await original_send_protocol_message(msg)
+        ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
+
+        with pytest.raises(AblyException) as exception:
+            await ably.connection.ping()
+        assert exception.value.code == 50003
+        assert exception.value.status_code == 504
+        await ably.close()
+
+    async def test_realtime_request_timeout_close(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        await ably.connect()
+        original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
+
+        async def new_send_protocol_message(msg):
+            if msg.get('action') == ProtocolMessageAction.CLOSE:
+                return
+            await original_send_protocol_message(msg)
+        ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
+
+        with pytest.raises(AblyException) as exception:
+            await ably.close()
+        assert exception.value.code == 50003
+        assert exception.value.status_code == 504
