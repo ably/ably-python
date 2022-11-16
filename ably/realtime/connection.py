@@ -219,14 +219,17 @@ class ConnectionManager(EventEmitter):
         headers = HttpUtils.default_headers()
         ws_url = f'wss://{self.options.get_realtime_host()}?key={self.__ably.key}'
         log.info(f'setup_ws(): attempting to connect to {ws_url}')
-        async with websockets.connect(ws_url, extra_headers=headers) as websocket:
-            log.info(f'setup_ws(): connection established to {ws_url}')
-            self.__websocket = websocket
-            task = self.__ably.options.loop.create_task(self.ws_read_loop())
-            try:
-                await task
-            except AblyAuthException:
-                return
+        try:
+            async with websockets.connect(ws_url, extra_headers=headers) as websocket:
+                log.info(f'setup_ws(): connection established to {ws_url}')
+                self.__websocket = websocket
+                task = self.__ably.options.loop.create_task(self.ws_read_loop())
+                try:
+                    await task
+                except AblyAuthException:
+                    return
+        except websockets.exceptions.WebSocketException as e:
+            raise AblyException(f'Error opening websocket connection: {e.message}', 400, 40000)
 
     async def ping(self):
         if self.__ping_future:
