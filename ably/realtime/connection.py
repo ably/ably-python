@@ -35,9 +35,10 @@ class ConnectionStateChange:
 class ProtocolMessageAction(IntEnum):
     HEARTBEAT = 0
     CONNECTED = 4
-    ERROR = 9
+    DISCONNECTED = 6
     CLOSE = 7
     CLOSED = 8
+    ERROR = 9
     ATTACH = 10
     ATTACHED = 11
     DETACH = 12
