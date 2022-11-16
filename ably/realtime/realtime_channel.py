@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from ably.realtime.connection import ConnectionState, ProtocolMessageAction
+from ably.rest.channel import Channel
 from ably.types.message import Message
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
@@ -20,7 +21,7 @@ class ChannelState(str, Enum):
     DETACHED = 'detached'
 
 
-class RealtimeChannel(EventEmitter):
+class RealtimeChannel(EventEmitter, Channel):
     """
     Ably Realtime Channel
 
@@ -44,6 +45,7 @@ class RealtimeChannel(EventEmitter):
     """
 
     def __init__(self, realtime, name):
+        EventEmitter.__init__(self)
         self.__name = name
         self.__attach_future = None
         self.__detach_future = None
@@ -51,7 +53,7 @@ class RealtimeChannel(EventEmitter):
         self.__state = ChannelState.INITIALIZED
         self.__message_emitter = EventEmitter()
         self.__timeout_in_secs = self.__realtime.options.realtime_request_timeout / 1000
-        super().__init__()
+        Channel.__init__(self, realtime, name, {})
 
     async def attach(self):
         """Attach to channel

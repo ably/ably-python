@@ -63,9 +63,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.subscribe('event', listener)
 
         # publish a message using rest client
-        rest = await RestSetup.get_ably_rest()
-        rest_channel = rest.channels.get('my_channel')
-        await rest_channel.publish('event', 'data')
+        await channel.publish('event', 'data')
         message = await first_message_future
 
         assert isinstance(message, Message)
@@ -73,11 +71,10 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         assert message.data == 'data'
 
         # test that the listener is called again for further publishes
-        await rest_channel.publish('event', 'data')
+        await channel.publish('event', 'data')
         await second_message_future
 
         await ably.close()
-        await rest.close()
 
     async def test_subscribe_coroutine(self):
         ably = await RestSetup.get_ably_realtime()
