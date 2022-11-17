@@ -17,12 +17,12 @@ test = ["contextlib2", "coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "mock (>=
 trio = ["trio (>=0.16)"]
 
 [[package]]
-name = "asynctest"
-version = "0.13.0"
-description = "Enhance the standard unittest package with features for testing asyncio libraries"
+name = "async-case"
+version = "10.1.0"
+description = "Backport of Python 3.8's unittest.async_case"
 category = "dev"
 optional = false
-python-versions = ">=3.5"
+python-versions = "*"
 
 [[package]]
 name = "attrs"
@@ -501,16 +501,15 @@ oldcrypto = ["pycrypto"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "669edb5b0c1ed2d51627f054aa8fd4315652d56694dce8e9131ed3897efd4f4c"
+content-hash = "5e0223b30434d511c3c18b6562dc63c33d9b96443a82cf280cf2ee44f64e9f8b"
 
 [metadata.files]
 anyio = [
     {file = "anyio-3.6.1-py3-none-any.whl", hash = "sha256:cb29b9c70620506a9a8f87a309591713446953302d7d995344d0d7c6c0c9a7be"},
     {file = "anyio-3.6.1.tar.gz", hash = "sha256:413adf95f93886e442aea925f3ee43baa5a765a64a0f52c6081894f9992fdd0b"},
 ]
-asynctest = [
-    {file = "asynctest-0.13.0-py3-none-any.whl", hash = "sha256:5da6118a7e6d6b54d83a8f7197769d046922a44d2a99c21382f0a6e4fadae676"},
-    {file = "asynctest-0.13.0.tar.gz", hash = "sha256:c27862842d15d83e6a34eb0b2866c323880eb3a75e4485b079ea11748fd77fac"},
+async-case = [
+    {file = "async_case-10.1.0.tar.gz", hash = "sha256:b819f68c78f6c640ab1101ecf69fac189402b490901fa2abc314c48edab5d3da"},
 ]
 attrs = [
     {file = "attrs-22.1.0-py2.py3-none-any.whl", hash = "sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c"},
