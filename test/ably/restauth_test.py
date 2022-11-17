@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 # does not make any request, no need to vary by protocol
 class TestAuth(BaseAsyncTestCase):
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
 
     def test_auth_init_key_only(self):
@@ -167,11 +167,11 @@ class TestAuth(BaseAsyncTestCase):
 
 class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
         self.test_vars = await RestSetup.get_test_vars()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):
@@ -336,7 +336,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
 
 class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
 
     def per_protocol_setup(self, use_binary_protocol):
@@ -491,7 +491,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
 
 class TestRenewToken(BaseAsyncTestCase):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
         # with headers
@@ -534,7 +534,7 @@ class TestRenewToken(BaseAsyncTestCase):
         self.publish_attempt_route.side_effect = call_back
         self.mocked_api.start()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         # We need to have quiet here in order to do not have check if all endpoints were called
         self.mocked_api.stop(quiet=True)
         self.mocked_api.reset()
@@ -592,7 +592,7 @@ class TestRenewToken(BaseAsyncTestCase):
 
 class TestRenewExpiredToken(BaseAsyncTestCase):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.publish_attempts = 0
         self.channel = uuid.uuid4().hex
@@ -639,7 +639,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
         self.publish_message_route.side_effect = cb_publish
         self.mocked_api.start()
 
-    def tearDown(self):
+    async def asyncTearDown(self):
         self.mocked_api.stop(quiet=True)
         self.mocked_api.reset()
 

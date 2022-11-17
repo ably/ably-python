@@ -22,12 +22,12 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     async def server_time(self):
         return await self.ably.time()
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         capability = {"*": ["*"]}
         self.permit_all = str(Capability(capability))
         self.ably = await RestSetup.get_ably_rest()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):
@@ -160,12 +160,12 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
 class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
         self.key_name = self.ably.options.key_name
         self.key_secret = self.ably.options.key_secret
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):

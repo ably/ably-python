@@ -14,10 +14,10 @@ class TestRestTime(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         self.ably.options.use_binary_protocol = use_binary_protocol
         self.use_binary_protocol = use_binary_protocol
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     async def test_time_accuracy(self):

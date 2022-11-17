@@ -25,7 +25,7 @@ class TestRestAppStatsSetup:
             'limit': 1
         }
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
         self.ably_text = await RestSetup.get_ably_rest(use_binary_protocol=False)
 
@@ -74,7 +74,7 @@ class TestRestAppStatsSetup:
         await self.ably.http.post('/stats', body=stats + previous_stats)
         TestRestAppStatsSetup.__stats_added = True
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
         await self.ably_text.close()
 

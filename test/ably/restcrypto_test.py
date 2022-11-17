@@ -19,12 +19,12 @@ log = logging.getLogger(__name__)
 
 class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.ably = await RestSetup.get_ably_rest()
         self.ably2 = await RestSetup.get_ably_rest()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
         await self.ably2.close()
 

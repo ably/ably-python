@@ -19,7 +19,7 @@ DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad
 
 class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
 
         # Register several devices for later use
@@ -34,7 +34,7 @@ class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
             await self.save_subscription(channel, device_id=device.id)
         assert len(list(itertools.chain(*self.channels.values()))) == len(self.devices)
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         for key, channel in zip(self.devices, itertools.cycle(self.channels)):
             device = self.devices[key]
             await self.remove_subscription(channel, device_id=device.id)
