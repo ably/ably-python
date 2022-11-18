@@ -197,6 +197,7 @@ class ConnectionManager(EventEmitter):
         if exception is not None:
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
+                self.enact_state_change(ConnectionState.DISCONNECTED, exception)
 
     async def connect_impl(self):
         self.setup_ws_task = self.__ably.options.loop.create_task(self.setup_ws())
@@ -231,7 +232,7 @@ class ConnectionManager(EventEmitter):
                 except AblyAuthException:
                     return
         except (websockets.exceptions.WebSocketException, socket.gaierror) as e:
-            raise AblyException(f'Error opening websocket connection: {e.message}', 400, 40000)
+            raise AblyException(f'Error opening websocket connection: {e}', 400, 40000)
 
     async def ping(self):
         if self.__ping_future:

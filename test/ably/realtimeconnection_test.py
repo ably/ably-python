@@ -170,10 +170,19 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert exception.value.status_code == 504
 
     async def test_unroutable_host(self):
-        ably = await RestSetup.get_ably_realtime(realtime_host="10.255.255.1")
+        ably = await RestSetup.get_ably_realtime(realtime_host="10.255.255.1", realtime_request_timeout=1000)
         with pytest.raises(AblyException) as exception:
             await ably.connect()
         assert exception.value.code == 50003
         assert exception.value.status_code == 504
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+        assert ably.connection.error_reason == exception.value
+
+    async def test_invalid_host(self):
+        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost")
+        with pytest.raises(AblyException) as exception:
+            await ably.connect()
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
         assert ably.connection.state == ConnectionState.DISCONNECTED
         assert ably.connection.error_reason == exception.value
