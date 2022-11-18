@@ -14,7 +14,7 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, Ba
 
 class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
 
     @dont_vary_protocol
@@ -91,6 +91,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     # RSC15
     @dont_vary_protocol
+    # Ignore library warning regarding fallback_hosts_use_default
+    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     def test_fallback_hosts(self):
         # Specify the fallback_hosts (RSC15a)
         fallback_hosts = [

@@ -23,15 +23,17 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, Ba
 log = logging.getLogger(__name__)
 
 
+# Ignore library warning regarding client_id
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.ably = await RestSetup.get_ably_rest()
         self.client_id = uuid.uuid4().hex
         self.ably_with_client_id = await RestSetup.get_ably_rest(client_id=self.client_id, use_token_auth=True)
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
         await self.ably_with_client_id.close()
 
@@ -439,11 +441,11 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
 class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
         self.ably_idempotent = await RestSetup.get_ably_rest(idempotent_rest_publishing=True)
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
         await self.ably_idempotent.close()
 

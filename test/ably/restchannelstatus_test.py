@@ -8,10 +8,10 @@ log = logging.getLogger(__name__)
 
 class TestRestChannelStatus(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):

@@ -27,7 +27,7 @@ class TestPaginatedResult(BaseAsyncTestCase):
 
         return callback
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
         # Mocked responses
         # without specific headers
@@ -62,7 +62,7 @@ class TestPaginatedResult(BaseAsyncTestCase):
             url='http://rest.ably.io/channels/channel_name/ch2',
             response_processor=lambda response: response.to_native())
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         self.mocked_api.stop()
         self.mocked_api.reset()
         await self.ably.close()

@@ -101,6 +101,8 @@ class TestRestHttp(BaseAsyncTestCase):
         await ably.close()
 
     # RSC15f
+    # Ignore library warning regarding fallback_hosts_use_default
+    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_cached_fallback(self):
         timeout = 2000
         ably = await RestSetup.get_ably_rest(fallback_hosts_use_default=True, fallback_retry_timeout=timeout)
@@ -110,11 +112,11 @@ class TestRestHttp(BaseAsyncTestCase):
         client = httpx.AsyncClient(http2=True)
         send = client.send
 
-        def side_effect(*args, **kwargs):
+        async def side_effect(*args, **kwargs):
             if args[1].url.host == host:
                 state['errors'] += 1
                 raise RuntimeError
-            return send(args[1])
+            return await send(args[1])
 
         with mock.patch('httpx.AsyncClient.send', side_effect=side_effect, autospec=True):
             # The main host is called and there's an error

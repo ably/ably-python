@@ -11,7 +11,7 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
 # RSC19
 class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
         self.test_vars = await RestSetup.get_test_vars()
 
@@ -22,7 +22,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
             body = {'name': 'event%s' % i, 'data': 'lorem ipsum %s' % i}
             await self.ably.request('POST', self.path, body=body)
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):
@@ -90,6 +90,8 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
     # RSC19e
     @dont_vary_protocol
+    # Ignore library warning regarding fallback_hosts_use_default
+    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_timeout(self):
         # Timeout
         timeout = 0.000001

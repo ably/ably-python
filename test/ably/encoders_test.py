@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import sys
 
 import mock
 import msgpack
@@ -10,16 +11,21 @@ from ably.util.crypto import get_cipher
 from ably.types.message import Message
 
 from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseAsyncTestCase, AsyncMock
+from test.ably.utils import BaseAsyncTestCase
+
+if sys.version_info >= (3, 8):
+    from unittest.mock import AsyncMock
+else:
+    from mock import AsyncMock
 
 log = logging.getLogger(__name__)
 
 
 class TestTextEncodersNoEncryption(BaseAsyncTestCase):
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     async def test_text_utf8(self):
@@ -138,12 +144,12 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
 
 
 class TestTextEncodersEncryption(BaseAsyncTestCase):
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
         self.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
                                           algorithm='aes')
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def decrypt(self, payload, options=None):
@@ -252,10 +258,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
 
 class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def decode(self, data):
@@ -343,11 +349,11 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
 
 class TestBinaryEncodersEncryption(BaseAsyncTestCase):
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.ably = await RestSetup.get_ably_rest()
         self.cipher_params = CipherParams(secret_key='keyfordecrypt_16', algorithm='aes')
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.ably.close()
 
     def decrypt(self, payload, options=None):

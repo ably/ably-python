@@ -40,15 +40,15 @@ crypto = ["pycryptodome"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
-mock = "^1.3"
+mock = "^4.0.3"
 pep8-naming = "^0.4.1"
 pytest-cov = "^2.4"
 pytest-flake8 = "^1.1"
 pytest-xdist = "^1.15"
 respx = "^0.17.1"
-asynctest = "^0.13"
 importlib-metadata = "^4.12"
 pytest-timeout = "^2.1.0"
+async-case = { version = "^10.1.0", python = "~3.7" }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
