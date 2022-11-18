@@ -3,6 +3,7 @@ import logging
 import asyncio
 import websockets
 import json
+import socket
 from ably.http.httputils import HttpUtils
 from ably.util.exceptions import AblyAuthException, AblyException
 from ably.util.eventemitter import EventEmitter
@@ -229,7 +230,7 @@ class ConnectionManager(EventEmitter):
                     await task
                 except AblyAuthException:
                     return
-        except websockets.exceptions.WebSocketException as e:
+        except (websockets.exceptions.WebSocketException, socket.gaierror) as e:
             raise AblyException(f'Error opening websocket connection: {e.message}', 400, 40000)
 
     async def ping(self):
