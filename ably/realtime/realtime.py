@@ -58,7 +58,9 @@ class AblyRealtime(AblyRest):
                 Timeout (in milliseconds) for the wait of acknowledgement for operations performed via a realtime
                 connection. Operations include establishing a connection with Ably, or sending a HEARTBEAT,
                 CONNECT, ATTACH, DETACH or CLOSE request. The default is 10 seconds(10000 milliseconds).
-
+            disconnected_retry_timeout: float
+                If the connection is still in the DISCONNECTED state after this delay, the client library will
+                attempt to reconnect automatically. The default is 15 seconds.
         Raises
         ------
         ValueError

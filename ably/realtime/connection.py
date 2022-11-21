@@ -167,8 +167,10 @@ class ConnectionManager(EventEmitter):
             try:
                 await self.__connected_future
             except asyncio.CancelledError:
-                exception = AblyException("Connection cancelled due to request timeout", 504, 50003)
+                exception = AblyException(
+                    "Connection cancelled due to request timeout. Attempting reconnection...", 504, 50003)
                 self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+                log.info('Connection cancelled due to request timeout. Attempting reconnection...')
                 raise exception
             self.enact_state_change(ConnectionState.CONNECTED)
         else:
@@ -193,14 +195,24 @@ class ConnectionManager(EventEmitter):
         if self.setup_ws_task:
             await self.setup_ws_task
 
+    def on_setup_ws_done(self, task):
+        exception = task.exception()
+        if exception is not None:
+            if self.__connected_future and not self.__connected_future.cancelled():
+                self.__connected_future.set_exception(exception)
+                self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+
     async def connect_impl(self):
         self.setup_ws_task = self.__ably.options.loop.create_task(self.setup_ws())
+        self.setup_ws_task.add_done_callback(self.on_setup_ws_done)
         try:
             await asyncio.wait_for(self.__connected_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
             exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
             self.enact_state_change(ConnectionState.DISCONNECTED, exception)
-            raise exception
+            await asyncio.sleep(self.options.disconnected_retry_timeout / 1000)
+            log.info('Attempting reconnection')
+            await self.connect()
         self.enact_state_change(ConnectionState.CONNECTED)
 
     async def send_close_message(self):
