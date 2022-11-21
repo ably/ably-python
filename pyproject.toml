@@ -27,7 +27,7 @@ python = "^3.7"
 # Mandatory dependencies
 methoddispatch = "^3.0.2"
 msgpack = "^1.0.0"
-httpx = "^0.20.0"
+httpx = "^0.23.0"
 h2 = "^4.0.0"
 
 # Optional dependencies
@@ -45,7 +45,7 @@ pep8-naming = "^0.4.1"
 pytest-cov = "^2.4"
 pytest-flake8 = "^1.1"
 pytest-xdist = "^1.15"
-respx = "^0.17.1"
+respx = "^0.20.0"
 importlib-metadata = "^4.12"
 pytest-timeout = "^2.1.0"
 async-case = { version = "^10.1.0", python = "~3.7" }
