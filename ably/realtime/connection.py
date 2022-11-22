@@ -11,6 +11,7 @@ from datetime import datetime
 from ably.util import helper
 from dataclasses import dataclass
 from typing import Optional
+from websockets.client import WebSocketClientProtocol, connect as ws_connect
 
 log = logging.getLogger(__name__)
 
@@ -146,6 +147,7 @@ class ConnectionManager(EventEmitter):
         self.setup_ws_task = None
         self.__ping_future = None
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
+        self.read_loop = None
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -193,10 +195,24 @@ class ConnectionManager(EventEmitter):
             await self.setup_ws_task
 
     def on_setup_ws_done(self, task):
-        exception = task.exception()
+        try:
+            exception = task.exception()
+        except asyncio.CancelledError as e:
+            exception = e
+
         if exception is not None:
+            print('try')
+            print(exception)
+            try:
+                self.__connected_future.cancelled()
+                print('done')
+            except Exception as e:
+                print('except!')
+                print(e)
             if self.__connected_future and not self.__connected_future.cancelled():
+                print('here2')
                 self.__connected_future.set_exception(exception)
+                print('here3')
                 self.enact_state_change(ConnectionState.DISCONNECTED, exception)
 
     async def connect_impl(self):
@@ -207,6 +223,9 @@ class ConnectionManager(EventEmitter):
         except asyncio.TimeoutError:
             exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
             self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+            if self.read_loop is not None:
+                self.read_loop.cancel()
+                self.read_loop = None
             await asyncio.sleep(self.options.disconnected_retry_timeout / 1000)
             log.info('Attempting reconnection')
             await self.connect()
@@ -220,6 +239,14 @@ class ConnectionManager(EventEmitter):
         log.info('send_protocol_message(): sending {raw_msg}')
         await self.__websocket.send(raw_msg)
 
+    def on_read_loop_done(self, task):
+        try:
+            exception = task.exception()
+        except asyncio.CancelledError as e:
+            exception = e
+
+        print(f'on_read_loop_done, exception = {exception}')
+
     async def setup_ws(self):
         headers = HttpUtils.default_headers()
         ws_url = f'wss://{self.options.get_realtime_host()}?key={self.__ably.key}'
@@ -227,10 +254,14 @@ class ConnectionManager(EventEmitter):
         async with websockets.connect(ws_url, extra_headers=headers) as websocket:
             log.info(f'setup_ws(): connection established to {ws_url}')
             self.__websocket = websocket
-            task = self.__ably.options.loop.create_task(self.ws_read_loop())
+            self.read_loop = self.__ably.options.loop.create_task(self.ws_read_loop())
+            self.read_loop.add_done_callback(self.on_read_loop_done)
             try:
-                await task
+                await self.read_loop
             except AblyAuthException:
+                return
+            except:
+                print('i got here lol')
                 return
 
     async def ping(self):
@@ -257,6 +288,45 @@ class ConnectionManager(EventEmitter):
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
+
+    def on_protocol_message(self, msg):
+        action = msg['action']
+        if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
+            if self.__connected_future:
+                if not self.__connected_future.cancelled():
+                    self.__connected_future.set_result(None)
+                self.__connected_future = None
+            else:
+                log.warn('CONNECTED message received but connected_future not set')
+        if action == ProtocolMessageAction.ERROR:  # ERROR
+            error = msg["error"]
+            if error['nonfatal'] is False:
+                exception = AblyAuthException(error["message"], error["statusCode"], error["code"])
+                self.enact_state_change(ConnectionState.FAILED, exception)
+                if self.__connected_future:
+                    self.__connected_future.set_exception(exception)
+                    self.__connected_future = None
+                self.__websocket = None
+                raise exception
+        if action == ProtocolMessageAction.CLOSED:
+            await self.__websocket.close()
+            self.__websocket = None
+            self.__closed_future.set_result(None)
+            self.transport.close()
+        if action == ProtocolMessageAction.HEARTBEAT:
+            if self.__ping_future:
+                # Resolve on heartbeat from ping request.
+                # TODO: Handle Normal heartbeat if required
+                if self.__ping_id == msg.get("id"):
+                    if not self.__ping_future.cancelled():
+                        self.__ping_future.set_result(None)
+                    self.__ping_future = None
+        if action in (
+            ProtocolMessageAction.ATTACHED,
+            ProtocolMessageAction.DETACHED,
+            ProtocolMessageAction.MESSAGE
+        ):
+            self.__ably.channels._on_channel_message(msg)
 
     async def ws_read_loop(self):
         while True:
@@ -308,3 +378,62 @@ class ConnectionManager(EventEmitter):
     @property
     def state(self):
         return self.__state
+
+
+class WebSocketTransport:
+    def __init__(self, connection_manager: ConnectionManager):
+        self.websocket: WebSocketClientProtocol | None = None
+        self.read_loop: asyncio.Task | None = None
+        self.connect_task: asyncio.Task | None = None
+        self.connection_manager = connection_manager
+        self.isDisposed = False
+        self.isConnected = False
+        self.isFinished = False
+
+    def finish(self):
+        pass
+
+    async def connect(self):
+        headers = HttpUtils.default_headers()
+        host = self.connection_manager.options.get_realtime_host()
+        key = self.connection_manager.__ably.key
+        ws_url = f'wss://{host}?key={key}'
+        log.info(f'setup_ws(): attempting to connect to {ws_url}')
+        async with ws_connect(ws_url, extra_headers=headers) as websocket:
+            log.info(f'setup_ws(): connection established to {ws_url}')
+            self.websocket = websocket
+            self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
+            self.read_loop.add_done_callback(self.on_read_loop_done)
+            try:
+                await self.read_loop
+            except AblyAuthException:
+                return
+            except Exception:
+                print('i got here lol')
+                return
+
+    async def ws_read_loop(self):
+        while True:
+            if self.websocket is not None:
+                raw = await self.websocket.recv()
+                msg = json.loads(raw)
+                log.info(f'ws_read_loop(): receieved protocol message: {msg}')
+                self.connection_manager.on_protocol_message(msg)
+            else:
+                raise Exception()
+
+    def on_read_loop_done(self, task):
+        try:
+            exception = task.exception()
+        except asyncio.CancelledError as e:
+            exception = e
+        print(f'on_read_loop_done, exception = {exception}')
+
+    def dispose(self):
+        pass
+
+    def disconnect(self):
+        pass
+
+    def close(self):
+        pass
