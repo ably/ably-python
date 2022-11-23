@@ -168,3 +168,26 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             await ably.close()
         assert exception.value.code == 50003
         assert exception.value.status_code == 504
+
+    async def test_disconnected_retry_timeout(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=0.001,
+                                                 disconnected_retry_timeout=2000)
+        state_changes = []
+
+        def on_state_change(state_change):
+            state_changes.append(state_change)
+
+        ably.connection.on(on_state_change)
+
+        with pytest.raises(AblyException) as exception:
+            await ably.connect()
+        assert exception.value.code == 50003
+        assert exception.value.status_code == 504
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+        # 2 state changes happens per retry.
+        # Retry timeout of 2 secs, will retry connection twice in 3 and/or 4 seconds, resulting in 4 state changes
+        await asyncio.sleep(4)
+        assert len(state_changes) == 4
+        assert state_changes[0].previous == ConnectionState.CONNECTING
+        assert state_changes[0].current == ConnectionState.DISCONNECTED
+        ably.close()
