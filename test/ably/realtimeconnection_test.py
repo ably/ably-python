@@ -171,7 +171,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
     async def test_disconnected_retry_timeout(self):
         ably = await RestSetup.get_ably_realtime(realtime_request_timeout=0.001,
-                                                 disconnected_retry_timeout=2000)
+                                                 disconnected_retry_timeout=2000, auto_connect=False)
         state_changes = []
 
         def on_state_change(state_change):

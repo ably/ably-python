@@ -165,12 +165,14 @@ class ConnectionManager(EventEmitter):
                 log.fatal('Connection state is CONNECTING but connected_future does not exist')
                 return
             try:
+                print("toh")
                 await self.__connected_future
             except asyncio.CancelledError:
                 exception = AblyException(
                     "Connection cancelled due to request timeout. Attempting reconnection...", 504, 50003)
                 self.enact_state_change(ConnectionState.DISCONNECTED, exception)
                 log.info('Connection cancelled due to request timeout. Attempting reconnection...')
+                print("cancelled error")
                 raise exception
             self.enact_state_change(ConnectionState.CONNECTED)
         else:
@@ -209,10 +211,14 @@ class ConnectionManager(EventEmitter):
             await asyncio.wait_for(self.__connected_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
             exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
-            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+            self.enact_state_change(ConnectionState.CONNECTING, exception)
             await asyncio.sleep(self.options.disconnected_retry_timeout / 1000)
             log.info('Attempting reconnection')
-            await self.connect()
+            self.__connected_future = asyncio.Future()
+            print("timeout error")
+            # task.add_done_callback(self.on_setup_ws_done)
+            # task = self.__ably.options.loop.create_task(self.connect())
+            self.__ably.options.loop.create_task(self.connect())
         self.enact_state_change(ConnectionState.CONNECTED)
 
     async def send_close_message(self):
