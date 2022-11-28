@@ -211,7 +211,8 @@ class ConnectionManager(EventEmitter):
 
     async def setup_ws(self):
         headers = HttpUtils.default_headers()
-        ws_url = f'wss://{self.options.get_realtime_host()}?key={self.__ably.key}'
+        ws_url = (f'wss://{self.options.get_realtime_host()}?key={self.__ably.key}'
+                  f'&v={self.options.protocol_version}')
         log.info(f'setup_ws(): attempting to connect to {ws_url}')
         async with websockets.connect(ws_url, extra_headers=headers) as websocket:
             log.info(f'setup_ws(): connection established to {ws_url}')
