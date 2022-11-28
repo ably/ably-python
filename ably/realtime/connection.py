@@ -83,7 +83,7 @@ class Connection(EventEmitter):
 
         Causes the connection to open, entering the connecting state
         """
-        await self.__connection_manager.connect()
+        await self.__connection_manager.connect_v2()
 
     async def close(self):
         """Causes the connection to close, entering the closing state.
@@ -157,15 +157,44 @@ class ConnectionManager(EventEmitter):
         self.__state = state
         self._emit('connectionstate', ConnectionStateChange(current_state, state, reason))
 
+    def on_connection_attempt_done(self, task):
+        try:
+            exception = task.exception()
+        except asyncio.CancelledError:
+            exception = AblyException(
+                "Connection cancelled due to request timeout. Attempting reconnection...", 504, 50003)
+        if exception is None:
+            return
+        self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+        asyncio.create_task(self.retry_connection_attempt())
+
+    async def retry_connection_attempt(self):
+        await asyncio.sleep(self.ably.options.disconnected_retry_timeout / 1000)
+        self.try_connect()
+
+    def try_connect(self):
+        task = asyncio.create_task(self.connect())
+        task.add_done_callback(self.on_connection_attempt_done)
+
+    async def connect_v2(self):
+        print('connect_v2_called')
+        if not self.__connected_future:
+            self.__connected_future = asyncio.Future()
+            self.try_connect()
+        await self.__connected_future
+        print('connect_v2_returning')
+
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
             return
 
         if self.__state == ConnectionState.CONNECTING:
-            if self.__connected_future is None:
-                log.fatal('Connection state is CONNECTING but connected_future does not exist')
-                return
+            # if self.__connected_future is None:
+            #     log.fatal('Connection state is CONNECTING but connected_future does not exist')
+            #     return
             try:
+                if not self.__connected_future:
+                    self.__connected_future = asyncio.Future()
                 await self.__connected_future
             except asyncio.CancelledError:
                 exception = AblyException(
@@ -173,10 +202,10 @@ class ConnectionManager(EventEmitter):
                 self.enact_state_change(ConnectionState.DISCONNECTED, exception)
                 log.info('Connection cancelled due to request timeout. Attempting reconnection...')
                 raise exception
-            self.enact_state_change(ConnectionState.CONNECTED)
+            # self.enact_state_change(ConnectionState.CONNECTED)
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
-            self.__connected_future = asyncio.Future()
+            # self.__connected_future = asyncio.Future()
             await self.connect_impl()
 
     async def close(self):
@@ -240,7 +269,8 @@ class ConnectionManager(EventEmitter):
         self.transport = WebSocketTransport(self)
         await self.transport.connect()
         await self.__connected_future
-        self.enact_state_change(ConnectionState.CONNECTED)
+        print('enacting state change...')
+        # self.enact_state_change(ConnectionState.CONNECTED)
 
     async def send_close_message(self):
         await self.send_protocol_message({"action": ProtocolMessageAction.CLOSE})
@@ -301,6 +331,7 @@ class ConnectionManager(EventEmitter):
         return round(response_time_ms, 2)
 
     async def on_protocol_message(self, msg):
+        print(f'msg received, msg = {msg}')
         action = msg['action']
         if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
             if self.transport:
@@ -311,6 +342,7 @@ class ConnectionManager(EventEmitter):
                 self.__connected_future = None
             else:
                 log.warn('CONNECTED message received but connected_future not set')
+            self.enact_state_change(ConnectionState.CONNECTED)
         if action == ProtocolMessageAction.ERROR:  # ERROR
             error = msg["error"]
             if error['nonfatal'] is False:
@@ -473,6 +505,7 @@ class WebSocketTransport:
         await self.send({'action': ProtocolMessageAction.CLOSE})
 
     async def send(self, message: dict):
+        print(f'sending, msg = {message}')
         if self.websocket is None:
             raise Exception()
         raw_msg = json.dumps(message)

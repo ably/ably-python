@@ -97,7 +97,9 @@ class RealtimeChannel(EventEmitter):
 
         # RTL4i - wait for pending connection
         if self.__realtime.connection.state == ConnectionState.CONNECTING:
-            await self.__realtime.connect()
+            print('calling connect')
+            await self.__realtime.connection.connection_manager.connect()
+            print('done with that')
 
         self.__attach_future = asyncio.Future()
         await self.__realtime.connection.connection_manager.send_protocol_message(
