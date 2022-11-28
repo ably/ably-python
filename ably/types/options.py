@@ -61,6 +61,7 @@ class Options(AuthOptions):
 
         self.__rest_hosts = self.__get_rest_hosts()
         self.__realtime_hosts = self.__get_realtime_hosts()
+        self.__protocol_version = Defaults.protocol_version
 
     @property
     def client_id(self):
@@ -205,6 +206,10 @@ class Options(AuthOptions):
     @property
     def auto_connect(self):
         return self.__auto_connect
+
+    @property
+    def protocol_version(self):
+        return self.__protocol_version
 
     def __get_rest_hosts(self):
         """

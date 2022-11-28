@@ -1,5 +1,5 @@
 class Defaults:
-    protocol_version = 1
+    protocol_version = "2"
     fallback_hosts = [
         "a.ably-realtime.com",
         "b.ably-realtime.com",
