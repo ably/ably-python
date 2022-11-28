@@ -81,6 +81,7 @@ class Connection(EventEmitter):
 
         Causes the connection to open, entering the connecting state
         """
+        self.__error_reason = None
         await self.__connection_manager.connect()
 
     async def close(self):
