@@ -209,6 +209,7 @@ class ConnectionManager(EventEmitter):
 
     async def close(self):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.INITIALIZED, ConnectionState.FAILED):
+            self.enact_state_change(ConnectionState.CLOSED)
             return
         if self.__state is ConnectionState.DISCONNECTED:
             if self.transport:
@@ -224,20 +225,13 @@ class ConnectionManager(EventEmitter):
         self.__closed_future = asyncio.Future()
         if self.transport and self.transport.isConnected:
             await self.transport.close()
+            try:
+                await asyncio.wait_for(self.__closed_future, self.__timeout_in_secs)
+            except asyncio.TimeoutError:
+                raise AblyException("Timeout waiting for connection close response", 504, 50003)
         else:
             log.warning('ConnectionManager: called close with no connected transport')
-        # if self.__websocket and self.__state != ConnectionState.FAILED:
-        #     await self.send_close_message()
-        #     try:
-        #         await asyncio.wait_for(self.__closed_future, self.__timeout_in_secs)
-        #     except asyncio.TimeoutError:
-        #         raise AblyException("Timeout waiting for connection close response", 504, 50003)
-        # else:
-        #     log.warning('Connection.closed called while connection already closed or not established')
-        await self.__closed_future
         self.enact_state_change(ConnectionState.CLOSED)
-        # if self.setup_ws_task:
-        #     await self.setup_ws_task
         if self.transport and self.transport.ws_connect_task is not None:
             await self.transport.ws_connect_task
 
