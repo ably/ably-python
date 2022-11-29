@@ -85,7 +85,8 @@ class AblyRealtime:
         self.__channels = Channels(self)
 
         if options.auto_connect:
-            asyncio.ensure_future(self.connection.connection_manager.connect_impl())
+            task = asyncio.create_task(self.connection.connection_manager.connect_impl())
+            task.add_done_callback(self.connection.connection_manager.on_connection_attempt_done)
 
     async def connect(self):
         """Establishes a realtime connection.

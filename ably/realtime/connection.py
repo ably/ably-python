@@ -165,7 +165,10 @@ class ConnectionManager(EventEmitter):
                 "Connection cancelled due to request timeout. Attempting reconnection...", 504, 50003)
         if exception is None:
             return
-        self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+        if self.__state in (ConnectionState.CLOSED, ConnectionState.FAILED):
+            return
+        if self.__state != ConnectionState.DISCONNECTED:
+            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
         asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
@@ -177,7 +180,6 @@ class ConnectionManager(EventEmitter):
         task.add_done_callback(self.on_connection_attempt_done)
 
     async def connect_v2(self):
-        print('connect_v2_called')
         if not self.__connected_future:
             self.__connected_future = asyncio.Future()
             self.try_connect()
@@ -198,10 +200,8 @@ class ConnectionManager(EventEmitter):
             except asyncio.CancelledError:
                 exception = AblyException(
                     "Connection cancelled due to request timeout. Attempting reconnection...", 504, 50003)
-                self.enact_state_change(ConnectionState.DISCONNECTED, exception)
                 log.info('Connection cancelled due to request timeout. Attempting reconnection...')
                 raise exception
-            # self.enact_state_change(ConnectionState.CONNECTED)
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
             # self.__connected_future = asyncio.Future()
@@ -343,7 +343,6 @@ class ConnectionManager(EventEmitter):
         return round(response_time_ms, 2)
 
     async def on_protocol_message(self, msg):
-        print(f'msg received, msg = {msg}')
         action = msg['action']
         if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
             if self.transport:
