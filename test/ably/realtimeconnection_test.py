@@ -117,8 +117,6 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         with pytest.raises(AblyAuthException) as exception:
             await ably.connect()
 
-        print('connect returned')
-
         assert len(failed_changes) == 1
         state_change = failed_changes[0]
         assert state_change is not None
@@ -176,6 +174,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         test_future = asyncio.Future()
         test_exception = Exception()
 
+        # intercept the library connection mechanism to fail the first two connection attempts
         async def new_connect():
             nonlocal call_count
             if call_count < 2:

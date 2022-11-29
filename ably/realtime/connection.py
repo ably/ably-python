@@ -193,9 +193,6 @@ class ConnectionManager(EventEmitter):
             return
 
         if self.__state == ConnectionState.CONNECTING:
-            # if self.__connected_future is None:
-            #     log.fatal('Connection state is CONNECTING but connected_future does not exist')
-            #     return
             try:
                 if not self.__connected_future:
                     self.__connected_future = asyncio.Future()
@@ -207,7 +204,6 @@ class ConnectionManager(EventEmitter):
                 raise exception
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
-            # self.__connected_future = asyncio.Future()
             await self.connect_impl()
 
     async def close(self):
@@ -226,7 +222,7 @@ class ConnectionManager(EventEmitter):
             await self.__connected_future
         self.enact_state_change(ConnectionState.CLOSING)
         self.__closed_future = asyncio.Future()
-        if self.transport and self.transport.isConnected:
+        if self.transport and self.transport.is_connected:
             await self.transport.close()
             try:
                 await asyncio.wait_for(self.__closed_future, self.__timeout_in_secs)
@@ -237,21 +233,6 @@ class ConnectionManager(EventEmitter):
         self.enact_state_change(ConnectionState.CLOSED)
         if self.transport and self.transport.ws_connect_task is not None:
             await self.transport.ws_connect_task
-
-    def on_setup_ws_done(self, task):
-        try:
-            exception = task.exception()
-        except asyncio.CancelledError as e:
-            exception = e
-
-        if exception is not None:
-            try:
-                self.__connected_future.cancelled()
-            except Exception as e:
-                print('except!')
-            if self.__connected_future and not self.__connected_future.cancelled():
-                self.__connected_future.set_exception(exception)
-                self.enact_state_change(ConnectionState.DISCONNECTED, exception)
 
     async def connect_impl(self):
         self.transport = WebSocketTransport(self)
@@ -275,30 +256,6 @@ class ConnectionManager(EventEmitter):
             await self.transport.send(protocol_message)
         else:
             raise Exception()
-
-    def on_read_loop_done(self, task):
-        try:
-            exception = task.exception()
-        except asyncio.CancelledError as e:
-            exception = e
-
-        print(f'on_read_loop_done, exception = {exception}')
-
-    async def setup_ws(self):
-        headers = HttpUtils.default_headers()
-        ws_url = f'wss://{self.options.get_realtime_host()}?key={self.__ably.key}'
-        log.info(f'setup_ws(): attempting to connect to {ws_url}')
-        async with websockets.connect(ws_url, extra_headers=headers) as websocket:
-            log.info(f'setup_ws(): connection established to {ws_url}')
-            self.__websocket = websocket
-            self.read_loop = self.__ably.options.loop.create_task(self.ws_read_loop())
-            self.read_loop.add_done_callback(self.on_read_loop_done)
-            try:
-                await self.read_loop
-            except AblyAuthException:
-                return
-            except Exception:
-                return
 
     async def ping(self):
         if self.__ping_future:
@@ -329,7 +286,7 @@ class ConnectionManager(EventEmitter):
         action = msg['action']
         if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
             if self.transport:
-                self.transport.isConnected = True
+                self.transport.is_connected = True
             if self.__connected_future:
                 if not self.__connected_future.cancelled():
                     self.__connected_future.set_result(None)
@@ -369,49 +326,6 @@ class ConnectionManager(EventEmitter):
         ):
             self.__ably.channels._on_channel_message(msg)
 
-    async def ws_read_loop(self):
-        while True:
-            raw = await self.__websocket.recv()
-            msg = json.loads(raw)
-            log.info(f'ws_read_loop(): receieved protocol message: {msg}')
-            action = msg['action']
-            if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
-                if self.__connected_future:
-                    if not self.__connected_future.cancelled():
-                        self.__connected_future.set_result(None)
-                    self.__connected_future = None
-                else:
-                    log.warn('CONNECTED message received but connected_future not set')
-            if action == ProtocolMessageAction.ERROR:  # ERROR
-                error = msg["error"]
-                if error['nonfatal'] is False:
-                    exception = AblyAuthException(error["message"], error["statusCode"], error["code"])
-                    self.enact_state_change(ConnectionState.FAILED, exception)
-                    if self.__connected_future:
-                        self.__connected_future.set_exception(exception)
-                        self.__connected_future = None
-                    self.__websocket = None
-                    raise exception
-            if action == ProtocolMessageAction.CLOSED:
-                await self.__websocket.close()
-                self.__websocket = None
-                self.__closed_future.set_result(None)
-                break
-            if action == ProtocolMessageAction.HEARTBEAT:
-                if self.__ping_future:
-                    # Resolve on heartbeat from ping request.
-                    # TODO: Handle Normal heartbeat if required
-                    if self.__ping_id == msg.get("id"):
-                        if not self.__ping_future.cancelled():
-                            self.__ping_future.set_result(None)
-                        self.__ping_future = None
-            if action in (
-                ProtocolMessageAction.ATTACHED,
-                ProtocolMessageAction.DETACHED,
-                ProtocolMessageAction.MESSAGE
-            ):
-                self.__ably.channels._on_channel_message(msg)
-
     @property
     def ably(self):
         return self.__ably
@@ -428,16 +342,14 @@ class WebSocketTransport:
         self.connect_task: asyncio.Task | None = None
         self.ws_connect_task: asyncio.Task | None = None
         self.connection_manager = connection_manager
-        self.isDisposed = False
-        self.isConnected = False
-        self.isFinished = False
+        self.is_connected = False
 
     async def connect(self):
         headers = HttpUtils.default_headers()
         host = self.connection_manager.options.get_realtime_host()
         key = self.connection_manager.ably.key
         ws_url = f'wss://{host}?key={key}'
-        log.info(f'setup_ws(): attempting to connect to {ws_url}')
+        log.info(f'connect(): attempting to connect to {ws_url}')
         self.ws_connect_task = asyncio.create_task(self.ws_connect(ws_url, headers))
         self.ws_connect_task.add_done_callback(self.on_ws_connect_done)
 
@@ -451,7 +363,7 @@ class WebSocketTransport:
 
     async def ws_connect(self, ws_url, headers):
         async with ws_connect(ws_url, extra_headers=headers) as websocket:
-            log.info(f'setup_ws(): connection established to {ws_url}')
+            log.info(f'ws_connect(): connection established to {ws_url}')
             self.websocket = websocket
             self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
             self.read_loop.add_done_callback(self.on_read_loop_done)
@@ -469,7 +381,6 @@ class WebSocketTransport:
                 if msg['action'] == ProtocolMessageAction.CLOSED:
                     if self.ws_connect_task:
                         self.ws_connect_task.cancel()
-                        # self.ws_connect_task = None
                 await self.connection_manager.on_protocol_message(msg)
             else:
                 raise Exception()
@@ -487,7 +398,6 @@ class WebSocketTransport:
             self.read_loop.cancel()
         if self.ws_connect_task:
             self.ws_connect_task.cancel()
-            # await self.ws_connect_task
         if self.websocket:
             await self.websocket.close()
         pass
@@ -499,7 +409,6 @@ class WebSocketTransport:
         await self.send({'action': ProtocolMessageAction.CLOSE})
 
     async def send(self, message: dict):
-        print(f'sending, msg = {message}')
         if self.websocket is None:
             raise Exception()
         raw_msg = json.dumps(message)
