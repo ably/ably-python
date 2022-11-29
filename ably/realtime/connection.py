@@ -30,7 +30,6 @@ class ConnectionStateChange:
     reason: Optional[AblyException] = None
 
 
-
 class Connection(EventEmitter):
     """Ably Realtime Connection
 
