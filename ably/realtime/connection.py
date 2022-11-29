@@ -182,7 +182,6 @@ class ConnectionManager(EventEmitter):
             self.__connected_future = asyncio.Future()
             self.try_connect()
         await self.__connected_future
-        print('connect_v2_returning')
 
     async def connect(self):
         if self.__state == ConnectionState.CONNECTED:
@@ -211,6 +210,12 @@ class ConnectionManager(EventEmitter):
     async def close(self):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.INITIALIZED, ConnectionState.FAILED):
             return
+        if self.__state is ConnectionState.DISCONNECTED:
+            if self.transport:
+                await self.transport.dispose()
+                self.transport = None
+                self.enact_state_change(ConnectionState.CLOSED)
+                return
         if self.__state != ConnectionState.CONNECTED:
             log.warning('Connection.closed called while connection state not connected')
         if self.__state == ConnectionState.CONNECTING:
@@ -268,9 +273,16 @@ class ConnectionManager(EventEmitter):
         # self.enact_state_change(ConnectionState.CONNECTED)
         self.transport = WebSocketTransport(self)
         await self.transport.connect()
-        await self.__connected_future
-        print('enacting state change...')
-        # self.enact_state_change(ConnectionState.CONNECTED)
+        try:
+            await asyncio.wait_for(asyncio.shield(self.__connected_future), self.__timeout_in_secs)
+        except asyncio.TimeoutError:
+            exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
+            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+            if self.transport:
+                await self.transport.dispose()
+                self.tranpsort = None
+            self.__connected_future.set_exception(exception)
+            raise exception
 
     async def send_close_message(self):
         await self.send_protocol_message({"action": ProtocolMessageAction.CLOSE})
