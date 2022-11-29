@@ -83,7 +83,7 @@ class Connection(EventEmitter):
 
         Causes the connection to open, entering the connecting state
         """
-        await self.__connection_manager.connect_v2()
+        await self.__connection_manager.connect()
 
     async def close(self):
         """Causes the connection to close, entering the closing state.
@@ -179,16 +179,16 @@ class ConnectionManager(EventEmitter):
         self.try_connect()
 
     def try_connect(self):
-        task = asyncio.create_task(self.connect())
+        task = asyncio.create_task(self._connect())
         task.add_done_callback(self.on_connection_attempt_done)
 
-    async def connect_v2(self):
+    async def connect(self):
         if not self.__connected_future:
             self.__connected_future = asyncio.Future()
             self.try_connect()
         await self.__connected_future
 
-    async def connect(self):
+    async def _connect(self):
         if self.__state == ConnectionState.CONNECTED:
             return
 
@@ -247,9 +247,6 @@ class ConnectionManager(EventEmitter):
                 self.tranpsort = None
             self.__connected_future.set_exception(exception)
             raise exception
-
-    async def send_close_message(self):
-        await self.send_protocol_message({"action": ProtocolMessageAction.CLOSE})
 
     async def send_protocol_message(self, protocol_message):
         if self.transport is not None:
@@ -400,9 +397,6 @@ class WebSocketTransport:
             self.ws_connect_task.cancel()
         if self.websocket:
             await self.websocket.close()
-        pass
-
-    def disconnect(self):
         pass
 
     async def close(self):
