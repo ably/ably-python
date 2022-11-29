@@ -1,6 +1,7 @@
 import functools
 import logging
 import asyncio
+from ably.realtime.connectionmanager import ProtocolMessageAction
 import websockets
 import json
 import urllib.parse
@@ -8,7 +9,7 @@ from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyAuthException, AblyException
 from ably.util.eventemitter import EventEmitter
-from enum import Enum, IntEnum
+from enum import Enum
 from datetime import datetime
 from ably.util import helper
 from dataclasses import dataclass
@@ -32,19 +33,6 @@ class ConnectionStateChange:
     previous: ConnectionState
     current: ConnectionState
     reason: Optional[AblyException] = None
-
-
-class ProtocolMessageAction(IntEnum):
-    HEARTBEAT = 0
-    CONNECTED = 4
-    ERROR = 9
-    CLOSE = 7
-    CLOSED = 8
-    ATTACH = 10
-    ATTACHED = 11
-    DETACH = 12
-    DETACHED = 13
-    MESSAGE = 15
 
 
 class Connection(EventEmitter):
