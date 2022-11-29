@@ -168,3 +168,33 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             await ably.close()
         assert exception.value.code == 50003
         assert exception.value.status_code == 504
+
+    async def test_disconnected_retry_timeout(self):
+        ably = await RestSetup.get_ably_realtime(disconnected_retry_timeout=2000, auto_connect=False)
+        original_connect = ably.connection.connection_manager.connect
+        call_count = 0
+        test_future = asyncio.Future()
+        test_exception = Exception()
+
+        async def new_connect():
+            nonlocal call_count
+            if call_count < 2:
+                call_count += 1
+                raise test_exception
+            else:
+                await original_connect()
+                test_future.set_result(None)
+
+        ably.connection.connection_manager.connect = new_connect
+
+        with pytest.raises(Exception) as exception:
+            await ably.connect()
+
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+        assert exception.value == test_exception
+
+        await test_future
+
+        assert ably.connection.state == ConnectionState.CONNECTED
+
+        await ably.close()

@@ -168,6 +168,9 @@ class ConnectionManager(EventEmitter):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.FAILED):
             return
         if self.__state != ConnectionState.DISCONNECTED:
+            if self.__connected_future:
+                self.__connected_future.set_exception(exception)
+                self.__connected_future = None
             self.enact_state_change(ConnectionState.DISCONNECTED, exception)
         asyncio.create_task(self.retry_connection_attempt())
 
@@ -251,20 +254,6 @@ class ConnectionManager(EventEmitter):
                 self.enact_state_change(ConnectionState.DISCONNECTED, exception)
 
     async def connect_impl(self):
-        # self.setup_ws_task = self.__ably.options.loop.create_task(self.setup_ws())
-        # self.setup_ws_task.add_done_callback(self.on_setup_ws_done)
-        # try:
-        #     await asyncio.wait_for(self.__connected_future, self.__timeout_in_secs)
-        # except asyncio.TimeoutError:
-        #     exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
-        #     self.enact_state_change(ConnectionState.DISCONNECTED, exception)
-        #     if self.read_loop is not None:
-        #         self.read_loop.cancel()
-        #         self.read_loop = None
-        #     await asyncio.sleep(self.options.disconnected_retry_timeout / 1000)
-        #     log.info('Attempting reconnection')
-        #     await self.connect()
-        # self.enact_state_change(ConnectionState.CONNECTED)
         self.transport = WebSocketTransport(self)
         await self.transport.connect()
         try:
@@ -281,9 +270,9 @@ class ConnectionManager(EventEmitter):
     async def send_close_message(self):
         await self.send_protocol_message({"action": ProtocolMessageAction.CLOSE})
 
-    async def send_protocol_message(self, protocolMessage):
+    async def send_protocol_message(self, protocol_message):
         if self.transport is not None:
-            await self.transport.send(protocolMessage)
+            await self.transport.send(protocol_message)
         else:
             raise Exception()
 
