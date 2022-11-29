@@ -83,7 +83,7 @@ class WebSocketTransport:
                         self.ws_connect_task.cancel()
                 await self.connection_manager.on_protocol_message(msg)
             else:
-                raise Exception()
+                raise Exception('ws_read_loop running with no websocket')
 
     def on_read_loop_done(self, task: asyncio.Task):
         try:
