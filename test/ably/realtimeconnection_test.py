@@ -134,7 +134,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert exception.value.status_code == 504
         assert ably.connection.state == ConnectionState.DISCONNECTED
         assert ably.connection.error_reason == exception.value
-        ably.close()
+        await ably.close()
 
     async def test_realtime_request_timeout_ping(self):
         ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
@@ -188,4 +188,4 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert len(state_changes) == 4
         assert state_changes[0].previous == ConnectionState.CONNECTING
         assert state_changes[0].current == ConnectionState.DISCONNECTED
-        ably.close()
+        await ably.close()
