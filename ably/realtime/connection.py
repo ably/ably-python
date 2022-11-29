@@ -181,6 +181,11 @@ class ConnectionManager(EventEmitter):
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
             self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+        asyncio.create_task(self.retry_connection_attempt())
+
+    async def retry_connection_attempt(self):
+        await asyncio.sleep(self.ably.options.disconnected_retry_timeout / 1000)
+        self.try_connect()
 
     async def close(self):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.INITIALIZED, ConnectionState.FAILED):
