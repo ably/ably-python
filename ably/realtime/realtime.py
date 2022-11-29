@@ -86,7 +86,6 @@ class AblyRealtime(AblyRest):
         self.key = key
         self.__connection = Connection(self)
         self.__channels = Channels(self)
-        print(options.auto_connect, "+++")
         if options.auto_connect:
             asyncio.ensure_future(self.connection.connection_manager.connect_impl())
 

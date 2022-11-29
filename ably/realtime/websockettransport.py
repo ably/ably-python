@@ -4,7 +4,9 @@ import asyncio
 from enum import IntEnum
 import json
 import logging
+import urllib.parse
 from ably.http.httputils import HttpUtils
+from ably.transport.defaults import Defaults
 from websockets.client import WebSocketClientProtocol, connect as ws_connect
 from websockets.exceptions import ConnectionClosedOK
 
@@ -37,6 +39,12 @@ class WebSocketTransport:
         self.is_connected = False
 
     async def connect(self):
+        headers = HttpUtils.default_headers()
+        protocol_version = Defaults.protocol_version
+        params = {"key": self.connection_manager.ably.key, "v": protocol_version}
+        query_params = urllib.parse.urlencode(params)
+        ws_url = (f'wss://{self.connection_manager.options.get_realtime_host()}?{query_params}')
+
         headers = HttpUtils.default_headers()
         host = self.connection_manager.options.get_realtime_host()
         key = self.connection_manager.ably.key
