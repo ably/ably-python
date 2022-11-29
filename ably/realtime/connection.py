@@ -216,12 +216,13 @@ class ConnectionManager(EventEmitter):
             await asyncio.wait_for(asyncio.shield(self.__connected_future), self.__timeout_in_secs)
         except asyncio.TimeoutError:
             exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
-            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
             if self.transport:
                 await self.transport.dispose()
                 self.tranpsort = None
             self.__connected_future.set_exception(exception)
-            raise exception
+            connected_future = self.__connected_future
+            self.__connected_future = None
+            self.on_connection_attempt_done(connected_future)
 
     async def send_protocol_message(self, protocol_message):
         if self.transport is not None:
