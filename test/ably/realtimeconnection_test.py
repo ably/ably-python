@@ -168,24 +168,32 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert exception.value.status_code == 504
 
     async def test_disconnected_retry_timeout(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=0.001,
-                                                 disconnected_retry_timeout=2000, auto_connect=False)
-        state_changes = []
+        ably = await RestSetup.get_ably_realtime(disconnected_retry_timeout=2000, auto_connect=False)
+        original_connect = ably.connection.connection_manager._connect
+        call_count = 0
+        test_future = asyncio.Future()
+        test_exception = Exception()
 
-        def on_state_change(state_change):
-            state_changes.append(state_change)
+        # intercept the library connection mechanism to fail the first two connection attempts
+        async def new_connect():
+            nonlocal call_count
+            if call_count < 2:
+                call_count += 1
+                raise test_exception
+            else:
+                await original_connect()
+                test_future.set_result(None)
 
-        ably.connection.on(on_state_change)
+        ably.connection.connection_manager._connect = new_connect
 
-        with pytest.raises(AblyException) as exception:
+        with pytest.raises(Exception) as exception:
             await ably.connect()
-        assert exception.value.code == 50003
-        assert exception.value.status_code == 504
+
         assert ably.connection.state == ConnectionState.DISCONNECTED
-        # 2 state changes happens per retry.
-        # Retry timeout of 2 secs, will retry connection twice in 3 and/or 4 seconds, resulting in 4 state changes
-        await asyncio.sleep(4)
-        assert len(state_changes) == 4
-        assert state_changes[0].previous == ConnectionState.CONNECTING
-        assert state_changes[0].current == ConnectionState.DISCONNECTED
+        assert exception.value == test_exception
+
+        await test_future
+
+        assert ably.connection.state == ConnectionState.CONNECTED
+
         await ably.close()
