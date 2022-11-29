@@ -209,8 +209,8 @@ class ConnectionManager(EventEmitter):
     async def send_close_message(self):
         await self.send_protocol_message({"action": ProtocolMessageAction.CLOSE})
 
-    async def send_protocol_message(self, protocolMessage):
-        raw_msg = json.dumps(protocolMessage)
+    async def send_protocol_message(self, protocol_message):
+        raw_msg = json.dumps(protocol_message)
         log.info('send_protocol_message(): sending {raw_msg}')
         await self.__websocket.send(raw_msg)
 
