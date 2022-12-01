@@ -3,7 +3,9 @@ import logging
 import asyncio
 import websockets
 import json
+import urllib.parse
 from ably.http.httputils import HttpUtils
+from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyAuthException, AblyException
 from ably.util.eventemitter import EventEmitter
 from enum import Enum, IntEnum
@@ -211,7 +213,10 @@ class ConnectionManager(EventEmitter):
 
     async def setup_ws(self):
         headers = HttpUtils.default_headers()
-        ws_url = f'wss://{self.options.get_realtime_host()}?key={self.__ably.key}'
+        protocol_version = Defaults.protocol_version
+        params = {"key": self.__ably.key, "v": protocol_version}
+        query_params = urllib.parse.urlencode(params)
+        ws_url = (f'wss://{self.options.get_realtime_host()}?{query_params}')
         log.info(f'setup_ws(): attempting to connect to {ws_url}')
         async with websockets.connect(ws_url, extra_headers=headers) as websocket:
             log.info(f'setup_ws(): connection established to {ws_url}')
