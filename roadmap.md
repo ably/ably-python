@@ -143,8 +143,16 @@ Handle errors which the realtime client may encounter once already in the `CONNE
 
 - Implement `maxIdleInterval` and handle `HEARTBEAT` messages and disconnect transport once `maxIdleInterval` is exceeded ([`RTN23`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN23))
 - Handle `CONNECTED` messages once connected ([`RTN24`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN24))
-- Attempt to resume connection when a connection is disconnected unexpectedly ([`RTN15a`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15a), [`RTN15b`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15b), [`RTN15c`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15a), [`RTN16`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN16))
 - Resend protocol messages for pending channels upon resume ([`RTN19b`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN19b))
+- When `connectionStateTtl` elapsed, clear connection state ([`RTN15g`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15g))
+- Immediately reattempt connection when unexpectedly disconnected ([`RTN15a`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15a))
+- Connection resume:
+    - Send resume query param when reconnecting within `connectionStateTtl` ([`RTN15b`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15b))
+    - Handle clean resume response ([`RTN15c6`](https://sdk.ably.com/builds/ably/specification/pull/108/features/#RTN15c6), [`RTL4c`](https://sdk.ably.com/builds/ably/specification/main/features/#RTL4c), [`RTN15e`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15e))
+    - Handle invalid resume response ([`RTN15c7`](https://sdk.ably.com/builds/ably/specification/pull/108/features/#RTN15c7))
+    - Handle fatal resume error ([`RTN15c4`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15c4))
+- Set the `ATTACH_RESUME` flag on unclean attach ([`RTL4j`](https://sdk.ably.com/builds/ably/specification/main/features/#RTL4j))
+- Emit `update` event on additional `ATTACHED` message ([`RTL12`](https://sdk.ably.com/builds/ably/specification/main/features/#RTL12))
 
 **Objective**: Detect connection errors while connected and handle them appropriately.
 
