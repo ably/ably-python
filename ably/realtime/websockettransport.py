@@ -44,11 +44,6 @@ class WebSocketTransport:
         params = {"key": self.connection_manager.ably.key, "v": protocol_version}
         query_params = urllib.parse.urlencode(params)
         ws_url = (f'wss://{self.connection_manager.options.get_realtime_host()}?{query_params}')
-
-        headers = HttpUtils.default_headers()
-        host = self.connection_manager.options.get_realtime_host()
-        key = self.connection_manager.ably.key
-        ws_url = f'wss://{host}?key={key}'
         log.info(f'connect(): attempting to connect to {ws_url}')
         self.ws_connect_task = asyncio.create_task(self.ws_connect(ws_url, headers))
         self.ws_connect_task.add_done_callback(self.on_ws_connect_done)
