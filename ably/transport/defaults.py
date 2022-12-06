@@ -20,7 +20,9 @@ class Defaults:
     comet_recv_timeout = 90000
     comet_send_timeout = 10000
     realtime_request_timeout = 10000
-    disconnected_retry_timeout = 1500
+    disconnected_retry_timeout = 15000
+    connection_state_ttl = 120000
+    suspended_retry_timeout = 30000
 
     transports = []  # ["web_socket", "comet"]
 
