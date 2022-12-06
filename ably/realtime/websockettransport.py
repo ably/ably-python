@@ -55,8 +55,11 @@ class WebSocketTransport:
             exception = task.exception()
         except asyncio.CancelledError as e:
             exception = e
-        if isinstance(exception, ConnectionClosedOK):
+        if exception is None or isinstance(exception, ConnectionClosedOK):
             return
+        connected_future = asyncio.Future()
+        connected_future.set_exception(exception)
+        self.connection_manager.on_connection_attempt_done(connected_future)
 
     async def ws_connect(self, ws_url, headers):
         try:
@@ -67,7 +70,7 @@ class WebSocketTransport:
                 self.read_loop.add_done_callback(self.on_read_loop_done)
                 await self.read_loop
         except (WebSocketException, socket.gaierror) as e:
-            raise AblyException(f'Error opening websocket connection: {e.message}', 400, 40000)
+            raise AblyException(f'Error opening websocket connection: {e}', 400, 40000)
 
     async def ws_read_loop(self):
         while True:
