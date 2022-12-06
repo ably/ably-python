@@ -4,6 +4,7 @@ import asyncio
 from enum import IntEnum
 import json
 import logging
+import socket
 import urllib.parse
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
@@ -65,7 +66,7 @@ class WebSocketTransport:
                 self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
                 self.read_loop.add_done_callback(self.on_read_loop_done)
                 await self.read_loop
-        except WebSocketException as e:
+        except (WebSocketException, socket.gaierror) as e:
             raise AblyException(f'Error opening websocket connection: {e.message}', 400, 40000)
 
     async def ws_read_loop(self):
