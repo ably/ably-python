@@ -7,8 +7,9 @@ import logging
 import urllib.parse
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
+from ably.util.exceptions import AblyException
 from websockets.client import WebSocketClientProtocol, connect as ws_connect
-from websockets.exceptions import ConnectionClosedOK
+from websockets.exceptions import ConnectionClosedOK, WebSocketException
 
 if TYPE_CHECKING:
     from ably.realtime.connection import ConnectionManager
@@ -57,12 +58,15 @@ class WebSocketTransport:
             return
 
     async def ws_connect(self, ws_url, headers):
-        async with ws_connect(ws_url, extra_headers=headers) as websocket:
-            log.info(f'ws_connect(): connection established to {ws_url}')
-            self.websocket = websocket
-            self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
-            self.read_loop.add_done_callback(self.on_read_loop_done)
-            await self.read_loop
+        try:
+            async with ws_connect(ws_url, extra_headers=headers) as websocket:
+                log.info(f'ws_connect(): connection established to {ws_url}')
+                self.websocket = websocket
+                self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
+                self.read_loop.add_done_callback(self.on_read_loop_done)
+                await self.read_loop
+        except WebSocketException as e:
+            raise AblyException(f'Error opening websocket connection: {e.message}', 400, 40000)
 
     async def ws_read_loop(self):
         while True:
