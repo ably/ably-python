@@ -134,19 +134,21 @@ class ConnectionManager(EventEmitter):
         self.transport: WebSocketTransport | None = None
         self.__ttl_task = None
         self.__retry_task = None
+        self.__connection_details = None
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
         current_state = self.__state
         self.__state = state
-        print(self.state, "enact")
         if self.state == ConnectionState.DISCONNECTED:
             if not self.__ttl_task or self.__ttl_task.done():
                 self.__ttl_task = asyncio.create_task(self.__connection_state_ttl())
         self._emit('connectionstate', ConnectionStateChange(current_state, state, reason))
 
     async def __connection_state_ttl(self):
-        await asyncio.sleep(self.ably.options.connection_state_ttl)
+        if self.__connection_details:
+            self.ably.options.connection_state_ttl = self.__connection_details["connectionStateTtl"]
+        await asyncio.sleep(self.ably.options.connection_state_ttl / 1000)
         exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)
         self.enact_state_change(ConnectionState.SUSPENDED, exception)
         if self.__retry_task:
@@ -160,7 +162,6 @@ class ConnectionManager(EventEmitter):
         await self.__connected_future
 
     def try_connect(self):
-        print("erm", self.__state)
         task = asyncio.create_task(self._connect())
         task.add_done_callback(self.on_connection_attempt_done)
 
@@ -194,7 +195,6 @@ class ConnectionManager(EventEmitter):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.FAILED):
             return
         if self.__state != ConnectionState.DISCONNECTED:
-            print("howdy")
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
@@ -202,12 +202,9 @@ class ConnectionManager(EventEmitter):
         self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
-        print("retrying", self.__state)
         if self.state == ConnectionState.SUSPENDED:
-            print("suspended")
             retry_timeout = self.ably.options.suspended_retry_timeout / 1000
         else:
-            print("not yet")
             retry_timeout = self.ably.options.disconnected_retry_timeout / 1000
         await asyncio.sleep(retry_timeout)
         self.try_connect()
@@ -299,6 +296,7 @@ class ConnectionManager(EventEmitter):
                 log.warn('CONNECTED message received but connected_future not set')
             if self.__ttl_task:
                 self.__ttl_task.cancel()
+            self.__connection_details = msg['connectionDetails']
             self.enact_state_change(ConnectionState.CONNECTED)
         if action == ProtocolMessageAction.ERROR:  # ERROR
             error = msg["error"]
@@ -337,3 +335,7 @@ class ConnectionManager(EventEmitter):
     @property
     def state(self):
         return self.__state
+
+    @property
+    def connection_details(self):
+        return self.__connection_details

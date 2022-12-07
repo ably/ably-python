@@ -225,6 +225,10 @@ class Options(AuthOptions):
     def connection_state_ttl(self):
         return self.__connection_state_ttl
 
+    @connection_state_ttl.setter
+    def connection_state_ttl(self, value):
+        self.__connection_state_ttl = value
+
     @property
     def suspended_retry_timeout(self):
         return self.__suspended_retry_timeout
