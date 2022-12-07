@@ -98,7 +98,7 @@ This milestone will add connection error handling to the realtime client,
 allowing it to continue operating in the event of a recoverable connection error.
 It will also improve the visibility of what went wrong in the event of a fatal connection error.
 
-### Milestone 2a: Handle connection opening errors
+### Milestone 2a: Handle connection opening errors ✅
 
 Implement the correct behaviour for all potential errors that may occur when establishing a new realtime connection.
 
