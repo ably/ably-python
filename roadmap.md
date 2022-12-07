@@ -2,7 +2,7 @@
 
 This document outlines our plans for the evolution of this SDK.
 
-## Milestone 1: Realtime Channel Subscription
+## Milestone 1: Realtime Channel Subscription ✅
 
 Once we've completed the scope and objectives detailed in this milestone,
 we'll be in a good position to make a release in order to start getting feedback from customers.
@@ -19,7 +19,7 @@ That release will come with the following known limitations:
 - No capability to publish over the Realtime connection. To be implemented under [Milestone 4: Realtime Channel Publish](#milestone-4-realtime-channel-publish).
 - No capability to receive or publish member presence messages for a channel over the Realtime connection. To be implemented under [Milestone 5: Realtime Channel Presence](#milestone-5-realtime-channel-presence).
 
-### Milestone 1a: Solidify Existing Foundations
+### Milestone 1a: Solidify Existing Foundations ✅
 
 Ensure the current source code is in a good enough state to build upon.
 This means solving currently known pain points (development environment stabilisation) as well as reassessing our baselines.
@@ -32,7 +32,7 @@ This means solving currently known pain points (development environment stabilis
 
 **Objective**: Achieve confidence that we have foundations we can confidently build upon, knowing what's coming up in future milestones.
 
-### Milestone 1b: Establish Realtime Foundations and Connect
+### Milestone 1b: Establish Realtime Foundations and Connect ✅
 
 **Scope**:
 
@@ -43,7 +43,7 @@ This means solving currently known pain points (development environment stabilis
 
 **Objective**: Successfully connect to Ably Realtime.
 
-### Milestone 1c: Realtime Connection Lifecycle
+### Milestone 1c: Realtime Connection Lifecycle ✅
 
 The basic foundations of Realtime connectivity, plus client identification (`Agent`).
 
@@ -59,7 +59,7 @@ The basic foundations of Realtime connectivity, plus client identification (`Age
 
 **Objective**: Track connection state and offer API to query it.
 
-### Milestone 1d: Basic Realtime-Client-initiated Messages
+### Milestone 1d: Basic Realtime-Client-initiated Messages ✅
 
 Give our users some control.
 
@@ -75,7 +75,7 @@ Give our users some control.
 **Objective**: Provide APIs for sending basic messages to the service,
 resulting in proof-of-life / smoke-test proving interactions with the event model chosen in [1b](#milestone-1b-establish-realtime-foundations-and-connect).
 
-### Milestone 1e: Attach and Subscribe
+### Milestone 1e: Attach and Subscribe ✅
 
 Start receiving messages from the Ably service.
 
