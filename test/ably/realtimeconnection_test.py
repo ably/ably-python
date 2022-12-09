@@ -206,6 +206,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert exception.value.status_code == 504
         assert ably.connection.state == ConnectionState.DISCONNECTED
         assert ably.connection.error_reason == exception.value
+        await ably.close()
 
     async def test_invalid_host(self):
         ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost")
@@ -215,3 +216,25 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert exception.value.status_code == 400
         assert ably.connection.state == ConnectionState.DISCONNECTED
         assert ably.connection.error_reason == exception.value
+        await ably.close()
+
+    async def test_connection_state_ttl(self):
+        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", connection_state_ttl=2000)
+        changes = []
+        suspended_future = asyncio.Future()
+
+        def on_state_change(state_change):
+            changes.append(state_change)
+            if state_change.current == ConnectionState.SUSPENDED:
+                suspended_future.set_result(None)
+        with pytest.raises(AblyException) as exception:
+            await ably.connect()
+        ably.connection.on(on_state_change)
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+        await suspended_future
+        assert ably.connection.state == changes[-1].current
+        assert ably.connection.state == ConnectionState.SUSPENDED
+        assert ably.connection.error_reason == changes[-1].reason
+        await ably.close()
