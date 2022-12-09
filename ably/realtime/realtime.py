@@ -64,6 +64,12 @@ class AblyRealtime(AblyRest):
             fallback_hosts: list[str]
                 An array of fallback hosts to be used in the case of an error necessitating the use of an alternative host.
                 If you have been provided a set of custom fallback hosts by Ably, please specify them here.
+            connection_state_ttl: float
+                The duration that Ably will persist the connection state for when a Realtime client is abruptly
+                disconnected.
+            suspended_retry_timeout: float
+                When the connection enters the SUSPENDED state, after this delay, if the state is still SUSPENDED,
+                the client library attempts to reconnect automatically. The default is 30 seconds.
         Raises
         ------
         ValueError
