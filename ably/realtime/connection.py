@@ -212,7 +212,6 @@ class ConnectionManager(EventEmitter):
             retry_timeout = self.ably.options.suspended_retry_timeout / 1000
         else:
             retry_timeout = self.ably.options.disconnected_retry_timeout / 1000
-        
         await asyncio.sleep(retry_timeout)
         self.try_connect()
 
@@ -242,7 +241,10 @@ class ConnectionManager(EventEmitter):
             log.warning('ConnectionManager: called close with no connected transport')
         self.enact_state_change(ConnectionState.CLOSED)
         if self.transport and self.transport.ws_connect_task is not None:
-            await self.transport.ws_connect_task
+            try:
+                await self.transport.ws_connect_task
+            except AblyException as e:
+                log.warning(f'Connection error encountered while closing: {e}')
 
     async def connect_impl(self):
         self.transport = WebSocketTransport(self)
