@@ -21,13 +21,26 @@ class ConnectionState(str, Enum):
     CLOSING = 'closing'
     CLOSED = 'closed'
     FAILED = 'failed'
-    SUSPENDED = "suspended"
+    SUSPENDED = 'suspended'
+
+
+class ConnectionEvent(str):
+    INITIALIZED = 'initialized'
+    CONNECTING = 'connecting'
+    CONNECTED = 'connected'
+    DISCONNECTED = 'disconnected'
+    CLOSING = 'closing'
+    CLOSED = 'closed'
+    FAILED = 'failed'
+    SUSPENDED = 'suspended'
+    UPDATE = 'update'
 
 
 @dataclass
 class ConnectionStateChange:
     previous: ConnectionState
     current: ConnectionState
+    event: ConnectionEvent
     reason: Optional[AblyException] = None
 
 
@@ -152,9 +165,10 @@ class ConnectionManager(EventEmitter):
         self.__retry_task = None
         self.__connection_details = None
         self.__fail_state = ConnectionState.DISCONNECTED
+        self.__fail_event = ConnectionEvent.DISCONNECTED
         super().__init__()
 
-    def enact_state_change(self, state, reason=None):
+    def enact_state_change(self, state, event, reason=None):
         current_state = self.__state
         self.__state = state
         if self.__state == ConnectionState.DISCONNECTED:
@@ -167,9 +181,10 @@ class ConnectionManager(EventEmitter):
             self.ably.options.connection_state_ttl = self.__connection_details.connectionStateTtl
         await asyncio.sleep(self.ably.options.connection_state_ttl / 1000)
         exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)
-        self.enact_state_change(ConnectionState.SUSPENDED, exception)
+        self.enact_state_change(ConnectionState.SUSPENDED, ConnectionEvent.SUSPENDED, exception)
         self.__connection_details = None
         self.__fail_state = ConnectionState.SUSPENDED
+        self.__fail_event = ConnectionEvent.SUSPENDED
         if self.__retry_task:
             self.__retry_task.cancel()
             self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
@@ -199,7 +214,7 @@ class ConnectionManager(EventEmitter):
                 log.info('Connection cancelled due to request timeout. Attempting reconnection...')
                 raise exception
         else:
-            self.enact_state_change(ConnectionState.CONNECTING)
+            self.enact_state_change(ConnectionState.CONNECTING, ConnectionEvent.CONNECTING)
             await self.connect_impl()
 
     def on_connection_attempt_done(self, task):
@@ -216,7 +231,11 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
-            self.enact_state_change(self.__fail_state, exception)
+            self.enact_state_change(self.__fail_state, self.__fail_event, exception)
+            # if self.__in_suspended_state:
+            #     self.enact_state_change(ConnectionState.SUSPENDED, ConnectionEvent.SUSPENDED, exception)
+            # else:
+            #     self.enact_state_change(ConnectionState.DISCONNECTED, ConnectionEvent.DISCONNECTED, exception)
         self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
@@ -229,19 +248,19 @@ class ConnectionManager(EventEmitter):
 
     async def close(self):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.INITIALIZED, ConnectionState.FAILED):
-            self.enact_state_change(ConnectionState.CLOSED)
+            self.enact_state_change(ConnectionState.CLOSED, ConnectionEvent.CLOSED)
             return
         if self.__state is ConnectionState.DISCONNECTED:
             if self.transport:
                 await self.transport.dispose()
                 self.transport = None
-                self.enact_state_change(ConnectionState.CLOSED)
+                self.enact_state_change(ConnectionState.CLOSED, ConnectionEvent.CLOSED)
                 return
         if self.__state != ConnectionState.CONNECTED:
             log.warning('Connection.closed called while connection state not connected')
         if self.__state == ConnectionState.CONNECTING:
             await self.__connected_future
-        self.enact_state_change(ConnectionState.CLOSING)
+        self.enact_state_change(ConnectionState.CLOSING, ConnectionEvent.CLOSING)
         self.__closed_future = asyncio.Future()
         if self.transport and self.transport.is_connected:
             await self.transport.close()
@@ -251,7 +270,7 @@ class ConnectionManager(EventEmitter):
                 raise AblyException("Timeout waiting for connection close response", 504, 50003)
         else:
             log.warning('ConnectionManager: called close with no connected transport')
-        self.enact_state_change(ConnectionState.CLOSED)
+        self.enact_state_change(ConnectionState.CLOSED, ConnectionEvent.CLOSED)
         if self.__ttl_task and not self.__ttl_task.done():
             self.__ttl_task.cancel()
         if self.transport and self.transport.ws_connect_task is not None:
@@ -309,6 +328,7 @@ class ConnectionManager(EventEmitter):
     async def on_protocol_message(self, msg):
         action = msg['action']
         if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
+            msg_error = msg.get("error")
             if self.transport:
                 self.transport.is_connected = True
             if self.__connected_future:
@@ -318,15 +338,19 @@ class ConnectionManager(EventEmitter):
             else:
                 log.warn('CONNECTED message received but connected_future not set')
             self.__fail_state == ConnectionState.DISCONNECTED
+            self.__fail_event == ConnectionEvent.DISCONNECTED
             if self.__ttl_task:
                 self.__ttl_task.cancel()
             self.__connection_details = ConnectionDetails.from_dict(msg["connectionDetails"])
-            self.enact_state_change(ConnectionState.CONNECTED)
+            if self.__state == ConnectionState.CONNECTED:
+                self.enact_state_change(ConnectionState.CONNECTED, ConnectionEvent.UPDATE, msg_error)
+            else:
+                self.enact_state_change(ConnectionState.CONNECTED, ConnectionEvent.CONNECTED)
         if action == ProtocolMessageAction.ERROR:  # ERROR
             error = msg["error"]
             if error['nonfatal'] is False:
                 exception = AblyAuthException(error["message"], error["statusCode"], error["code"])
-                self.enact_state_change(ConnectionState.FAILED, exception)
+                self.enact_state_change(ConnectionState.FAILED, ConnectionEvent.FAILED, exception)
                 if self.__connected_future:
                     self.__connected_future.set_exception(exception)
                     self.__connected_future = None
