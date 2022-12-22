@@ -1,6 +1,7 @@
 import functools
 import logging
 import asyncio
+import httpx
 from ably.realtime.websockettransport import WebSocketTransport, ProtocolMessageAction
 from ably.util.exceptions import AblyAuthException, AblyException
 from ably.util.eventemitter import EventEmitter
@@ -201,6 +202,13 @@ class ConnectionManager(EventEmitter):
         else:
             self.enact_state_change(ConnectionState.CONNECTING)
             await self.connect_impl()
+
+    def check_connection(self):
+        try:
+            response = httpx.get("https://internet-up.ably-realtime.com/is-the-internet-up.txt")
+            return response.status_code == 200 and response.text == "yes"
+        finally:
+            return False
 
     def on_connection_attempt_done(self, task):
         try:
