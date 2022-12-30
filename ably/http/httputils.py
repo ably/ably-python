@@ -44,6 +44,6 @@ class HttpUtils:
         params = {}
 
         if options.add_request_ids:
-            params['request_id'] = base64.urlsafe_b64encode(os.urandom(12))
+            params['request_id'] = base64.urlsafe_b64encode(os.urandom(12)).decode('ascii')
 
         return params
