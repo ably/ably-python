@@ -212,7 +212,7 @@ class TestRestHttp(BaseAsyncTestCase):
     # RSC7c
     async def test_add_request_ids(self):
         # With request id
-        ably = await RestSetup.get_ably_rest(add_request_ids = True)
+        ably = await RestSetup.get_ably_rest(add_request_ids=True)
         r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
         assert 'request_id' in r.request.url.params
         request_id1 = r.request.url.params['request_id']
