@@ -170,7 +170,7 @@ class ConnectionManager(EventEmitter):
     def check_connection(self):
         try:
             response = httpx.get("https://internet-up.ably-realtime.com/is-the-internet-up.txt")
-            return response.status_code == 200 and response.text == "yes"
+            return response.status_code == 200 and response.text == "yes\n"
         finally:
             return False
 
