@@ -236,5 +236,6 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         await suspended_future
         assert ably.connection.state == changes[-1].current
         assert ably.connection.state == ConnectionState.SUSPENDED
+        assert ably.connection.connection_details is None
         assert ably.connection.error_reason == changes[-1].reason
         await ably.close()
