@@ -207,7 +207,7 @@ class ConnectionManager(EventEmitter):
         try:
             response = httpx.get("https://internet-up.ably-realtime.com/is-the-internet-up.txt")
             return response.status_code == 200 and "yes" in response.text
-        finally:
+        except httpx.HTTPError:
             return False
 
     def on_connection_attempt_done(self, task):
