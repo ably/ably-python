@@ -62,8 +62,9 @@ class AblyRealtime(AblyRest):
                 If the connection is still in the DISCONNECTED state after this delay, the client library will
                 attempt to reconnect automatically. The default is 15 seconds.
             fallback_hosts: list[str]
-                An array of fallback hosts to be used in the case of an error necessitating the use of an alternative host.
-                If you have been provided a set of custom fallback hosts by Ably, please specify them here.
+                An array of fallback hosts to be used in the case of an error necessitating the use of
+                an alternative host.If you have been provided a set of custom fallback hosts by Ably,
+                please specify them here.
         Raises
         ------
         ValueError
