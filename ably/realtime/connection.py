@@ -206,7 +206,7 @@ class ConnectionManager(EventEmitter):
     def check_connection(self):
         try:
             response = httpx.get("https://internet-up.ably-realtime.com/is-the-internet-up.txt")
-            return response.status_code == 200 and response.text == "yes\n"
+            return response.status_code == 200 and "yes" in response.text
         finally:
             return False
 
@@ -236,7 +236,11 @@ class ConnectionManager(EventEmitter):
         else:
             retry_timeout = self.ably.options.disconnected_retry_timeout / 1000
         await asyncio.sleep(retry_timeout)
-        self.try_connect()
+        if self.check_connection():
+            self.try_connect()
+        else:
+            exception = AblyException("Unable to connect (network unreachable)", 80003, 404)
+            self.enact_state_change(ConnectionState.FAILED, exception)
 
     async def close(self):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.INITIALIZED, ConnectionState.FAILED):
