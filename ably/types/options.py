@@ -49,9 +49,6 @@ class Options(AuthOptions):
         if environment is None:
             environment = Defaults.environment
 
-        if http_max_retry_count is None:
-            http_max_retry_count = Defaults.http_max_retry_count
-
         self.__client_id = client_id
         self.__log_level = log_level
         self.__tls = tls
@@ -262,6 +259,8 @@ class Options(AuthOptions):
         environment = self.environment
 
         http_max_retry_count = self.http_max_retry_count
+        if http_max_retry_count is None:
+            http_max_retry_count = Defaults.http_max_retry_count
 
         # Prepend environment
         if environment != 'production':
@@ -309,14 +308,16 @@ class Options(AuthOptions):
         else:
             host = Defaults.realtime_host
 
-        hosts = [host] + self.__fallback_hosts
-        return hosts[:self.http_max_retry_count]
+        return [host] + self.__fallback_hosts
 
     def get_rest_hosts(self):
         return self.__rest_hosts
 
     def get_rest_host(self):
         return self.__rest_hosts[0]
+
+    def get_realtime_hosts(self):
+        return self.__realtime_hosts
 
     def get_realtime_host(self):
         return self.__realtime_hosts[0]

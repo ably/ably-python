@@ -165,6 +165,8 @@ class ConnectionManager(EventEmitter):
         self.__ttl_task = None
         self.__connection_details = None
         self.__fail_state = ConnectionState.DISCONNECTED
+        self.__connection_host = self.options.get_realtime_host()
+        self.__fallback_hosts = self.__generate_fallback_hosts()
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -193,6 +195,18 @@ class ConnectionManager(EventEmitter):
     def try_connect(self):
         self.connection_attempt_task = asyncio.create_task(self._connect())
         self.connection_attempt_task.add_done_callback(self.on_connection_attempt_done)
+
+    def __generate_fallback_hosts(self):
+        for host in self.options.get_fallback_realtime_hosts():
+            yield host
+
+    def __use_fallback_host(self):
+        try:
+            self.__connection_host = next(self.__fallback_hosts)
+        except StopIteration as e:
+            log.warning("Exhausted Fallback hosts", {e})
+            return
+
 
     async def _connect(self):
         if self.__state == ConnectionState.CONNECTED:
@@ -293,7 +307,7 @@ class ConnectionManager(EventEmitter):
     async def connect_impl(self):
         self.transport = WebSocketTransport(self)  # RTN1
         self._emit('transport.pending', self.transport)
-        await self.transport.connect()
+        await self.transport.connect(self.__connection_host)
         try:
             await asyncio.wait_for(asyncio.shield(self.__connected_future), self.__timeout_in_secs)
         except asyncio.TimeoutError:
@@ -304,6 +318,7 @@ class ConnectionManager(EventEmitter):
             self.__connected_future.set_exception(exception)
             connected_future = self.__connected_future
             self.__connected_future = None
+            self.__use_fallback_host()
             self.on_connection_attempt_done(connected_future)
 
     async def send_protocol_message(self, protocol_message):

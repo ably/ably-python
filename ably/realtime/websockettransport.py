@@ -23,6 +23,7 @@ log = logging.getLogger(__name__)
 class ProtocolMessageAction(IntEnum):
     HEARTBEAT = 0
     CONNECTED = 4
+    DISCONNECTED = 6
     CLOSE = 7
     CLOSED = 8
     ERROR = 9
@@ -46,12 +47,12 @@ class WebSocketTransport:
         self.last_activity = None
         self.max_idle_interval = None
 
-    async def connect(self):
+    async def connect(self, connection_host):
         headers = HttpUtils.default_headers()
         protocol_version = Defaults.protocol_version
         params = {"key": self.connection_manager.ably.key, "v": protocol_version}
         query_params = urllib.parse.urlencode(params)
-        ws_url = (f'wss://{self.connection_manager.options.get_realtime_host()}?{query_params}')
+        ws_url = (f'wss://{connection_host}?{query_params}')
         log.info(f'connect(): attempting to connect to {ws_url}')
         self.ws_connect_task = asyncio.create_task(self.ws_connect(ws_url, headers))
         self.ws_connect_task.add_done_callback(self.on_ws_connect_done)
