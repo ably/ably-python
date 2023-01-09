@@ -14,8 +14,8 @@ class Options(AuthOptions):
                  http_open_timeout=None, http_request_timeout=None, realtime_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
                  fallback_hosts_use_default=None, fallback_retry_timeout=None, disconnected_retry_timeout=None,
-                 idempotent_rest_publishing=None, loop=None, auto_connect=True, connection_state_ttl=None,
-                 suspended_retry_timeout=None, **kwargs):
+                 idempotent_rest_publishing=None, loop=None, auto_connect=True, suspended_retry_timeout=None,
+                 **kwargs):
         super().__init__(**kwargs)
 
         # TODO check these defaults
@@ -28,8 +28,7 @@ class Options(AuthOptions):
         if disconnected_retry_timeout is None:
             disconnected_retry_timeout = Defaults.disconnected_retry_timeout
 
-        if connection_state_ttl is None:
-            connection_state_ttl = Defaults.connection_state_ttl
+        connection_state_ttl = Defaults.connection_state_ttl
 
         if suspended_retry_timeout is None:
             suspended_retry_timeout = Defaults.suspended_retry_timeout
