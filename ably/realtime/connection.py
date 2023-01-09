@@ -31,6 +31,18 @@ class ConnectionStateChange:
     reason: Optional[AblyException] = None
 
 
+@dataclass
+class ConnectionDetails:
+    connectionStateTtl: int
+
+    def __init__(self, connection_state_ttl: int):
+        self.connectionStateTtl = connection_state_ttl
+
+    @staticmethod
+    def from_dict(json_dict: dict):
+        return ConnectionDetails(json_dict.get('connectionStateTtl'))
+
+
 class Connection(EventEmitter):
     """Ably Realtime Connection
 
@@ -139,7 +151,7 @@ class ConnectionManager(EventEmitter):
         self.__ttl_task = None
         self.__retry_task = None
         self.__connection_details = None
-        self.__in_suspended_state = False
+        self.__fail_state = ConnectionState.DISCONNECTED
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -152,12 +164,12 @@ class ConnectionManager(EventEmitter):
 
     async def __start_suspended_timer(self):
         if self.__connection_details:
-            self.ably.options.connection_state_ttl = self.__connection_details["connectionStateTtl"]
+            self.ably.options.connection_state_ttl = self.__connection_details.connectionStateTtl
         await asyncio.sleep(self.ably.options.connection_state_ttl / 1000)
         exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)
         self.enact_state_change(ConnectionState.SUSPENDED, exception)
         self.__connection_details = None
-        self.__in_suspended_state = True
+        self.__fail_state = ConnectionState.SUSPENDED
         if self.__retry_task:
             self.__retry_task.cancel()
             self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
@@ -174,8 +186,6 @@ class ConnectionManager(EventEmitter):
 
     async def _connect(self):
         if self.__state == ConnectionState.CONNECTED:
-            if self.__ttl_task:
-                self.__ttl_task.cancel()
             return
 
         if self.__state == ConnectionState.CONNECTING:
@@ -206,14 +216,14 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
-            if self.__in_suspended_state:
+            if self.__fail_state == ConnectionState.SUSPENDED:
                 self.enact_state_change(ConnectionState.SUSPENDED, exception)
             else:
                 self.enact_state_change(ConnectionState.DISCONNECTED, exception)
         self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
-        if self.__in_suspended_state:
+        if self.__fail_state == ConnectionState.SUSPENDED:
             retry_timeout = self.ably.options.suspended_retry_timeout / 1000
         else:
             retry_timeout = self.ably.options.disconnected_retry_timeout / 1000
@@ -308,10 +318,10 @@ class ConnectionManager(EventEmitter):
                 self.__connected_future = None
             else:
                 log.warn('CONNECTED message received but connected_future not set')
-            self.__in_suspended_state = False
+            self.__fail_state == ConnectionState.DISCONNECTED
             if self.__ttl_task:
                 self.__ttl_task.cancel()
-            self.__connection_details = msg.get('connectionDetails')
+            self.__connection_details = ConnectionDetails.from_dict(msg["connectionDetails"])
             self.enact_state_change(ConnectionState.CONNECTED)
         if action == ProtocolMessageAction.ERROR:  # ERROR
             error = msg["error"]

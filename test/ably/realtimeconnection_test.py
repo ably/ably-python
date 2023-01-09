@@ -219,7 +219,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         await ably.close()
 
     async def test_connection_state_ttl(self):
-        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", connection_state_ttl=2000)
+        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost")
         changes = []
         suspended_future = asyncio.Future()
 
