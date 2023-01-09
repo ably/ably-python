@@ -2,6 +2,7 @@ import inspect
 import random
 import string
 import asyncio
+import time
 from typing import Callable
 
 
@@ -14,6 +15,10 @@ def get_random_id():
 
 def is_callable_or_coroutine(value):
     return asyncio.iscoroutinefunction(value) or inspect.isfunction(value) or inspect.ismethod(value)
+
+
+def unix_time_ms():
+    return round(time.time_ns() / 1_000_000)
 
 
 class Timer:
