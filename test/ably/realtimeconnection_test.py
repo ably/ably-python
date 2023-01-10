@@ -296,3 +296,35 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert state_change.current == ConnectionState.CONNECTED
         assert state_change.event == ConnectionEvent.UPDATE
         await ably.close()
+
+    async def test_max_idle_interval(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+
+        test_future = asyncio.Future()
+
+        def on_transport_pending(transport):
+            original_on_protocol_message = transport.on_protocol_message
+
+            async def on_protocol_message(msg):
+                if msg["action"] == ProtocolMessageAction.CONNECTED:
+                    msg["connectionDetails"]["maxIdleInterval"] = 100
+
+                await original_on_protocol_message(msg)
+
+            transport.on_protocol_message = on_protocol_message
+
+        ably.connection.connection_manager.on('transport.pending', on_transport_pending)
+
+        def once_disconnected(state_change):
+            test_future.set_result(state_change)
+
+        ably.connection.once(ConnectionState.DISCONNECTED, once_disconnected)
+
+        state_change = await test_future
+
+        assert state_change.previous == ConnectionState.CONNECTED
+        assert state_change.current == ConnectionState.DISCONNECTED
+        assert state_change.reason.code == 80003
+        assert state_change.reason.status_code == 408
+
+        await ably.close()
