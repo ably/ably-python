@@ -29,7 +29,10 @@ class Timer:
 
     async def _job(self):
         await asyncio.sleep(self._timeout / 1000)
-        self._callback()
+        if asyncio.iscoroutinefunction(self._callback):
+            await self._callback()
+        else:
+            self._callback()
 
     def cancel(self):
         self._task.cancel()
