@@ -72,6 +72,13 @@ class WebSocketTransport:
         except (WebSocketException, socket.gaierror) as e:
             raise AblyException(f'Error opening websocket connection: {e}', 400, 40000)
 
+    async def on_protocol_message(self, msg):
+        log.info(f'WebSocketTransport.on_protocol_message(): receieved protocol message: {msg}')
+        if msg['action'] == ProtocolMessageAction.CLOSED:
+            if self.ws_connect_task:
+                self.ws_connect_task.cancel()
+        await self.connection_manager.on_protocol_message(msg)
+
     async def ws_read_loop(self):
         while True:
             if self.websocket is not None:
@@ -80,11 +87,7 @@ class WebSocketTransport:
                 except ConnectionClosedOK:
                     break
                 msg = json.loads(raw)
-                log.info(f'ws_read_loop(): receieved protocol message: {msg}')
-                if msg['action'] == ProtocolMessageAction.CLOSED:
-                    if self.ws_connect_task:
-                        self.ws_connect_task.cancel()
-                await self.connection_manager.on_protocol_message(msg)
+                await self.on_protocol_message(msg)
             else:
                 raise Exception('ws_read_loop running with no websocket')
 
