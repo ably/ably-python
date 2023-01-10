@@ -395,6 +395,10 @@ class ConnectionManager(EventEmitter):
         ):
             self.__ably.channels._on_channel_message(msg)
 
+    def deactivate_transport(self, reason=None):
+        self.transport = None
+        self.enact_state_change(ConnectionState.DISCONNECTED, reason)
+
     @property
     def ably(self):
         return self.__ably
