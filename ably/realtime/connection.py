@@ -166,9 +166,10 @@ class ConnectionManager(EventEmitter):
         self.__closed_future = None
         self.__ping_future = None
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
+        self.retry_connection_attempt_task = None
+        self.connection_attempt_task = None
         self.transport: WebSocketTransport | None = None
         self.__ttl_task = None
-        self.__retry_task = None
         self.__connection_details = None
         self.__fail_state = ConnectionState.DISCONNECTED
         super().__init__()
@@ -189,9 +190,6 @@ class ConnectionManager(EventEmitter):
         self.enact_state_change(ConnectionState.SUSPENDED, exception)
         self.__connection_details = None
         self.__fail_state = ConnectionState.SUSPENDED
-        if self.__retry_task:
-            self.__retry_task.cancel()
-            self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def connect(self):
         if not self.__connected_future:
@@ -200,8 +198,8 @@ class ConnectionManager(EventEmitter):
         await self.__connected_future
 
     def try_connect(self):
-        task = asyncio.create_task(self._connect())
-        task.add_done_callback(self.on_connection_attempt_done)
+        self.connection_attempt_task = asyncio.create_task(self._connect())
+        self.connection_attempt_task.add_done_callback(self.on_connection_attempt_done)
 
     async def _connect(self):
         if self.__state == ConnectionState.CONNECTED:
@@ -230,6 +228,14 @@ class ConnectionManager(EventEmitter):
             return False
 
     def on_connection_attempt_done(self, task):
+        if self.connection_attempt_task:
+            if not self.connection_attempt_task.done():
+                self.connection_attempt_task.cancel()
+            self.connection_attempt_task = None
+        if self.retry_connection_attempt_task:
+            if not self.retry_connection_attempt_task.done():
+                self.retry_connection_attempt_task.cancel()
+            self.retry_connection_attempt_task = None
         try:
             exception = task.exception()
         except asyncio.CancelledError:
@@ -243,8 +249,8 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
-            self.enact_state_change(self.__fail_state, exception)
-        self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
+            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+        self.retry_connection_attempt_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
         if self.__fail_state == ConnectionState.SUSPENDED:
