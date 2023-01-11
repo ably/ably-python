@@ -24,7 +24,7 @@ class ConnectionState(str, Enum):
     SUSPENDED = 'suspended'
 
 
-class ConnectionEvent(str):
+class ConnectionEvent(str, Enum):
     INITIALIZED = 'initialized'
     CONNECTING = 'connecting'
     CONNECTED = 'connected'
@@ -174,7 +174,7 @@ class ConnectionManager(EventEmitter):
         if self.__state == ConnectionState.DISCONNECTED:
             if not self.__ttl_task or self.__ttl_task.done():
                 self.__ttl_task = asyncio.create_task(self.__start_suspended_timer())
-        self._emit('connectionstate', ConnectionStateChange(current_state, state, reason))
+        self._emit('connectionstate', ConnectionStateChange(current_state, state, event, reason))
 
     async def __start_suspended_timer(self):
         if self.__connection_details:
@@ -232,10 +232,6 @@ class ConnectionManager(EventEmitter):
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
             self.enact_state_change(self.__fail_state, self.__fail_event, exception)
-            # if self.__in_suspended_state:
-            #     self.enact_state_change(ConnectionState.SUSPENDED, ConnectionEvent.SUSPENDED, exception)
-            # else:
-            #     self.enact_state_change(ConnectionState.DISCONNECTED, ConnectionEvent.DISCONNECTED, exception)
         self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
