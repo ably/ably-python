@@ -9,13 +9,12 @@ log = logging.getLogger(__name__)
 
 
 class Options(AuthOptions):
-    def __init__(self, client_id=None, log_level=0, tls=True, rest_host=None,
-                 realtime_host=None, port=0, tls_port=0, use_binary_protocol=True,
-                 queue_messages=False, recover=False, environment=None,
+    def __init__(self, client_id=None, log_level=0, tls=True, rest_host=None, realtime_host=None, port=0,
+                 tls_port=0, use_binary_protocol=True, queue_messages=False, recover=False, environment=None,
                  http_open_timeout=None, http_request_timeout=None, realtime_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
                  fallback_hosts_use_default=None, fallback_retry_timeout=None, disconnected_retry_timeout=None,
-                 idempotent_rest_publishing=None, loop=None, auto_connect=True,
+                 idempotent_rest_publishing=None, loop=None, auto_connect=True, suspended_retry_timeout=None,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -28,6 +27,11 @@ class Options(AuthOptions):
 
         if disconnected_retry_timeout is None:
             disconnected_retry_timeout = Defaults.disconnected_retry_timeout
+
+        connection_state_ttl = Defaults.connection_state_ttl
+
+        if suspended_retry_timeout is None:
+            suspended_retry_timeout = Defaults.suspended_retry_timeout
 
         if environment is not None and rest_host is not None:
             raise ValueError('specify rest_host or environment, not both')
@@ -62,6 +66,8 @@ class Options(AuthOptions):
         self.__idempotent_rest_publishing = idempotent_rest_publishing
         self.__loop = loop
         self.__auto_connect = auto_connect
+        self.__connection_state_ttl = connection_state_ttl
+        self.__suspended_retry_timeout = suspended_retry_timeout
 
         self.__rest_hosts = self.__get_rest_hosts()
         self.__realtime_hosts = self.__get_realtime_hosts()
@@ -213,6 +219,18 @@ class Options(AuthOptions):
     @property
     def auto_connect(self):
         return self.__auto_connect
+
+    @property
+    def connection_state_ttl(self):
+        return self.__connection_state_ttl
+
+    @connection_state_ttl.setter
+    def connection_state_ttl(self, value):
+        self.__connection_state_ttl = value
+
+    @property
+    def suspended_retry_timeout(self):
+        return self.__suspended_retry_timeout
 
     def __get_rest_hosts(self):
         """

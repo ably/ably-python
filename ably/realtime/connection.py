@@ -21,6 +21,7 @@ class ConnectionState(str, Enum):
     CLOSING = 'closing'
     CLOSED = 'closed'
     FAILED = 'failed'
+    SUSPENDED = "suspended"
 
 
 @dataclass
@@ -28,6 +29,18 @@ class ConnectionStateChange:
     previous: ConnectionState
     current: ConnectionState
     reason: Optional[AblyException] = None
+
+
+@dataclass
+class ConnectionDetails:
+    connectionStateTtl: int
+
+    def __init__(self, connection_state_ttl: int):
+        self.connectionStateTtl = connection_state_ttl
+
+    @staticmethod
+    def from_dict(json_dict: dict):
+        return ConnectionDetails(json_dict.get('connectionStateTtl'))
 
 
 class Connection(EventEmitter):
@@ -120,6 +133,10 @@ class Connection(EventEmitter):
     def connection_manager(self):
         return self.__connection_manager
 
+    @property
+    def connection_details(self):
+        return self.__connection_manager.connection_details
+
 
 class ConnectionManager(EventEmitter):
     def __init__(self, realtime, initial_state):
@@ -131,12 +148,31 @@ class ConnectionManager(EventEmitter):
         self.__ping_future = None
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
         self.transport: WebSocketTransport | None = None
+        self.__ttl_task = None
+        self.__retry_task = None
+        self.__connection_details = None
+        self.__fail_state = ConnectionState.DISCONNECTED
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
         current_state = self.__state
         self.__state = state
+        if self.__state == ConnectionState.DISCONNECTED:
+            if not self.__ttl_task or self.__ttl_task.done():
+                self.__ttl_task = asyncio.create_task(self.__start_suspended_timer())
         self._emit('connectionstate', ConnectionStateChange(current_state, state, reason))
+
+    async def __start_suspended_timer(self):
+        if self.__connection_details:
+            self.ably.options.connection_state_ttl = self.__connection_details.connectionStateTtl
+        await asyncio.sleep(self.ably.options.connection_state_ttl / 1000)
+        exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)
+        self.enact_state_change(ConnectionState.SUSPENDED, exception)
+        self.__connection_details = None
+        self.__fail_state = ConnectionState.SUSPENDED
+        if self.__retry_task:
+            self.__retry_task.cancel()
+            self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def connect(self):
         if not self.__connected_future:
@@ -180,11 +216,15 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
-            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
-        asyncio.create_task(self.retry_connection_attempt())
+            self.enact_state_change(self.__fail_state, exception)
+        self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
-        await asyncio.sleep(self.ably.options.disconnected_retry_timeout / 1000)
+        if self.__fail_state == ConnectionState.SUSPENDED:
+            retry_timeout = self.ably.options.suspended_retry_timeout / 1000
+        else:
+            retry_timeout = self.ably.options.disconnected_retry_timeout / 1000
+        await asyncio.sleep(retry_timeout)
         self.try_connect()
 
     async def close(self):
@@ -212,8 +252,13 @@ class ConnectionManager(EventEmitter):
         else:
             log.warning('ConnectionManager: called close with no connected transport')
         self.enact_state_change(ConnectionState.CLOSED)
+        if self.__ttl_task and not self.__ttl_task.done():
+            self.__ttl_task.cancel()
         if self.transport and self.transport.ws_connect_task is not None:
-            await self.transport.ws_connect_task
+            try:
+                await self.transport.ws_connect_task
+            except AblyException as e:
+                log.warning(f'Connection error encountered while closing: {e}')
 
     async def connect_impl(self):
         self.transport = WebSocketTransport(self)
@@ -272,6 +317,10 @@ class ConnectionManager(EventEmitter):
                 self.__connected_future = None
             else:
                 log.warn('CONNECTED message received but connected_future not set')
+            self.__fail_state == ConnectionState.DISCONNECTED
+            if self.__ttl_task:
+                self.__ttl_task.cancel()
+            self.__connection_details = ConnectionDetails.from_dict(msg["connectionDetails"])
             self.enact_state_change(ConnectionState.CONNECTED)
         if action == ProtocolMessageAction.ERROR:  # ERROR
             error = msg["error"]
@@ -310,3 +359,7 @@ class ConnectionManager(EventEmitter):
     @property
     def state(self):
         return self.__state
+
+    @property
+    def connection_details(self):
+        return self.__connection_details

@@ -4,6 +4,7 @@ import pytest
 from ably.util.exceptions import AblyAuthException, AblyException
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
+from ably.transport.defaults import Defaults
 
 
 class TestRealtimeAuth(BaseAsyncTestCase):
@@ -206,6 +207,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert exception.value.status_code == 504
         assert ably.connection.state == ConnectionState.DISCONNECTED
         assert ably.connection.error_reason == exception.value
+        await ably.close()
 
     async def test_invalid_host(self):
         ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost")
@@ -215,3 +217,28 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert exception.value.status_code == 400
         assert ably.connection.state == ConnectionState.DISCONNECTED
         assert ably.connection.error_reason == exception.value
+        await ably.close()
+
+    async def test_connection_state_ttl(self):
+        Defaults.connection_state_ttl = 100
+        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost")
+        changes = []
+        suspended_future = asyncio.Future()
+
+        def on_state_change(state_change):
+            changes.append(state_change)
+            if state_change.current == ConnectionState.SUSPENDED:
+                suspended_future.set_result(None)
+        with pytest.raises(AblyException) as exception:
+            await ably.connect()
+        ably.connection.on(on_state_change)
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+        await suspended_future
+        assert ably.connection.state == changes[-1].current
+        assert ably.connection.state == ConnectionState.SUSPENDED
+        assert ably.connection.connection_details is None
+        assert ably.connection.error_reason == changes[-1].reason
+        await ably.close()
+        Defaults.connection_state_ttl = 120000
