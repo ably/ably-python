@@ -207,7 +207,7 @@ class ConnectionManager(EventEmitter):
     def check_connection(self):
         try:
             response = httpx.get(self.options.connectivity_check_url)
-            return response.status_code == 200 and \
+            return 200 <= response.status_code < 300 and \
                 (self.options.connectivity_check_url != Defaults.connectivity_check_url or "yes" in response.text)
         except httpx.HTTPError:
             return False
