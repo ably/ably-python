@@ -4,6 +4,7 @@ import pytest
 from ably.util.exceptions import AblyAuthException, AblyException
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
+from ably.transport.defaults import Defaults
 
 
 class TestRealtimeAuth(BaseAsyncTestCase):
@@ -219,6 +220,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         await ably.close()
 
     async def test_connection_state_ttl(self):
+        Defaults.connection_state_ttl = 100
         ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost")
         changes = []
         suspended_future = asyncio.Future()
@@ -239,3 +241,4 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.connection.connection_details is None
         assert ably.connection.error_reason == changes[-1].reason
         await ably.close()
+        Defaults.connection_state_ttl = 120000
