@@ -71,6 +71,11 @@ class AblyRealtime(AblyRest):
             suspended_retry_timeout: float
                 When the connection enters the SUSPENDED state, after this delay, if the state is still SUSPENDED,
                 the client library attempts to reconnect automatically. The default is 30 seconds.
+            connectivity_check_url: string
+                Override the URL used by the realtime client to check if the internet is available.
+                In the event of a failure to connect to the primary endpoint, the client will send a
+                GET request to this URL to check if the internet is available. If this request returns
+                a success response the client will attempt to connect to a fallback host.
         Raises
         ------
         ValueError

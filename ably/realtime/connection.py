@@ -1,7 +1,9 @@
 import functools
 import logging
 import asyncio
+import httpx
 from ably.realtime.websockettransport import WebSocketTransport, ProtocolMessageAction
+from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyAuthException, AblyException
 from ably.util.eventemitter import EventEmitter
 from enum import Enum
@@ -202,6 +204,14 @@ class ConnectionManager(EventEmitter):
             self.enact_state_change(ConnectionState.CONNECTING)
             await self.connect_impl()
 
+    def check_connection(self):
+        try:
+            response = httpx.get(self.options.connectivity_check_url)
+            return 200 <= response.status_code < 300 and \
+                (self.options.connectivity_check_url != Defaults.connectivity_check_url or "yes" in response.text)
+        except httpx.HTTPError:
+            return False
+
     def on_connection_attempt_done(self, task):
         try:
             exception = task.exception()
@@ -225,7 +235,11 @@ class ConnectionManager(EventEmitter):
         else:
             retry_timeout = self.ably.options.disconnected_retry_timeout / 1000
         await asyncio.sleep(retry_timeout)
-        self.try_connect()
+        if self.check_connection():
+            self.try_connect()
+        else:
+            exception = AblyException("Unable to connect (network unreachable)", 80003, 404)
+            self.enact_state_change(self.__fail_state, exception)
 
     async def close(self):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.INITIALIZED, ConnectionState.FAILED):

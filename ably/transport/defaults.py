@@ -10,6 +10,7 @@ class Defaults:
 
     rest_host = "rest.ably.io"
     realtime_host = "realtime.ably.io"
+    connectivity_check_url = "https://internet-up.ably-realtime.com/is-the-internet-up.txt"
     environment = 'production'
 
     port = 80
