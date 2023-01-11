@@ -76,7 +76,6 @@ class Options(AuthOptions):
         self.__rest_hosts = self.__get_rest_hosts()
         self.__realtime_hosts = self.__get_realtime_hosts()
 
-
     @property
     def client_id(self):
         return self.__client_id
