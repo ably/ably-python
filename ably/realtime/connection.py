@@ -216,10 +216,7 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
-            if self.__fail_state == ConnectionState.SUSPENDED:
-                self.enact_state_change(ConnectionState.SUSPENDED, exception)
-            else:
-                self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+            self.enact_state_change(self.__fail_state, exception)
         self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
@@ -255,6 +252,8 @@ class ConnectionManager(EventEmitter):
         else:
             log.warning('ConnectionManager: called close with no connected transport')
         self.enact_state_change(ConnectionState.CLOSED)
+        if self.__ttl_task and not self.__ttl_task.done():
+            self.__ttl_task.cancel()
         if self.transport and self.transport.ws_connect_task is not None:
             try:
                 await self.transport.ws_connect_task
