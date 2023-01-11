@@ -3,6 +3,7 @@ import logging
 import asyncio
 import httpx
 from ably.realtime.websockettransport import WebSocketTransport, ProtocolMessageAction
+from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyAuthException, AblyException
 from ably.util.eventemitter import EventEmitter
 from enum import Enum
@@ -205,8 +206,9 @@ class ConnectionManager(EventEmitter):
 
     def check_connection(self):
         try:
-            response = httpx.get("https://internet-up.ably-realtime.com/is-the-internet-up.txt")
-            return response.status_code == 200 and "yes" in response.text
+            response = httpx.get(self.options.connectivity_check_url)
+            return response.status_code == 200 and \
+                (self.options.connectivity_check_url != Defaults.connectivity_check_url or "yes" in response.text)
         except httpx.HTTPError:
             return False
 

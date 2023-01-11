@@ -15,7 +15,7 @@ class Options(AuthOptions):
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
                  fallback_hosts_use_default=None, fallback_retry_timeout=None, disconnected_retry_timeout=None,
                  idempotent_rest_publishing=None, loop=None, auto_connect=True, suspended_retry_timeout=None,
-                 **kwargs):
+                 connectivity_check_url=None, **kwargs):
         super().__init__(**kwargs)
 
         # TODO check these defaults
@@ -27,6 +27,9 @@ class Options(AuthOptions):
 
         if disconnected_retry_timeout is None:
             disconnected_retry_timeout = Defaults.disconnected_retry_timeout
+
+        if connectivity_check_url is None:
+            connectivity_check_url = Defaults.connectivity_check_url
 
         connection_state_ttl = Defaults.connection_state_ttl
 
@@ -68,9 +71,11 @@ class Options(AuthOptions):
         self.__auto_connect = auto_connect
         self.__connection_state_ttl = connection_state_ttl
         self.__suspended_retry_timeout = suspended_retry_timeout
+        self.__connectivity_check_url = connectivity_check_url
 
         self.__rest_hosts = self.__get_rest_hosts()
         self.__realtime_hosts = self.__get_realtime_hosts()
+
 
     @property
     def client_id(self):
@@ -231,6 +236,10 @@ class Options(AuthOptions):
     @property
     def suspended_retry_timeout(self):
         return self.__suspended_retry_timeout
+
+    @property
+    def connectivity_check_url(self):
+        return self.__connectivity_check_url
 
     def __get_rest_hosts(self):
         """
