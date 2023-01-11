@@ -237,7 +237,7 @@ class ConnectionManager(EventEmitter):
             self.try_connect()
         else:
             exception = AblyException("Unable to connect (network unreachable)", 80003, 404)
-            self.enact_state_change(ConnectionState.FAILED, exception)
+            self.enact_state_change(self.__fail_state, exception)
 
     async def close(self):
         if self.__state in (ConnectionState.CLOSED, ConnectionState.INITIALIZED, ConnectionState.FAILED):
