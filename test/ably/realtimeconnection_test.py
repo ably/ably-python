@@ -205,17 +205,17 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.connection.connection_manager.check_connection() is True
 
     async def test_connectivity_check_non_default(self):
-        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://httpbin.org/status/200")
+        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://echo.ably.io/respondWith?status=200")
         # A non-default URL should return True with a HTTP OK despite not returning "Yes" in the body
         assert ably.connection.connection_manager.check_connection() is True
 
     async def test_connectivity_check_bad_status(self):
-        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://httpbin.org/status/400")
+        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://echo.ably.io/respondWith?status=400")
         # Should return False when the URL returns a non-2xx response code
         assert ably.connection.connection_manager.check_connection() is False
 
     async def test_retry_connection_attempt(self):
-        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://httpbin.org/status/400",
+        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://echo.ably.io/respondWith?status=400",
                                                  disconnected_retry_timeout=1, auto_connect=False)
         test_future = asyncio.Future()
 
