@@ -198,6 +198,39 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         await ably.close()
 
+    async def test_connectivity_check_default(self):
+        ably = await RestSetup.get_ably_realtime()
+        # The default connectivity check should return True
+        assert ably.connection.connection_manager.check_connection() is True
+
+    async def test_connectivity_check_non_default(self):
+        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://httpbin.org/status/200")
+        # A non-default URL should return True with a HTTP OK despite not returning "Yes" in the body
+        assert ably.connection.connection_manager.check_connection() is True
+
+    async def test_connectivity_check_bad_status(self):
+        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://httpbin.org/status/400")
+        # Should return False when the URL returns a non-2xx response code
+        assert ably.connection.connection_manager.check_connection() is False
+
+    async def test_retry_connection_attempt(self):
+        ably = await RestSetup.get_ably_realtime(connectivity_check_url="https://httpbin.org/status/400",
+                                                 disconnected_retry_timeout=1, auto_connect=False)
+        test_future = asyncio.Future()
+
+        def on_state_change(change):
+            if change.current == ConnectionState.DISCONNECTED:
+                test_future.set_result(change)
+
+        ably.connection.connection_manager.on('connectionstate', on_state_change)
+
+        asyncio.create_task(ably.connection.connection_manager.retry_connection_attempt())
+
+        state_change = await test_future
+
+        assert state_change.reason.status_code == 80003
+        assert state_change.reason.message == "Unable to connect (network unreachable)"
+
     async def test_unroutable_host(self):
         ably = await RestSetup.get_ably_realtime(realtime_host="10.255.255.1")
         with pytest.raises(AblyException) as exception:
