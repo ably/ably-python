@@ -77,6 +77,9 @@ class WebSocketTransport:
                 self.read_loop.add_done_callback(self.on_read_loop_done)
                 await self.read_loop
         except (WebSocketException, socket.gaierror) as e:
+            log.info(f'ws_connect(): Error establishing connection on host{ws_url}')
+            log.info("Attempting reconnection using a fallback host")
+            self.connection_manager.use_fallback_host()
             raise AblyException(f'Error opening websocket connection: {e}', 400, 40000)
 
     async def on_protocol_message(self, msg):

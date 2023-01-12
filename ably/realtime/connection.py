@@ -197,16 +197,17 @@ class ConnectionManager(EventEmitter):
         self.connection_attempt_task.add_done_callback(self.on_connection_attempt_done)
 
     def __generate_fallback_hosts(self):
-        for host in self.options.get_fallback_realtime_hosts():
-            yield host
+        if len(self.options.get_fallback_realtime_hosts()) > 0:
+            for host in self.options.get_fallback_realtime_hosts():
+                yield host
 
-    def __use_fallback_host(self):
+    def use_fallback_host(self):
         try:
             self.__connection_host = next(self.__fallback_hosts)
         except StopIteration as e:
-            log.warning("Exhausted Fallback hosts", {e})
-            return
-
+            log.warning("Exhausted Fallback hosts, retrying connection", {e})
+            self.__fallback_hosts = self.__generate_fallback_hosts()
+            self.__connection_host = self.options.get_realtime_host()
 
     async def _connect(self):
         if self.__state == ConnectionState.CONNECTED:
@@ -318,7 +319,7 @@ class ConnectionManager(EventEmitter):
             self.__connected_future.set_exception(exception)
             connected_future = self.__connected_future
             self.__connected_future = None
-            self.__use_fallback_host()
+            self.use_fallback_host()
             self.on_connection_attempt_done(connected_future)
 
     async def send_protocol_message(self, protocol_message):
