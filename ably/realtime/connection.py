@@ -73,6 +73,7 @@ class Connection(EventEmitter):
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
         self.__connection_manager = ConnectionManager(self.__realtime, self.state)
         self.__connection_manager.on('connectionstate', self._on_state_update)
+        self.__connection_manager.on('update', self._on_connection_update)
         super().__init__()
 
     async def connect(self):
@@ -116,6 +117,9 @@ class Connection(EventEmitter):
         self.__error_reason = state_change.reason
         self.__realtime.options.loop.call_soon(functools.partial(self._emit, state_change.current, state_change))
 
+    def _on_connection_update(self, state_change):
+        self.__realtime.options.loop.call_soon(functools.partial(self._emit, ConnectionEvent.UPDATE, state_change))
+
     @property
     def state(self):
         """The current connection state of the connection"""
@@ -151,20 +155,20 @@ class ConnectionManager(EventEmitter):
         self.__in_suspended_state = False
         super().__init__()
 
-    def enact_state_change(self, state, event, reason=None):
+    def enact_state_change(self, state, reason=None):
         current_state = self.__state
         self.__state = state
         if self.__state == ConnectionState.DISCONNECTED:
             if not self.__ttl_task or self.__ttl_task.done():
                 self.__ttl_task = asyncio.create_task(self.__connection_state_ttl())
-        self._emit('connectionstate', ConnectionStateChange(current_state, state, event, reason))
+        self._emit('connectionstate', ConnectionStateChange(current_state, state, state, reason))
 
     async def __connection_state_ttl(self):
         if self.__connection_details:
             self.ably.options.connection_state_ttl = self.__connection_details["connectionStateTtl"]
         await asyncio.sleep(self.ably.options.connection_state_ttl / 1000)
         exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)
-        self.enact_state_change(ConnectionState.SUSPENDED, ConnectionEvent.SUSPENDED, exception)
+        self.enact_state_change(ConnectionState.SUSPENDED, exception)
         self.__in_suspended_state = True
         if self.__retry_task:
             self.__retry_task.cancel()
@@ -322,7 +326,12 @@ class ConnectionManager(EventEmitter):
                 self.__ttl_task.cancel()
             self.__connection_details = msg['connectionDetails']
             if self.__state == ConnectionState.CONNECTED:
-                self.enact_state_change(ConnectionState.CONNECTED, ConnectionEvent.UPDATE, msg_error)
+                state_change = ConnectionStateChange(
+                    ConnectionState.CONNECTED,
+                    ConnectionState.CONNECTED,
+                    ConnectionEvent.UPDATE,
+                )
+                self._emit('update', state_change)
             else:
                 self.enact_state_change(ConnectionState.CONNECTED, ConnectionEvent.CONNECTED)
         if action == ProtocolMessageAction.ERROR:  # ERROR
