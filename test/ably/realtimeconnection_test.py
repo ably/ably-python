@@ -8,7 +8,7 @@ from ably.transport.defaults import Defaults
 
 
 class TestRealtimeAuth(BaseAsyncTestCase):
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.valid_key_format = "api:key"
 
