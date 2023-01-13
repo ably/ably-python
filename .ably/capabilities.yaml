@@ -17,6 +17,18 @@ compliance:
   Protocol:
     JSON:
     MessagePack:
+      .caveats: 'Not supported for realtime'
+  Realtime:
+    Channel:
+      Attach:
+      Subscribe:
+      State Events:
+    Connection:
+      Disconnected Retry Timeout:
+      Lifecycle control:
+      Ping:
+      State Events:
+      Suspended Retry Timeout:
   REST:
     Authentication:
       Authorize:
@@ -40,7 +52,7 @@ compliance:
         Subscribe:
       Release:
       Status:
-        Channel Details: # https://github.com/ably/ably-python/pull/276
+        Channel Details:
     Opaque Request:
     Push Notifications Administration:
       Channel Subscription:
