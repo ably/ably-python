@@ -27,12 +27,6 @@
 - Add environment client option for realtime [\#335](https://github.com/ably/ably-python/pull/335)
 - EventEmitter: allow signatures with no event arg [\#350](https://github.com/ably/ably-python/pull/350)
 
-## [v1.2.2](https://github.com/ably/ably-python/tree/v1.2.2)
-
-[Full Changelog](https://github.com/ably/ably-python/compare/v1.2.1...v1.2.2)
-
-- Upgrade httpx and respx dependencies [\#369](https://github.com/ably/ably-python/pull/369)
-
 ## [v1.2.1](https://github.com/ably/ably-python/tree/v1.2.1)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v1.2.0...v1.2.1)
