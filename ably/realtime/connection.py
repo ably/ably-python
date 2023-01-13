@@ -205,7 +205,7 @@ class ConnectionManager(EventEmitter):
         try:
             self.__connection_host = next(self.__fallback_hosts)
         except StopIteration as e:
-            log.warning("Exhausted Fallback hosts, retrying connection", {e})
+            log.warning(f"Exhausted Fallback hosts, retrying connection: {e}")
             self.__fallback_hosts = self.__generate_fallback_hosts()
             self.__connection_host = self.options.get_realtime_host()
 

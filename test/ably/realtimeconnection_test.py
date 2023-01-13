@@ -330,5 +330,25 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert state_change.current == ConnectionState.DISCONNECTED
         assert state_change.reason.code == 80003
         assert state_change.reason.status_code == 408
+        await ably.close()
 
+    async def test_fallback_host(self):
+        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=1000,
+                                                 fallback_hosts=['sandbox-realtime.ably.io'])
+        connected_future = asyncio.Future()
+
+        def on_change(connection_state):
+            if connection_state.current == ConnectionState.CONNECTED:
+                connected_future.set_result(connection_state)
+
+        with pytest.raises(AblyException) as exception:
+            await ably.connect()
+        ably.connection.on(on_change)
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+        assert ably.connection.error_reason == exception.value
+        state_change = await connected_future
+        assert state_change.previous == ConnectionState.DISCONNECTED
+        assert state_change.current == ConnectionState.CONNECTED
         await ably.close()
