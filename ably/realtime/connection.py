@@ -340,8 +340,6 @@ class ConnectionManager(EventEmitter):
             if not self.__connected_future.cancelled():
                 self.__connected_future.set_result(None)
             self.__connected_future = None
-        else:
-            log.warn('CONNECTED message received but connected_future not set')
         self.__fail_state = ConnectionState.DISCONNECTED
         if self.__ttl_task:
             self.__ttl_task.cancel()
