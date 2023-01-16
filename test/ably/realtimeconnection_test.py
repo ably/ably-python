@@ -142,10 +142,10 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.connect()
         original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
 
-        async def new_send_protocol_message(msg):
-            if msg.get('action') == ProtocolMessageAction.HEARTBEAT:
+        async def new_send_protocol_message(protocol_message):
+            if protocol_message.get('action') == ProtocolMessageAction.HEARTBEAT:
                 return
-            await original_send_protocol_message(msg)
+            await original_send_protocol_message(protocol_message)
         ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
 
         with pytest.raises(AblyException) as exception:
