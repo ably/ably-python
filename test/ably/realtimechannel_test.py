@@ -9,7 +9,7 @@ from ably.util.exceptions import AblyException
 
 
 class TestRealtimeChannel(BaseAsyncTestCase):
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.valid_key_format = "api:key"
 
