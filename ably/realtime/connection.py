@@ -48,10 +48,10 @@ class ConnectionStateChange:
 
 @dataclass
 class ConnectionDetails:
-    connectionStateTtl: int
+    connection_state_ttl: int
 
     def __init__(self, connection_state_ttl: int):
-        self.connectionStateTtl = connection_state_ttl
+        self.connection_state_ttl = connection_state_ttl
 
     @staticmethod
     def from_dict(json_dict: dict):
@@ -184,7 +184,7 @@ class ConnectionManager(EventEmitter):
 
     async def __start_suspended_timer(self):
         if self.__connection_details:
-            self.ably.options.connection_state_ttl = self.__connection_details.connectionStateTtl
+            self.ably.options.connection_state_ttl = self.__connection_details.connection_state_ttl
         await asyncio.sleep(self.ably.options.connection_state_ttl / 1000)
         exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)
         self.enact_state_change(ConnectionState.SUSPENDED, exception)
