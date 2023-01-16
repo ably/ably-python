@@ -1,7 +1,7 @@
 import asyncio
 from ably.realtime.connection import ConnectionEvent, ConnectionState, ProtocolMessageAction
 import pytest
-from ably.util.exceptions import AblyAuthException, AblyException
+from ably.util.exceptions import AblyException
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
 from ably.transport.defaults import Defaults
@@ -38,7 +38,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_auth_invalid_key(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
-        with pytest.raises(AblyAuthException) as exception:
+        with pytest.raises(AblyException) as exception:
             await ably.connect()
         assert ably.connection.state == ConnectionState.FAILED
         assert ably.connection.error_reason == exception.value
@@ -62,7 +62,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_connection_ping_failed(self):
         ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
-        with pytest.raises(AblyAuthException) as exception:
+        with pytest.raises(AblyException) as exception:
             await ably.connect()
         assert ably.connection.state == ConnectionState.FAILED
         assert ably.connection.error_reason == exception.value
@@ -115,7 +115,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         ably.connection.on(ConnectionState.FAILED, on_state_change)
 
-        with pytest.raises(AblyAuthException) as exception:
+        with pytest.raises(AblyException) as exception:
             await ably.connect()
 
         assert len(failed_changes) == 1
@@ -288,8 +288,12 @@ class TestRealtimeConnection(BaseAsyncTestCase):
                 test_future.set_result(connection_state)
 
         ably.connection.on(ConnectionEvent.UPDATE, on_update)
-        await ably.connection.connection_manager.on_protocol_message({'action': 4, "connectionDetails":
-                                                                      {"connectionStateTtl": 200}})
+
+        async def on_transport_pending(transport):
+            await transport.on_protocol_message({'action': 4, "connectionDetails": {"connectionStateTtl": 200}})
+
+        ably.connection.connection_manager.on('transport.pending', on_transport_pending)
+
         state_change = await test_future
 
         assert state_change.previous == ConnectionState.CONNECTED

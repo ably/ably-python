@@ -8,6 +8,7 @@ import socket
 import urllib.parse
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
+from ably.types.connectiondetails import ConnectionDetails
 from ably.util.exceptions import AblyException
 from ably.util.helper import Timer, unix_time_ms
 from websockets.client import WebSocketClientProtocol, connect as ws_connect
@@ -80,18 +81,31 @@ class WebSocketTransport:
     async def on_protocol_message(self, msg):
         self.on_activity()
         log.info(f'WebSocketTransport.on_protocol_message(): receieved protocol message: {msg}')
-        if msg['action'] == ProtocolMessageAction.CONNECTED:
-            connection_details = msg.get('connectionDetails')
-            if not connection_details:
-                raise NotImplementedError
-            max_idle_interval = connection_details.get('maxIdleInterval')
+        action = msg.get('action')
+        if action == ProtocolMessageAction.CONNECTED:
+            connection_details = ConnectionDetails.from_dict(msg.get('connectionDetails'))
+            max_idle_interval = connection_details.max_idle_interval
             if max_idle_interval:
                 self.max_idle_interval = max_idle_interval + self.options.realtime_request_timeout
                 self.on_activity()
-        elif msg['action'] == ProtocolMessageAction.CLOSED:
+            self.connection_manager.on_connected(connection_details)
+        elif action == ProtocolMessageAction.CLOSED:
             if self.ws_connect_task:
                 self.ws_connect_task.cancel()
-        await self.connection_manager.on_protocol_message(msg)
+            await self.connection_manager.on_closed()
+        elif action == ProtocolMessageAction.ERROR:
+            error = msg.get('error')
+            exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
+            await self.connection_manager.on_error(msg, exception)
+        elif action == ProtocolMessageAction.HEARTBEAT:
+            id = msg.get('id')
+            self.connection_manager.on_heartbeat(id)
+        elif action in (
+            ProtocolMessageAction.ATTACHED,
+            ProtocolMessageAction.DETACHED,
+            ProtocolMessageAction.MESSAGE
+        ):
+            self.connection_manager.on_channel_message(msg)
 
     async def ws_read_loop(self):
         while True:
