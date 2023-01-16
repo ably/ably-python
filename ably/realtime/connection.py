@@ -23,13 +23,26 @@ class ConnectionState(str, Enum):
     CLOSING = 'closing'
     CLOSED = 'closed'
     FAILED = 'failed'
-    SUSPENDED = "suspended"
+    SUSPENDED = 'suspended'
+
+
+class ConnectionEvent(str, Enum):
+    INITIALIZED = 'initialized'
+    CONNECTING = 'connecting'
+    CONNECTED = 'connected'
+    DISCONNECTED = 'disconnected'
+    CLOSING = 'closing'
+    CLOSED = 'closed'
+    FAILED = 'failed'
+    SUSPENDED = 'suspended'
+    UPDATE = 'update'
 
 
 @dataclass
 class ConnectionStateChange:
     previous: ConnectionState
     current: ConnectionState
+    event: ConnectionEvent
     reason: Optional[AblyException] = None
 
 
@@ -74,6 +87,7 @@ class Connection(EventEmitter):
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
         self.__connection_manager = ConnectionManager(self.__realtime, self.state)
         self.__connection_manager.on('connectionstate', self._on_state_update)
+        self.__connection_manager.on('update', self._on_connection_update)
         super().__init__()
 
     async def connect(self):
@@ -116,6 +130,9 @@ class Connection(EventEmitter):
         self.__state = state_change.current
         self.__error_reason = state_change.reason
         self.__realtime.options.loop.call_soon(functools.partial(self._emit, state_change.current, state_change))
+
+    def _on_connection_update(self, state_change):
+        self.__realtime.options.loop.call_soon(functools.partial(self._emit, ConnectionEvent.UPDATE, state_change))
 
     @property
     def state(self):
@@ -162,7 +179,7 @@ class ConnectionManager(EventEmitter):
         if self.__state == ConnectionState.DISCONNECTED:
             if not self.__ttl_task or self.__ttl_task.done():
                 self.__ttl_task = asyncio.create_task(self.__start_suspended_timer())
-        self._emit('connectionstate', ConnectionStateChange(current_state, state, reason))
+        self._emit('connectionstate', ConnectionStateChange(current_state, state, state, reason))
 
     async def __start_suspended_timer(self):
         if self.__connection_details:
@@ -335,7 +352,12 @@ class ConnectionManager(EventEmitter):
             if self.__ttl_task:
                 self.__ttl_task.cancel()
             self.__connection_details = ConnectionDetails.from_dict(msg["connectionDetails"])
-            self.enact_state_change(ConnectionState.CONNECTED)
+            if self.__state == ConnectionState.CONNECTED:
+                state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
+                                                     ConnectionEvent.UPDATE)
+                self._emit(ConnectionEvent.UPDATE, state_change)
+            else:
+                self.enact_state_change(ConnectionState.CONNECTED)
         if action == ProtocolMessageAction.ERROR:  # ERROR
             error = msg["error"]
             if error['nonfatal'] is False:

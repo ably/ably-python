@@ -1,5 +1,5 @@
 import asyncio
-from ably.realtime.connection import ConnectionState, ProtocolMessageAction
+from ably.realtime.connection import ConnectionEvent, ConnectionState, ProtocolMessageAction
 import pytest
 from ably.util.exceptions import AblyAuthException, AblyException
 from test.ably.restsetup import RestSetup
@@ -278,3 +278,21 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.connection.error_reason == changes[-1].reason
         await ably.close()
         Defaults.connection_state_ttl = 120000
+
+    async def test_handle_connected(self):
+        ably = await RestSetup.get_ably_realtime()
+        test_future = asyncio.Future()
+
+        def on_update(connection_state):
+            if connection_state.event == ConnectionEvent.UPDATE:
+                test_future.set_result(connection_state)
+
+        ably.connection.on(ConnectionEvent.UPDATE, on_update)
+        await ably.connection.connection_manager.on_protocol_message({'action': 4, "connectionDetails":
+                                                                      {"connectionStateTtl": 200}})
+        state_change = await test_future
+
+        assert state_change.previous == ConnectionState.CONNECTED
+        assert state_change.current == ConnectionState.CONNECTED
+        assert state_change.event == ConnectionEvent.UPDATE
+        await ably.close()
