@@ -147,7 +147,7 @@ class AblyRealtime(AblyRest):
         """Returns the realtime connection object"""
         return self.__connection
 
-    # RTC3
+    # RTC3, RTS1
     @property
     def channels(self):
         """Returns the realtime channel object"""
@@ -169,6 +169,7 @@ class Channels:
         self.all = {}
         self.__realtime = realtime
 
+    # RTS3
     def get(self, name):
         """Creates a new RealtimeChannel object, or returns the existing channel object.
 
@@ -182,6 +183,7 @@ class Channels:
             self.all[name] = RealtimeChannel(self.__realtime, name)
         return self.all[name]
 
+    # RTS4
     def release(self, name):
         """Releases a RealtimeChannel object, deleting it, and enabling it to be garbage collected
 
