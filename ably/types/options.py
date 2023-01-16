@@ -108,6 +108,7 @@ class Options(AuthOptions):
     def rest_host(self, value):
         self.__rest_host = value
 
+    # RTC1d
     @property
     def realtime_host(self):
         return self.__realtime_host
@@ -220,6 +221,7 @@ class Options(AuthOptions):
     def loop(self):
         return self.__loop
 
+    # RTC1b
     @property
     def auto_connect(self):
         return self.__auto_connect

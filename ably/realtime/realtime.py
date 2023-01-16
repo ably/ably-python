@@ -81,6 +81,7 @@ class AblyRealtime(AblyRest):
         ValueError
             If no authentication key is not provided
         """
+        # RTC1
         super().__init__(key, **kwargs)
 
         if loop is None:
@@ -104,6 +105,7 @@ class AblyRealtime(AblyRest):
         if options.auto_connect:
             asyncio.ensure_future(self.connection.connection_manager.connect_impl())
 
+    # RTC15
     async def connect(self):
         """Establishes a realtime connection.
 
@@ -112,17 +114,21 @@ class AblyRealtime(AblyRest):
         CONNECTING state.
         """
         log.info('Realtime.connect() called')
+        # RTC15a
         await self.connection.connect()
 
+    # RTC16
     async def close(self):
         """Causes the connection to close, entering the closing state.
         Once closed, the library will not attempt to re-establish the
         connection without an explicit call to connect()
         """
         log.info('Realtime.close() called')
+        # RTC16a
         await self.connection.close()
         await super().close()
 
+    # RTC4
     @property
     def auth(self):
         """Returns the auth object"""
@@ -133,11 +139,13 @@ class AblyRealtime(AblyRest):
         """Returns the auth options object"""
         return self.__options
 
+    # RTC2
     @property
     def connection(self):
         """Returns the realtime connection object"""
         return self.__connection
 
+    # RTC3
     @property
     def channels(self):
         """Returns the realtime channel object"""
