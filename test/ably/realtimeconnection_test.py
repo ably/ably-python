@@ -7,12 +7,12 @@ from test.ably.utils import BaseAsyncTestCase
 from ably.transport.defaults import Defaults
 
 
-class TestRealtimeAuth(BaseAsyncTestCase):
+class TestRealtimeConnection(BaseAsyncTestCase):
     async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
         self.valid_key_format = "api:key"
 
-    async def test_auth_connection(self):
+    async def test_connection_state(self):
         ably = await RestSetup.get_ably_realtime(auto_connect=False)
         assert ably.connection.state == ConnectionState.INITIALIZED
         await ably.connect()
