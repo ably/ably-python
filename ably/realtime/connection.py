@@ -44,10 +44,10 @@ class ConnectionStateChange:
     previous: ConnectionState
     current: ConnectionState
     event: ConnectionEvent
-    reason: Optional[AblyException] = None
+    reason: Optional[AblyException] = None  # RTN4f
 
 
-class Connection(EventEmitter):
+class Connection(EventEmitter):  # RTN4
     """Ably Realtime Connection
 
     Enables the management of a connection to Ably
@@ -75,10 +75,11 @@ class Connection(EventEmitter):
         self.__error_reason = None
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
         self.__connection_manager = ConnectionManager(self.__realtime, self.state)
-        self.__connection_manager.on('connectionstate', self._on_state_update)
-        self.__connection_manager.on('update', self._on_connection_update)
+        self.__connection_manager.on('connectionstate', self._on_state_update)  # RTN4a
+        self.__connection_manager.on('update', self._on_connection_update)  # RTN4h
         super().__init__()
 
+    # RTN11
     async def connect(self):
         """Establishes a realtime connection.
 
@@ -95,6 +96,7 @@ class Connection(EventEmitter):
         """
         await self.__connection_manager.close()
 
+    # RTN13
     async def ping(self):
         """Send a ping to the realtime connection
 
@@ -123,11 +125,13 @@ class Connection(EventEmitter):
     def _on_connection_update(self, state_change):
         self.__realtime.options.loop.call_soon(functools.partial(self._emit, ConnectionEvent.UPDATE, state_change))
 
+    # RTN4d
     @property
     def state(self):
         """The current connection state of the connection"""
         return self.__state
 
+    # RTN25
     @property
     def error_reason(self):
         """An object describing the last error which occurred on the channel, if any."""
@@ -175,7 +179,7 @@ class ConnectionManager(EventEmitter):
         if self.__connection_details:
             self.ably.options.connection_state_ttl = self.__connection_details.connection_state_ttl
         await asyncio.sleep(self.ably.options.connection_state_ttl / 1000)
-        exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)
+        exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)  # RTN14e
         self.enact_state_change(ConnectionState.SUSPENDED, exception)
         self.__connection_details = None
         self.__fail_state = ConnectionState.SUSPENDED
@@ -238,7 +242,7 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
-            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+            self.enact_state_change(ConnectionState.DISCONNECTED, exception)  # RTN14d
         self.retry_connection_attempt_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
@@ -287,13 +291,13 @@ class ConnectionManager(EventEmitter):
                 log.warning(f'Connection error encountered while closing: {e}')
 
     async def connect_impl(self):
-        self.transport = WebSocketTransport(self)
+        self.transport = WebSocketTransport(self)  # RTN1
         self._emit('transport.pending', self.transport)
         await self.transport.connect()
         try:
             await asyncio.wait_for(asyncio.shield(self.__connected_future), self.__timeout_in_secs)
         except asyncio.TimeoutError:
-            exception = AblyException("Timeout waiting for realtime connection", 504, 50003)
+            exception = AblyException("Timeout waiting for realtime connection", 504, 50003)  # RTN14c
             if self.transport:
                 await self.transport.dispose()
                 self.tranpsort = None
@@ -343,8 +347,8 @@ class ConnectionManager(EventEmitter):
         self.__fail_state = ConnectionState.DISCONNECTED
         if self.__ttl_task:
             self.__ttl_task.cancel()
-        self.__connection_details = connection_details
-        if self.__state == ConnectionState.CONNECTED:
+        self.__connection_details = connection_details  # RTN21
+        if self.__state == ConnectionState.CONNECTED:  # RTN24
             state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
                                                  ConnectionEvent.UPDATE)
             self._emit(ConnectionEvent.UPDATE, state_change)
@@ -352,7 +356,7 @@ class ConnectionManager(EventEmitter):
             self.enact_state_change(ConnectionState.CONNECTED)
 
     async def on_error(self, msg: dict, exception: AblyException):
-        if msg.get('channel') is None:
+        if msg.get('channel') is None:  # RTN15i
             self.enact_state_change(ConnectionState.FAILED, exception)
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)

@@ -55,6 +55,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__timeout_in_secs = self.__realtime.options.realtime_request_timeout / 1000
         Channel.__init__(self, realtime, name, {})
 
+    # RTL4
     async def attach(self):
         """Attach to channel
 
@@ -102,6 +103,7 @@ class RealtimeChannel(EventEmitter, Channel):
             await self.__realtime.connect()
 
         self.__attach_future = asyncio.Future()
+        # RTL4c
         await self.__realtime.connection.connection_manager.send_protocol_message(
             {
                 "action": ProtocolMessageAction.ATTACH,
@@ -109,11 +111,12 @@ class RealtimeChannel(EventEmitter, Channel):
             }
         )
         try:
-            await asyncio.wait_for(self.__attach_future, self.__timeout_in_secs)
+            await asyncio.wait_for(self.__attach_future, self.__timeout_in_secs)  # RTL4f
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for channel attach", 504, 50003)
         self.set_state(ChannelState.ATTACHED)
 
+    # RTL5
     async def detach(self):
         """Detach from channel
 
@@ -129,7 +132,7 @@ class RealtimeChannel(EventEmitter, Channel):
 
         log.info(f'RealtimeChannel.detach() called, channel = {self.name}')
 
-        # RTL5g - raise exception if state invalid
+        # RTL5g, RTL5b - raise exception if state invalid
         if self.__realtime.connection.state in [ConnectionState.CLOSING, ConnectionState.FAILED]:
             raise AblyException(
                 message=f"Unable to detach; channel state = {self.state}",
@@ -161,6 +164,7 @@ class RealtimeChannel(EventEmitter, Channel):
             await self.__realtime.connect()
 
         self.__detach_future = asyncio.Future()
+        # RTL5d
         await self.__realtime.connection.connection_manager.send_protocol_message(
             {
                 "action": ProtocolMessageAction.DETACH,
@@ -168,11 +172,12 @@ class RealtimeChannel(EventEmitter, Channel):
             }
         )
         try:
-            await asyncio.wait_for(self.__detach_future, self.__timeout_in_secs)
+            await asyncio.wait_for(self.__detach_future, self.__timeout_in_secs)  # RTL5f
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for channel detach", 504, 50003)
         self.set_state(ChannelState.DETACHED)
 
+    # RTL7
     async def subscribe(self, *args):
         """Subscribe to a channel
 
@@ -226,16 +231,20 @@ class RealtimeChannel(EventEmitter, Channel):
                 40000
             )
 
+        # RTL7c
         if self.state in (ChannelState.INITIALIZED, ChannelState.ATTACHING, ChannelState.DETACHED):
             await self.attach()
 
         if event is not None:
+            # RTL7b
             self.__message_emitter.on(event, listener)
         else:
+            # RTL7a
             self.__message_emitter.on(listener)
 
         await self.attach()
 
+    # RTL8
     def unsubscribe(self, *args):
         """Unsubscribe from a channel
 
@@ -280,10 +289,13 @@ class RealtimeChannel(EventEmitter, Channel):
         log.info(f'RealtimeChannel.unsubscribe called, channel = {self.name}, event = {event}')
 
         if listener is None:
+            # RTL8c
             self.__message_emitter.off()
         elif event is not None:
+            # RTL8b
             self.__message_emitter.off(event, listener)
         else:
+            # RTL8a
             self.__message_emitter.off(listener)
 
     def _on_message(self, msg):
@@ -303,13 +315,15 @@ class RealtimeChannel(EventEmitter, Channel):
 
     def set_state(self, state):
         self.__state = state
-        self._emit(state)
+        self._emit(state)  # RTL2a
 
+    # RTL23
     @property
     def name(self):
         """Returns channel name"""
         return self.__name
 
+    # RTL2b
     @property
     def state(self):
         """Returns channel state"""
