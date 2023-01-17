@@ -145,7 +145,7 @@ class Http:
 
     def get_rest_hosts(self):
         hosts = self.options.get_rest_hosts()
-        host = self.__host
+        host = self.__host or self.options.fallback_realtime_host
         if host is None:
             return hosts
 

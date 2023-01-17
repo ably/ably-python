@@ -79,7 +79,7 @@ class WebSocketTransport:
         except (WebSocketException, socket.gaierror) as e:
             log.info(f'ws_connect(): Error establishing connection on host{ws_url}')
             log.info("Attempting reconnection using a fallback host")
-            self.connection_manager.use_fallback_host()
+            self.connection_manager.use_fallback_host() # RSC15l, RSC15l1
             raise AblyException(f'Error opening websocket connection: {e}', 400, 40000)
 
     async def on_protocol_message(self, msg):
@@ -93,6 +93,8 @@ class WebSocketTransport:
                 self.max_idle_interval = max_idle_interval + self.options.realtime_request_timeout
                 self.on_activity()
             self.connection_manager.on_connected(connection_details)
+        if action == ProtocolMessageAction.DISCONNECTED:
+            self.connection_manager.on_disconnected(msg)
         elif action == ProtocolMessageAction.CLOSED:
             if self.ws_connect_task:
                 self.ws_connect_task.cancel()
