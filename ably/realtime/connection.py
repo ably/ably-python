@@ -4,13 +4,14 @@ import asyncio
 import httpx
 from ably.realtime.websockettransport import WebSocketTransport, ProtocolMessageAction
 from ably.transport.defaults import Defaults
-from ably.util.exceptions import AblyAuthException, AblyException
+from ably.util.exceptions import AblyException
 from ably.util.eventemitter import EventEmitter
 from enum import Enum
 from datetime import datetime
 from ably.util import helper
 from dataclasses import dataclass
 from typing import Optional
+from ably.types.connectiondetails import ConnectionDetails
 
 log = logging.getLogger(__name__)
 
@@ -44,18 +45,6 @@ class ConnectionStateChange:
     current: ConnectionState
     event: ConnectionEvent
     reason: Optional[AblyException] = None
-
-
-@dataclass
-class ConnectionDetails:
-    connectionStateTtl: int
-
-    def __init__(self, connection_state_ttl: int):
-        self.connectionStateTtl = connection_state_ttl
-
-    @staticmethod
-    def from_dict(json_dict: dict):
-        return ConnectionDetails(json_dict.get('connectionStateTtl'))
 
 
 class Connection(EventEmitter):
@@ -166,9 +155,10 @@ class ConnectionManager(EventEmitter):
         self.__closed_future = None
         self.__ping_future = None
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
+        self.retry_connection_attempt_task = None
+        self.connection_attempt_task = None
         self.transport: WebSocketTransport | None = None
         self.__ttl_task = None
-        self.__retry_task = None
         self.__connection_details = None
         self.__fail_state = ConnectionState.DISCONNECTED
         super().__init__()
@@ -183,15 +173,12 @@ class ConnectionManager(EventEmitter):
 
     async def __start_suspended_timer(self):
         if self.__connection_details:
-            self.ably.options.connection_state_ttl = self.__connection_details.connectionStateTtl
+            self.ably.options.connection_state_ttl = self.__connection_details.connection_state_ttl
         await asyncio.sleep(self.ably.options.connection_state_ttl / 1000)
         exception = AblyException("Exceeded connectionStateTtl while in DISCONNECTED state", 504, 50003)
         self.enact_state_change(ConnectionState.SUSPENDED, exception)
         self.__connection_details = None
         self.__fail_state = ConnectionState.SUSPENDED
-        if self.__retry_task:
-            self.__retry_task.cancel()
-            self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def connect(self):
         if not self.__connected_future:
@@ -200,8 +187,8 @@ class ConnectionManager(EventEmitter):
         await self.__connected_future
 
     def try_connect(self):
-        task = asyncio.create_task(self._connect())
-        task.add_done_callback(self.on_connection_attempt_done)
+        self.connection_attempt_task = asyncio.create_task(self._connect())
+        self.connection_attempt_task.add_done_callback(self.on_connection_attempt_done)
 
     async def _connect(self):
         if self.__state == ConnectionState.CONNECTED:
@@ -230,6 +217,14 @@ class ConnectionManager(EventEmitter):
             return False
 
     def on_connection_attempt_done(self, task):
+        if self.connection_attempt_task:
+            if not self.connection_attempt_task.done():
+                self.connection_attempt_task.cancel()
+            self.connection_attempt_task = None
+        if self.retry_connection_attempt_task:
+            if not self.retry_connection_attempt_task.done():
+                self.retry_connection_attempt_task.cancel()
+            self.retry_connection_attempt_task = None
         try:
             exception = task.exception()
         except asyncio.CancelledError:
@@ -243,8 +238,8 @@ class ConnectionManager(EventEmitter):
             if self.__connected_future:
                 self.__connected_future.set_exception(exception)
                 self.__connected_future = None
-            self.enact_state_change(self.__fail_state, exception)
-        self.__retry_task = asyncio.create_task(self.retry_connection_attempt())
+            self.enact_state_change(ConnectionState.DISCONNECTED, exception)
+        self.retry_connection_attempt_task = asyncio.create_task(self.retry_connection_attempt())
 
     async def retry_connection_attempt(self):
         if self.__fail_state == ConnectionState.SUSPENDED:
@@ -293,6 +288,7 @@ class ConnectionManager(EventEmitter):
 
     async def connect_impl(self):
         self.transport = WebSocketTransport(self)
+        self._emit('transport.pending', self.transport)
         await self.transport.connect()
         try:
             await asyncio.wait_for(asyncio.shield(self.__connected_future), self.__timeout_in_secs)
@@ -337,56 +333,54 @@ class ConnectionManager(EventEmitter):
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
 
-    async def on_protocol_message(self, msg):
-        action = msg['action']
-        if action == ProtocolMessageAction.CONNECTED:  # CONNECTED
-            if self.transport:
-                self.transport.is_connected = True
+    def on_connected(self, connection_details: ConnectionDetails):
+        if self.transport:
+            self.transport.is_connected = True
+        if self.__connected_future:
+            if not self.__connected_future.cancelled():
+                self.__connected_future.set_result(None)
+            self.__connected_future = None
+        self.__fail_state = ConnectionState.DISCONNECTED
+        if self.__ttl_task:
+            self.__ttl_task.cancel()
+        self.__connection_details = connection_details
+        if self.__state == ConnectionState.CONNECTED:
+            state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
+                                                 ConnectionEvent.UPDATE)
+            self._emit(ConnectionEvent.UPDATE, state_change)
+        else:
+            self.enact_state_change(ConnectionState.CONNECTED)
+
+    async def on_error(self, msg: dict, exception: AblyException):
+        if msg.get('channel') is None:
+            self.enact_state_change(ConnectionState.FAILED, exception)
             if self.__connected_future:
-                if not self.__connected_future.cancelled():
-                    self.__connected_future.set_result(None)
+                self.__connected_future.set_exception(exception)
                 self.__connected_future = None
-            else:
-                log.warn('CONNECTED message received but connected_future not set')
-            self.__fail_state == ConnectionState.DISCONNECTED
-            if self.__ttl_task:
-                self.__ttl_task.cancel()
-            self.__connection_details = ConnectionDetails.from_dict(msg["connectionDetails"])
-            if self.__state == ConnectionState.CONNECTED:
-                state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
-                                                     ConnectionEvent.UPDATE)
-                self._emit(ConnectionEvent.UPDATE, state_change)
-            else:
-                self.enact_state_change(ConnectionState.CONNECTED)
-        if action == ProtocolMessageAction.ERROR:  # ERROR
-            error = msg["error"]
-            if error['nonfatal'] is False:
-                exception = AblyAuthException(error["message"], error["statusCode"], error["code"])
-                self.enact_state_change(ConnectionState.FAILED, exception)
-                if self.__connected_future:
-                    self.__connected_future.set_exception(exception)
-                    self.__connected_future = None
-                if self.transport:
-                    await self.transport.dispose()
-                raise exception
-        if action == ProtocolMessageAction.CLOSED:
             if self.transport:
                 await self.transport.dispose()
+            raise exception
+
+    async def on_closed(self):
+        if self.transport:
+            await self.transport.dispose()
+        if self.__closed_future and not self.__closed_future.done():
             self.__closed_future.set_result(None)
-        if action == ProtocolMessageAction.HEARTBEAT:
-            if self.__ping_future:
-                # Resolve on heartbeat from ping request.
-                # TODO: Handle Normal heartbeat if required
-                if self.__ping_id == msg.get("id"):
-                    if not self.__ping_future.cancelled():
-                        self.__ping_future.set_result(None)
-                    self.__ping_future = None
-        if action in (
-            ProtocolMessageAction.ATTACHED,
-            ProtocolMessageAction.DETACHED,
-            ProtocolMessageAction.MESSAGE
-        ):
-            self.__ably.channels._on_channel_message(msg)
+
+    def on_channel_message(self, msg: dict):
+        self.__ably.channels._on_channel_message(msg)
+
+    def on_heartbeat(self, id: Optional[str]):
+        if self.__ping_future:
+            # Resolve on heartbeat from ping request.
+            if self.__ping_id == id:
+                if not self.__ping_future.cancelled():
+                    self.__ping_future.set_result(None)
+                self.__ping_future = None
+
+    def deactivate_transport(self, reason=None):
+        self.transport = None
+        self.enact_state_change(ConnectionState.DISCONNECTED, reason)
 
     @property
     def ably(self):

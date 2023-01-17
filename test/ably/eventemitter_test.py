@@ -5,7 +5,7 @@ from test.ably.utils import BaseAsyncTestCase
 
 
 class TestEventEmitter(BaseAsyncTestCase):
-    async def setUp(self):
+    async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
 
     async def test_connection_events(self):
