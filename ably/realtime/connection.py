@@ -319,7 +319,7 @@ class ConnectionManager(EventEmitter):
             self.__connected_future.set_exception(exception)
             connected_future = self.__connected_future
             self.__connected_future = None
-            self.use_fallback_host() # RSC15l, RSC15l2
+            self.use_fallback_host()  # RSC15l, RSC15l2
             self.on_connection_attempt_done(connected_future)
 
     async def send_protocol_message(self, protocol_message):
@@ -364,7 +364,7 @@ class ConnectionManager(EventEmitter):
         if self.__ttl_task:
             self.__ttl_task.cancel()
         self.__connection_details = connection_details  # RTN21
-        if self.__connection_host != self.options.get_realtime_host(): # RTN17e
+        if self.__connection_host != self.options.get_realtime_host():  # RTN17e
             self.options.fallback_realtime_host = self.__connection_host
         if self.__state == ConnectionState.CONNECTED:  # RTN24
             state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
@@ -378,7 +378,7 @@ class ConnectionManager(EventEmitter):
         error = msg.get("error")
         if error:
             error_status_code = error.get("statusCode")
-            if error_status_code >= 500 or error_status_code <= 504: # RTN17f1
+            if error_status_code >= 500 or error_status_code <= 504:  # RTN17f1
                 self.use_fallback_host()
                 self.retry_connection_attempt_task = asyncio.create_task(self.retry_connection_attempt())
 

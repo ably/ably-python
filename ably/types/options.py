@@ -249,7 +249,7 @@ class Options(AuthOptions):
     @property
     def fallback_realtime_host(self):
         return self.__fallback_realtime_host
-    
+
     @fallback_realtime_host.setter
     def fallback_realtime_host(self, value):
         self.__fallback_realtime_host = value
