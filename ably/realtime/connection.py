@@ -166,6 +166,7 @@ class ConnectionManager(EventEmitter):
         self.__connection_details = None
         self.__fail_state = ConnectionState.DISCONNECTED
         self.transition_timer: Timer | None = None
+        self.suspend_timer: Timer | None = None
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -405,6 +406,7 @@ class ConnectionManager(EventEmitter):
             self.start_connect()
 
     def start_connect(self):
+        self.start_suspend_timer()
         self.start_transition_timer(ConnectionState.CONNECTING)
         self.connect_base_task = asyncio.create_task(self.connect_base())
 
@@ -440,6 +442,7 @@ class ConnectionManager(EventEmitter):
             return
 
         self.cancel_transition_timer()
+        self.check_suspend_timer(state)
 
         self.enact_state_change(state, reason)
 
@@ -470,6 +473,39 @@ class ConnectionManager(EventEmitter):
         if self.transition_timer:
             self.transition_timer.cancel()
             self.transition_timer = None
+
+    def start_suspend_timer(self):
+        log.debug('ConnectionManager.start_suspend_timer()')
+        if self.suspend_timer:
+            return
+
+        def on_suspend_timer_expire():
+            if self.suspend_timer:
+                self.suspend_timer = None
+                log.info('ConnectionManager suspend timer expired, requesting new state: suspended')
+                self.notify_state(
+                    ConnectionState.SUSPENDED,
+                    AblyException("Connection to server unavailable", 400, 80002)
+                )
+                self.__fail_state = ConnectionState.SUSPENDED
+                self.__connection_details = None
+
+        self.suspend_timer = Timer(Defaults.connection_state_ttl, on_suspend_timer_expire)
+
+    def check_suspend_timer(self, state: ConnectionState):
+        if state not in (
+            ConnectionState.CONNECTING,
+            ConnectionState.DISCONNECTED,
+            ConnectionState.SUSPENDED,
+        ):
+            self.cancel_suspend_timer()
+
+    def cancel_suspend_timer(self):
+        log.debug('ConnectionManager.cancel_suspend_timer()')
+        self.__fail_state = ConnectionState.DISCONNECTED
+        if self.suspend_timer:
+            self.suspend_timer.cancel()
+            self.suspend_timer = None
 
     @property
     def ably(self):
