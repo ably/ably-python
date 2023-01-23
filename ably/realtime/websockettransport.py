@@ -9,6 +9,7 @@ import urllib.parse
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
 from ably.types.connectiondetails import ConnectionDetails
+from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
 from ably.util.helper import Timer, unix_time_ms
 from websockets.client import WebSocketClientProtocol, connect as ws_connect
@@ -33,7 +34,7 @@ class ProtocolMessageAction(IntEnum):
     MESSAGE = 15
 
 
-class WebSocketTransport:
+class WebSocketTransport(EventEmitter):
     def __init__(self, connection_manager: ConnectionManager):
         self.websocket: WebSocketClientProtocol | None = None
         self.read_loop: asyncio.Task | None = None
@@ -45,6 +46,7 @@ class WebSocketTransport:
         self.idle_timer = None
         self.last_activity = None
         self.max_idle_interval = None
+        super().__init__()
 
     def connect(self):
         headers = HttpUtils.default_headers()
@@ -71,12 +73,16 @@ class WebSocketTransport:
         try:
             async with ws_connect(ws_url, extra_headers=headers) as websocket:
                 log.info(f'ws_connect(): connection established to {ws_url}')
+                self._emit('connected')
                 self.websocket = websocket
                 self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
                 self.read_loop.add_done_callback(self.on_read_loop_done)
                 await self.read_loop
         except (WebSocketException, socket.gaierror) as e:
-            raise AblyException(f'Error opening websocket connection: {e}', 400, 40000)
+            exception = AblyException(f'Error opening websocket connection: {e}', 400, 40000)
+            log.exception(f'WebSocketTransport.ws_connect(): Error opening websocket connection: {exception}')
+            self._emit('failed', exception)
+            raise exception
 
     async def on_protocol_message(self, msg):
         self.on_activity()
