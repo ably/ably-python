@@ -1,3 +1,4 @@
+import asyncio
 from pyee.asyncio import AsyncIOEventEmitter
 
 from ably.util.helper import is_callable_or_coroutine
@@ -99,6 +100,21 @@ class EventEmitter:
             self.__named_event_emitter.remove_listener(args[0], args[1])
         else:
             raise ValueError("EventEmitter.once(): invalid args")
+
+    async def once_async(self, state=None):
+        future = asyncio.Future()
+
+        def on_state_change(*args):
+            future.set_result(*args)
+
+        if state is not None:
+            self.once(state, on_state_change)
+        else:
+            self.once(on_state_change)
+
+        state_change = await future
+
+        return state_change
 
     def _emit(self, *args):
         self.__named_event_emitter.emit(*args)
