@@ -323,7 +323,13 @@ class ConnectionManager(EventEmitter):
             self.notify_state(self.__fail_state, reason=exception)
 
     def notify_state(self, state: ConnectionState, reason=None):
-        log.info(f'ConnectionManager.notify_state(): new state: {state}')
+        # RTN15a
+        retry_immediately = state == ConnectionState.DISCONNECTED and self.__state == ConnectionState.CONNECTED
+
+        log.info(
+            f'ConnectionManager.notify_state(): new state: {state}'
+            + ('; will retry immediately' if retry_immediately else '')
+        )
 
         if state == self.__state:
             return
@@ -331,12 +337,14 @@ class ConnectionManager(EventEmitter):
         self.cancel_transition_timer()
         self.check_suspend_timer(state)
 
-        if state == ConnectionState.DISCONNECTED:
+        if retry_immediately:
+            self.options.loop.call_soon(self.request_state, ConnectionState.CONNECTING)
+        elif state == ConnectionState.DISCONNECTED:
             self.start_retry_timer(self.options.disconnected_retry_timeout)
         elif state == ConnectionState.SUSPENDED:
             self.start_retry_timer(self.options.suspended_retry_timeout)
 
-        if state == ConnectionState.DISCONNECTED or state == ConnectionState.SUSPENDED:
+        if (state == ConnectionState.DISCONNECTED and not retry_immediately) or state == ConnectionState.SUSPENDED:
             self.disconnect_transport()
 
         self.enact_state_change(state, reason)
