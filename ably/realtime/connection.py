@@ -165,6 +165,7 @@ class ConnectionManager(EventEmitter):
         self.__ttl_task = None
         self.__connection_details = None
         self.__fail_state = ConnectionState.DISCONNECTED
+        self.__connection_query_params = {"key": self.__ably.key, "v": Defaults.protocol_version}
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -293,7 +294,7 @@ class ConnectionManager(EventEmitter):
     async def connect_impl(self):
         self.transport = WebSocketTransport(self)  # RTN1
         self._emit('transport.pending', self.transport)
-        await self.transport.connect()
+        await self.transport.connect(self.__connection_query_params)
         try:
             await asyncio.wait_for(asyncio.shield(self.__connected_future), self.__timeout_in_secs)
         except asyncio.TimeoutError:
@@ -348,6 +349,7 @@ class ConnectionManager(EventEmitter):
         if self.__ttl_task:
             self.__ttl_task.cancel()
         self.__connection_details = connection_details  # RTN21
+        self.__connection_query_params["resume"] = self.__connection_details.connection_key #  RTN15b
         if self.__state == ConnectionState.CONNECTED:  # RTN24
             state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
                                                  ConnectionEvent.UPDATE)

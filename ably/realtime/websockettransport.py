@@ -46,10 +46,8 @@ class WebSocketTransport:
         self.last_activity = None
         self.max_idle_interval = None
 
-    async def connect(self):
+    async def connect(self, params):
         headers = HttpUtils.default_headers()
-        protocol_version = Defaults.protocol_version
-        params = {"key": self.connection_manager.ably.key, "v": protocol_version}
         query_params = urllib.parse.urlencode(params)
         ws_url = (f'wss://{self.connection_manager.options.get_realtime_host()}?{query_params}')
         log.info(f'connect(): attempting to connect to {ws_url}')
