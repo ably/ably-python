@@ -400,6 +400,14 @@ class ConnectionManager(EventEmitter):
 
         self.enact_state_change(state)
 
+    def notify_state(self, state: ConnectionState, reason=None):
+        log.info(f'ConnectionManager.notify_state(): new state: {state}')
+
+        if state == self.__state:
+            return
+
+        self.enact_state_change(state, reason)
+
     @property
     def ably(self):
         return self.__ably
