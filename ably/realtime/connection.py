@@ -444,6 +444,11 @@ class ConnectionManager(EventEmitter):
         self.cancel_transition_timer()
         self.check_suspend_timer(state)
 
+        if state == ConnectionState.DISCONNECTED:
+            self.start_retry_timer(self.options.disconnected_retry_timeout)
+        elif state == ConnectionState.SUSPENDED:
+            self.start_retry_timer(self.options.suspended_retry_timeout)
+
         self.enact_state_change(state, reason)
 
     def start_transition_timer(self, state: ConnectionState):
@@ -506,6 +511,19 @@ class ConnectionManager(EventEmitter):
         if self.suspend_timer:
             self.suspend_timer.cancel()
             self.suspend_timer = None
+
+    def start_retry_timer(self, interval: int):
+        def on_retry_timeout():
+            log.info('ConnectionManager retry timer expired, retrying')
+            self.retry_timer = None
+            self.request_state(ConnectionState.CONNECTING)
+
+        self.retry_timer = Timer(interval, on_retry_timeout)
+
+    def cancel_retry_timer(self):
+        if self.retry_timer:
+            self.retry_timer.cancel()
+            self.retry_timer = None
 
     @property
     def ably(self):
