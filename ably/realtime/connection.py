@@ -8,7 +8,7 @@ from ably.util.exceptions import AblyException
 from ably.util.eventemitter import EventEmitter
 from enum import Enum
 from datetime import datetime
-from ably.util import helper
+from ably.util.helper import get_random_id, Timer
 from dataclasses import dataclass
 from typing import Optional
 from ably.types.connectiondetails import ConnectionDetails
@@ -165,6 +165,7 @@ class ConnectionManager(EventEmitter):
         self.__ttl_task = None
         self.__connection_details = None
         self.__fail_state = ConnectionState.DISCONNECTED
+        self.transition_timer: Timer | None = None
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -322,7 +323,7 @@ class ConnectionManager(EventEmitter):
 
         self.__ping_future = asyncio.Future()
         if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
-            self.__ping_id = helper.get_random_id()
+            self.__ping_id = get_random_id()
             ping_start_time = datetime.now().timestamp()
             await self.send_protocol_message({"action": ProtocolMessageAction.HEARTBEAT,
                                               "id": self.__ping_id})
@@ -404,6 +405,7 @@ class ConnectionManager(EventEmitter):
             self.start_connect()
 
     def start_connect(self):
+        self.start_transition_timer(ConnectionState.CONNECTING)
         self.connect_base_task = asyncio.create_task(self.connect_base())
 
     async def connect_base(self):
@@ -437,7 +439,37 @@ class ConnectionManager(EventEmitter):
         if state == self.__state:
             return
 
+        self.cancel_transition_timer()
+
         self.enact_state_change(state, reason)
+
+    def start_transition_timer(self, state: ConnectionState):
+        log.debug(f'ConnectionManager.start_transition_timer(): transition state = {state}')
+
+        if self.transition_timer:
+            log.debug('ConnectionManager.start_transition_timer(): clearing already-running timer')
+            self.transition_timer.cancel()
+
+        timeout = self.options.realtime_request_timeout
+
+        def on_transition_timer_expire():
+            if self.transition_timer:
+                self.transition_timer = None
+                log.info(f'ConnectionManager {state} timer expired, notifying new state: {self.__fail_state}')
+                self.notify_state(
+                    self.__fail_state,
+                    AblyException("Connection cancelled due to request timeout", 504, 50003)
+                )
+
+        log.debug(f'ConnectionManager.start_transition_timer(): setting timer for {timeout}ms')
+
+        self.transition_timer = Timer(timeout, on_transition_timer_expire)
+
+    def cancel_transition_timer(self):
+        log.debug('ConnectionManager.cancel_transition_timer()')
+        if self.transition_timer:
+            self.transition_timer.cancel()
+            self.transition_timer = None
 
     @property
     def ably(self):
