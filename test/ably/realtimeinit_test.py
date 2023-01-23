@@ -31,7 +31,8 @@ class TestRealtimeInit(BaseAsyncTestCase):
     async def test_init_without_autoconnect(self):
         ably = await RestSetup.get_ably_realtime(auto_connect=False)
         assert ably.connection.state == ConnectionState.INITIALIZED
-        await ably.connect()
+        ably.connect()
+        await ably.connection.once_async(ConnectionState.CONNECTED)
         assert ably.connection.state == ConnectionState.CONNECTED
         await ably.close()
         assert ably.connection.state == ConnectionState.CLOSED

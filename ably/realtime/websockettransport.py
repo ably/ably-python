@@ -46,6 +46,7 @@ class WebSocketTransport(EventEmitter):
         self.idle_timer = None
         self.last_activity = None
         self.max_idle_interval = None
+        self.is_disposed = False
         super().__init__()
 
     def connect(self):
@@ -65,9 +66,9 @@ class WebSocketTransport(EventEmitter):
             exception = e
         if exception is None or isinstance(exception, ConnectionClosedOK):
             return
-        connected_future = asyncio.Future()
-        connected_future.set_exception(exception)
-        self.connection_manager.on_connection_attempt_done(connected_future)
+        log.info(
+            f'WebSocketTransport.on_ws_connect_done(): exception = {exception}'
+        )
 
     async def ws_connect(self, ws_url, headers):
         try:
@@ -77,7 +78,12 @@ class WebSocketTransport(EventEmitter):
                 self.websocket = websocket
                 self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
                 self.read_loop.add_done_callback(self.on_read_loop_done)
-                await self.read_loop
+                try:
+                    await self.read_loop
+                except WebSocketException as err:
+                    if not self.is_disposed:
+                        await self.dispose()
+                        self.connection_manager.deactivate_transport(err)
         except (WebSocketException, socket.gaierror) as e:
             exception = AblyException(f'Error opening websocket connection: {e}', 400, 40000)
             log.exception(f'WebSocketTransport.ws_connect(): Error opening websocket connection: {exception}')
@@ -94,6 +100,7 @@ class WebSocketTransport(EventEmitter):
             if max_idle_interval:
                 self.max_idle_interval = max_idle_interval + self.options.realtime_request_timeout
                 self.on_activity()
+            self.is_connected = True
             self.connection_manager.on_connected(connection_details)
         elif action == ProtocolMessageAction.CLOSED:
             if self.ws_connect_task:
@@ -134,6 +141,7 @@ class WebSocketTransport(EventEmitter):
             return
 
     async def dispose(self):
+        self.is_disposed = True
         if self.read_loop:
             self.read_loop.cancel()
         if self.ws_connect_task:
