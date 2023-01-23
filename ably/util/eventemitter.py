@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pyee.asyncio import AsyncIOEventEmitter
 
 from ably.util.helper import is_callable_or_coroutine
@@ -8,6 +9,8 @@ from ably.util.helper import is_callable_or_coroutine
 # is used to listen to all events and this arbitrary string is the event name
 # used to emit all events on that listener
 _all_event = 'all'
+
+log = logging.getLogger(__name__)
 
 
 def _is_named_event_args(*args):
@@ -32,9 +35,11 @@ class EventEmitter:
     off()
         Subscribe to messages on a channel
     """
+
     def __init__(self):
         self.__named_event_emitter = AsyncIOEventEmitter()
         self.__all_event_emitter = AsyncIOEventEmitter()
+        self.__wrapped_listeners = {}
 
     def on(self, *args):
         """
@@ -51,11 +56,34 @@ class EventEmitter:
             The event listener.
         """
         if _is_all_event_args(*args):
-            self.__all_event_emitter.add_listener(_all_event, args[0])
+            event = _all_event
+            listener = args[0]
+            emitter = self.__all_event_emitter
+            # self.__all_event_emitter.add_listener(_all_event, args[0])
         elif _is_named_event_args(*args):
-            self.__named_event_emitter.add_listener(args[0], args[1])
+            event = args[0]
+            listener = args[1]
+            emitter = self.__named_event_emitter
+            # self.__named_event_emitter.add_listener(args[0], args[1])
         else:
             raise ValueError("EventEmitter.on(): invalid args")
+
+        if asyncio.iscoroutinefunction(listener):
+            async def wrapped_listener(*args, **kwargs):
+                try:
+                    await listener(*args, **kwargs)
+                except Exception as err:
+                    log.exception(f'EventEmitter.emit(): uncaught listener exception: {err}')
+        else:
+            def wrapped_listener(*args, **kwargs):
+                try:
+                    listener(*args, **kwargs)
+                except Exception as err:
+                    log.exception(f'EventEmitter.emit(): uncaught listener exception: {err}')
+
+        self.__wrapped_listeners[listener] = wrapped_listener
+
+        emitter.add_listener(event, wrapped_listener)
 
     def once(self, *args):
         """
@@ -73,11 +101,34 @@ class EventEmitter:
             The event listener.
         """
         if _is_all_event_args(*args):
-            self.__all_event_emitter.once(_all_event, args[0])
+            event = _all_event
+            listener = args[0]
+            emitter = self.__all_event_emitter
+            # self.__all_event_emitter.add_listener(_all_event, args[0])
         elif _is_named_event_args(*args):
-            self.__named_event_emitter.once(args[0], args[1])
+            event = args[0]
+            listener = args[1]
+            emitter = self.__named_event_emitter
+            # self.__named_event_emitter.add_listener(args[0], args[1])
         else:
-            raise ValueError("EventEmitter.once(): invalid args")
+            raise ValueError("EventEmitter.on(): invalid args")
+
+        if asyncio.iscoroutinefunction(listener):
+            async def wrapped_listener(*args, **kwargs):
+                try:
+                    await listener(*args, **kwargs)
+                except Exception as err:
+                    log.exception(f'EventEmitter.emit(): uncaught listener exception: {err}')
+        else:
+            def wrapped_listener(*args, **kwargs):
+                try:
+                    listener(*args, **kwargs)
+                except Exception as err:
+                    log.exception(f'EventEmitter.emit(): uncaught listener exception: {err}')
+
+        self.__wrapped_listeners[listener] = wrapped_listener
+
+        emitter.once(event, wrapped_listener)
 
     def off(self, *args):
         """
@@ -94,12 +145,25 @@ class EventEmitter:
         if len(args) == 0:
             self.__all_event_emitter.remove_all_listeners()
             self.__named_event_emitter.remove_all_listeners()
+            return
         elif _is_all_event_args(*args):
-            self.__all_event_emitter.remove_listener(_all_event, args[0])
+            event = _all_event
+            listener = args[0]
+            emitter = self.__all_event_emitter
         elif _is_named_event_args(*args):
-            self.__named_event_emitter.remove_listener(args[0], args[1])
+            event = args[0]
+            listener = args[1]
+            emitter = self.__named_event_emitter
         else:
             raise ValueError("EventEmitter.once(): invalid args")
+
+        wrapped_listener = self.__wrapped_listeners.get(listener)
+
+        if wrapped_listener is None:
+            return
+
+        emitter.remove_listener(event, wrapped_listener)
+        self.__wrapped_listeners[listener] = None
 
     async def once_async(self, state=None):
         future = asyncio.Future()
