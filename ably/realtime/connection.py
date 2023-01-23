@@ -400,6 +400,37 @@ class ConnectionManager(EventEmitter):
 
         self.enact_state_change(state)
 
+        if state == ConnectionState.CONNECTING:
+            self.start_connect()
+
+    def start_connect(self):
+        self.connect_base_task = asyncio.create_task(self.connect_base())
+
+    async def connect_base(self):
+        self.transport = WebSocketTransport(self)
+        self._emit('transport.pending', self.transport)
+        self.transport.connect()
+
+        future = asyncio.Future()
+
+        def on_transport_connected():
+            log.info('ConnectionManager.try_a_host(): transport connected')
+            if self.transport:
+                self.transport.off('failed', on_transport_failed)
+            future.set_result(None)
+
+        async def on_transport_failed(exception):
+            log.info('ConnectionManager.try_a_host(): transport failed')
+            if self.transport:
+                self.transport.off('connected', on_transport_connected)
+                await self.transport.dispose()
+            future.set_exception(exception)
+
+        self.transport.once('connected', on_transport_connected)
+        self.transport.once('failed', on_transport_failed)
+
+        await future
+
     def notify_state(self, state: ConnectionState, reason=None):
         log.info(f'ConnectionManager.notify_state(): new state: {state}')
 
