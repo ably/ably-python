@@ -293,7 +293,7 @@ class ConnectionManager(EventEmitter):
     async def connect_impl(self):
         self.transport = WebSocketTransport(self)  # RTN1
         self._emit('transport.pending', self.transport)
-        await self.transport.connect()
+        self.transport.connect()
         try:
             await asyncio.wait_for(asyncio.shield(self.__connected_future), self.__timeout_in_secs)
         except asyncio.TimeoutError:

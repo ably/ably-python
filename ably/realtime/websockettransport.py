@@ -46,7 +46,7 @@ class WebSocketTransport:
         self.last_activity = None
         self.max_idle_interval = None
 
-    async def connect(self):
+    def connect(self):
         headers = HttpUtils.default_headers()
         protocol_version = Defaults.protocol_version
         params = {"key": self.connection_manager.ably.key, "v": protocol_version}
