@@ -386,6 +386,20 @@ class ConnectionManager(EventEmitter):
         self.transport = None
         self.enact_state_change(ConnectionState.DISCONNECTED, reason)
 
+    def request_state(self, state: ConnectionState):
+        log.info(f'ConnectionManager.request_state(): state = {state}')
+
+        if state == self.state:
+            return
+
+        if state == ConnectionState.CONNECTING and self.__state == ConnectionState.CONNECTED:
+            return
+
+        if state == ConnectionState.CLOSING and self.__state == ConnectionState.CLOSED:
+            return
+
+        self.enact_state_change(state)
+
     @property
     def ably(self):
         return self.__ably
