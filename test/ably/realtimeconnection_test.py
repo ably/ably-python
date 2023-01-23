@@ -264,3 +264,23 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert state_change.reason.status_code == 408
 
         await ably.close()
+
+    # RTN15a
+    async def test_retry_immediately_upon_unexpected_disconnection(self):
+        # Set timeouts to 500s so that if the client uses retry delay the test will fail with a timeout
+        ably = await RestSetup.get_ably_realtime(
+            disconnected_retry_timeout=500_000,
+            suspended_retry_timeout=500_000
+        )
+
+        # Wait for the client to connect
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+
+        # Simulate random loss of connection
+        assert ably.connection.connection_manager.transport
+        await ably.connection.connection_manager.transport.dispose()
+        ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
+        assert ably.connection.state == ConnectionState.DISCONNECTED
+
+        # Wait for the client to connect again
+        await ably.connection.once_async(ConnectionState.CONNECTED)
