@@ -284,3 +284,18 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         # Wait for the client to connect again
         await ably.connection.once_async(ConnectionState.CONNECTED)
+        await ably.close()
+
+    async def test_fallback_host(self):
+        fallback_host = 'sandbox-realtime.ably.io'
+        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
+                                                fallback_hosts=[fallback_host])
+        connected_future = asyncio.Future()
+
+        def on_change(connection_state):
+            if connection_state.current == ConnectionState.CONNECTED:
+                connected_future.set_result(connection_state)
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        assert ably.connection.connection_manager.transport.host == fallback_host
+        await ably.close()
