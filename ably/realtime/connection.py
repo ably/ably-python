@@ -296,6 +296,12 @@ class ConnectionManager(EventEmitter):
 
     async def connect_base(self):
         host = self.options.get_realtime_host()
+        try:
+            await self.try_host(host)
+        except Exception as exception:
+            self.notify_state(self.__fail_state, reason=exception)
+
+    async def try_host(self, host):
         self.transport = WebSocketTransport(self, host)
         self._emit('transport.pending', self.transport)
         self.transport.connect()
@@ -317,11 +323,7 @@ class ConnectionManager(EventEmitter):
 
         self.transport.once('connected', on_transport_connected)
         self.transport.once('failed', on_transport_failed)
-
-        try:
-            await future
-        except Exception as exception:
-            self.notify_state(self.__fail_state, reason=exception)
+        await future
 
     def notify_state(self, state: ConnectionState, reason=None):
         # RTN15a
