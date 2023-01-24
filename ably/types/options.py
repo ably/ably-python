@@ -46,6 +46,9 @@ class Options(AuthOptions):
             from ably import api_version
             idempotent_rest_publishing = api_version >= '1.2'
 
+        if environment is None:
+            environment = Defaults.environment
+
         self.__client_id = client_id
         self.__log_level = log_level
         self.__tls = tls
@@ -254,8 +257,6 @@ class Options(AuthOptions):
             host = Defaults.rest_host
 
         environment = self.environment
-        if environment is None:
-            environment = Defaults.environment
 
         http_max_retry_count = self.http_max_retry_count
         if http_max_retry_count is None:
@@ -292,6 +293,7 @@ class Options(AuthOptions):
         # Shuffle
         fallback_hosts = list(fallback_hosts)
         random.shuffle(fallback_hosts)
+        self.__fallback_hosts = fallback_hosts
 
         # First main host
         hosts = [host] + fallback_hosts
@@ -300,11 +302,13 @@ class Options(AuthOptions):
 
     def __get_realtime_hosts(self):
         if self.realtime_host is not None:
-            return self.realtime_host
-        elif self.environment is not None:
-            return f'{self.environment}-{Defaults.realtime_host}'
+            host = self.realtime_host
+        elif self.environment != "production":
+            host = f'{self.environment}-{Defaults.realtime_host}'
         else:
-            return Defaults.realtime_host
+            host = Defaults.realtime_host
+
+        return [host] + self.__fallback_hosts
 
     def get_rest_hosts(self):
         return self.__rest_hosts
@@ -312,8 +316,14 @@ class Options(AuthOptions):
     def get_rest_host(self):
         return self.__rest_hosts[0]
 
-    def get_realtime_host(self):
+    def get_realtime_hosts(self):
         return self.__realtime_hosts
+
+    def get_realtime_host(self):
+        return self.__realtime_hosts[0]
 
     def get_fallback_rest_hosts(self):
         return self.__rest_hosts[1:]
+
+    def get_fallback_realtime_hosts(self):
+        return self.__realtime_hosts[1:]
