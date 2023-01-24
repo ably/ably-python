@@ -35,7 +35,7 @@ class ProtocolMessageAction(IntEnum):
 
 
 class WebSocketTransport(EventEmitter):
-    def __init__(self, connection_manager: ConnectionManager):
+    def __init__(self, connection_manager: ConnectionManager, host: str):
         self.websocket: WebSocketClientProtocol | None = None
         self.read_loop: asyncio.Task | None = None
         self.connect_task: asyncio.Task | None = None
@@ -47,6 +47,7 @@ class WebSocketTransport(EventEmitter):
         self.last_activity = None
         self.max_idle_interval = None
         self.is_disposed = False
+        self.host = host
         super().__init__()
 
     def connect(self):
@@ -54,7 +55,7 @@ class WebSocketTransport(EventEmitter):
         protocol_version = Defaults.protocol_version
         params = {"key": self.connection_manager.ably.key, "v": protocol_version}
         query_params = urllib.parse.urlencode(params)
-        ws_url = (f'wss://{self.connection_manager.options.get_realtime_host()}?{query_params}')
+        ws_url = (f'wss://{self.host}?{query_params}')
         log.info(f'connect(): attempting to connect to {ws_url}')
         self.ws_connect_task = asyncio.create_task(self.ws_connect(ws_url, headers))
         self.ws_connect_task.add_done_callback(self.on_ws_connect_done)

@@ -295,7 +295,8 @@ class ConnectionManager(EventEmitter):
         self.connect_base_task = asyncio.create_task(self.connect_base())
 
     async def connect_base(self):
-        self.transport = WebSocketTransport(self)
+        host = self.options.get_realtime_host()
+        self.transport = WebSocketTransport(self, host)
         self._emit('transport.pending', self.transport)
         self.transport.connect()
 
