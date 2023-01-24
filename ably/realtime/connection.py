@@ -295,11 +295,16 @@ class ConnectionManager(EventEmitter):
         self.connect_base_task = asyncio.create_task(self.connect_base())
 
     async def connect_base(self):
-        host = self.options.get_realtime_host()
-        try:
-            await self.try_host(host)
-        except Exception as exception:
-            self.notify_state(self.__fail_state, reason=exception)
+        hosts = self.options.get_realtime_hosts()
+        for host in hosts:
+            try:
+                await self.try_host(host)
+                return
+            except Exception as exception:
+                log.exception(f'Connection to {host} failed, reason={exception}')
+        
+        log.exception("No more fallback hosts to try")
+        self.notify_state(self.__fail_state, reason=exception)
 
     async def try_host(self, host):
         self.transport = WebSocketTransport(self, host)
