@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 class ProtocolMessageAction(IntEnum):
     HEARTBEAT = 0
     CONNECTED = 4
+    DISCONNECTED = 6
     CLOSE = 7
     CLOSED = 8
     ERROR = 9
@@ -105,6 +106,8 @@ class WebSocketTransport(EventEmitter):
             if self.host != self.options.get_realtime_host():  # RTN17e
                 self.options.fallback_realtime_host = self.host
             self.connection_manager.on_connected(connection_details)
+        elif action == ProtocolMessageAction.DISCONNECTED:
+            self.connection_manager.on_disconnected(msg)
         elif action == ProtocolMessageAction.CLOSED:
             if self.ws_connect_task:
                 self.ws_connect_task.cancel()
