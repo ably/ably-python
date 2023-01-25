@@ -1,5 +1,7 @@
 import asyncio
+from dataclasses import dataclass
 import logging
+from typing import Optional
 
 from ably.realtime.connection import ConnectionState, ProtocolMessageAction
 from ably.rest.channel import Channel
@@ -21,6 +23,13 @@ class ChannelState(str, Enum):
     DETACHED = 'detached'
     SUSPENDED = 'suspended'
     FAILED = 'failed'
+
+
+@dataclass
+class ChannelStateChange:
+    previous: ChannelState
+    current: ChannelState
+    reason: Optional[AblyException] = None
 
 
 class RealtimeChannel(EventEmitter, Channel):
