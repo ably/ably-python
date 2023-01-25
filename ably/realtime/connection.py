@@ -241,7 +241,7 @@ class ConnectionManager(EventEmitter):
         else:
             self.notify_state(ConnectionState.CONNECTED)
 
-    def on_disconnected(self, msg:dict):
+    def on_disconnected(self, msg: dict):
         error = msg.get("error")
         exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
         self.notify_state(ConnectionState.DISCONNECTED, exception)
@@ -310,7 +310,7 @@ class ConnectionManager(EventEmitter):
         self.start_transition_timer(ConnectionState.CONNECTING)
         self.connect_base_task = asyncio.create_task(self.connect_base())
 
-    async def connect_with_fallback_hosts(self, fallback_hosts):
+    async def connect_with_fallback_hosts(self, fallback_hosts: list):
         for host in fallback_hosts:
             try:
                 if self.check_connection():

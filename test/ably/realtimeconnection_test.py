@@ -319,7 +319,6 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         ably.connection.connection_manager.on('transport.pending', on_transport_pending)
 
-
         await ably.connection.once_async(ConnectionState.CONNECTED)
         assert ably.connection.connection_manager.transport.host == fallback_host
         await ably.close()
