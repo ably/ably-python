@@ -19,6 +19,8 @@ class ChannelState(str, Enum):
     ATTACHED = 'attached'
     DETACHING = 'detaching'
     DETACHED = 'detached'
+    SUSPENDED = 'suspended'
+    FAILED = 'failed'
 
 
 class RealtimeChannel(EventEmitter, Channel):
