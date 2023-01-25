@@ -114,13 +114,14 @@ class RealtimeChannel(EventEmitter, Channel):
             await self.__realtime.connect()
 
         self.__attach_future = asyncio.Future()
+
         # RTL4c
-        await self.__realtime.connection.connection_manager.send_protocol_message(
-            {
-                "action": ProtocolMessageAction.ATTACH,
-                "channel": self.name,
-            }
-        )
+        attach_msg = {
+            "action": ProtocolMessageAction.ATTACH,
+            "channel": self.name,
+        }
+        self._send_message(attach_msg)
+
         try:
             await asyncio.wait_for(self.__attach_future, self.__timeout_in_secs)  # RTL4f
         except asyncio.TimeoutError:
@@ -175,13 +176,14 @@ class RealtimeChannel(EventEmitter, Channel):
             await self.__realtime.connect()
 
         self.__detach_future = asyncio.Future()
+
         # RTL5d
-        await self.__realtime.connection.connection_manager.send_protocol_message(
-            {
-                "action": ProtocolMessageAction.DETACH,
-                "channel": self.name,
-            }
-        )
+        detach_msg = {
+            "action": ProtocolMessageAction.DETACH,
+            "channel": self.name,
+        }
+        self._send_message(detach_msg)
+
         try:
             await asyncio.wait_for(self.__detach_future, self.__timeout_in_secs)  # RTL5f
         except asyncio.TimeoutError:
@@ -338,6 +340,9 @@ class RealtimeChannel(EventEmitter, Channel):
 
         self.__state = state
         self._emit(state, state_change)
+
+    def _send_message(self, msg):
+        asyncio.create_task(self.__realtime.connection.connection_manager.send_protocol_message(msg))
 
     # RTL23
     @property
