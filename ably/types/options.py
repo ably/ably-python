@@ -75,6 +75,7 @@ class Options(AuthOptions):
         self.__connection_state_ttl = connection_state_ttl
         self.__suspended_retry_timeout = suspended_retry_timeout
         self.__connectivity_check_url = connectivity_check_url
+        self.__fallback_realtime_host = None
 
         self.__rest_hosts = self.__get_rest_hosts()
         self.__realtime_hosts = self.__get_realtime_hosts()
@@ -244,6 +245,14 @@ class Options(AuthOptions):
     @property
     def connectivity_check_url(self):
         return self.__connectivity_check_url
+
+    @property
+    def fallback_realtime_host(self):
+        return self.__fallback_realtime_host
+
+    @fallback_realtime_host.setter
+    def fallback_realtime_host(self, value):
+        self.__fallback_realtime_host = value
 
     def __get_rest_hosts(self):
         """
