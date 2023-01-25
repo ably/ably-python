@@ -107,7 +107,7 @@ class RealtimeChannel(EventEmitter, Channel):
                 raise AblyException("Unable to detach channel due to request timeout", 504, 50003)
             return
 
-        self._notify_state(ChannelState.ATTACHING)
+        self._request_state(ChannelState.ATTACHING)
 
         # RTL4i - wait for pending connection
         if self.__realtime.connection.state == ConnectionState.CONNECTING:
@@ -125,7 +125,7 @@ class RealtimeChannel(EventEmitter, Channel):
             await asyncio.wait_for(self.__attach_future, self.__timeout_in_secs)  # RTL4f
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for channel attach", 504, 50003)
-        self._notify_state(ChannelState.ATTACHED)
+        self._request_state(ChannelState.ATTACHED)
 
     # RTL5
     async def detach(self):
@@ -323,6 +323,10 @@ class RealtimeChannel(EventEmitter, Channel):
             messages = Message.from_encoded_array(msg.get('messages'))
             for message in messages:
                 self.__message_emitter._emit(message.name, message)
+
+    def _request_state(self, state: ChannelState):
+        log.info(f'RealtimeChannel._request_state(): state = {state}')
+        self._notify_state(state)
 
     def _notify_state(self, state: ChannelState, reason=None):
         log.info(f'RealtimeChannel._notify_state(): state = {state}')
