@@ -1,6 +1,7 @@
 import asyncio
 from ably.realtime.connection import ConnectionEvent, ConnectionState, ProtocolMessageAction
 import pytest
+import logging
 from ably.util.exceptions import AblyException
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase
@@ -290,12 +291,21 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         fallback_host = 'sandbox-realtime.ably.io'
         ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
                                                 fallback_hosts=[fallback_host])
-        connected_future = asyncio.Future()
-
-        def on_change(connection_state):
-            if connection_state.current == ConnectionState.CONNECTED:
-                connected_future.set_result(connection_state)
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
         assert ably.connection.connection_manager.transport.host == fallback_host
+        await ably.close()
+
+    async def test_fallback_host_no_connectivity(self):
+        fallback_host = 'sandbox-realtime.ably.io'
+        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
+                                                fallback_hosts=[fallback_host])
+
+        def check_connection():
+            return False
+
+        ably.connection.connection_manager.check_connection = check_connection
+
+        await ably.connection.once_async(ConnectionState.DISCONNECTED)
+        assert ably.connection.connection_manager.transport.host == "iamnotahost"
         await ably.close()

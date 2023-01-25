@@ -296,12 +296,25 @@ class ConnectionManager(EventEmitter):
 
     async def connect_base(self):
         hosts = self.options.get_realtime_hosts()
-        for host in hosts:
-            try:
-                await self.try_host(host)
-                return
-            except Exception as exception:
-                log.exception(f'Connection to {host} failed, reason={exception}')
+        primary_host = hosts.pop(0)
+        try:
+            await self.try_host(primary_host)
+            return
+        except Exception as exception:
+            log.exception(f'Connection to {primary_host} failed, reason={exception}, attempting fallback hosts')
+            for host in hosts:
+                try:
+                    if self.check_connection():
+                        await self.try_host(host)
+                        return
+                    else:
+                        message = "Unable to connect, network unreachable"
+                        log.exception(message)
+                        exception = AblyException(message, status_code=404, code=80003)
+                        self.notify_state(self.__fail_state, exception)
+                        return
+                except Exception as exception:
+                    log.exception(f'Connection to {host} failed, reason={exception}')
         
         log.exception("No more fallback hosts to try")
         self.notify_state(self.__fail_state, reason=exception)
