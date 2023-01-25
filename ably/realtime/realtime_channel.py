@@ -115,18 +115,23 @@ class RealtimeChannel(EventEmitter, Channel):
 
         self.__attach_future = asyncio.Future()
 
-        # RTL4c
-        attach_msg = {
-            "action": ProtocolMessageAction.ATTACH,
-            "channel": self.name,
-        }
-        self._send_message(attach_msg)
+        self._attach_impl()
 
         try:
             await asyncio.wait_for(self.__attach_future, self.__timeout_in_secs)  # RTL4f
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for channel attach", 504, 50003)
         self._request_state(ChannelState.ATTACHED)
+
+    def _attach_impl(self):
+        log.info("RealtimeChannel.attach_impl(): sending ATTACH protocol message")
+
+        # RTL4c
+        attach_msg = {
+            "action": ProtocolMessageAction.ATTACH,
+            "channel": self.name,
+        }
+        self._send_message(attach_msg)
 
     # RTL5
     async def detach(self):
