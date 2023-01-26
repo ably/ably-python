@@ -341,6 +341,14 @@ class ConnectionManager(EventEmitter):
 
         self.enact_state_change(state, reason)
 
+        if state in (
+            ConnectionState.CLOSING,
+            ConnectionState.CLOSED,
+            ConnectionState.SUSPENDED,
+            ConnectionState.FAILED,
+        ):
+            self.ably.channels._propagate_connection_interruption(state, reason)
+
     def start_transition_timer(self, state: ConnectionState, fail_state=None):
         log.debug(f'ConnectionManager.start_transition_timer(): transition state = {state}')
 

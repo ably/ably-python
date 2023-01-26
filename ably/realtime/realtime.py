@@ -4,7 +4,7 @@ from ably.realtime.connection import Connection, ConnectionState
 from ably.rest.auth import Auth
 from ably.rest.rest import AblyRest
 from ably.types.options import Options
-from ably.realtime.realtime_channel import RealtimeChannel
+from ably.realtime.realtime_channel import ChannelState, RealtimeChannel
 
 
 log = logging.getLogger(__name__)
@@ -218,3 +218,23 @@ class Channels:
             return
 
         channel._on_message(msg)
+
+    def _propagate_connection_interruption(self, state: ConnectionState, reason):
+        from_channel_states = (
+            ChannelState.ATTACHING,
+            ChannelState.ATTACHED,
+            ChannelState.DETACHING,
+            ChannelState.SUSPENDED,
+        )
+
+        connection_to_channel_state = {
+            ConnectionState.CLOSING: ChannelState.DETACHED,
+            ConnectionState.CLOSED: ChannelState.DETACHED,
+            ConnectionState.FAILED: ChannelState.FAILED,
+            ConnectionState.SUSPENDED: ChannelState.SUSPENDED,
+        }
+
+        for name in self.all.keys():
+            channel = self.all[name]
+            if channel.state in from_channel_states:
+                channel._notify_state(connection_to_channel_state[state], reason)
