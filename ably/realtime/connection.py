@@ -12,6 +12,7 @@ from ably.util.helper import get_random_id, Timer
 from dataclasses import dataclass
 from typing import Optional
 from ably.types.connectiondetails import ConnectionDetails
+from queue import Queue
 
 log = logging.getLogger(__name__)
 
@@ -167,6 +168,7 @@ class ConnectionManager(EventEmitter):
         self.connect_base_task: asyncio.Task | None = None
         self.disconnect_transport_task: asyncio.Task | None = None
         self.__fallback_hosts = self.options.get_fallback_realtime_hosts()
+        self.queued_messages = Queue()
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -199,10 +201,37 @@ class ConnectionManager(EventEmitter):
         self.notify_state(ConnectionState.CLOSED)
 
     async def send_protocol_message(self, protocol_message):
-        if self.transport is not None:
-            await self.transport.send(protocol_message)
-        else:
-            raise Exception()
+        if self.state in (
+            ConnectionState.DISCONNECTED,
+            ConnectionState.CONNECTING,
+        ):
+            self.queued_messages.put(protocol_message)
+            return
+
+        if self.state == ConnectionState.CONNECTED:
+            if self.transport:
+                await self.transport.send(protocol_message)
+            else:
+                log.exception(
+                    "ConnectionManager.send_protocol_message(): can not send message with no active transport"
+                )
+            return
+
+        raise AblyException(f"ConnectionManager.send_protocol_message(): called in {self.state}", 500, 50000)
+
+    def send_queued_messages(self):
+        log.info(f'ConnectionManager.send_queued_messages(): sending {self.queued_messages.qsize()} message(s)')
+        while not self.queued_messages.empty():
+            asyncio.create_task(self.send_protocol_message(self.queued_messages.get()))
+
+    def fail_queued_messages(self, err):
+        log.info(
+            f"ConnectionManager.fail_queued_messages(): discarding {self.queued_messages.qsize()} messages;" +
+            f" reason = {err}"
+        )
+        while not self.queued_messages.empty():
+            msg = self.queued_messages.get()
+            log.exception(f"ConnectionManager.fail_queued_messages(): Failed to send protocol message: {msg}")
 
     async def ping(self):
         if self.__ping_future:
@@ -399,12 +428,15 @@ class ConnectionManager(EventEmitter):
 
         self.enact_state_change(state, reason)
 
-        if state in (
+        if state == ConnectionState.CONNECTED:
+            self.send_queued_messages()
+        elif state in (
             ConnectionState.CLOSING,
             ConnectionState.CLOSED,
             ConnectionState.SUSPENDED,
             ConnectionState.FAILED,
         ):
+            self.fail_queued_messages(reason)
             self.ably.channels._propagate_connection_interruption(state, reason)
 
     def start_transition_timer(self, state: ConnectionState, fail_state=None):
