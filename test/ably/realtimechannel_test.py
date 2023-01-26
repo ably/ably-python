@@ -283,3 +283,10 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         assert channel.state == ChannelState.FAILED
 
         await ably.close()
+
+    async def test_attach_while_connecting(self):
+        ably = await RestSetup.get_ably_realtime()
+        channel = ably.channels.get(random_string(5))
+        await channel.attach()
+        assert channel.state == ChannelState.ATTACHED
+        await ably.close()
