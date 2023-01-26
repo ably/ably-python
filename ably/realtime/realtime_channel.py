@@ -10,7 +10,7 @@ from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
 from enum import Enum
 
-from ably.util.helper import is_callable_or_coroutine
+from ably.util.helper import Timer, is_callable_or_coroutine
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +64,12 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__state = ChannelState.INITIALIZED
         self.__message_emitter = EventEmitter()
         self.__timeout_in_secs = self.__realtime.options.realtime_request_timeout / 1000
+        self.__state_timer: Timer | None = None
+
+        # Used to listen to state changes internally, if we use the public event emitter interface then internals
+        # will be disrupted if the user called .off() to remove all listeners
+        self.__internal_state_emitter = EventEmitter()
+
         Channel.__init__(self, realtime, name, {})
 
     # RTL4
@@ -93,35 +99,17 @@ class RealtimeChannel(EventEmitter, Channel):
                 status_code=400
             )
 
-        # RTL4h - wait for pending attach/detach
-        if self.state == ChannelState.ATTACHING:
-            try:
-                await self.__attach_future
-            except asyncio.CancelledError:
-                raise AblyException("Unable to attach channel due to request timeout", 504, 50003)
-            return
-        elif self.state == ChannelState.DETACHING:
-            try:
-                await self.__detach_future
-            except asyncio.CancelledError:
-                raise AblyException("Unable to detach channel due to request timeout", 504, 50003)
-            return
-
-        self._request_state(ChannelState.ATTACHING)
+        if self.state != ChannelState.ATTACHING:
+            self._request_state(ChannelState.ATTACHING)
 
         # RTL4i - wait for pending connection
         if self.__realtime.connection.state == ConnectionState.CONNECTING:
             await self.__realtime.connect()
 
-        self.__attach_future = asyncio.Future()
+        state_change = await self.__internal_state_emitter.once_async()
 
-        self._attach_impl()
-
-        try:
-            await asyncio.wait_for(self.__attach_future, self.__timeout_in_secs)  # RTL4f
-        except asyncio.TimeoutError:
-            raise AblyException("Timeout waiting for channel attach", 504, 50003)
-        self._request_state(ChannelState.ATTACHED)
+        if state_change.current in (ChannelState.SUSPENDED, ChannelState.FAILED):
+            raise state_change.reason
 
     def _attach_impl(self):
         log.info("RealtimeChannel.attach_impl(): sending ATTACH protocol message")
@@ -325,9 +313,10 @@ class RealtimeChannel(EventEmitter, Channel):
     def _on_message(self, msg):
         action = msg.get('action')
         if action == ProtocolMessageAction.ATTACHED:
-            if self.__attach_future:
-                self.__attach_future.set_result(None)
-            self.__attach_future = None
+            if self.state == ChannelState.ATTACHING:
+                self._notify_state(ChannelState.ATTACHED)
+            else:
+                log.warn("RealtimeChannel._on_message(): ATTACHED received while not attaching")
         elif action == ProtocolMessageAction.DETACHED:
             if self.__detach_future:
                 self.__detach_future.set_result(None)
@@ -340,9 +329,12 @@ class RealtimeChannel(EventEmitter, Channel):
     def _request_state(self, state: ChannelState):
         log.info(f'RealtimeChannel._request_state(): state = {state}')
         self._notify_state(state)
+        self.__check_pending_state()
 
     def _notify_state(self, state: ChannelState, reason=None):
         log.info(f'RealtimeChannel._notify_state(): state = {state}')
+
+        self.__clear_state_timer()
 
         if state == self.state:
             return
@@ -351,9 +343,50 @@ class RealtimeChannel(EventEmitter, Channel):
 
         self.__state = state
         self._emit(state, state_change)
+        self.__internal_state_emitter._emit(state, state_change)
 
     def _send_message(self, msg):
         asyncio.create_task(self.__realtime.connection.connection_manager.send_protocol_message(msg))
+
+    def __check_pending_state(self):
+        connection_state = self.__realtime.connection.connection_manager.state
+
+        if connection_state not in (
+            ConnectionState.CONNECTING,
+            ConnectionState.CONNECTED,
+            ConnectionState.DISCONNECTED,
+        ):
+            return
+
+        if self.state == ChannelState.ATTACHING:
+            self.__start_state_timer()
+            self._attach_impl()
+        elif self.state == ChannelState.DETACHING:
+            self.__start_state_timer()
+            self._detach_impl()
+
+    def __start_state_timer(self):
+        if not self.__state_timer:
+            def on_timeout():
+                log.info('RealtimeChannel.start_state_timer(): timer expired')
+                self.__state_timer = None
+                self.__timeout_pending_state()
+
+            self.__state_timer = Timer(self.__realtime.options.realtime_request_timeout, on_timeout)
+
+    def __clear_state_timer(self):
+        if self.__state_timer:
+            self.__state_timer.cancel()
+            self.__state_timer = None
+
+    def __timeout_pending_state(self):
+        if self.state == ChannelState.ATTACHING:
+            self._notify_state(
+                ChannelState.SUSPENDED, reason=AblyException("Channel attach timed out", 408, 90007))
+        elif self.state == ChannelState.DETACHING:
+            self._notify_state(ChannelState.ATTACHED, reason=AblyException("Channel detach timed out", 408, 90007))
+        else:
+            self.__check_pending_state()
 
     # RTL23
     @property
