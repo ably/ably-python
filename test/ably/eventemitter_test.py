@@ -8,24 +8,6 @@ class TestEventEmitter(BaseAsyncTestCase):
     async def asyncSetUp(self):
         self.test_vars = await RestSetup.get_test_vars()
 
-    async def test_connection_events(self):
-        realtime = await RestSetup.get_ably_realtime()
-        call_count = 0
-
-        def listener(_):
-            nonlocal call_count
-            call_count += 1
-
-        realtime.connection.on(ConnectionState.CONNECTED, listener)
-
-        await realtime.connect()
-
-        # Listener is only called once event loop is free
-        assert call_count == 0
-        await asyncio.sleep(0)
-        assert call_count == 1
-        await realtime.close()
-
     async def test_event_listener_error(self):
         realtime = await RestSetup.get_ably_realtime()
         call_count = 0
@@ -39,10 +21,9 @@ class TestEventEmitter(BaseAsyncTestCase):
         listener.side_effect = Exception()
         realtime.connection.on(ConnectionState.CONNECTED, listener)
 
-        await realtime.connect()
+        realtime.connect()
+        await realtime.connection.once_async(ConnectionState.CONNECTED)
 
-        assert call_count == 0
-        await asyncio.sleep(0)
         assert call_count == 1
         await realtime.close()
 
@@ -57,7 +38,7 @@ class TestEventEmitter(BaseAsyncTestCase):
         realtime.connection.on(ConnectionState.CONNECTED, listener)
         realtime.connection.off(ConnectionState.CONNECTED, listener)
 
-        await realtime.connect()
+        await realtime.connection.once_async(ConnectionState.CONNECTED)
 
         assert call_count == 0
         await asyncio.sleep(0)

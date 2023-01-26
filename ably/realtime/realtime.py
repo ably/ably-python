@@ -1,6 +1,6 @@
 import logging
 import asyncio
-from ably.realtime.connection import Connection
+from ably.realtime.connection import Connection, ConnectionState
 from ably.rest.auth import Auth
 from ably.rest.rest import AblyRest
 from ably.types.options import Options
@@ -105,10 +105,10 @@ class AblyRealtime(AblyRest):
 
         # RTN3
         if options.auto_connect:
-            asyncio.ensure_future(self.connection.connection_manager.connect_impl())
+            self.connection.connection_manager.request_state(ConnectionState.CONNECTING, force=True)
 
     # RTC15
-    async def connect(self):
+    def connect(self):
         """Establishes a realtime connection.
 
         Explicitly calling connect() is unnecessary unless the autoConnect attribute of the ClientOptions object
@@ -117,7 +117,7 @@ class AblyRealtime(AblyRest):
         """
         log.info('Realtime.connect() called')
         # RTC15a
-        await self.connection.connect()
+        self.connection.connect()
 
     # RTC16
     async def close(self):
