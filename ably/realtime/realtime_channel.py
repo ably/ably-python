@@ -182,18 +182,24 @@ class RealtimeChannel(EventEmitter, Channel):
 
         self.__detach_future = asyncio.Future()
 
-        # RTL5d
-        detach_msg = {
-            "action": ProtocolMessageAction.DETACH,
-            "channel": self.name,
-        }
-        self._send_message(detach_msg)
+        self._detach_impl()
 
         try:
             await asyncio.wait_for(self.__detach_future, self.__timeout_in_secs)  # RTL5f
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for channel detach", 504, 50003)
         self._notify_state(ChannelState.DETACHED)
+
+    def _detach_impl(self):
+        log.info("RealtimeChannel.detach_impl(): sending DETACH protocol message")
+
+        # RTL5d
+        detach_msg = {
+            "action": ProtocolMessageAction.DETACH,
+            "channel": self.__name,
+        }
+
+        self._send_message(detach_msg)
 
     # RTL7
     async def subscribe(self, *args):
