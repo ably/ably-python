@@ -324,7 +324,7 @@ class ConnectionManager(EventEmitter):
                     return
             except Exception as exc:
                 exception = exc
-                log.exception(f'Connection to {host}, reason={exception}')
+                log.exception(f'Connection to {host} failed, reason={exception}')
         log.exception("No more fallback hosts to try")
         return exception
 
@@ -366,7 +366,11 @@ class ConnectionManager(EventEmitter):
 
         self.transport.once('connected', on_transport_connected)
         self.transport.once('failed', on_transport_failed)
-        await future
+        #  Fix asyncio CancelledError in python 3.7
+        try:
+            await future
+        except asyncio.CancelledError:
+            return
 
     def notify_state(self, state: ConnectionState, reason=None):
         # RTN15a

@@ -317,7 +317,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         async def on_transport_pending(transport):
             await transport.on_protocol_message({'action': 6, "error": {"statusCode": 500, "code": 500}})
 
-        ably.connection.connection_manager.on('transport.pending', on_transport_pending)
+        ably.connection.connection_manager.once('transport.pending', on_transport_pending)
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
         assert ably.connection.connection_manager.transport.host == fallback_host
