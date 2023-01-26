@@ -149,34 +149,27 @@ class RealtimeChannel(EventEmitter, Channel):
         if self.state in [ChannelState.INITIALIZED, ChannelState.DETACHED]:
             return
 
-        # RTL5i - wait for pending attach/detach
-        if self.state == ChannelState.DETACHING:
-            try:
-                await self.__detach_future
-            except asyncio.CancelledError:
-                raise AblyException("Unable to detach channel due to request timeout", 504, 50003)
+        if self.state == ChannelState.SUSPENDED:
+            self._notify_state(ChannelState.DETACHED)
             return
-        elif self.state == ChannelState.ATTACHING:
-            try:
-                await self.__attach_future
-            except asyncio.CancelledError:
-                raise AblyException("Unable to attach channel due to request timeout", 504, 50003)
-
-        self._notify_state(ChannelState.DETACHING)
+        elif self.state == ChannelState.FAILED:
+            raise AblyException("Unable to detach; channel state = failed", 90001, 400)
+        else:
+            self._request_state(ChannelState.DETACHING)
 
         # RTL5h - wait for pending connection
         if self.__realtime.connection.state == ConnectionState.CONNECTING:
             await self.__realtime.connect()
 
-        self.__detach_future = asyncio.Future()
+        state_change = await self.__internal_state_emitter.once_async()
+        new_state = state_change.current
 
-        self._detach_impl()
-
-        try:
-            await asyncio.wait_for(self.__detach_future, self.__timeout_in_secs)  # RTL5f
-        except asyncio.TimeoutError:
-            raise AblyException("Timeout waiting for channel detach", 504, 50003)
-        self._notify_state(ChannelState.DETACHED)
+        if new_state == ChannelState.DETACHED:
+            return
+        elif new_state == ChannelState.ATTACHING:
+            raise AblyException("Detach request superseded by a subsequent attach request", 90000, 409)
+        else:
+            raise state_change.reason
 
     def _detach_impl(self):
         log.info("RealtimeChannel.detach_impl(): sending DETACH protocol message")
@@ -318,9 +311,10 @@ class RealtimeChannel(EventEmitter, Channel):
             else:
                 log.warn("RealtimeChannel._on_message(): ATTACHED received while not attaching")
         elif action == ProtocolMessageAction.DETACHED:
-            if self.__detach_future:
-                self.__detach_future.set_result(None)
-            self.__detach_future = None
+            if self.state == ChannelState.DETACHING:
+                self._notify_state(ChannelState.DETACHED)
+            else:
+                log.warn("RealtimeChannel._on_message(): DETACHED recieved while not detaching")
         elif action == ProtocolMessageAction.MESSAGE:
             messages = Message.from_encoded_array(msg.get('messages'))
             for message in messages:
