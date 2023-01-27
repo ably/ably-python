@@ -78,26 +78,19 @@ class TestRestHttp(BaseAsyncTestCase):
                     expected_hosts_set.remove(prep_request_tuple[0].headers.get('host'))
         await ably.close()
 
-    @pytest.mark.skip(reason="skipped due to httpx changes")
+    @respx.mock
     async def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
         ably = AblyRest(token="foo", rest_host=custom_host)
 
-        custom_url = "%s://%s:%d/" % (
-            ably.http.preferred_scheme,
-            custom_host,
-            ably.http.preferred_port)
+        mock_route = respx.get("https://example.org").mock(side_effect=httpx.RequestError(''))
 
-        with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
-            with mock.patch('httpx.AsyncClient.send', side_effect=httpx.RequestError('')) as send_mock:
-                with pytest.raises(httpx.RequestError):
-                    await ably.http.make_request('GET', '/', skip_auth=True)
+        with pytest.raises(httpx.RequestError):
+            await ably.http.make_request('GET', '/', skip_auth=True)
 
-                assert send_mock.call_count == 1
-                assert request_mock.call_args == mock.call(mock.ANY,
-                                                           custom_url,
-                                                           content=mock.ANY,
-                                                           headers=mock.ANY)
+        assert mock_route.call_count == 1
+        assert respx.calls.call_count == 1
+
         await ably.close()
 
     # RSC15f
@@ -137,7 +130,7 @@ class TestRestHttp(BaseAsyncTestCase):
         await client.aclose()
         await ably.close()
 
-    @pytest.mark.skip(reason="skipped due to httpx changes")
+    @respx.mock
     async def test_no_retry_if_not_500_to_599_http_code(self):
         default_host = Options().get_rest_host()
         ably = AblyRest(token="foo")
@@ -147,20 +140,16 @@ class TestRestHttp(BaseAsyncTestCase):
             default_host,
             ably.http.preferred_port)
 
-        def raise_ably_exception(*args, **kwargs):
-            raise AblyException(message="", status_code=600, code=50500)
+        mock_response = httpx.Response(600, json={'message': "", 'status_code': 600, 'code': 50500})
 
-        with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
-            with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
-                            side_effect=raise_ably_exception) as send_mock:
-                with pytest.raises(AblyException):
-                    await ably.http.make_request('GET', '/', skip_auth=True)
+        mock_route = respx.get(default_url).mock(return_value=mock_response)
 
-                assert send_mock.call_count == 1
-                assert request_mock.call_args == mock.call(mock.ANY,
-                                                           default_url,
-                                                           content=mock.ANY,
-                                                           headers=mock.ANY)
+        with pytest.raises(AblyException):
+            await ably.http.make_request('GET', '/', skip_auth=True)
+
+        assert mock_route.call_count == 1
+        assert respx.calls.call_count == 1
+
         await ably.close()
 
     async def test_500_errors(self):
