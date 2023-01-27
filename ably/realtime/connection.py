@@ -166,6 +166,7 @@ class ConnectionManager(EventEmitter):
         self.retry_timer: Timer | None = None
         self.connect_base_task: asyncio.Task | None = None
         self.disconnect_transport_task: asyncio.Task | None = None
+        self.__fallback_hosts = self.options.get_fallback_realtime_hosts()
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
@@ -240,6 +241,21 @@ class ConnectionManager(EventEmitter):
         else:
             self.notify_state(ConnectionState.CONNECTED)
 
+    def on_disconnected(self, msg: dict):
+        error = msg.get("error")
+        exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
+        self.notify_state(ConnectionState.DISCONNECTED, exception)
+        if error:
+            error_status_code = error.get("statusCode")
+            if error_status_code >= 500 or error_status_code <= 504:  # RTN17f1
+                if len(self.__fallback_hosts) > 0:
+                    res = asyncio.create_task(self.connect_with_fallback_hosts(self.__fallback_hosts))
+                    if not res:
+                        return
+                    self.notify_state(self.__fail_state, reason=res)
+                else:
+                    log.info("No fallback host to try for disconnected protocol message")
+
     async def on_error(self, msg: dict, exception: AblyException):
         if msg.get('channel') is None:  # RTN15i
             self.enact_state_change(ConnectionState.FAILED, exception)
@@ -294,8 +310,42 @@ class ConnectionManager(EventEmitter):
         self.start_transition_timer(ConnectionState.CONNECTING)
         self.connect_base_task = asyncio.create_task(self.connect_base())
 
+    async def connect_with_fallback_hosts(self, fallback_hosts: list):
+        for host in fallback_hosts:
+            try:
+                if self.check_connection():
+                    await self.try_host(host)
+                    return
+                else:
+                    message = "Unable to connect, network unreachable"
+                    log.exception(message)
+                    exception = AblyException(message, status_code=404, code=80003)
+                    self.notify_state(self.__fail_state, exception)
+                    return
+            except Exception as exc:
+                exception = exc
+                log.exception(f'Connection to {host} failed, reason={exception}')
+        log.exception("No more fallback hosts to try")
+        return exception
+
     async def connect_base(self):
-        self.transport = WebSocketTransport(self)
+        fallback_hosts = self.__fallback_hosts
+        primary_host = self.options.get_realtime_host()
+        try:
+            await self.try_host(primary_host)
+            return
+        except Exception as exception:
+            log.exception(f'Connection to {primary_host} failed, reason={exception}')
+            if len(fallback_hosts) > 0:
+                log.info("Attempting connection to fallback host(s)")
+                resp = await self.connect_with_fallback_hosts(fallback_hosts)
+                if not resp:
+                    return
+                exception = resp
+            self.notify_state(self.__fail_state, reason=exception)
+
+    async def try_host(self, host):
+        self.transport = WebSocketTransport(self, host)
         self._emit('transport.pending', self.transport)
         self.transport.connect()
 
@@ -316,11 +366,11 @@ class ConnectionManager(EventEmitter):
 
         self.transport.once('connected', on_transport_connected)
         self.transport.once('failed', on_transport_failed)
-
+        #  Fix asyncio CancelledError in python 3.7
         try:
             await future
-        except Exception as exception:
-            self.notify_state(self.__fail_state, reason=exception)
+        except asyncio.CancelledError:
+            return
 
     def notify_state(self, state: ConnectionState, reason=None):
         # RTN15a
