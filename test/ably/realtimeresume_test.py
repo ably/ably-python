@@ -9,6 +9,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         self.test_vars = await RestSetup.get_test_vars()
         self.valid_key_format = "api:key"
 
+    # RTN15c6 - valid resume response
     async def test_connection_resume(self):
         ably = await RestSetup.get_ably_realtime()
 
@@ -25,6 +26,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
 
         await ably.close()
 
+    # RTN15c4 - fatal resume error
     async def test_fatal_resume_error(self):
         ably = await RestSetup.get_ably_realtime()
 
@@ -39,6 +41,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         assert state_change.reason.status_code == 401
         await ably.close()
 
+    # RTN15c7 - invalid resume response
     async def test_invalid_resume_response(self):
         ably = await RestSetup.get_ably_realtime()
 
