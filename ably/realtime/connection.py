@@ -185,6 +185,10 @@ class ConnectionManager(EventEmitter):
         except httpx.HTTPError:
             return False
 
+    def __get_transport_params(self):
+        protocol_version = Defaults.protocol_version
+        return {"key": self.__ably.key, "v": protocol_version}
+
     async def close_impl(self):
         log.debug('ConnectionManager.close_impl()')
 
@@ -374,7 +378,8 @@ class ConnectionManager(EventEmitter):
             self.notify_state(self.__fail_state, reason=exception)
 
     async def try_host(self, host):
-        self.transport = WebSocketTransport(self, host)
+        params = self.__get_transport_params()
+        self.transport = WebSocketTransport(self, host, params)
         self._emit('transport.pending', self.transport)
         self.transport.connect()
 
