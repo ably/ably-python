@@ -7,7 +7,6 @@ import logging
 import socket
 import urllib.parse
 from ably.http.httputils import HttpUtils
-from ably.transport.defaults import Defaults
 from ably.types.connectiondetails import ConnectionDetails
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
