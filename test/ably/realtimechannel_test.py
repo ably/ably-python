@@ -230,8 +230,8 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         channel = ably.channels.get('channel_name')
         with pytest.raises(AblyException) as exception:
             await channel.attach()
-        assert exception.value.code == 50003
-        assert exception.value.status_code == 504
+        assert exception.value.code == 90007
+        assert exception.value.status_code == 408
         await ably.close()
 
     async def test_realtime_request_timeout_detach(self):
@@ -249,6 +249,6 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.attach()
         with pytest.raises(AblyException) as exception:
             await channel.detach()
-        assert exception.value.code == 50003
-        assert exception.value.status_code == 504
+        assert exception.value.code == 90007
+        assert exception.value.status_code == 408
         await ably.close()
