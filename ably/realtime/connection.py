@@ -187,7 +187,10 @@ class ConnectionManager(EventEmitter):
 
     def __get_transport_params(self):
         protocol_version = Defaults.protocol_version
-        return {"key": self.__ably.key, "v": protocol_version}
+        params = {"key": self.__ably.key, "v": protocol_version}
+        if self.connection_details:
+            params["resume"] = self.connection_details.connection_key
+        return params
 
     async def close_impl(self):
         log.debug('ConnectionManager.close_impl()')
