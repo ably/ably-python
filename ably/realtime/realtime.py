@@ -238,3 +238,14 @@ class Channels:
             channel = self.all[name]
             if channel.state in from_channel_states:
                 channel._notify_state(connection_to_channel_state[state], reason)
+
+    def _on_connected(self):
+        for channel_name in self.all.keys():
+            channel = self.all[channel_name]
+
+            if channel.state == ChannelState.ATTACHING or channel.state == ChannelState.DETACHING:
+                channel._check_pending_state()
+            elif channel.state == ChannelState.SUSPENDED:
+                asyncio.create_task(channel.attach())
+            elif channel.state == ChannelState.ATTACHED:
+                channel._request_state(ChannelState.ATTACHING)

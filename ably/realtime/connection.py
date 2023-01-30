@@ -279,6 +279,8 @@ class ConnectionManager(EventEmitter):
         else:
             self.notify_state(ConnectionState.CONNECTED, reason=reason)
 
+        self.ably.channels._on_connected()
+
     def on_disconnected(self, msg: dict):
         error = msg.get("error")
         exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
