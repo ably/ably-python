@@ -3,7 +3,7 @@ import pytest
 from ably.realtime.realtime_channel import ChannelState
 from ably.types.message import Message
 from test.ably.restsetup import RestSetup
-from test.ably.utils import BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, random_string
 from ably.realtime.connection import ConnectionState, ProtocolMessageAction
 from ably.util.exceptions import AblyException
 
@@ -251,4 +251,35 @@ class TestRealtimeChannel(BaseAsyncTestCase):
             await channel.detach()
         assert exception.value.code == 90007
         assert exception.value.status_code == 408
+        await ably.close()
+
+    async def test_channel_detached_once_connection_closed(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        channel = ably.channels.get(random_string(5))
+        await channel.attach()
+
+        await ably.close()
+        assert channel.state == ChannelState.DETACHED
+
+    async def test_channel_failed_once_connection_failed(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        channel = ably.channels.get(random_string(5))
+        await channel.attach()
+
+        ably.connection.connection_manager.notify_state(ConnectionState.SUSPENDED)
+        assert channel.state == ChannelState.SUSPENDED
+
+        await ably.close()
+
+    async def test_channel_suspended_once_connection_suspended(self):
+        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        channel = ably.channels.get(random_string(5))
+        await channel.attach()
+
+        ably.connection.connection_manager.notify_state(ConnectionState.FAILED)
+        assert channel.state == ChannelState.FAILED
+
         await ably.close()

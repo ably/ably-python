@@ -58,12 +58,9 @@ class RealtimeChannel(EventEmitter, Channel):
     def __init__(self, realtime, name):
         EventEmitter.__init__(self)
         self.__name = name
-        self.__attach_future = None
-        self.__detach_future = None
         self.__realtime = realtime
         self.__state = ChannelState.INITIALIZED
         self.__message_emitter = EventEmitter()
-        self.__timeout_in_secs = self.__realtime.options.realtime_request_timeout / 1000
         self.__state_timer: Timer | None = None
 
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
