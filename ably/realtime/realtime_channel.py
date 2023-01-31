@@ -224,19 +224,6 @@ class RealtimeChannel(EventEmitter, Channel):
 
         log.info(f'RealtimeChannel.subscribe called, channel = {self.name}, event = {event}')
 
-        if self.__realtime.connection.state == ConnectionState.CONNECTING:
-            await self.__realtime.connection.connect()
-        elif self.__realtime.connection.state != ConnectionState.CONNECTED:
-            raise AblyException(
-                'Cannot subscribe to channel, invalid connection state: {self.__realtime.connection.state}',
-                400,
-                40000
-            )
-
-        # RTL7c
-        if self.state in (ChannelState.INITIALIZED, ChannelState.ATTACHING, ChannelState.DETACHED):
-            await self.attach()
-
         if event is not None:
             # RTL7b
             self.__message_emitter.on(event, listener)
@@ -244,6 +231,7 @@ class RealtimeChannel(EventEmitter, Channel):
             # RTL7a
             self.__message_emitter.on(listener)
 
+        # RTL7c
         await self.attach()
 
     # RTL8
