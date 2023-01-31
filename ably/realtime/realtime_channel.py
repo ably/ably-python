@@ -25,7 +25,7 @@ class ChannelState(str, Enum):
     FAILED = 'failed'
 
 
-class Flags(int, Enum):
+class Flag(int, Enum):
     # Channel attach state flags
     HAS_PRESENCE = 1 << 0
     HAS_BACKLOG = 1 << 1
@@ -37,6 +37,10 @@ class Flags(int, Enum):
     PUBLISH = 1 << 17
     SUBSCRIBE = 1 << 18
     PRESENCE_SUBSCRIBE = 1 << 19
+
+
+def has_flag(message_flags: int, flag: Flag):
+    return message_flags & flag > 0
 
 
 @dataclass
@@ -77,6 +81,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__state = ChannelState.INITIALIZED
         self.__message_emitter = EventEmitter()
         self.__state_timer: Timer | None = None
+        self.__attach_resume = False
 
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
         # will be disrupted if the user called .off() to remove all listeners
@@ -131,6 +136,10 @@ class RealtimeChannel(EventEmitter, Channel):
             "action": ProtocolMessageAction.ATTACH,
             "channel": self.name,
         }
+
+        if self.__attach_resume:
+            attach_msg["flags"] = Flag.ATTACH_RESUME
+
         self._send_message(attach_msg)
 
     # RTL5
@@ -307,7 +316,9 @@ class RealtimeChannel(EventEmitter, Channel):
         action = msg.get('action')
         if action == ProtocolMessageAction.ATTACHED:
             if self.state == ChannelState.ATTACHING:
-                self._notify_state(ChannelState.ATTACHED)
+                flags = msg.get('flags')
+                resumed = has_flag(flags, Flag.RESUMED)
+                self._notify_state(ChannelState.ATTACHED, resumed=resumed)
             else:
                 log.warn("RealtimeChannel._on_message(): ATTACHED received while not attaching")
         elif action == ProtocolMessageAction.DETACHED:
@@ -332,6 +343,12 @@ class RealtimeChannel(EventEmitter, Channel):
 
         if state == self.state:
             return
+
+        # RTL4j1
+        if state == ChannelState.ATTACHED:
+            self.__attach_resume = True
+        if state in (ChannelState.DETACHING, ChannelState.FAILED):
+            self.__attach_resume = False
 
         state_change = ChannelStateChange(self.__state, state, resumed, reason=reason)
 
