@@ -266,7 +266,7 @@ class ConnectionManager(EventEmitter):
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
 
-    def on_connected(self, connection_details: ConnectionDetails, connection_id: str):
+    def on_connected(self, connection_details: ConnectionDetails, connection_id: str, reason=None):
         self.__fail_state = ConnectionState.DISCONNECTED
 
         self.__connection_details = connection_details
@@ -277,7 +277,9 @@ class ConnectionManager(EventEmitter):
                                                  ConnectionEvent.UPDATE)
             self._emit(ConnectionEvent.UPDATE, state_change)
         else:
-            self.notify_state(ConnectionState.CONNECTED)
+            self.notify_state(ConnectionState.CONNECTED, reason=reason)
+
+        self.ably.channels._on_connected()
 
     def on_disconnected(self, msg: dict):
         error = msg.get("error")

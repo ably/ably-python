@@ -320,7 +320,7 @@ class RealtimeChannel(EventEmitter, Channel):
     def _request_state(self, state: ChannelState):
         log.info(f'RealtimeChannel._request_state(): state = {state}')
         self._notify_state(state)
-        self.__check_pending_state()
+        self._check_pending_state()
 
     def _notify_state(self, state: ChannelState, reason=None):
         log.info(f'RealtimeChannel._notify_state(): state = {state}')
@@ -339,14 +339,11 @@ class RealtimeChannel(EventEmitter, Channel):
     def _send_message(self, msg):
         asyncio.create_task(self.__realtime.connection.connection_manager.send_protocol_message(msg))
 
-    def __check_pending_state(self):
+    def _check_pending_state(self):
         connection_state = self.__realtime.connection.connection_manager.state
 
-        if connection_state not in (
-            ConnectionState.CONNECTING,
-            ConnectionState.CONNECTED,
-            ConnectionState.DISCONNECTED,
-        ):
+        if connection_state is not ConnectionState.CONNECTED:
+            log.info(f"RealtimeChannel._check_pending_state(): connection state = {connection_state}")
             return
 
         if self.state == ChannelState.ATTACHING:
@@ -377,7 +374,7 @@ class RealtimeChannel(EventEmitter, Channel):
         elif self.state == ChannelState.DETACHING:
             self._notify_state(ChannelState.ATTACHED, reason=AblyException("Channel detach timed out", 408, 90007))
         else:
-            self.__check_pending_state()
+            self._check_pending_state()
 
     # RTL23
     @property
@@ -390,3 +387,7 @@ class RealtimeChannel(EventEmitter, Channel):
     def state(self):
         """Returns channel state"""
         return self.__state
+
+    @state.setter
+    def state(self, state: ChannelState):
+        self.__state = state
