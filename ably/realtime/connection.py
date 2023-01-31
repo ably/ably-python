@@ -161,6 +161,7 @@ class ConnectionManager(EventEmitter):
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
         self.transport: WebSocketTransport | None = None
         self.__connection_details = None
+        self.connection_id = None
         self.__fail_state = ConnectionState.DISCONNECTED
         self.transition_timer: Timer | None = None
         self.suspend_timer: Timer | None = None
@@ -184,6 +185,13 @@ class ConnectionManager(EventEmitter):
                 (self.options.connectivity_check_url != Defaults.connectivity_check_url or "yes" in response.text)
         except httpx.HTTPError:
             return False
+
+    def __get_transport_params(self):
+        protocol_version = Defaults.protocol_version
+        params = {"key": self.__ably.key, "v": protocol_version}
+        if self.connection_details:
+            params["resume"] = self.connection_details.connection_key
+        return params
 
     async def close_impl(self):
         log.debug('ConnectionManager.close_impl()')
@@ -258,10 +266,11 @@ class ConnectionManager(EventEmitter):
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
 
-    def on_connected(self, connection_details: ConnectionDetails):
+    def on_connected(self, connection_details: ConnectionDetails, connection_id: str):
         self.__fail_state = ConnectionState.DISCONNECTED
 
         self.__connection_details = connection_details
+        self.connection_id = connection_id
 
         if self.__state == ConnectionState.CONNECTED:
             state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
@@ -374,7 +383,8 @@ class ConnectionManager(EventEmitter):
             self.notify_state(self.__fail_state, reason=exception)
 
     async def try_host(self, host):
-        self.transport = WebSocketTransport(self, host)
+        params = self.__get_transport_params()
+        self.transport = WebSocketTransport(self, host, params)
         self._emit('transport.pending', self.transport)
         self.transport.connect()
 
