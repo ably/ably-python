@@ -95,6 +95,7 @@ class WebSocketTransport(EventEmitter):
         log.info(f'WebSocketTransport.on_protocol_message(): receieved protocol message: {msg}')
         action = msg.get('action')
         if action == ProtocolMessageAction.CONNECTED:
+            connection_id = msg.get('connectionId')
             connection_details = ConnectionDetails.from_dict(msg.get('connectionDetails'))
             max_idle_interval = connection_details.max_idle_interval
             if max_idle_interval:
@@ -103,7 +104,7 @@ class WebSocketTransport(EventEmitter):
             self.is_connected = True
             if self.host != self.options.get_realtime_host():  # RTN17e
                 self.options.fallback_realtime_host = self.host
-            self.connection_manager.on_connected(connection_details)
+            self.connection_manager.on_connected(connection_details, connection_id)
         elif action == ProtocolMessageAction.DISCONNECTED:
             self.connection_manager.on_disconnected(msg)
         elif action == ProtocolMessageAction.CLOSED:

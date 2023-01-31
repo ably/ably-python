@@ -161,6 +161,7 @@ class ConnectionManager(EventEmitter):
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
         self.transport: WebSocketTransport | None = None
         self.__connection_details = None
+        self.connection_id = None
         self.__fail_state = ConnectionState.DISCONNECTED
         self.transition_timer: Timer | None = None
         self.suspend_timer: Timer | None = None
@@ -265,10 +266,11 @@ class ConnectionManager(EventEmitter):
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
 
-    def on_connected(self, connection_details: ConnectionDetails):
+    def on_connected(self, connection_details: ConnectionDetails, connection_id: str):
         self.__fail_state = ConnectionState.DISCONNECTED
 
         self.__connection_details = connection_details
+        self.connection_id = connection_id
 
         if self.__state == ConnectionState.CONNECTED:
             state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,

@@ -12,13 +12,13 @@ class TestRealtimeResume(BaseAsyncTestCase):
         ably = await RestSetup.get_ably_realtime()
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
-        prev_connection_id = ably.connection.connection_details.connection_id
+        prev_connection_id = ably.connection.connection_manager.connection_id
         connection_key = ably.connection.connection_details.connection_key
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
-        new_connection_id = ably.connection.connection_details.connection_id
+        new_connection_id = ably.connection.connection_manager.connection_id
         assert ably.connection.connection_manager.transport.params["resume"] == connection_key
         assert prev_connection_id == new_connection_id
 
