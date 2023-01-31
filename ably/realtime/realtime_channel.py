@@ -89,7 +89,11 @@ class RealtimeChannel(EventEmitter, Channel):
             return
 
         # RTL4b
-        if self.__realtime.connection.state not in [ConnectionState.CONNECTING, ConnectionState.CONNECTED]:
+        if self.__realtime.connection.state not in [
+            ConnectionState.CONNECTING,
+            ConnectionState.CONNECTED,
+            ConnectionState.DISCONNECTED
+        ]:
             raise AblyException(
                 message=f"Unable to attach; channel state = {self.state}",
                 code=90001,
@@ -98,10 +102,6 @@ class RealtimeChannel(EventEmitter, Channel):
 
         if self.state != ChannelState.ATTACHING:
             self._request_state(ChannelState.ATTACHING)
-
-        # RTL4i - wait for pending connection
-        if self.__realtime.connection.state == ConnectionState.CONNECTING:
-            await self.__realtime.connect()
 
         state_change = await self.__internal_state_emitter.once_async()
 
