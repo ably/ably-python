@@ -97,7 +97,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         timeout = 0.000001
         ably = AblyRest(token="foo", http_request_timeout=timeout)
         assert ably.http.http_request_timeout == timeout
-        with pytest.raises(httpx.ReadTimeout):
+        with pytest.raises(httpx.WriteTimeout):
             await ably.request('GET', '/time')
         await ably.close()
 
