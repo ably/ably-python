@@ -182,7 +182,7 @@ class Http:
         if headers:
             all_headers.update(headers)
 
-        timeout = (self.http_open_timeout, self.http_request_timeout)
+        timeout = httpx.Timeout(self.http_request_timeout, connect=self.http_open_timeout, pool=None)
         http_max_retry_duration = self.http_max_retry_duration
         requested_at = time.time()
 
