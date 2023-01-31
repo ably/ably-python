@@ -29,6 +29,7 @@ class ChannelState(str, Enum):
 class ChannelStateChange:
     previous: ChannelState
     current: ChannelState
+    resumed: bool
     reason: Optional[AblyException] = None
 
 
@@ -310,7 +311,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self._notify_state(state)
         self._check_pending_state()
 
-    def _notify_state(self, state: ChannelState, reason=None):
+    def _notify_state(self, state: ChannelState, reason=None, resumed=False):
         log.info(f'RealtimeChannel._notify_state(): state = {state}')
 
         self.__clear_state_timer()
@@ -318,7 +319,7 @@ class RealtimeChannel(EventEmitter, Channel):
         if state == self.state:
             return
 
-        state_change = ChannelStateChange(self.__state, state, reason=reason)
+        state_change = ChannelStateChange(self.__state, state, resumed, reason=reason)
 
         self.__state = state
         self._emit(state, state_change)
