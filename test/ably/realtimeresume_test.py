@@ -1,6 +1,7 @@
 import asyncio
 from ably.realtime.connection import ConnectionState
 from ably.realtime.realtime_channel import ChannelState
+from ably.realtime.websockettransport import ProtocolMessageAction
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase, random_string
 
@@ -169,3 +170,35 @@ class TestRealtimeResume(BaseAsyncTestCase):
 
         await realtime.close()
         await rest.close()
+
+    async def test_resume_update_channel_attached(self):
+        realtime = await RestSetup.get_ably_realtime()
+
+        name = random_string(5)
+        channel = realtime.channels.get(name)
+        await channel.attach()
+        error_code = 123
+        error_status_code = 456
+        error_message = "some error"
+        message = {
+            "action": ProtocolMessageAction.ATTACHED,
+            "channel": name,
+            "error": {
+                "code": error_code,
+                "statusCode": error_status_code,
+                "message": error_message
+            }
+        }
+        future = asyncio.Future()
+
+        def on_update(state_change):
+            future.set_result(state_change)
+
+        channel.once("update", on_update)
+        await realtime.connection.connection_manager.transport.on_protocol_message(message)
+
+        state_change = await future
+        assert state_change.reason.code == error_code
+        assert state_change.reason.status_code == error_status_code
+        assert state_change.reason.message == error_message
+        await realtime.close()
