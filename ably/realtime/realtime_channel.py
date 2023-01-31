@@ -342,11 +342,8 @@ class RealtimeChannel(EventEmitter, Channel):
     def _check_pending_state(self):
         connection_state = self.__realtime.connection.connection_manager.state
 
-        if connection_state not in (
-            ConnectionState.CONNECTING,
-            ConnectionState.CONNECTED,
-            ConnectionState.DISCONNECTED,
-        ):
+        if connection_state is not ConnectionState.CONNECTED:
+            log.info(f"RealtimeChannel._check_pending_state(): connection state = {connection_state}")
             return
 
         if self.state == ChannelState.ATTACHING:
