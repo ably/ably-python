@@ -1,7 +1,22 @@
+import asyncio
 from ably.realtime.connection import ConnectionState
 from ably.realtime.realtime_channel import ChannelState
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase, random_string
+
+
+async def send_and_await(rest_channel, realtime_channel):
+    event = random_string(5)
+    message = random_string(5)
+    future = asyncio.Future()
+
+    def on_message(_):
+        future.set_result(None)
+
+    await realtime_channel.subscribe(event, on_message)
+    await rest_channel.publish(event, message)
+
+    await future
 
 
 class TestRealtimeResume(BaseAsyncTestCase):
@@ -108,3 +123,49 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await channel.once_async(ChannelState.ATTACHED)
 
         await ably.close()
+
+    async def test_resume_receives_channel_messages_while_disconnected(self):
+        realtime = await RestSetup.get_ably_realtime()
+        rest = await RestSetup.get_ably_rest()
+
+        channel_name = random_string(5)
+
+        realtime_channel = realtime.channels.get(channel_name)
+        rest_channel = rest.channels.get(channel_name)
+
+        await realtime.connection.once_async(ConnectionState.CONNECTED)
+
+        asyncio.create_task(realtime_channel.attach())
+        state_change = await realtime_channel.once_async(ChannelState.ATTACHED)
+        assert state_change.resumed is False
+
+        await send_and_await(rest_channel, realtime_channel)
+
+        assert realtime.connection.connection_manager.transport
+        await realtime.connection.connection_manager.transport.dispose()
+        realtime.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED, retry_immediately=False)
+
+        event_name = random_string(5)
+        message = random_string(5)
+        await rest_channel.publish(event_name, message)
+
+        future = asyncio.Future()
+
+        def on_message(message):
+            future.set_result(message)
+
+        await realtime_channel.subscribe(event_name, on_message)
+
+        realtime.connect()
+        await realtime.connection.once_async(ConnectionState.CONNECTED)
+
+        state_change = await realtime_channel.once_async(ChannelState.ATTACHED)
+
+        assert state_change.resumed is True
+
+        received_message = await future
+
+        assert received_message.data == message
+
+        await realtime.close()
+        await rest.close()
