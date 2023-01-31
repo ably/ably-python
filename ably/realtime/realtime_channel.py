@@ -82,6 +82,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__message_emitter = EventEmitter()
         self.__state_timer: Timer | None = None
         self.__attach_resume = False
+        self.__channel_serial: str | None = None
 
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
         # will be disrupted if the user called .off() to remove all listeners
@@ -139,6 +140,8 @@ class RealtimeChannel(EventEmitter, Channel):
 
         if self.__attach_resume:
             attach_msg["flags"] = Flag.ATTACH_RESUME
+        if self.__channel_serial:
+            attach_msg["channelSerial"] = self.__channel_serial
 
         self._send_message(attach_msg)
 
@@ -314,6 +317,12 @@ class RealtimeChannel(EventEmitter, Channel):
 
     def _on_message(self, msg):
         action = msg.get('action')
+
+        # RTL4c1
+        channel_serial = msg.get('channelSerial')
+        if channel_serial:
+            self.__channel_serial = channel_serial
+
         if action == ProtocolMessageAction.ATTACHED:
             if self.state == ChannelState.ATTACHING:
                 flags = msg.get('flags')
@@ -349,6 +358,10 @@ class RealtimeChannel(EventEmitter, Channel):
             self.__attach_resume = True
         if state in (ChannelState.DETACHING, ChannelState.FAILED):
             self.__attach_resume = False
+
+        # RTP5a1
+        if state in (ChannelState.DETACHED, ChannelState.SUSPENDED, ChannelState.FAILED):
+            self.__channel_serial = None
 
         state_change = ChannelStateChange(self.__state, state, resumed, reason=reason)
 
