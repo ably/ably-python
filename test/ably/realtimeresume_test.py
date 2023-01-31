@@ -23,3 +23,17 @@ class TestRealtimeResume(BaseAsyncTestCase):
         assert prev_connection_id == new_connection_id
 
         await ably.close()
+
+    async def test_fatal_resume_error(self):
+        ably = await RestSetup.get_ably_realtime()
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        key_name = ably.options.key_name
+        ably.key = f"{key_name}:wrong-secret"
+        await ably.connection.connection_manager.transport.dispose()
+        ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
+
+        state_change = await ably.connection.once_async(ConnectionState.FAILED)
+        assert state_change.reason.code == 40101
+        assert state_change.reason.status_code == 401
+        await ably.close()
