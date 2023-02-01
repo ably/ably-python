@@ -22,7 +22,7 @@ port = 80
 tls_port = 443
 
 if host and not host.endswith("rest.ably.io"):
-    tls = tls and not host.equals("localhost")
+    tls = tls and host != "localhost"
     port = 8080
     tls_port = 8081
 
@@ -37,7 +37,7 @@ class TestApp:
     __test_vars = None
 
     @staticmethod
-    async def get_test_vars(sender=None):
+    async def get_test_vars():
         if not TestApp.__test_vars:
             r = await ably.http.post("/apps", body=app_spec_local, skip_auth=True)
             AblyException.raise_for_response(r)
@@ -68,8 +68,8 @@ class TestApp:
 
         return TestApp.__test_vars
 
-    @classmethod
-    async def get_ably_rest(cls, **kw):
+    @staticmethod
+    async def get_ably_rest(**kw):
         test_vars = await TestApp.get_test_vars()
         options = {
             'key': test_vars["keys"][0]["key_str"],
@@ -82,8 +82,8 @@ class TestApp:
         options.update(kw)
         return AblyRest(**options)
 
-    @classmethod
-    async def get_ably_realtime(cls, **kw):
+    @staticmethod
+    async def get_ably_realtime(**kw):
         test_vars = await TestApp.get_test_vars()
         options = {
             'key': test_vars["keys"][0]["key_str"],
@@ -97,15 +97,15 @@ class TestApp:
         options.update(kw)
         return AblyRealtime(**options)
 
-    @classmethod
-    async def clear_test_vars(cls):
+    @staticmethod
+    async def clear_test_vars():
         test_vars = TestApp.__test_vars
         options = Options(key=test_vars["keys"][0]["key_str"])
         options.rest_host = test_vars["host"]
         options.port = test_vars["port"]
         options.tls_port = test_vars["tls_port"]
         options.tls = test_vars["tls"]
-        ably = await cls.get_ably_rest()
+        ably = await TestApp.get_ably_rest()
         await ably.http.delete('/apps/' + test_vars['app_id'])
         TestApp.__test_vars = None
         await ably.close()
