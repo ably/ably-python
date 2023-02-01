@@ -184,16 +184,16 @@ class Channel(SingleDispatch):
 class Channels:
     def __init__(self, rest):
         self.__ably = rest
-        self.__attached = OrderedDict()
+        self.__all = OrderedDict()
 
     def get(self, name, **kwargs):
         if isinstance(name, bytes):
             name = name.decode('ascii')
 
-        if name not in self.__attached:
-            result = self.__attached[name] = Channel(self.__ably, name, kwargs)
+        if name not in self.__all:
+            result = self.__all[name] = Channel(self.__ably, name, kwargs)
         else:
-            result = self.__attached[name]
+            result = self.__all[name]
             if len(kwargs) != 0:
                 result.options = kwargs
 
@@ -213,13 +213,13 @@ class Channels:
         else:
             name = item
 
-        return name in self.__attached
+        return name in self.__all
 
     def __iter__(self):
-        return iter(self.__attached.values())
+        return iter(self.__all.values())
 
     def release(self, key):
-        del self.__attached[key]
+        del self.__all[key]
 
     def __delitem__(self, key):
         return self.release(key)
