@@ -314,3 +314,32 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.once_async(ChannelState.ATTACHED)
 
         await ably.close()
+
+    # RTL13b
+    async def test_channel_attach_retry_after_unsuccessful_attach(self):
+        ably = await TestApp.get_ably_realtime(channel_retry_timeout=500, realtime_request_timeout=1000)
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name)
+        call_count = 0
+
+        original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
+
+        # Discard the first ATTACHED message recieved
+        async def new_send_protocol_message(msg):
+            nonlocal call_count
+            if call_count == 0 and msg.get('action') == ProtocolMessageAction.ATTACH:
+                call_count += 1
+                return
+            await original_send_protocol_message(msg)
+        ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
+
+        with pytest.raises(AblyException):
+            await channel.attach()
+
+        # The channel should become SUSPENDED but will still retry again after channel_retry_timeout
+        assert channel.state == ChannelState.SUSPENDED
+
+        # Make sure the channel sucessfully re-attaches
+        await channel.once_async(ChannelState.ATTACHED)
+
+        await ably.close()
