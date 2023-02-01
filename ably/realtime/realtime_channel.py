@@ -324,9 +324,23 @@ class RealtimeChannel(EventEmitter, Channel):
             self.__channel_serial = channel_serial
 
         if action == ProtocolMessageAction.ATTACHED:
-            if self.state == ChannelState.ATTACHING:
-                flags = msg.get('flags')
+            flags = msg.get('flags')
+            error = msg.get("error")
+            exception = None
+            resumed = None
+
+            if error:
+                exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
+
+            if flags:
                 resumed = has_flag(flags, Flag.RESUMED)
+
+            #  RTL12
+            if self.state == ChannelState.ATTACHED:
+                if not resumed:
+                    state_change = ChannelStateChange(self.state, ChannelState.ATTACHED, resumed, exception)
+                    self._emit("update", state_change)
+            elif self.state == ChannelState.ATTACHING:
                 self._notify_state(ChannelState.ATTACHED, resumed=resumed)
             else:
                 log.warn("RealtimeChannel._on_message(): ATTACHED received while not attaching")
