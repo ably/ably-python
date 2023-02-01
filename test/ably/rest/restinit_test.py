@@ -8,14 +8,14 @@ from ably import AblyException
 from ably.transport.defaults import Defaults
 from ably.types.tokendetails import TokenDetails
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 
 class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
 
     @dont_vary_protocol
     def test_key_only(self):
@@ -181,8 +181,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     # RSA10k
     async def test_query_time_param(self):
-        ably = await RestSetup.get_ably_rest(query_time=True,
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(query_time=True,
+                                           use_binary_protocol=self.use_binary_protocol)
 
         timestamp = ably.auth._timestamp
         with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\

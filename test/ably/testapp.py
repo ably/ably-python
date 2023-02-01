@@ -33,12 +33,12 @@ ably = AblyRest(token='not_a_real_token', rest_host=host,
                 use_binary_protocol=False)
 
 
-class RestSetup:
+class TestApp:
     __test_vars = None
 
     @staticmethod
     async def get_test_vars(sender=None):
-        if not RestSetup.__test_vars:
+        if not TestApp.__test_vars:
             r = await ably.http.post("/apps", body=app_spec_local, skip_auth=True)
             AblyException.raise_for_response(r)
 
@@ -62,15 +62,15 @@ class RestSetup:
                 } for k in app_spec.get("keys", [])]
             }
 
-            RestSetup.__test_vars = test_vars
+            TestApp.__test_vars = test_vars
             log.debug([(app_id, k.get("id", ""), k.get("value", ""))
                       for k in app_spec.get("keys", [])])
 
-        return RestSetup.__test_vars
+        return TestApp.__test_vars
 
     @classmethod
     async def get_ably_rest(cls, **kw):
-        test_vars = await RestSetup.get_test_vars()
+        test_vars = await TestApp.get_test_vars()
         options = {
             'key': test_vars["keys"][0]["key_str"],
             'rest_host': test_vars["host"],
@@ -84,7 +84,7 @@ class RestSetup:
 
     @classmethod
     async def get_ably_realtime(cls, **kw):
-        test_vars = await RestSetup.get_test_vars()
+        test_vars = await TestApp.get_test_vars()
         options = {
             'key': test_vars["keys"][0]["key_str"],
             'realtime_host': test_vars["realtime_host"],
@@ -99,7 +99,7 @@ class RestSetup:
 
     @classmethod
     async def clear_test_vars(cls):
-        test_vars = RestSetup.__test_vars
+        test_vars = TestApp.__test_vars
         options = Options(key=test_vars["keys"][0]["key_str"])
         options.rest_host = test_vars["host"]
         options.port = test_vars["port"]
@@ -107,5 +107,5 @@ class RestSetup:
         options.tls = test_vars["tls"]
         ably = await cls.get_ably_rest()
         await ably.http.delete('/apps/' + test_vars['app_id'])
-        RestSetup.__test_vars = None
+        TestApp.__test_vars = None
         await ably.close()

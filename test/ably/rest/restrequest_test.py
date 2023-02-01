@@ -3,7 +3,7 @@ import pytest
 
 from ably import AblyRest
 from ably.http.paginatedresult import HttpPaginatedResponse
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
 
@@ -12,8 +12,8 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
 class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
-        self.test_vars = await RestSetup.get_test_vars()
+        self.ably = await TestApp.get_ably_rest()
+        self.test_vars = await TestApp.get_test_vars()
 
         # Populate the channel (using the new api)
         self.channel = self.get_channel_name()

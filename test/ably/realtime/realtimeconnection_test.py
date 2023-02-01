@@ -3,18 +3,18 @@ from ably.realtime.connection import ConnectionEvent, ConnectionState
 import pytest
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.util.exceptions import AblyException
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 from ably.transport.defaults import Defaults
 
 
 class TestRealtimeConnection(BaseAsyncTestCase):
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
         self.valid_key_format = "api:key"
 
     async def test_connection_state(self):
-        ably = await RestSetup.get_ably_realtime(auto_connect=False)
+        ably = await TestApp.get_ably_realtime(auto_connect=False)
         assert ably.connection.state == ConnectionState.INITIALIZED
         ably.connect()
         await ably.connection.once_async()
@@ -25,12 +25,12 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.CLOSED
 
     async def test_connection_state_is_connecting_on_init(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         assert ably.connection.state == ConnectionState.CONNECTING
         await ably.close()
 
     async def test_auth_invalid_key(self):
-        ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
+        ably = await TestApp.get_ably_realtime(key=self.valid_key_format)
         state_change = await ably.connection.once_async()
         assert ably.connection.state == ConnectionState.FAILED
         assert state_change.reason
@@ -42,7 +42,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_connection_ping_connected(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
@@ -50,7 +50,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_connection_ping_initialized(self):
-        ably = await RestSetup.get_ably_realtime(auto_connect=False)
+        ably = await TestApp.get_ably_realtime(auto_connect=False)
         assert ably.connection.state == ConnectionState.INITIALIZED
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
@@ -58,7 +58,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert exception.value.status_code == 40000
 
     async def test_connection_ping_failed(self):
-        ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
+        ably = await TestApp.get_ably_realtime(key=self.valid_key_format)
         await ably.connection.once_async(ConnectionState.FAILED)
         assert ably.connection.state == ConnectionState.FAILED
         with pytest.raises(AblyException) as exception:
@@ -68,7 +68,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_connection_ping_closed(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         ably.connect()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         await ably.close()
@@ -78,7 +78,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert exception.value.status_code == 40000
 
     async def test_auto_connect(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         connect_future = asyncio.Future()
         ably.connection.on(ConnectionState.CONNECTED, lambda change: connect_future.set_result(change))
         await connect_future
@@ -86,7 +86,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_connection_state_change(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
 
         connected_future = asyncio.Future()
 
@@ -101,7 +101,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_connection_state_change_reason(self):
-        ably = await RestSetup.get_ably_realtime(key=self.valid_key_format)
+        ably = await TestApp.get_ably_realtime(key=self.valid_key_format)
 
         state_change = await ably.connection.once_async()
 
@@ -112,7 +112,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_realtime_request_timeout_connect(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=0.000001)
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=0.000001)
         state_change = await ably.connection.once_async()
         assert state_change.reason is not None
         assert state_change.reason.code == 50003
@@ -122,7 +122,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_realtime_request_timeout_ping(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000)
         await ably.connection.once_async(ConnectionState.CONNECTED)
 
         original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
@@ -142,7 +142,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_disconnected_retry_timeout(self):
-        ably = await RestSetup.get_ably_realtime(disconnected_retry_timeout=2000, auto_connect=False)
+        ably = await TestApp.get_ably_realtime(disconnected_retry_timeout=2000, auto_connect=False)
         original_connect = ably.connection.connection_manager.connect_base
         call_count = 0
 
@@ -167,24 +167,24 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_connectivity_check_default(self):
-        ably = await RestSetup.get_ably_realtime(auto_connect=False)
+        ably = await TestApp.get_ably_realtime(auto_connect=False)
         # The default connectivity check should return True
         assert ably.connection.connection_manager.check_connection() is True
 
     async def test_connectivity_check_non_default(self):
-        ably = await RestSetup.get_ably_realtime(
+        ably = await TestApp.get_ably_realtime(
             connectivity_check_url="https://echo.ably.io/respondWith?status=200", auto_connect=False)
         # A non-default URL should return True with a HTTP OK despite not returning "Yes" in the body
         assert ably.connection.connection_manager.check_connection() is True
 
     async def test_connectivity_check_bad_status(self):
-        ably = await RestSetup.get_ably_realtime(
+        ably = await TestApp.get_ably_realtime(
             connectivity_check_url="https://echo.ably.io/respondWith?status=400", auto_connect=False)
         # Should return False when the URL returns a non-2xx response code
         assert ably.connection.connection_manager.check_connection() is False
 
     async def test_unroutable_host(self):
-        ably = await RestSetup.get_ably_realtime(realtime_host="10.255.255.1", realtime_request_timeout=3000)
+        ably = await TestApp.get_ably_realtime(realtime_host="10.255.255.1", realtime_request_timeout=3000)
         state_change = await ably.connection.once_async()
         assert state_change.reason
         assert state_change.reason.code == 50003
@@ -194,7 +194,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_invalid_host(self):
-        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost")
+        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost")
         state_change = await ably.connection.once_async()
         assert state_change.reason
         assert state_change.reason.code == 40000
@@ -205,7 +205,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_connection_state_ttl(self):
         Defaults.connection_state_ttl = 10
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
 
         state_change = await ably.connection.once_async()
 
@@ -220,7 +220,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         Defaults.connection_state_ttl = 120000
 
     async def test_handle_connected(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         test_future = asyncio.Future()
 
         def on_update(connection_state):
@@ -242,7 +242,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_max_idle_interval(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000)
 
         def on_transport_pending(transport):
             original_on_protocol_message = transport.on_protocol_message
@@ -269,7 +269,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
     # RTN15a
     async def test_retry_immediately_upon_unexpected_disconnection(self):
         # Set timeouts to 500s so that if the client uses retry delay the test will fail with a timeout
-        ably = await RestSetup.get_ably_realtime(
+        ably = await TestApp.get_ably_realtime(
             disconnected_retry_timeout=500_000,
             suspended_retry_timeout=500_000
         )
@@ -289,8 +289,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_fallback_host(self):
         fallback_host = 'sandbox-realtime.ably.io'
-        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
-                                                 fallback_hosts=[fallback_host])
+        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
+                                               fallback_hosts=[fallback_host])
         await ably.connection.once_async(ConnectionState.CONNECTED)
         assert ably.connection.connection_manager.transport.host == fallback_host
         assert ably.options.fallback_realtime_host == fallback_host
@@ -298,8 +298,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_fallback_host_no_connection(self):
         fallback_host = 'sandbox-realtime.ably.io'
-        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
-                                                 fallback_hosts=[fallback_host])
+        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
+                                               fallback_hosts=[fallback_host])
 
         def check_connection():
             return False
@@ -312,8 +312,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_fallback_host_disconnected_protocol_msg(self):
         fallback_host = 'sandbox-realtime.ably.io'
-        ably = await RestSetup.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
-                                                 fallback_hosts=[fallback_host])
+        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
+                                               fallback_hosts=[fallback_host])
 
         async def on_transport_pending(transport):
             await transport.on_protocol_message({'action': 6, "error": {"statusCode": 500, "code": 500}})

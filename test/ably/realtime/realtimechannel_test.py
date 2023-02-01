@@ -3,7 +3,7 @@ import pytest
 from ably.realtime.realtime_channel import ChannelState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.message import Message
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, random_string
 from ably.realtime.connection import ConnectionState
 from ably.util.exceptions import AblyException
@@ -11,24 +11,24 @@ from ably.util.exceptions import AblyException
 
 class TestRealtimeChannel(BaseAsyncTestCase):
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
         self.valid_key_format = "api:key"
 
     async def test_channels_get(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         channel = ably.channels.get('my_channel')
         assert channel == ably.channels.all['my_channel']
         await ably.close()
 
     async def test_channels_release(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         ably.channels.get('my_channel')
         ably.channels.release('my_channel')
         assert ably.channels.all.get('my_channel') is None
         await ably.close()
 
     async def test_channel_attach(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get('my_channel')
         assert channel.state == ChannelState.INITIALIZED
@@ -37,7 +37,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await ably.close()
 
     async def test_channel_detach(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get('my_channel')
         await channel.attach()
@@ -47,7 +47,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
     # RTL7b
     async def test_subscribe(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
 
         first_message_future = asyncio.Future()
         second_message_future = asyncio.Future()
@@ -78,7 +78,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await ably.close()
 
     async def test_subscribe_coroutine(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get('my_channel')
         await channel.attach()
@@ -92,7 +92,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.subscribe('event', listener)
 
         # publish a message using rest client
-        rest = await RestSetup.get_ably_rest()
+        rest = await TestApp.get_ably_rest()
         rest_channel = rest.channels.get('my_channel')
         await rest_channel.publish('event', 'data')
 
@@ -106,7 +106,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
     # RTL7a
     async def test_subscribe_all_events(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get('my_channel')
         await channel.attach()
@@ -119,7 +119,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.subscribe(listener)
 
         # publish a message using rest client
-        rest = await RestSetup.get_ably_rest()
+        rest = await TestApp.get_ably_rest()
         rest_channel = rest.channels.get('my_channel')
         await rest_channel.publish('event', 'data')
         message = await message_future
@@ -133,7 +133,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
     # RTL7c
     async def test_subscribe_auto_attach(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get('my_channel')
         assert channel.state == ChannelState.INITIALIZED
@@ -149,7 +149,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
     # RTL8b
     async def test_unsubscribe(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get('my_channel')
         await channel.attach()
@@ -165,7 +165,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.subscribe('event', listener)
 
         # publish a message using rest client
-        rest = await RestSetup.get_ably_rest()
+        rest = await TestApp.get_ably_rest()
         rest_channel = rest.channels.get('my_channel')
         await rest_channel.publish('event', 'data')
         await message_future
@@ -184,7 +184,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
     # RTL8c
     async def test_unsubscribe_all(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get('my_channel')
         await channel.attach()
@@ -200,7 +200,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.subscribe('event', listener)
 
         # publish a message using rest client
-        rest = await RestSetup.get_ably_rest()
+        rest = await TestApp.get_ably_rest()
         rest_channel = rest.channels.get('my_channel')
         await rest_channel.publish('event', 'data')
         await message_future
@@ -218,7 +218,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await rest.close()
 
     async def test_realtime_request_timeout_attach(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000)
         await ably.connection.once_async(ConnectionState.CONNECTED)
         original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
 
@@ -236,7 +236,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await ably.close()
 
     async def test_realtime_request_timeout_detach(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000)
         await ably.connection.once_async(ConnectionState.CONNECTED)
         original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
 
@@ -255,7 +255,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await ably.close()
 
     async def test_channel_detached_once_connection_closed(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000)
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get(random_string(5))
         await channel.attach()
@@ -264,7 +264,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         assert channel.state == ChannelState.DETACHED
 
     async def test_channel_failed_once_connection_failed(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000)
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get(random_string(5))
         await channel.attach()
@@ -275,7 +275,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await ably.close()
 
     async def test_channel_suspended_once_connection_suspended(self):
-        ably = await RestSetup.get_ably_realtime(realtime_request_timeout=2000)
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000)
         await ably.connection.once_async(ConnectionState.CONNECTED)
         channel = ably.channels.get(random_string(5))
         await channel.attach()
@@ -286,7 +286,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await ably.close()
 
     async def test_attach_while_connecting(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
         channel = ably.channels.get(random_string(5))
         await channel.attach()
         assert channel.state == ChannelState.ATTACHED

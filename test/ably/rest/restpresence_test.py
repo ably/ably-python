@@ -7,14 +7,14 @@ from ably.http.paginatedresult import PaginatedResult
 from ably.types.presence import PresenceMessage
 
 from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseAsyncTestCase
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 
 
 class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
-        self.ably = await RestSetup.get_ably_rest()
+        self.test_vars = await TestApp.get_test_vars()
+        self.ably = await TestApp.get_ably_rest()
         self.channel = self.ably.channels.get('persisted:presence_fixtures')
         self.ably.options.use_binary_protocol = True
 
@@ -190,7 +190,7 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 class TestPresenceCrypt(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
+        self.ably = await TestApp.get_ably_rest()
         key = b'0123456789abcdef'
         self.channel = self.ably.channels.get('persisted:presence_fixtures', cipher={'key': key})
 

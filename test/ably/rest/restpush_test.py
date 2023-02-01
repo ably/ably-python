@@ -9,7 +9,7 @@ from ably import AblyException, AblyAuthException
 from ably import DeviceDetails, PushChannelSubscription
 from ably.http.paginatedresult import PaginatedResult
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, BaseAsyncTestCase
 from test.ably.utils import new_dict, random_string, get_random_key
 
@@ -20,7 +20,7 @@ DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad
 class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
+        self.ably = await TestApp.get_ably_rest()
 
         # Register several devices for later use
         self.devices = {}

@@ -3,7 +3,7 @@ from httpx import Response
 
 from ably.http.paginatedresult import PaginatedResult
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
 
@@ -28,7 +28,7 @@ class TestPaginatedResult(BaseAsyncTestCase):
         return callback
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
+        self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
         # Mocked responses
         # without specific headers
         self.mocked_api = respx.mock(base_url='http://rest.ably.io')
