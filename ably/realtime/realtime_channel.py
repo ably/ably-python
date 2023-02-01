@@ -3,7 +3,8 @@ from dataclasses import dataclass
 import logging
 from typing import Optional
 
-from ably.realtime.connection import ConnectionState, ProtocolMessageAction
+from ably.realtime.connection import ConnectionState
+from ably.realtime.websockettransport import ProtocolMessageAction
 from ably.rest.channel import Channel
 from ably.types.message import Message
 from ably.util.eventemitter import EventEmitter
