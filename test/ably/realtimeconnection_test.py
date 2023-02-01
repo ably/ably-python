@@ -1,6 +1,7 @@
 import asyncio
-from ably.realtime.connection import ConnectionEvent, ConnectionState, ProtocolMessageAction
+from ably.realtime.connection import ConnectionEvent, ConnectionState
 import pytest
+from ably.transport.websockettransport import ProtocolMessageAction
 from ably.util.exceptions import AblyException
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase

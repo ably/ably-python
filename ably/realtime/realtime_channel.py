@@ -1,54 +1,18 @@
 import asyncio
-from dataclasses import dataclass
 import logging
-from typing import Optional
 
-from ably.realtime.connection import ConnectionState, ProtocolMessageAction
+from ably.realtime.connection import ConnectionState
+from ably.transport.websockettransport import ProtocolMessageAction
 from ably.rest.channel import Channel
+from ably.types.channelstate import ChannelState, ChannelStateChange
+from ably.types.flags import Flag, has_flag
 from ably.types.message import Message
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
-from enum import Enum
 
 from ably.util.helper import Timer, is_callable_or_coroutine
 
 log = logging.getLogger(__name__)
-
-
-class ChannelState(str, Enum):
-    INITIALIZED = 'initialized'
-    ATTACHING = 'attaching'
-    ATTACHED = 'attached'
-    DETACHING = 'detaching'
-    DETACHED = 'detached'
-    SUSPENDED = 'suspended'
-    FAILED = 'failed'
-
-
-class Flag(int, Enum):
-    # Channel attach state flags
-    HAS_PRESENCE = 1 << 0
-    HAS_BACKLOG = 1 << 1
-    RESUMED = 1 << 2
-    TRANSIENT = 1 << 4
-    ATTACH_RESUME = 1 << 5
-    # Channel mode flags
-    PRESENCE = 1 << 16
-    PUBLISH = 1 << 17
-    SUBSCRIBE = 1 << 18
-    PRESENCE_SUBSCRIBE = 1 << 19
-
-
-def has_flag(message_flags: int, flag: Flag):
-    return message_flags & flag > 0
-
-
-@dataclass
-class ChannelStateChange:
-    previous: ChannelState
-    current: ChannelState
-    resumed: bool
-    reason: Optional[AblyException] = None
 
 
 class RealtimeChannel(EventEmitter, Channel):
@@ -327,7 +291,7 @@ class RealtimeChannel(EventEmitter, Channel):
             flags = msg.get('flags')
             error = msg.get("error")
             exception = None
-            resumed = None
+            resumed = False
 
             if error:
                 exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
