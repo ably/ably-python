@@ -167,7 +167,7 @@ class Channels(RestChannels):
     """
 
     # RTS3
-    def get(self, name):
+    def get(self, name) -> RealtimeChannel:
         """Creates a new RealtimeChannel object, or returns the existing channel object.
 
         Parameters

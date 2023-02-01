@@ -3,6 +3,7 @@ from collections import OrderedDict
 import logging
 import json
 import os
+from typing import Iterator
 from urllib import parse
 import warnings
 
@@ -215,7 +216,7 @@ class Channels:
 
         return name in self.__all
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.__all.values())
 
     def release(self, key):
