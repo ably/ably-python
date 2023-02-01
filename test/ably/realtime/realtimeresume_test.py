@@ -2,7 +2,7 @@ import asyncio
 from ably.realtime.connection import ConnectionState
 from ably.realtime.realtime_channel import ChannelState
 from ably.transport.websockettransport import ProtocolMessageAction
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, random_string
 
 
@@ -22,12 +22,12 @@ async def send_and_await(rest_channel, realtime_channel):
 
 class TestRealtimeResume(BaseAsyncTestCase):
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
         self.valid_key_format = "api:key"
 
     # RTN15c6 - valid resume response
     async def test_connection_resume(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
         prev_connection_id = ably.connection.connection_manager.connection_id
@@ -44,7 +44,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
 
     # RTN15c4 - fatal resume error
     async def test_fatal_resume_error(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
         key_name = ably.options.key_name
@@ -59,7 +59,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
 
     # RTN15c7 - invalid resume response
     async def test_invalid_resume_response(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
 
@@ -79,7 +79,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await ably.close()
 
     async def test_attached_channel_reattaches_on_invalid_resume(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
 
@@ -103,7 +103,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await ably.close()
 
     async def test_suspended_channel_reattaches_on_invalid_resume(self):
-        ably = await RestSetup.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime()
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
 
@@ -126,8 +126,8 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await ably.close()
 
     async def test_resume_receives_channel_messages_while_disconnected(self):
-        realtime = await RestSetup.get_ably_realtime()
-        rest = await RestSetup.get_ably_rest()
+        realtime = await TestApp.get_ably_realtime()
+        rest = await TestApp.get_ably_rest()
 
         channel_name = random_string(5)
 
@@ -172,7 +172,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await rest.close()
 
     async def test_resume_update_channel_attached(self):
-        realtime = await RestSetup.get_ably_realtime()
+        realtime = await TestApp.get_ably_realtime()
 
         name = random_string(5)
         channel = realtime.channels.get(name)

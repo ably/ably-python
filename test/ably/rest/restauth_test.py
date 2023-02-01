@@ -17,7 +17,7 @@ from ably import Auth
 from ably import AblyAuthException
 from ably.types.tokendetails import TokenDetails
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 if sys.version_info >= (3, 8):
@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 # does not make any request, no need to vary by protocol
 class TestAuth(BaseAsyncTestCase):
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
 
     def test_auth_init_key_only(self):
         ably = AblyRest(key=self.test_vars["keys"][0]["key_str"])
@@ -58,7 +58,7 @@ class TestAuth(BaseAsyncTestCase):
             callback_called.append(True)
             return "this_is_not_really_a_token_request"
 
-        ably = await RestSetup.get_ably_rest(
+        ably = await TestApp.get_ably_rest(
             key=None,
             key_name=self.test_vars["keys"][0]["key_name"],
             auth_callback=token_callback)
@@ -78,7 +78,7 @@ class TestAuth(BaseAsyncTestCase):
         assert ably.auth.client_id == 'testClientId'
 
     async def test_auth_init_with_token(self):
-        ably = await RestSetup.get_ably_rest(key=None, token="this_is_not_really_a_token")
+        ably = await TestApp.get_ably_rest(key=None, token="this_is_not_really_a_token")
         assert Auth.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
 
     # RSA11
@@ -168,8 +168,8 @@ class TestAuth(BaseAsyncTestCase):
 class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
-        self.test_vars = await RestSetup.get_test_vars()
+        self.ably = await TestApp.get_ably_rest()
+        self.test_vars = await TestApp.get_test_vars()
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -224,22 +224,22 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
     async def test_with_token_str_https(self):
         token = await self.ably.auth.authorize()
         token = token.token
-        ably = await RestSetup.get_ably_rest(key=None, token=token, tls=True,
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(key=None, token=token, tls=True,
+                                           use_binary_protocol=self.use_binary_protocol)
         await ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
         await ably.close()
 
     async def test_with_token_str_http(self):
         token = await self.ably.auth.authorize()
         token = token.token
-        ably = await RestSetup.get_ably_rest(key=None, token=token, tls=False,
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(key=None, token=token, tls=False,
+                                           use_binary_protocol=self.use_binary_protocol)
         await ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
         await ably.close()
 
     async def test_if_default_client_id_is_used(self):
-        ably = await RestSetup.get_ably_rest(client_id='my_client_id',
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(client_id='my_client_id',
+                                           use_binary_protocol=self.use_binary_protocol)
         token = await ably.auth.authorize()
         assert token.client_id == 'my_client_id'
         await ably.close()
@@ -304,7 +304,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
     async def test_client_id_precedence(self):
         client_id = uuid.uuid4().hex
         overridden_client_id = uuid.uuid4().hex
-        ably = await RestSetup.get_ably_rest(
+        ably = await TestApp.get_ably_rest(
             use_binary_protocol=self.use_binary_protocol,
             client_id=client_id,
             default_token_params={'client_id': overridden_client_id})
@@ -337,20 +337,20 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
 class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
 
     def per_protocol_setup(self, use_binary_protocol):
         self.use_binary_protocol = use_binary_protocol
 
     async def test_with_key(self):
-        ably = await RestSetup.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
 
         token_details = await ably.auth.request_token()
         assert isinstance(token_details, TokenDetails)
         await ably.close()
 
-        ably = await RestSetup.get_ably_rest(key=None, token_details=token_details,
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(key=None, token_details=token_details,
+                                           use_binary_protocol=self.use_binary_protocol)
         channel = self.get_channel_name('test_request_token_with_key')
 
         await ably.channels[channel].publish('event', 'foo')
@@ -364,7 +364,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
     async def test_with_auth_url_headers_and_params_POST(self):  # noqa: N802
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
-        ably = await RestSetup.get_ably_rest(key=None, auth_url=url)
+        ably = await TestApp.get_ably_rest(key=None, auth_url=url)
 
         auth_params = {'foo': 'auth', 'spam': 'eggs'}
         token_params = {'foo': 'token'}
@@ -396,7 +396,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
     async def test_with_auth_url_headers_and_params_GET(self):  # noqa: N802
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
-        ably = await RestSetup.get_ably_rest(
+        ably = await TestApp.get_ably_rest(
             key=None, auth_url=url,
             auth_headers={'this': 'will_not_be_used'},
             auth_params={'this': 'will_not_be_used'})
@@ -429,7 +429,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
             assert token_params == called_token_params
             return 'token_string'
 
-        ably = await RestSetup.get_ably_rest(key=None, auth_callback=callback)
+        ably = await TestApp.get_ably_rest(key=None, auth_callback=callback)
 
         token_details = await ably.auth.request_token(
             token_params=called_token_params, auth_callback=callback)
@@ -450,7 +450,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
     async def test_when_auth_url_has_query_string(self):
         url = 'http://www.example.com?with=query'
         headers = {'foo': 'bar'}
-        ably = await RestSetup.get_ably_rest(key=None, auth_url=url)
+        ably = await TestApp.get_ably_rest(key=None, auth_url=url)
         auth_route = respx.get('http://www.example.com', params={'with': 'query', 'spam': 'eggs'}).mock(
             return_value=Response(status_code=200, content='token_string'))
         await ably.auth.request_token(auth_url=url,
@@ -461,7 +461,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
 
     @dont_vary_protocol
     async def test_client_id_null_for_anonymous_auth(self):
-        ably = await RestSetup.get_ably_rest(
+        ably = await TestApp.get_ably_rest(
             key=None,
             key_name=self.test_vars["keys"][0]["key_name"],
             key_secret=self.test_vars["keys"][0]["key_secret"])
@@ -475,7 +475,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
     @dont_vary_protocol
     async def test_client_id_null_until_auth(self):
         client_id = uuid.uuid4().hex
-        token_ably = await RestSetup.get_ably_rest(
+        token_ably = await TestApp.get_ably_rest(
             default_token_params={'client_id': client_id})
         # before auth, client_id is None
         assert token_ably.auth.client_id is None
@@ -492,8 +492,8 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
 class TestRenewToken(BaseAsyncTestCase):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
-        self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
+        self.test_vars = await TestApp.get_test_vars()
+        self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
         # with headers
         self.publish_attempts = 0
         self.channel = uuid.uuid4().hex
@@ -556,7 +556,7 @@ class TestRenewToken(BaseAsyncTestCase):
     async def test_when_not_renewable(self):
         await self.ably.close()
 
-        self.ably = await RestSetup.get_ably_rest(
+        self.ably = await TestApp.get_ably_rest(
             key=None,
             token='token ID cannot be used to create a new token',
             use_binary_protocol=False)
@@ -574,7 +574,7 @@ class TestRenewToken(BaseAsyncTestCase):
     # RSA4a
     async def test_when_not_renewable_with_token_details(self):
         token_details = TokenDetails(token='a_dummy_token')
-        self.ably = await RestSetup.get_ably_rest(
+        self.ably = await TestApp.get_ably_rest(
             key=None,
             token_details=token_details,
             use_binary_protocol=False)
@@ -593,7 +593,7 @@ class TestRenewToken(BaseAsyncTestCase):
 class TestRenewExpiredToken(BaseAsyncTestCase):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
         self.publish_attempts = 0
         self.channel = uuid.uuid4().hex
 
@@ -645,7 +645,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
 
     # RSA4b1
     async def test_query_time_false(self):
-        ably = await RestSetup.get_ably_rest()
+        ably = await TestApp.get_ably_rest()
         await ably.auth.authorize()
         self.publish_fail = True
         await ably.channels[self.channel].publish('evt', 'msg')
@@ -654,7 +654,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
 
     # RSA4b1
     async def test_query_time_true(self):
-        ably = await RestSetup.get_ably_rest(query_time=True)
+        ably = await TestApp.get_ably_rest(query_time=True)
         await ably.auth.authorize()
         self.publish_fail = False
         await ably.channels[self.channel].publish('evt', 'msg')

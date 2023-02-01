@@ -3,15 +3,15 @@ import pytest
 from ably.types.capability import Capability
 from ably.util.exceptions import AblyException
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 
 class TestRestCapability(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
-        self.ably = await RestSetup.get_ably_rest()
+        self.test_vars = await TestApp.get_test_vars()
+        self.ably = await TestApp.get_ably_rest()
 
     async def asyncTearDown(self):
         await self.ably.close()

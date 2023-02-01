@@ -8,7 +8,7 @@ from ably.types.stats import Stats
 from ably.util.exceptions import AblyException
 from ably.http.paginatedresult import PaginatedResult
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
@@ -26,8 +26,8 @@ class TestRestAppStatsSetup:
         }
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
-        self.ably_text = await RestSetup.get_ably_rest(use_binary_protocol=False)
+        self.ably = await TestApp.get_ably_rest()
+        self.ably_text = await TestApp.get_ably_rest(use_binary_protocol=False)
 
         self.last_year = datetime.now().year - 1
         self.previous_year = datetime.now().year - 2

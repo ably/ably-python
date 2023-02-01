@@ -1,15 +1,15 @@
 import asyncio
 from ably.realtime.connection import ConnectionState
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
 
 class TestEventEmitter(BaseAsyncTestCase):
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
 
     async def test_event_listener_error(self):
-        realtime = await RestSetup.get_ably_realtime()
+        realtime = await TestApp.get_ably_realtime()
         call_count = 0
 
         def listener(_):
@@ -28,7 +28,7 @@ class TestEventEmitter(BaseAsyncTestCase):
         await realtime.close()
 
     async def test_event_emitter_off(self):
-        realtime = await RestSetup.get_ably_realtime()
+        realtime = await TestApp.get_ably_realtime()
         call_count = 0
 
         def listener(_):

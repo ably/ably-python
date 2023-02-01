@@ -17,7 +17,7 @@ from ably.types.message import Message
 from ably.types.tokendetails import TokenDetails
 from ably.util import case
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
@@ -28,10 +28,10 @@ log = logging.getLogger(__name__)
 class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
-        self.ably = await RestSetup.get_ably_rest()
+        self.test_vars = await TestApp.get_test_vars()
+        self.ably = await TestApp.get_ably_rest()
         self.client_id = uuid.uuid4().hex
-        self.ably_with_client_id = await RestSetup.get_ably_rest(client_id=self.client_id, use_token_auth=True)
+        self.ably_with_client_id = await TestApp.get_ably_rest(client_id=self.client_id, use_token_auth=True)
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -119,7 +119,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             assert message['data'] == str(i)
 
     async def test_publish_error(self):
-        ably = await RestSetup.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
         await ably.auth.authorize(
             token_params={'capability': {"only_subscribe": ["subscribe"]}})
 
@@ -297,9 +297,9 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
     async def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
         new_token = await self.ably.auth.authorize(token_params={'client_id': uuid.uuid4().hex})
-        new_ably = await RestSetup.get_ably_rest(key=None,
-                                                 token=new_token.token,
-                                                 use_binary_protocol=self.use_binary_protocol)
+        new_ably = await TestApp.get_ably_rest(key=None,
+                                               token=new_token.token,
+                                               use_binary_protocol=self.use_binary_protocol)
 
         channel = new_ably.channels[
             self.get_channel_name('persisted:wrong_client_id_implicit_client')]
@@ -314,7 +314,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     # RSA15b
     async def test_wildcard_client_id_can_publish_as_others(self):
         wildcard_token_details = await self.ably.auth.request_token({'client_id': '*'})
-        wildcard_ably = await RestSetup.get_ably_rest(
+        wildcard_ably = await TestApp.get_ably_rest(
             key=None,
             token_details=wildcard_token_details,
             use_binary_protocol=self.use_binary_protocol)
@@ -383,7 +383,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             'binary': bytearray,
         }
 
-        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         path = os.path.join(root_dir, 'submodules', 'test-resources', 'messages-encoding.json')
         with open(path) as f:
             data = json.load(f)
@@ -442,8 +442,8 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
-        self.ably_idempotent = await RestSetup.get_ably_rest(idempotent_rest_publishing=True)
+        self.ably = await TestApp.get_ably_rest()
+        self.ably_idempotent = await TestApp.get_ably_rest(idempotent_rest_publishing=True)
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -463,11 +463,11 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
             assert self.ably.options.idempotent_rest_publishing is True
 
         # Test setting value explicitly
-        ably = await RestSetup.get_ably_rest(idempotent_rest_publishing=True)
+        ably = await TestApp.get_ably_rest(idempotent_rest_publishing=True)
         assert ably.options.idempotent_rest_publishing is True
         await ably.close()
 
-        ably = await RestSetup.get_ably_rest(idempotent_rest_publishing=False)
+        ably = await TestApp.get_ably_rest(idempotent_rest_publishing=False)
         assert ably.options.idempotent_rest_publishing is False
         await ably.close()
 
@@ -523,7 +523,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
 
     def get_ably_rest(self, *args, **kwargs):
         kwargs['use_binary_protocol'] = self.use_binary_protocol
-        return RestSetup.get_ably_rest(*args, **kwargs)
+        return TestApp.get_ably_rest(*args, **kwargs)
 
     # RSL1k4
     async def test_idempotent_library_generated_retry(self):

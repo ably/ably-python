@@ -5,7 +5,7 @@ import respx
 from ably import AblyException
 from ably.http.paginatedresult import PaginatedResult
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
@@ -14,8 +14,8 @@ log = logging.getLogger(__name__)
 class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
-        self.test_vars = await RestSetup.get_test_vars()
+        self.ably = await TestApp.get_ably_rest()
+        self.test_vars = await TestApp.get_test_vars()
 
     async def asyncTearDown(self):
         await self.ably.close()

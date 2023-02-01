@@ -13,7 +13,7 @@ from ably import AblyRest
 from ably.transport.defaults import Defaults
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
 
@@ -105,7 +105,7 @@ class TestRestHttp(BaseAsyncTestCase):
     @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_cached_fallback(self):
         timeout = 2000
-        ably = await RestSetup.get_ably_rest(fallback_hosts_use_default=True, fallback_retry_timeout=timeout)
+        ably = await TestApp.get_ably_rest(fallback_hosts_use_default=True, fallback_retry_timeout=timeout)
         host = ably.options.get_rest_host()
 
         state = {'errors': 0}
@@ -195,7 +195,7 @@ class TestRestHttp(BaseAsyncTestCase):
 
     # RSC7a, RSC7b
     async def test_request_headers(self):
-        ably = await RestSetup.get_ably_rest()
+        ably = await TestApp.get_ably_rest()
         r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
 
         # API
@@ -212,7 +212,7 @@ class TestRestHttp(BaseAsyncTestCase):
         url = 'https://www.example.com'
         respx.get(url).mock(return_value=Response(status_code=200))
 
-        ably = await RestSetup.get_ably_rest(rest_host=url)
+        ably = await TestApp.get_ably_rest(rest_host=url)
         r = await ably.http.make_request('GET', url, skip_auth=True)
         assert r.http_version == 'HTTP/2'
         await ably.close()

@@ -11,7 +11,7 @@ from ably import Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     async def asyncSetUp(self):
         capability = {"*": ["*"]}
         self.permit_all = str(Capability(capability))
-        self.ably = await RestSetup.get_ably_rest()
+        self.ably = await TestApp.get_ably_rest()
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -93,7 +93,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert capability == token_details.capability, "Unexpected capability"
 
     async def test_request_token_with_specified_key(self):
-        test_vars = await RestSetup.get_test_vars()
+        test_vars = await TestApp.get_test_vars()
         key = test_vars["keys"][1]
         token_details = await self.ably.auth.request_token(
             key_name=key["key_name"], key_secret=key["key_secret"])
@@ -161,7 +161,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
+        self.ably = await TestApp.get_ably_rest()
         self.key_name = self.ably.options.key_name
         self.key_secret = self.ably.options.key_secret
 
@@ -174,7 +174,7 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
     @dont_vary_protocol
     async def test_key_name_and_secret_are_required(self):
-        ably = await RestSetup.get_ably_rest(key=None, token='not a real token')
+        ably = await TestApp.get_ably_rest(key=None, token='not a real token')
         with pytest.raises(AblyException, match="40101 401 No key specified"):
             await ably.auth.create_token_request()
         with pytest.raises(AblyException, match="40101 401 No key specified"):
@@ -215,9 +215,9 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         async def auth_callback(token_params):
             return token_request
 
-        ably = await RestSetup.get_ably_rest(key=None,
-                                             auth_callback=auth_callback,
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(key=None,
+                                           auth_callback=auth_callback,
+                                           use_binary_protocol=self.use_binary_protocol)
 
         token = await ably.auth.authorize()
         assert isinstance(token, TokenDetails)
@@ -231,9 +231,9 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         async def auth_callback(token_params):
             return token_request.to_dict()
 
-        ably = await RestSetup.get_ably_rest(key=None,
-                                             auth_callback=auth_callback,
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(key=None,
+                                           auth_callback=auth_callback,
+                                           use_binary_protocol=self.use_binary_protocol)
 
         token = await ably.auth.authorize()
         assert isinstance(token, TokenDetails)
@@ -307,8 +307,8 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         async def auth_callback(token_params):
             return token_request
 
-        ably = await RestSetup.get_ably_rest(key=None, auth_callback=auth_callback,
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(key=None, auth_callback=auth_callback,
+                                           use_binary_protocol=self.use_binary_protocol)
 
         token = await ably.auth.authorize()
 
