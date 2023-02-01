@@ -291,3 +291,26 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.attach()
         assert channel.state == ChannelState.ATTACHED
         await ably.close()
+
+    # RTL13a
+    async def test_channel_attach_retry_immediately_on_unexpected_detached(self):
+        ably = await TestApp.get_ably_realtime(channel_retry_timeout=500)
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name)
+        await channel.attach()
+
+        # Simulate an unexpected DETACHED message from ably
+        message = {
+            "action": ProtocolMessageAction.DETACHED,
+            "channel": channel_name,
+        }
+        assert ably.connection.connection_manager.transport
+        await ably.connection.connection_manager.transport.on_protocol_message(message)
+
+        # The channel should retry attachment immediately
+        assert channel.state == ChannelState.ATTACHING
+
+        # Make sure the channel sucessfully re-attaches
+        await channel.once_async(ChannelState.ATTACHED)
+
+        await ably.close()
