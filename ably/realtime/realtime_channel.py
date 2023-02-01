@@ -47,6 +47,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__state_timer: Timer | None = None
         self.__attach_resume = False
         self.__channel_serial: str | None = None
+        self.__retry_timer: Timer | None = None
 
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
         # will be disrupted if the user called .off() to remove all listeners
@@ -333,6 +334,11 @@ class RealtimeChannel(EventEmitter, Channel):
         if state == self.state:
             return
 
+        if state == ChannelState.SUSPENDED and self.ably.connection.state == ConnectionState.CONNECTED:
+            self.__start_retry_timer()
+        else:
+            self.__cancel_retry_timer()
+
         # RTL4j1
         if state == ChannelState.ATTACHED:
             self.__attach_resume = True
@@ -388,6 +394,23 @@ class RealtimeChannel(EventEmitter, Channel):
             self._notify_state(ChannelState.ATTACHED, reason=AblyException("Channel detach timed out", 408, 90007))
         else:
             self._check_pending_state()
+
+    def __start_retry_timer(self):
+        if self.__retry_timer:
+            return
+
+        self.__retry_timer = Timer(self.ably.options.channel_retry_timeout, self.__on_retry_timer_expire)
+
+    def __cancel_retry_timer(self):
+        if self.__retry_timer:
+            self.__retry_timer.cancel()
+            self.__retry_timer = None
+
+    def __on_retry_timer_expire(self):
+        if self.state == ChannelState.SUSPENDED and self.ably.connection.state == ConnectionState.CONNECTED:
+            self.__retry_timer = None
+            log.info("RealtimeChannel retry timer expired, attempting a new attach")
+            self._request_state(ChannelState.ATTACHING)
 
     # RTL23
     @property
