@@ -413,9 +413,10 @@ class ConnectionManager(EventEmitter):
         except asyncio.CancelledError:
             return
 
-    def notify_state(self, state: ConnectionState, reason=None):
+    def notify_state(self, state: ConnectionState, reason=None, retry_immediately=None):
         # RTN15a
-        retry_immediately = state == ConnectionState.DISCONNECTED and self.__state == ConnectionState.CONNECTED
+        retry_immediately = (retry_immediately is not False) and (
+            state == ConnectionState.DISCONNECTED and self.__state == ConnectionState.CONNECTED)
 
         log.info(
             f'ConnectionManager.notify_state(): new state: {state}'

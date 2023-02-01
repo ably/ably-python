@@ -25,10 +25,29 @@ class ChannelState(str, Enum):
     FAILED = 'failed'
 
 
+class Flag(int, Enum):
+    # Channel attach state flags
+    HAS_PRESENCE = 1 << 0
+    HAS_BACKLOG = 1 << 1
+    RESUMED = 1 << 2
+    TRANSIENT = 1 << 4
+    ATTACH_RESUME = 1 << 5
+    # Channel mode flags
+    PRESENCE = 1 << 16
+    PUBLISH = 1 << 17
+    SUBSCRIBE = 1 << 18
+    PRESENCE_SUBSCRIBE = 1 << 19
+
+
+def has_flag(message_flags: int, flag: Flag):
+    return message_flags & flag > 0
+
+
 @dataclass
 class ChannelStateChange:
     previous: ChannelState
     current: ChannelState
+    resumed: bool
     reason: Optional[AblyException] = None
 
 
@@ -62,6 +81,8 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__state = ChannelState.INITIALIZED
         self.__message_emitter = EventEmitter()
         self.__state_timer: Timer | None = None
+        self.__attach_resume = False
+        self.__channel_serial: str | None = None
 
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
         # will be disrupted if the user called .off() to remove all listeners
@@ -116,6 +137,12 @@ class RealtimeChannel(EventEmitter, Channel):
             "action": ProtocolMessageAction.ATTACH,
             "channel": self.name,
         }
+
+        if self.__attach_resume:
+            attach_msg["flags"] = Flag.ATTACH_RESUME
+        if self.__channel_serial:
+            attach_msg["channelSerial"] = self.__channel_serial
+
         self._send_message(attach_msg)
 
     # RTL5
@@ -290,9 +317,17 @@ class RealtimeChannel(EventEmitter, Channel):
 
     def _on_message(self, msg):
         action = msg.get('action')
+
+        # RTL4c1
+        channel_serial = msg.get('channelSerial')
+        if channel_serial:
+            self.__channel_serial = channel_serial
+
         if action == ProtocolMessageAction.ATTACHED:
             if self.state == ChannelState.ATTACHING:
-                self._notify_state(ChannelState.ATTACHED)
+                flags = msg.get('flags')
+                resumed = has_flag(flags, Flag.RESUMED)
+                self._notify_state(ChannelState.ATTACHED, resumed=resumed)
             else:
                 log.warn("RealtimeChannel._on_message(): ATTACHED received while not attaching")
         elif action == ProtocolMessageAction.DETACHED:
@@ -310,7 +345,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self._notify_state(state)
         self._check_pending_state()
 
-    def _notify_state(self, state: ChannelState, reason=None):
+    def _notify_state(self, state: ChannelState, reason=None, resumed=False):
         log.info(f'RealtimeChannel._notify_state(): state = {state}')
 
         self.__clear_state_timer()
@@ -318,7 +353,17 @@ class RealtimeChannel(EventEmitter, Channel):
         if state == self.state:
             return
 
-        state_change = ChannelStateChange(self.__state, state, reason=reason)
+        # RTL4j1
+        if state == ChannelState.ATTACHED:
+            self.__attach_resume = True
+        if state in (ChannelState.DETACHING, ChannelState.FAILED):
+            self.__attach_resume = False
+
+        # RTP5a1
+        if state in (ChannelState.DETACHED, ChannelState.SUSPENDED, ChannelState.FAILED):
+            self.__channel_serial = None
+
+        state_change = ChannelStateChange(self.__state, state, resumed, reason=reason)
 
         self.__state = state
         self._emit(state, state_change)
