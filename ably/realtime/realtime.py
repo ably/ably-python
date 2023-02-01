@@ -4,6 +4,7 @@ from ably.realtime.connection import Connection, ConnectionState
 from ably.rest.auth import Auth
 from ably.rest.rest import AblyRest
 from ably.types.options import Options
+from ably.rest.channel import Channels as RestChannels
 from ably.realtime.realtime_channel import ChannelState, RealtimeChannel
 
 
@@ -154,7 +155,7 @@ class AblyRealtime(AblyRest):
         return self.__channels
 
 
-class Channels:
+class Channels(RestChannels):
     """Creates and destroys RealtimeChannel objects.
 
     Methods
@@ -164,10 +165,6 @@ class Channels:
     release(name)
         Releases a channel
     """
-
-    def __init__(self, realtime):
-        self.all = {}
-        self.__realtime = realtime
 
     # RTS3
     def get(self, name):
@@ -179,9 +176,11 @@ class Channels:
         name: str
             Channel name
         """
-        if not self.all.get(name):
-            self.all[name] = RealtimeChannel(self.__realtime, name)
-        return self.all[name]
+        if name not in self.__all:
+            channel = self.__all[name] = RealtimeChannel(self.__ably, name)
+        else:
+            channel = self.__all[name]
+        return channel
 
     # RTS4
     def release(self, name):
@@ -196,9 +195,9 @@ class Channels:
         name: str
             Channel name
         """
-        if not self.all.get(name):
+        if name not in self.__all:
             return
-        del self.all[name]
+        del self.__all[name]
 
     def _on_channel_message(self, msg):
         channel_name = msg.get('channel')
@@ -209,7 +208,7 @@ class Channels:
             )
             return
 
-        channel = self.all.get(msg.get('channel'))
+        channel = self.__all[channel_name]
         if not channel:
             log.warning(
                 'Channels.on_channel_message()',
@@ -234,15 +233,14 @@ class Channels:
             ConnectionState.SUSPENDED: ChannelState.SUSPENDED,
         }
 
-        for name in self.all.keys():
-            channel = self.all[name]
+        for channel_name in self.__all:
+            channel = self.__all[channel_name]
             if channel.state in from_channel_states:
                 channel._notify_state(connection_to_channel_state[state], reason)
 
     def _on_connected(self):
-        for channel_name in self.all.keys():
-            channel = self.all[channel_name]
-
+        for channel_name in self.__all:
+            channel = self.__all[channel_name]
             if channel.state == ChannelState.ATTACHING or channel.state == ChannelState.DETACHING:
                 channel._check_pending_state()
             elif channel.state == ChannelState.SUSPENDED:
