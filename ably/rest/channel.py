@@ -203,10 +203,7 @@ class Channels:
         return self.get(key)
 
     def __getattr__(self, name):
-        try:
-            return super().__getattr__(name)
-        except AttributeError:
-            return self.get(name)
+        return self.get(name)
 
     def __contains__(self, item):
         if isinstance(item, Channel):
