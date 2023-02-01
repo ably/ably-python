@@ -383,7 +383,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             'binary': bytearray,
         }
 
-        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         path = os.path.join(root_dir, 'submodules', 'test-resources', 'messages-encoding.json')
         with open(path) as f:
             data = json.load(f)
