@@ -1,7 +1,7 @@
 import logging
 import asyncio
 import httpx
-from ably.realtime.websockettransport import WebSocketTransport, ProtocolMessageAction
+from ably.transport.websockettransport import WebSocketTransport, ProtocolMessageAction
 from ably.transport.defaults import Defaults
 from ably.types.connectionstate import ConnectionEvent, ConnectionState, ConnectionStateChange
 from ably.util.exceptions import AblyException

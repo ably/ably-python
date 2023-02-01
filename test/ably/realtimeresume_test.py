@@ -1,7 +1,7 @@
 import asyncio
 from ably.realtime.connection import ConnectionState
 from ably.realtime.realtime_channel import ChannelState
-from ably.realtime.websockettransport import ProtocolMessageAction
+from ably.transport.websockettransport import ProtocolMessageAction
 from test.ably.restsetup import RestSetup
 from test.ably.utils import BaseAsyncTestCase, random_string
 
