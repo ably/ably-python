@@ -311,8 +311,10 @@ class RealtimeChannel(EventEmitter, Channel):
         elif action == ProtocolMessageAction.DETACHED:
             if self.state == ChannelState.DETACHING:
                 self._notify_state(ChannelState.DETACHED)
+            elif self.state == ChannelState.ATTACHING:
+                self._notify_state(ChannelState.SUSPENDED)
             else:
-                log.warn("RealtimeChannel._on_message(): DETACHED recieved while not detaching")
+                self._request_state(ChannelState.ATTACHING)
         elif action == ProtocolMessageAction.MESSAGE:
             messages = Message.from_encoded_array(msg.get('messages'))
             for message in messages:
