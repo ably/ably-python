@@ -15,7 +15,7 @@ class Options(AuthOptions):
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
                  fallback_hosts_use_default=None, fallback_retry_timeout=None, disconnected_retry_timeout=None,
                  idempotent_rest_publishing=None, loop=None, auto_connect=True, suspended_retry_timeout=None,
-                 connectivity_check_url=None, **kwargs):
+                 connectivity_check_url=None, channel_retry_timeout=Defaults.channel_retry_timeout, **kwargs):
         super().__init__(**kwargs)
 
         # TODO check these defaults
@@ -69,6 +69,7 @@ class Options(AuthOptions):
         self.__fallback_hosts_use_default = fallback_hosts_use_default
         self.__fallback_retry_timeout = fallback_retry_timeout
         self.__disconnected_retry_timeout = disconnected_retry_timeout
+        self.__channel_retry_timeout = channel_retry_timeout
         self.__idempotent_rest_publishing = idempotent_rest_publishing
         self.__loop = loop
         self.__auto_connect = auto_connect
@@ -216,6 +217,10 @@ class Options(AuthOptions):
     @property
     def disconnected_retry_timeout(self):
         return self.__disconnected_retry_timeout
+
+    @property
+    def channel_retry_timeout(self):
+        return self.__channel_retry_timeout
 
     @property
     def idempotent_rest_publishing(self):
