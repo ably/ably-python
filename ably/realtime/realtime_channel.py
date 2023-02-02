@@ -294,7 +294,7 @@ class RealtimeChannel(EventEmitter, Channel):
             resumed = False
 
             if error:
-                exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
+                exception = AblyException.from_dict(error)
 
             if flags:
                 resumed = has_flag(flags, Flag.RESUMED)

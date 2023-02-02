@@ -63,6 +63,10 @@ class AblyException(Exception):
             return e
         return AblyException("Unexpected exception: %s" % e, 500, 50000)
 
+    @staticmethod
+    def from_dict(value: dict):
+        return AblyException(value.get('message'), value.get('statusCode'), value.get('code'))
+
 
 def catch_all(func):
     @functools.wraps(func)

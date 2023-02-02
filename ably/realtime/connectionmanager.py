@@ -146,7 +146,7 @@ class ConnectionManager(EventEmitter):
 
     def on_disconnected(self, msg: dict):
         error = msg.get("error")
-        exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
+        exception = AblyException.from_dict(error)
         self.notify_state(ConnectionState.DISCONNECTED, exception)
         if error:
             error_status_code = error.get("statusCode")
