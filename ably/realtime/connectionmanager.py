@@ -51,7 +51,10 @@ class ConnectionManager(EventEmitter):
 
     def __get_transport_params(self):
         protocol_version = Defaults.protocol_version
-        params = {"key": self.__ably.key, "v": protocol_version}
+        params = {"v": protocol_version}
+        auth_params = self.ably.auth.get_auth_transport_param()
+        if 'key' in auth_params:
+            params["key"] = self.__ably.key
         if self.connection_details:
             params["resume"] = self.connection_details.connection_key
         return params
