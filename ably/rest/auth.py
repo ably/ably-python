@@ -76,14 +76,15 @@ class Auth:
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    def get_auth_transport_param(self):
+    async def get_auth_transport_param(self):
+        print("called", self.__auth_mechanism)
         if self.__auth_mechanism == Auth.Method.BASIC:
             key_name = self.__auth_options.key_name
             key_secret = self.__auth_options.key_secret
             return {"key": f"{key_name}:{key_secret}"}
         elif self.__auth_mechanism == Auth.Method.TOKEN:
-            token_details  = asyncio.create_task(self.__authorize_when_necessary())
-            return {"accessToken": token_details}
+            token_details  = await self.__authorize_when_necessary()
+            return {"accessToken": token_details.token}
         else:
             log.info("Auth mechanism not known or invalid")
 

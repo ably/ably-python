@@ -49,12 +49,18 @@ class ConnectionManager(EventEmitter):
         except httpx.HTTPError:
             return False
 
-    def __get_transport_params(self):
+    async def __get_transport_params(self):
         protocol_version = Defaults.protocol_version
         params = {"v": protocol_version}
-        auth_params = self.ably.auth.get_auth_transport_param()
+        auth_params = await self.ably.auth.get_auth_transport_param()
+
+        print(auth_params, "==")
+
         if 'key' in auth_params:
             params["key"] = self.__ably.key
+        if 'accessToken' in auth_params:
+            token = auth_params["accessToken"]
+            params["accessToken"] = token
         if self.connection_details:
             params["resume"] = self.connection_details.connection_key
         return params
@@ -251,7 +257,7 @@ class ConnectionManager(EventEmitter):
             self.notify_state(self.__fail_state, reason=exception)
 
     async def try_host(self, host):
-        params = self.__get_transport_params()
+        params = await self.__get_transport_params()
         self.transport = WebSocketTransport(self, host, params)
         self._emit('transport.pending', self.transport)
         self.transport.connect()

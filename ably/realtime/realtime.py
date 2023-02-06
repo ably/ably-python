@@ -6,6 +6,7 @@ from ably.rest.rest import AblyRest
 from ably.types.options import Options
 from ably.rest.channel import Channels as RestChannels
 from ably.realtime.realtime_channel import ChannelState, RealtimeChannel
+from ably.types.tokendetails import TokenDetails
 
 
 log = logging.getLogger(__name__)
@@ -86,8 +87,6 @@ class AblyRealtime(AblyRest):
         ValueError
             If no authentication key is not provided
         """
-        # RTC1
-        super().__init__(key, **kwargs)
 
         if loop is None:
             try:
@@ -95,21 +94,15 @@ class AblyRealtime(AblyRest):
             except RuntimeError:
                 log.warning('Realtime client created outside event loop')
 
-        if key is not None:
-            options = Options(key=key, loop=loop, **kwargs)
-        else:
-            raise ValueError("Key is missing. Provide an API key.")
+        # RTC1
+        super().__init__(key, loop=loop, **kwargs)
 
-        log.info(f'Realtime client initialised with options: {vars(options)}')
-
-        self.__auth = Auth(self, options)
-        self.__options = options
         self.key = key
         self.__connection = Connection(self)
         self.__channels = Channels(self)
 
         # RTN3
-        if options.auto_connect:
+        if self.options.auto_connect:
             self.connection.connection_manager.request_state(ConnectionState.CONNECTING, force=True)
 
     # RTC15
@@ -134,17 +127,6 @@ class AblyRealtime(AblyRest):
         # RTC16a
         await self.connection.close()
         await super().close()
-
-    # RTC4
-    @property
-    def auth(self):
-        """Returns the auth object"""
-        return self.__auth
-
-    @property
-    def options(self):
-        """Returns the auth options object"""
-        return self.__options
 
     # RTC2
     @property
