@@ -101,10 +101,9 @@ class TestApp:
         auth_methods = ["auth_url", "auth_callback", "token", "token_details", "key"]
         if not any(x in kwargs for x in auth_methods):
             options["key"] = test_vars["keys"][0]["key_str"]
-        
+
         options.update(kwargs)
         return options
-
 
     @staticmethod
     async def clear_test_vars():

@@ -1,4 +1,3 @@
-import asyncio
 import base64
 from datetime import timedelta
 import logging
@@ -82,7 +81,7 @@ class Auth:
             key_secret = self.__auth_options.key_secret
             return {"key": f"{key_name}:{key_secret}"}
         elif self.__auth_mechanism == Auth.Method.TOKEN:
-            token_details  = await self.__authorize_when_necessary()
+            token_details = await self.__authorize_when_necessary()
             return {"accessToken": token_details.token}
 
     async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):

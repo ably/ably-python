@@ -1,12 +1,8 @@
 import logging
 import asyncio
 from ably.realtime.connection import Connection, ConnectionState
-from ably.rest.auth import Auth
 from ably.rest.rest import AblyRest
-from ably.types.options import Options
-from ably.rest.channel import Channels as RestChannels
 from ably.realtime.realtime_channel import ChannelState, RealtimeChannel
-from ably.types.tokendetails import TokenDetails
 
 
 log = logging.getLogger(__name__)

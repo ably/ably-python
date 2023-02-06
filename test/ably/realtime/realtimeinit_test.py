@@ -32,25 +32,7 @@ class TestRealtimeInit(BaseAsyncTestCase):
         ably = await TestApp.get_ably_realtime(auto_connect=False)
         assert ably.connection.state == ConnectionState.INITIALIZED
         ably.connect()
-
         await ably.connection.once_async(ConnectionState.CONNECTED)
         assert ably.connection.state == ConnectionState.CONNECTED
-        print(await ably.connection.ping())
         await ably.close()
         assert ably.connection.state == ConnectionState.CLOSED
-
-
-class TestRealtimeAuth(BaseAsyncTestCase):
-    async def asyncSetUp(self):
-        self.test_vars = await TestApp.get_test_vars()
-        self.valid_key_format = "api:key"
-
-    async def test_auth_with_token_str(self):
-        # ably = await TestApp.get_ably_realtime()
-        self.rest = await TestApp.get_ably_rest()
-        token = await self.rest.auth.request_token()
-        # print(token, "===")
-        print(token, "+++++")
-        ably = await TestApp.get_ably_realtime(token=token)
-        await ably.connect()
-        # print(await ably.connection.ping())
