@@ -85,8 +85,12 @@ class TestApp:
     @staticmethod
     async def get_ably_realtime(**kw):
         test_vars = await TestApp.get_test_vars()
+        options = TestApp.get_options(test_vars, **kw)
+        return AblyRealtime(**options)
+
+    @staticmethod
+    def get_options(test_vars, **kwargs):
         options = {
-            'key': test_vars["keys"][0]["key_str"],
             'realtime_host': test_vars["realtime_host"],
             'rest_host': test_vars["host"],
             'port': test_vars["port"],
@@ -94,8 +98,13 @@ class TestApp:
             'tls': test_vars["tls"],
             'environment': test_vars["environment"],
         }
-        options.update(kw)
-        return AblyRealtime(**options)
+        auth_methods = ["auth_url", "auth_callback", "token", "token_details", "key"]
+        if not any(x in kwargs for x in auth_methods):
+            options["key"] = test_vars["keys"][0]["key_str"]
+        
+        options.update(kwargs)
+        return options
+
 
     @staticmethod
     async def clear_test_vars():
