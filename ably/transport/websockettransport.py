@@ -101,7 +101,7 @@ class WebSocketTransport(EventEmitter):
             error = msg.get('error')
             exception = None
             if error:
-                exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
+                exception = AblyException.from_dict(error)
 
             max_idle_interval = connection_details.max_idle_interval
             if max_idle_interval:
@@ -119,7 +119,7 @@ class WebSocketTransport(EventEmitter):
             await self.connection_manager.on_closed()
         elif action == ProtocolMessageAction.ERROR:
             error = msg.get('error')
-            exception = AblyException(error.get('message'), error.get('statusCode'), error.get('code'))
+            exception = AblyException.from_dict(error)
             await self.connection_manager.on_error(msg, exception)
         elif action == ProtocolMessageAction.HEARTBEAT:
             id = msg.get('id')
