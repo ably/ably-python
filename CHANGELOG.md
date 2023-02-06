@@ -1,5 +1,37 @@
 # Change Log
 
+## [v2.0.0-beta.3](https://github.com/ably/ably-python/tree/v2.0.0-beta.3)
+
+This new beta release of the ably-python realtime client implements a number of new features to improve the stability of realtime connections, allowing the client to reconnect during a temporary disconnection, use fallback hosts when necessary, and catch up on messages missed while the client was disconnected.
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.0-beta.2...v2.0.0-beta.3)
+
+- Resend protocol messages for pending channels upon resume [\#347](https://github.com/ably/ably-python/issues/347)
+- Attempt to resume connection when disconnected unexpectedly [\#346](https://github.com/ably/ably-python/issues/346)
+- Handle `CONNECTED` messages once connected [\#345](https://github.com/ably/ably-python/issues/345)
+- Implement `maxIdleInterval` [\#344](https://github.com/ably/ably-python/issues/344)
+- Implement realtime connectivity check [\#343](https://github.com/ably/ably-python/issues/343)
+- Use fallback realtime hosts when encountering an appropriate error [\#342](https://github.com/ably/ably-python/issues/342)
+- Add `fallbackHosts` client option for realtime clients [\#341](https://github.com/ably/ably-python/issues/341)
+- Implement `connectionStateTtl` [\#340](https://github.com/ably/ably-python/issues/340)
+- Implement `disconnectedRetryTimeout` [\#339](https://github.com/ably/ably-python/issues/339)
+- Handle recoverable connection opening errors [\#338](https://github.com/ably/ably-python/issues/338)
+- Implement `channelRetryTimeout` [\#442](https://github.com/ably/ably-python/issues/436)
+- Queue protocol messages when connection state is `CONNECTING` or `DISCONNECTED` [\#418](https://github.com/ably/ably-python/issues/418)
+- Propagate connection interruptions to realtime channels [\#417](https://github.com/ably/ably-python/issues/417)
+- Spec compliance: `Realtime.connect` should be sync [\#413](https://github.com/ably/ably-python/issues/413)
+- Emit `update` event on additional `ATTACHED` message [\#386](https://github.com/ably/ably-python/issues/386)
+- Set the `ATTACH_RESUME` flag on unclean attach [\#385](https://github.com/ably/ably-python/issues/385)
+- Handle fatal resume error [\#384](https://github.com/ably/ably-python/issues/384)
+- Handle invalid resume response [\#383](https://github.com/ably/ably-python/issues/383)
+- Handle clean resume response [\#382](https://github.com/ably/ably-python/issues/382)
+- Send resume query param when reconnecting within `connectionStateTtl`  [\#381](https://github.com/ably/ably-python/issues/381)
+- Immediately reattempt connection when unexpectedly disconnected [\#380](https://github.com/ably/ably-python/issues/380)
+- Clear connection state when `connectionStateTtl` elapsed [\#379](https://github.com/ably/ably-python/issues/379)
+- Refactor websocket async tasks into WebSocketTransport class [\#373](https://github.com/ably/ably-python/issues/373)
+- Send version transport param [\#368](https://github.com/ably/ably-python/issues/368)
+- Clear `Connection.error_reason` when `Connection.connect` is called [\#367](https://github.com/ably/ably-python/issues/367)
+
 ## [v2.0.0-beta.2](https://github.com/ably/ably-python/tree/v2.0.0-beta.2)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.0-beta.1...v2.0.0-beta.2)
