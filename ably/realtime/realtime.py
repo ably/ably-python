@@ -61,6 +61,10 @@ class AblyRealtime(AblyRest):
             disconnected_retry_timeout: float
                 If the connection is still in the DISCONNECTED state after this delay, the client library will
                 attempt to reconnect automatically. The default is 15 seconds.
+            channel_retry_timeout: float
+                When a channel becomes SUSPENDED following a server initiated DETACHED, after this delay, if the
+                channel is still SUSPENDED and the connection is in CONNECTED, the client library will attempt to
+                re-attach the channel automatically. The default is 15 seconds.
             fallback_hosts: list[str]
                 An array of fallback hosts to be used in the case of an error necessitating the use of an
                 alternative host. If you have been provided a set of custom fallback hosts by Ably, please specify

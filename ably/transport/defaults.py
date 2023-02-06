@@ -21,6 +21,7 @@ class Defaults:
     comet_recv_timeout = 90000
     comet_send_timeout = 10000
     realtime_request_timeout = 10000
+    channel_retry_timeout = 15000
     disconnected_retry_timeout = 15000
     connection_state_ttl = 120000
     suspended_retry_timeout = 30000
