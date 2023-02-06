@@ -1,6 +1,6 @@
 import asyncio
 import pytest
-from ably.realtime.realtime_channel import ChannelState
+from ably.realtime.realtime_channel import ChannelState, RealtimeChannel
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.message import Message
 from test.ably.testapp import TestApp
@@ -17,14 +17,18 @@ class TestRealtimeChannel(BaseAsyncTestCase):
     async def test_channels_get(self):
         ably = await TestApp.get_ably_realtime()
         channel = ably.channels.get('my_channel')
-        assert channel == ably.channels.all['my_channel']
+        assert channel == ably.channels.get('my_channel')
+        assert isinstance(channel, RealtimeChannel)
         await ably.close()
 
     async def test_channels_release(self):
         ably = await TestApp.get_ably_realtime()
         ably.channels.get('my_channel')
         ably.channels.release('my_channel')
-        assert ably.channels.all.get('my_channel') is None
+
+        for _ in ably.channels:
+            raise AssertionError("Expected no channels to exist")
+
         await ably.close()
 
     async def test_channel_attach(self):
