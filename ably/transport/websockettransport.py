@@ -92,7 +92,7 @@ class WebSocketTransport(EventEmitter):
 
     async def on_protocol_message(self, msg):
         self.on_activity()
-        log.info(f'WebSocketTransport.on_protocol_message(): receieved protocol message: {msg}')
+        log.info(f'WebSocketTransport.on_protocol_message(): received protocol message: {msg}')
         action = msg.get('action')
         if action == ProtocolMessageAction.CONNECTED:
             connection_id = msg.get('connectionId')
