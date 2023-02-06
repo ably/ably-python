@@ -197,14 +197,49 @@ await client.time()
 await client.close()
 ```
 
-### Using the Realtime API
-The python realtime client currently only supports basic authentication.
+## Realtime client (beta)
+
+We currently have a preview version of our first ever Python realtime client available for beta testing.
+Currently the realtime client only supports authentication using basic auth and message subscription.
+Realtime publishing, token authentication, and realtime presence are upcoming but not yet supported.
+Check out the [roadmap](./roadmap.md) to see our plan for the realtime client.
+
+### Installing the realtime client
+
+The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b3/) package.
+
+```
+pip install ably==2.0.0b3
+```
+
+### Using the realtime client
+
 #### Creating a client
 ```python
 from ably import AblyRealtime
 
 async def main():
+    # Create a client using an Ably API key
     client = AblyRealtime('api:key')
+```
+
+#### Subscribe to connection state changes
+
+```python
+# subscribe to 'failed' connection state
+client.connection.on('failed', listener)
+
+# subscribe to 'connected' connection state
+client.connection.on('connected', listener)
+
+# subscribe to all connection state changes
+client.connection.on(listener)
+
+# wait for the next state change
+await client.connection.once_async()
+
+# wait for the connection to become connected
+await client.connection.once_async('connected')
 ```
 
 #### Get a realtime channel instance
@@ -234,18 +269,6 @@ channel.unsubscribe('event', listener)
 channel.unsubscribe()
 ```
 
-#### Subscribe to connection state change
-```python
-# subscribe to 'failed' connection state
-client.connection.on('failed', listener)
-
-# subscribe to 'connected' connection state
-client.connection.on('connected', listener)
-
-# subscribe to all connection state changes
-client.connection.on(listener)
-```
-
 #### Attach to a channel
 ```python
 await channel.attach()
@@ -259,7 +282,7 @@ await channel.detach()
 ```python
 # Establish a realtime connection.
 # Explicitly calling connect() is unnecessary unless the autoConnect attribute of the ClientOptions object is false
-await client.connect()
+client.connect()
 
 # Close a connection
 await client.close()
