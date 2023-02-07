@@ -352,6 +352,8 @@ class Auth:
             body = {}
             params = dict(auth_params, **token_params)
         elif method == 'POST':
+            if isinstance(auth_params, TokenDetails):
+                auth_params = auth_params.to_dict()
             params = {}
             body = dict(auth_params, **token_params)
 

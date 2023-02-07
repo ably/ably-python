@@ -3,6 +3,9 @@ from ably.realtime.connection import ConnectionState
 from ably.types.tokendetails import TokenDetails
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
+import urllib.parse
+
+echo_url = 'https://echo.ably.io'
 
 
 class TestRealtimeAuth(BaseAsyncTestCase):
@@ -112,11 +115,10 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         await ably.close()
 
     async def test_auth_with_auth_url_json(self):
-        echo_url = 'https://echo.ably.io'
         rest = await TestApp.get_ably_rest()
         token_details = await rest.auth.request_token()
         token_details_json = json.dumps(token_details.to_dict())
-        url_path = f"{echo_url}/?type=json&body={token_details_json}"
+        url_path = f"{echo_url}/?type=json&body={urllib.parse.quote_plus(token_details_json)}"
 
         ably = await TestApp.get_ably_realtime(auth_url=url_path)
         await ably.connection.once_async(ConnectionState.CONNECTED)
@@ -126,7 +128,6 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         await ably.close()
 
     async def test_auth_with_auth_url_text_plain(self):
-        echo_url = 'https://echo.ably.io'
         rest = await TestApp.get_ably_rest()
         token_details = await rest.auth.request_token()
         url_path = f"{echo_url}/?type=text&body={token_details.token}"
@@ -139,7 +140,6 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         await ably.close()
 
     async def test_auth_with_auth_url_post(self):
-        echo_url = 'https://echo.ably.io'
         rest = await TestApp.get_ably_rest()
         token_details = await rest.auth.request_token()
         url_path = f"{echo_url}/?type=json&"
