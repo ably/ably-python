@@ -108,7 +108,7 @@ Implement the correct behaviour for all potential errors that may occur when est
 - Populate the `Connection.errorReason` field when a connection error is encountered ([`RTN14a`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14a))
 - Transition to `DISCONNECTED` upon recoverable errors as defined by [`RTN14d`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14d) (network failure, disconnected response)
 
-**Objective**: Acheieve confidence that the library has defined behaviour for all errors it may encounter upon establishing a realtime connection.
+**Objective**: Achieve confidence that the library has defined behaviour for all errors it may encounter upon establishing a realtime connection.
 
 ### Milestone 2b: Retry failed connection attempts
 
@@ -119,7 +119,7 @@ Attempt to re-establish connection upon a recoverable connection attempt failure
 - Implement configurable `disconnectedRetryTimeout` and retry connection periodically while the connection state is `DISCONNECTED` ([`RTN14d`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14d))
 - Implement configurable `connectionStateTtl` and transition connection to `SUSPENDED` when `connectionStateTtl` is exceeded ([`RTN14e`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14e))
 - Fallback hosts are outside of the scope of this milestone: each retry should be against the primary realtime endpoint
-- Incrmental backoff and jitter is outside of the scope of this milestone
+- Incremental backoff and jitter is outside of the scope of this milestone
 
 **Objective**: Allow the library to re-establish connection in the event of a recoverable connection opening failure.
 
@@ -158,7 +158,43 @@ Handle errors which the realtime client may encounter once already in the `CONNE
 
 ## Milestone 3: Token Authentication
 
-_T.B.D. but necessary in order to utilise capabilities embedded within signed JWTs for production applications._
+This milestone will add token-based authentication to the realtime client.
+
+### Milestone 3a: Enable token-based authentication and re-authentication
+
+Implement the expected behavior for successful token-based authentication and re-authentication.
+
+**Scope**:
+
+- Allow token auth methods for realtime constructor ([`RTC4`](https://sdk.ably.com/builds/ably/specification/main/features/#RTC4), [`RTC8`](https://sdk.ably.com/builds/ably/specification/main/features/#RTC8))
+- Send `AUTH` protocol message when `Auth.authorize` called on realtime client ([`RTC8`](https://sdk.ably.com/builds/ably/specification/main/features/#RTC8), [`RSA3c`](https://sdk.ably.com/builds/ably/specification/main/features/#RSA3c), [`RSA3d`](https://sdk.ably.com/builds/ably/specification/main/features/#RSA3d))
+- Reauth upon inbound `AUTH` protocol message ([`RTN22`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN22), [`RTC8a`](https://sdk.ably.com/builds/ably/specification/main/features/#RTC8a), [`RTC8a1`](https://sdk.ably.com/builds/ably/specification/main/features/#RTC8a1))
+
+**Objective**: Create functionality that will allow the client to authenticate with Ably via tokens.
+
+### Milestone 3b: Error scenarios
+
+Implement the correct handling of edge cases when there are connectivity issues or authentication errors during token-based authentication.
+
+**Scope**:
+
+- Handle connection request failure due to token error ([`RTN14b`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN14b), [`RSA4a`](https://sdk.ably.com/builds/ably/specification/main/features/#RSA4a))
+- Handle `DISCONNECTED` messages containing token errors ([`RTN15h`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15h), [`RTN15h1`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15h1), [`RTN15h2`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15h2), [`RTN22a`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN22a))
+- Handle token `ERROR` response to a resume request ([`RTN15c5`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15c5), [`RTN15h`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN15h))
+
+**Objective**: Display the correct errors and place client in expected state during error scenarios that may arise during authentication process.
+
+### Milestone 3c: Client ID
+
+Properly handle and set `clientId` attribute during token-based authentication.
+
+**Scope**:
+
+- Apply `Auth#clientId` only after a realtime connection has been established ([`RTC4a`](https://sdk.ably.com/builds/ably/specification/main/features/#RTC4a), [`RSA7b3`](https://sdk.ably.com/builds/ably/specification/main/features/#RSA7b3), [`RSA7b4`](https://sdk.ably.com/builds/ably/specification/main/features/#RSA7b4))
+- Validate `clientId` in `ClientOptions` ([`RSA15`](https://sdk.ably.com/builds/ably/specification/main/features/#RSA15))
+- Pass `clientId` as query string param when opening a new connection ([`RTN2d`](https://sdk.ably.com/builds/ably/specification/main/features/#RTN2d))
+
+**Objective**: Ensure `clientId` is set after authentication so that it can be used for follow-on development of realtime functionality.
 
 ## Milestone 4: Realtime Channel Publish
 
