@@ -1,3 +1,4 @@
+import json
 from ably.realtime.connection import ConnectionState
 from ably.types.tokendetails import TokenDetails
 from test.ably.testapp import TestApp
@@ -60,6 +61,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
     async def test_auth_with_auth_callback(self):
         rest = await TestApp.get_ably_rest()
+
         async def callback(params):
             token = await rest.auth.create_token_request(token_params=params)
             return token
@@ -79,4 +81,18 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         state_change = await ably.connection.once_async(ConnectionState.FAILED)
         assert state_change.reason.code == 40005
         assert state_change.reason.status_code == 400
+        await ably.close()
+
+    async def test_auth_with_auth_url(self):
+        echo_url = 'https://echo.ably.io/'
+        rest = await TestApp.get_ably_rest()
+        token_details = await rest.auth.request_token()
+        token_details_json = json.dumps(token_details.to_dict())
+        url_path = f"{echo_url}?type=json&body={token_details_json}"
+
+        ably = await TestApp.get_ably_realtime(auth_url=url_path)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        response_time_ms = await ably.connection.ping()
+        assert response_time_ms is not None
+        assert ably.connection.error_reason is None
         await ably.close()
