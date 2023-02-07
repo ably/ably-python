@@ -23,7 +23,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.reason.status_code == 400
         await ably.close()
 
-    async def test_auth_with_token_str(self):
+    async def test_auth_with_token_string(self):
         rest = await TestApp.get_ably_rest()
         token_details = await rest.auth.request_token()
         ably = await TestApp.get_ably_realtime(token=token_details.token)
@@ -33,7 +33,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.connection.error_reason is None
         await ably.close()
 
-    async def test_auth_with_invalid_token_str(self):
+    async def test_auth_with_invalid_token_string(self):
         invalid_token = "Sdnurv_some_invalid_token_nkds9r7"
         ably = await TestApp.get_ably_realtime(token=invalid_token)
         state_change = await ably.connection.once_async(ConnectionState.FAILED)
@@ -59,12 +59,40 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.reason.status_code == 400
         await ably.close()
 
-    async def test_auth_with_auth_callback(self):
+    async def test_auth_with_auth_callback_with_token_request(self):
         rest = await TestApp.get_ably_rest()
 
         async def callback(params):
-            token = await rest.auth.create_token_request(token_params=params)
-            return token
+            token_details = await rest.auth.create_token_request(token_params=params)
+            return token_details
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        response_time_ms = await ably.connection.ping()
+        assert response_time_ms is not None
+        assert ably.connection.error_reason is None
+        await ably.close()
+
+    async def test_auth_with_auth_callback_token_with_details(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        response_time_ms = await ably.connection.ping()
+        assert response_time_ms is not None
+        assert ably.connection.error_reason is None
+        await ably.close()
+
+    async def test_auth_with_auth_callback_with_token_string(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
 
         ably = await TestApp.get_ably_realtime(auth_callback=callback)
         await ably.connection.once_async(ConnectionState.CONNECTED)
