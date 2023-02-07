@@ -2,6 +2,7 @@ import logging
 import asyncio
 from ably.realtime.connection import Connection, ConnectionState
 from ably.rest.rest import AblyRest
+from ably.rest.channel import Channels as RestChannels
 from ably.realtime.realtime_channel import ChannelState, RealtimeChannel
 
 

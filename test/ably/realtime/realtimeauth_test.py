@@ -111,14 +111,41 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.reason.status_code == 400
         await ably.close()
 
-    async def test_auth_with_auth_url(self):
-        echo_url = 'https://echo.ably.io/'
+    async def test_auth_with_auth_url_json(self):
+        echo_url = 'https://echo.ably.io'
         rest = await TestApp.get_ably_rest()
         token_details = await rest.auth.request_token()
         token_details_json = json.dumps(token_details.to_dict())
-        url_path = f"{echo_url}?type=json&body={token_details_json}"
+        url_path = f"{echo_url}/?type=json&body={token_details_json}"
 
         ably = await TestApp.get_ably_realtime(auth_url=url_path)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        response_time_ms = await ably.connection.ping()
+        assert response_time_ms is not None
+        assert ably.connection.error_reason is None
+        await ably.close()
+
+    async def test_auth_with_auth_url_text_plain(self):
+        echo_url = 'https://echo.ably.io'
+        rest = await TestApp.get_ably_rest()
+        token_details = await rest.auth.request_token()
+        url_path = f"{echo_url}/?type=text&body={token_details.token}"
+
+        ably = await TestApp.get_ably_realtime(auth_url=url_path)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        response_time_ms = await ably.connection.ping()
+        assert response_time_ms is not None
+        assert ably.connection.error_reason is None
+        await ably.close()
+
+    async def test_auth_with_auth_url_post(self):
+        echo_url = 'https://echo.ably.io'
+        rest = await TestApp.get_ably_rest()
+        token_details = await rest.auth.request_token()
+        url_path = f"{echo_url}/?type=json&"
+
+        ably = await TestApp.get_ably_realtime(auth_url=url_path, auth_method='POST',
+                                               auth_params=token_details)
         await ably.connection.once_async(ConnectionState.CONNECTED)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
