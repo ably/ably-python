@@ -75,6 +75,15 @@ class Auth:
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
+    async def get_auth_transport_param(self):
+        if self.__auth_mechanism == Auth.Method.BASIC:
+            key_name = self.__auth_options.key_name
+            key_secret = self.__auth_options.key_secret
+            return {"key": f"{key_name}:{key_secret}"}
+        elif self.__auth_mechanism == Auth.Method.TOKEN:
+            token_details = await self.__authorize_when_necessary()
+            return {"accessToken": token_details.token}
+
     async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
 
@@ -343,6 +352,8 @@ class Auth:
             body = {}
             params = dict(auth_params, **token_params)
         elif method == 'POST':
+            if isinstance(auth_params, TokenDetails):
+                auth_params = auth_params.to_dict()
             params = {}
             body = dict(auth_params, **token_params)
 
