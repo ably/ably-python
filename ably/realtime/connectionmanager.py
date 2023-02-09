@@ -3,6 +3,7 @@ import asyncio
 import httpx
 from ably.transport.websockettransport import WebSocketTransport, ProtocolMessageAction
 from ably.transport.defaults import Defaults
+from ably.types.connectionerrors import ConnectionErrors
 from ably.types.connectionstate import ConnectionEvent, ConnectionState, ConnectionStateChange
 from ably.util.exceptions import AblyException
 from ably.util.eventemitter import EventEmitter
@@ -48,6 +49,9 @@ class ConnectionManager(EventEmitter):
                 (self.options.connectivity_check_url != Defaults.connectivity_check_url or "yes" in response.text)
         except httpx.HTTPError:
             return False
+
+    def get_state_error(self):
+        return ConnectionErrors[self.state]
 
     async def __get_transport_params(self):
         protocol_version = Defaults.protocol_version
