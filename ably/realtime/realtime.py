@@ -93,6 +93,7 @@ class AblyRealtime(AblyRest):
 
         # RTC1
         super().__init__(key, loop=loop, **kwargs)
+        self._is_realtime = True
 
         self.key = key
         self.__connection = Connection(self)
