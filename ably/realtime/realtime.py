@@ -95,8 +95,6 @@ class AblyRealtime(AblyRest):
         super().__init__(key, loop=loop, **kwargs)
 
         self.key = key
-        # print(self.auth)
-        # self.__auth = self.auth
         self.__connection = Connection(self)
         self.__channels = Channels(self)
 
