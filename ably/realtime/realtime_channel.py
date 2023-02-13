@@ -77,6 +77,8 @@ class RealtimeChannel(EventEmitter, Channel):
         if self.state == ChannelState.ATTACHED:
             return
 
+        self.__error_reason = None
+
         # RTL4b
         if self.__realtime.connection.state not in [
             ConnectionState.CONNECTING,
@@ -339,6 +341,12 @@ class RealtimeChannel(EventEmitter, Channel):
 
         if state == self.state:
             return
+
+        if reason is not None:
+            self.__error_reason = reason
+
+        if state == ChannelState.INITIALIZED:
+            self.__error_reason = None
 
         if state == ChannelState.SUSPENDED and self.ably.connection.state == ConnectionState.CONNECTED:
             self.__start_retry_timer()
