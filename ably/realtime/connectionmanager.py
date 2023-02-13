@@ -166,6 +166,8 @@ class ConnectionManager(EventEmitter):
             if self.transport:
                 await self.transport.dispose()
             raise exception
+        else:
+            self.on_channel_message(msg)
 
     async def on_closed(self):
         if self.transport:

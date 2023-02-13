@@ -320,6 +320,9 @@ class RealtimeChannel(EventEmitter, Channel):
             messages = Message.from_encoded_array(msg.get('messages'))
             for message in messages:
                 self.__message_emitter._emit(message.name, message)
+        elif action == ProtocolMessageAction.ERROR:
+            error = AblyException.from_dict(msg.get('error'))
+            self._notify_state(ChannelState.FAILED, reason=error)
 
     def _request_state(self, state: ChannelState):
         log.info(f'RealtimeChannel._request_state(): state = {state}')
