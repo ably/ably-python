@@ -1,5 +1,8 @@
+import asyncio
 import json
 from ably.realtime.connection import ConnectionState
+from ably.transport.websockettransport import ProtocolMessageAction
+from ably.types.connectionstate import ConnectionEvent
 from ably.types.tokendetails import TokenDetails
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
@@ -150,4 +153,72 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
+        await ably.close()
+
+    async def test_reauth_while_connected(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+
+        assert ably.connection.connection_manager.transport
+        original_access_token = ably.connection.connection_manager.transport.params.get('accessToken')
+        assert original_access_token is not None
+
+        original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
+        fut1 = asyncio.Future()
+
+        async def send_protocol_message(protocol_message):
+            if protocol_message.get('action') == ProtocolMessageAction.AUTH:
+                fut1.set_result(protocol_message)
+            await original_send_protocol_message(protocol_message)
+        ably.connection.connection_manager.send_protocol_message = send_protocol_message
+
+        fut2 = asyncio.Future()
+
+        def on_update(state_change):
+            fut2.set_result(state_change)
+
+        ably.connection.on(ConnectionEvent.UPDATE, on_update)
+
+        await ably.auth.authorize()
+        message = await fut1
+        new_access_token = message.get('auth').get('accessToken')
+        assert new_access_token is not None
+        assert new_access_token is not original_access_token
+
+        state_change = await fut2
+        assert state_change.current == ConnectionState.CONNECTED
+        await ably.close()
+
+    async def test_reauth_while_connecting(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        original_transport = await ably.connection.connection_manager.once_async('transport.pending')
+        await ably.auth.authorize()
+        assert ably.connection.state == ConnectionState.CONNECTED
+        assert ably.connection.connection_manager.transport is not original_transport
+
+        await ably.close()
+
+    async def test_reauth_immediately(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        await ably.auth.authorize()
+        assert ably.connection.state == ConnectionState.CONNECTED
+
         await ably.close()
