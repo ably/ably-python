@@ -357,3 +357,26 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         ably.connect()
         assert channel.state == ChannelState.INITIALIZED
         await ably.close()
+
+    async def test_channel_error(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name)
+        await channel.attach()
+        code = 12345
+        status_code = 123
+
+        msg = {
+            "action": ProtocolMessageAction.ERROR,
+            "channel": channel_name,
+            "error": {
+                "message": "test error",
+                "code": code,
+                "statusCode": status_code,
+            },
+        }
+
+        assert ably.connection.connection_manager.transport
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+
+        assert channel.state == ChannelState.FAILED
