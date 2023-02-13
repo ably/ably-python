@@ -200,7 +200,8 @@ class ConnectionManager(EventEmitter):
         if state == ConnectionState.CLOSING and self.__state == ConnectionState.CLOSED:
             return
 
-        if state == ConnectionState.CONNECTING and self.__state in (ConnectionState.CLOSED, ConnectionState.FAILED):
+        if state == ConnectionState.CONNECTING and self.__state in (ConnectionState.CLOSED,
+                                                                    ConnectionState.FAILED):
             self.ably.channels._initialize_channels()
 
         if not force:
