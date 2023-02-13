@@ -2,10 +2,11 @@ import asyncio
 import json
 from ably.realtime.connection import ConnectionState
 from ably.transport.websockettransport import ProtocolMessageAction
+from ably.types.channelstate import ChannelState
 from ably.types.connectionstate import ConnectionEvent
 from ably.types.tokendetails import TokenDetails
 from test.ably.testapp import TestApp
-from test.ably.utils import BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, random_string
 import urllib.parse
 
 echo_url = 'https://echo.ably.io'
@@ -220,5 +221,57 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         ably = await TestApp.get_ably_realtime(auth_callback=callback)
         await ably.auth.authorize()
         assert ably.connection.state == ConnectionState.CONNECTED
+
+        await ably.close()
+
+    async def test_capability_change_without_loss_of_continuity(self):
+        rest = await TestApp.get_ably_rest()
+        channel_name = random_string(5)
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+
+        await ably.auth.authorize({"capability": {channel_name: "*"}})
+
+        channel = ably.channels.get(channel_name)
+        await channel.attach()
+
+        await ably.auth.authorize({"capability": {channel_name: "*", random_string(5): "*"}})
+        await channel.once_async(ChannelState.ATTACHED)
+
+        await ably.close()
+
+    async def test_capability_downgrade(self):
+        rest = await TestApp.get_ably_rest()
+        channel_name = random_string(5)
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+
+        await ably.auth.authorize({"capability": {channel_name: "*"}})
+
+        channel = ably.channels.get(channel_name)
+        await channel.attach()
+
+        future = asyncio.Future()
+
+        def on_channel_state_change(state_change):
+            future.set_result(state_change)
+
+        channel.on(ChannelState.FAILED, on_channel_state_change)
+
+        await ably.auth.authorize({"capability": {random_string(5): "*"}})
+
+        state_change = await future
+
+        assert state_change.reason is not None
+        assert state_change.reason.code == 40160
+        assert state_change.reason.status_code == 401
 
         await ably.close()
