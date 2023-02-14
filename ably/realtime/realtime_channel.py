@@ -25,6 +25,8 @@ class RealtimeChannel(EventEmitter, Channel):
         Channel name
     state: str
         Channel state
+    error_reason: AblyException
+        An AblyException instance describing the last error which occurred on the channel, if any.
 
     Methods
     -------
@@ -48,6 +50,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__attach_resume = False
         self.__channel_serial: str | None = None
         self.__retry_timer: Timer | None = None
+        self.__error_reason: AblyException | None = None
 
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
         # will be disrupted if the user called .off() to remove all listeners
@@ -73,6 +76,8 @@ class RealtimeChannel(EventEmitter, Channel):
         # RTL4a - if channel is attached do nothing
         if self.state == ChannelState.ATTACHED:
             return
+
+        self.__error_reason = None
 
         # RTL4b
         if self.__realtime.connection.state not in [
@@ -320,6 +325,9 @@ class RealtimeChannel(EventEmitter, Channel):
             messages = Message.from_encoded_array(msg.get('messages'))
             for message in messages:
                 self.__message_emitter._emit(message.name, message)
+        elif action == ProtocolMessageAction.ERROR:
+            error = AblyException.from_dict(msg.get('error'))
+            self._notify_state(ChannelState.FAILED, reason=error)
 
     def _request_state(self, state: ChannelState):
         log.info(f'RealtimeChannel._request_state(): state = {state}')
@@ -333,6 +341,12 @@ class RealtimeChannel(EventEmitter, Channel):
 
         if state == self.state:
             return
+
+        if reason is not None:
+            self.__error_reason = reason
+
+        if state == ChannelState.INITIALIZED:
+            self.__error_reason = None
 
         if state == ChannelState.SUSPENDED and self.ably.connection.state == ConnectionState.CONNECTED:
             self.__start_retry_timer()
@@ -427,3 +441,9 @@ class RealtimeChannel(EventEmitter, Channel):
     @state.setter
     def state(self, state: ChannelState):
         self.__state = state
+
+    # RTL24
+    @property
+    def error_reason(self):
+        """An AblyException instance describing the last error which occurred on the channel, if any."""
+        return self.__error_reason

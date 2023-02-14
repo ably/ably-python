@@ -357,3 +357,87 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         ably.connect()
         assert channel.state == ChannelState.INITIALIZED
         await ably.close()
+
+    async def test_channel_error(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name)
+        await channel.attach()
+        code = 12345
+        status_code = 123
+
+        msg = {
+            "action": ProtocolMessageAction.ERROR,
+            "channel": channel_name,
+            "error": {
+                "message": "test error",
+                "code": code,
+                "statusCode": status_code,
+            },
+        }
+
+        assert ably.connection.connection_manager.transport
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+
+        assert channel.state == ChannelState.FAILED
+        assert channel.error_reason
+        assert channel.error_reason.code == code
+        assert channel.error_reason.status_code == status_code
+
+        await ably.close()
+
+    async def test_channel_error_cleared_upon_attach(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name)
+        await channel.attach()
+        code = 12345
+        status_code = 123
+
+        msg = {
+            "action": ProtocolMessageAction.ERROR,
+            "channel": channel_name,
+            "error": {
+                "message": "test error",
+                "code": code,
+                "statusCode": status_code,
+            },
+        }
+
+        assert ably.connection.connection_manager.transport
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+
+        assert channel.error_reason is not None
+        await channel.attach()
+        assert channel.error_reason is None
+
+        await ably.close()
+
+    async def test_channel_error_cleared_upon_connect_from_terminal_state(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name)
+        await channel.attach()
+        code = 12345
+        status_code = 123
+
+        msg = {
+            "action": ProtocolMessageAction.ERROR,
+            "channel": channel_name,
+            "error": {
+                "message": "test error",
+                "code": code,
+                "statusCode": status_code,
+            },
+        }
+
+        assert ably.connection.connection_manager.transport
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+
+        await ably.close()
+
+        assert channel.error_reason is not None
+        ably.connect()
+        assert channel.error_reason is None
+
+        await ably.close()
