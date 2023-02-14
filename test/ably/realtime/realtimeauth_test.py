@@ -1,5 +1,7 @@
 import asyncio
 import json
+
+import httpx
 from ably.realtime.connection import ConnectionState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState
@@ -297,4 +299,27 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         ably.connection.on("update", on_update)
         await ably.connection.connection_manager.transport.on_protocol_message(msg)
         await auth_future
+        await ably.close()
+
+    # RSC8a4
+    async def test_jwt_reauth(self):
+        test_vars = await TestApp.get_test_vars()
+        key = test_vars["keys"][0]
+        key_name = key["key_name"]
+        key_secret = key["key_secret"]
+
+        async def auth_callback(_):
+            response = httpx.get(
+                echo_url + '/createJWT',
+                params={"keyName": key_name, "keySecret": key_secret, "expiresIn": 35}
+            )
+            return response.text
+
+        ably = await TestApp.get_ably_realtime(auth_callback=auth_callback)
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        original_token_details = ably.auth.token_details
+        await ably.connection.once_async(ConnectionEvent.UPDATE)
+        assert ably.auth.token_details is not original_token_details
+
         await ably.close()
