@@ -275,3 +275,26 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.reason.status_code == 401
 
         await ably.close()
+
+    async def test_reauth_inbound_auth_protocol_msg(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        msg = {
+            "action": ProtocolMessageAction.AUTH,
+        }
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        auth_future = asyncio.Future()
+
+        def on_update(state_change):
+            auth_future.set_result(state_change)
+
+        ably.connection.on("update", on_update)
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+        await auth_future
+        await ably.close()
