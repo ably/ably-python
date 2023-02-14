@@ -114,6 +114,12 @@ class WebSocketTransport(EventEmitter):
             self.connection_manager.on_connected(connection_details, connection_id, reason=exception)
         elif action == ProtocolMessageAction.DISCONNECTED:
             self.connection_manager.on_disconnected(msg)
+        elif action == ProtocolMessageAction.AUTH:
+            try:
+                await self.connection_manager.ably.auth.authorize()
+            except Exception as exc:
+                log.exception(f"WebSocketTransport.on_protocol_message(): An exception \
+                                occurred during reauth: {exc}")
         elif action == ProtocolMessageAction.CLOSED:
             if self.ws_connect_task:
                 self.ws_connect_task.cancel()
