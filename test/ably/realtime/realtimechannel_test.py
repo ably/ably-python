@@ -347,3 +347,13 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         await channel.once_async(ChannelState.ATTACHED)
 
         await ably.close()
+
+    async def test_channel_initialized_on_connection_from_terminal_state(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name)
+        await channel.attach()
+        await ably.close()
+        ably.connect()
+        assert channel.state == ChannelState.INITIALIZED
+        await ably.close()

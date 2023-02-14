@@ -230,3 +230,8 @@ class Channels(RestChannels):
                 asyncio.create_task(channel.attach())
             elif channel.state == ChannelState.ATTACHED:
                 channel._request_state(ChannelState.ATTACHING)
+
+    def _initialize_channels(self):
+        for channel_name in self.__all:
+            channel = self.__all[channel_name]
+            channel._request_state(ChannelState.INITIALIZED)
