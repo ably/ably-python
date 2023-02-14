@@ -60,6 +60,8 @@ class AblyRest:
         else:
             options = Options(**kwargs)
 
+        self._is_realtime = False
+
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
         self.__http.auth = self.__auth

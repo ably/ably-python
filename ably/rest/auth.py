@@ -81,10 +81,18 @@ class Auth:
             key_secret = self.__auth_options.key_secret
             return {"key": f"{key_name}:{key_secret}"}
         elif self.__auth_mechanism == Auth.Method.TOKEN:
-            token_details = await self.__authorize_when_necessary()
+            token_details = await self.__ensure_valid_auth_credentials()
             return {"accessToken": token_details.token}
 
     async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
+        token_details = await self.__ensure_valid_auth_credentials(token_params, auth_options, force)
+
+        if self.ably._is_realtime:
+            await self.ably.connection.connection_manager.on_auth_updated(token_details)
+
+        return token_details
+
+    async def __ensure_valid_auth_credentials(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
 
         if token_params is None:
@@ -107,6 +115,7 @@ class Auth:
 
         self.__token_details = await self.request_token(token_params, **auth_options)
         self._configure_client_id(self.__token_details.client_id)
+
         return self.__token_details
 
     def token_details_has_expired(self):

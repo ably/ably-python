@@ -32,6 +32,7 @@ class ProtocolMessageAction(IntEnum):
     DETACH = 12
     DETACHED = 13
     MESSAGE = 15
+    AUTH = 17
 
 
 class WebSocketTransport(EventEmitter):

@@ -3,7 +3,9 @@ import asyncio
 import httpx
 from ably.transport.websockettransport import WebSocketTransport, ProtocolMessageAction
 from ably.transport.defaults import Defaults
+from ably.types.connectionerrors import ConnectionErrors
 from ably.types.connectionstate import ConnectionEvent, ConnectionState, ConnectionStateChange
+from ably.types.tokendetails import TokenDetails
 from ably.util.exceptions import AblyException
 from ably.util.eventemitter import EventEmitter
 from datetime import datetime
@@ -48,6 +50,9 @@ class ConnectionManager(EventEmitter):
                 (self.options.connectivity_check_url != Defaults.connectivity_check_url or "yes" in response.text)
         except httpx.HTTPError:
             return False
+
+    def get_state_error(self):
+        return ConnectionErrors[self.state]
 
     async def __get_transport_params(self):
         protocol_version = Defaults.protocol_version
@@ -266,7 +271,8 @@ class ConnectionManager(EventEmitter):
             log.info('ConnectionManager.try_a_host(): transport connected')
             if self.transport:
                 self.transport.off('failed', on_transport_failed)
-            future.set_result(None)
+            if not future.done():
+                future.set_result(None)
 
         async def on_transport_failed(exception):
             log.info('ConnectionManager.try_a_host(): transport failed')
@@ -403,6 +409,52 @@ class ConnectionManager(EventEmitter):
         log.info('ConnectionManager.disconnect_transport()')
         if self.transport:
             self.disconnect_transport_task = asyncio.create_task(self.transport.dispose())
+
+    async def on_auth_updated(self, token_details: TokenDetails):
+        log.info(f"ConnectionManager.on_auth_updated(): state = {self.state}")
+        if self.state == ConnectionState.CONNECTED:
+            auth_message = {
+                "action": ProtocolMessageAction.AUTH,
+                "auth": {
+                    "accessToken": token_details.token
+                }
+            }
+            await self.send_protocol_message(auth_message)
+
+            state_change = await self.once_async()
+
+            if state_change.current == ConnectionState.CONNECTED:
+                return
+            elif state_change.current == ConnectionState.FAILED:
+                raise state_change.reason
+        elif self.state == ConnectionState.CONNECTING:
+            if self.connect_base_task and not self.connect_base_task.done():
+                self.connect_base_task.cancel()
+            if self.transport:
+                await self.transport.dispose()
+        if self.state != ConnectionState.CONNECTED:
+            future = asyncio.Future()
+
+            def on_state_change(state_change):
+                if state_change.current == ConnectionState.CONNECTED:
+                    self.off('connectionstate', on_state_change)
+                    future.set_result(token_details)
+                if state_change.current in (
+                        ConnectionState.CLOSED,
+                        ConnectionState.FAILED,
+                        ConnectionState.SUSPENDED
+                ):
+                    self.off('connectionstate', on_state_change)
+                    future.set_exception(state_change.reason or self.get_state_error())
+
+            self.on('connectionstate', on_state_change)
+
+            if self.state == ConnectionState.CONNECTING:
+                self.start_connect()
+            else:
+                self.request_state(ConnectionState.CONNECTING)
+
+            return await future
 
     @property
     def ably(self):
