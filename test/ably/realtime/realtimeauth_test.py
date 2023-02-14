@@ -1,5 +1,7 @@
 import asyncio
 import json
+
+import httpx
 from ably.realtime.connection import ConnectionState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState
@@ -273,5 +275,51 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.reason is not None
         assert state_change.reason.code == 40160
         assert state_change.reason.status_code == 401
+
+        await ably.close()
+
+    async def test_reauth_inbound_auth_protocol_msg(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        msg = {
+            "action": ProtocolMessageAction.AUTH,
+        }
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        auth_future = asyncio.Future()
+
+        def on_update(state_change):
+            auth_future.set_result(state_change)
+
+        ably.connection.on("update", on_update)
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+        await auth_future
+        await ably.close()
+
+    # RSC8a4
+    async def test_jwt_reauth(self):
+        test_vars = await TestApp.get_test_vars()
+        key = test_vars["keys"][0]
+        key_name = key["key_name"]
+        key_secret = key["key_secret"]
+
+        async def auth_callback(_):
+            response = httpx.get(
+                echo_url + '/createJWT',
+                params={"keyName": key_name, "keySecret": key_secret, "expiresIn": 35}
+            )
+            return response.text
+
+        ably = await TestApp.get_ably_realtime(auth_callback=auth_callback)
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        original_token_details = ably.auth.token_details
+        await ably.connection.once_async(ConnectionEvent.UPDATE)
+        assert ably.auth.token_details is not original_token_details
 
         await ably.close()

@@ -94,7 +94,6 @@ class Auth:
 
     async def __ensure_valid_auth_credentials(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
-
         if token_params is None:
             token_params = dict(self.auth_options.default_token_params)
         else:
