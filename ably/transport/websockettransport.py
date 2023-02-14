@@ -146,9 +146,18 @@ class WebSocketTransport(EventEmitter):
                 except ConnectionClosedOK:
                     break
                 msg = json.loads(raw)
-                await self.on_protocol_message(msg)
+                task = asyncio.create_task(self.on_protocol_message(msg))
+                task.add_done_callback(self.on_protcol_message_handled)
             else:
                 raise Exception('ws_read_loop running with no websocket')
+
+    def on_protcol_message_handled(self, task):
+        try:
+            exception = task.exception()
+        except Exception as e:
+            exception = e
+        if exception is not None:
+            log.exception(f"WebSocketTransport.on_protocol_message_handled(): uncaught exception: {exception}")
 
     def on_read_loop_done(self, task: asyncio.Task):
         try:
