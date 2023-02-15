@@ -170,6 +170,7 @@ class ConnectionManager(EventEmitter):
     async def on_error(self, msg: dict, exception: AblyException):
         error = msg.get('error')
         code = error.get('code')
+        #RTN14b
         if is_token_error(code) and msg.get('channel') is None:
             if isinstance(self.__error_reason, AblyException):
                 previous_error_code = self.__error_reason.code
@@ -183,6 +184,7 @@ class ConnectionManager(EventEmitter):
                 self.notify_state(ConnectionState.DISCONNECTED, AblyException.from_dict(error))
                 return
             await self.ably.auth.authorize()
+        #RSA4a
         elif code == 40171:
             log.info(f"No means to renew authentication token: {error}")
             self.notify_state(ConnectionState.FAILED, AblyException.from_dict(error))

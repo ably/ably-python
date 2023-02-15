@@ -7,6 +7,7 @@ from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState
 from ably.types.connectionstate import ConnectionEvent
 from ably.types.tokendetails import TokenDetails
+from ably.util.exceptions import AblyException
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, random_string
 import urllib.parse
@@ -324,6 +325,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         await ably.close()
 
+    #RTN14b
     async def test_renew_token_single_attempt(self):
         rest = await TestApp.get_ably_rest()
 
@@ -344,4 +346,30 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         original_token_details = ably.auth.token_details
         await ably.connection.connection_manager.transport.on_protocol_message(msg)
         assert ably.auth.token_details is not original_token_details
+        await ably.close()
+
+    #RTN14b
+    async def test_renew_token_connection_attempt_fails(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        msg = {
+            "action": ProtocolMessageAction.ERROR,
+            "error": {
+                "code": 40142,
+                "statusCode": 401
+            }
+        }
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        ably.connection.connection_manager.enact_state_change(ConnectionState.DISCONNECTED, AblyException("oks", 401, 40143))
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+        state_change = await ably.connection.once_async(ConnectionState.DISCONNECTED)
+        assert ably.connection.error_reason == state_change.reason
+        assert state_change.reason.code == 40143
+        assert state_change.reason.status_code == 401
         await ably.close()
