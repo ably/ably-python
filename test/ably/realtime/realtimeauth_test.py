@@ -323,3 +323,25 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.auth.token_details is not original_token_details
 
         await ably.close()
+
+    async def test_renew_token_single_attempt(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        msg = {
+            "action": ProtocolMessageAction.ERROR,
+            "error": {
+                "code": 40142,
+                "statusCode": 401
+            }
+        }
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        original_token_details = ably.auth.token_details
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+        assert ably.auth.token_details is not original_token_details
+        await ably.close()
