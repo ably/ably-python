@@ -9,7 +9,7 @@ from ably.types.tokendetails import TokenDetails
 from ably.util.exceptions import AblyException
 from ably.util.eventemitter import EventEmitter
 from datetime import datetime
-from ably.util.helper import get_random_id, Timer
+from ably.util.helper import get_random_id, Timer, is_token_error
 from typing import Optional
 from ably.types.connectiondetails import ConnectionDetails
 from queue import Queue
@@ -35,12 +35,14 @@ class ConnectionManager(EventEmitter):
         self.disconnect_transport_task: asyncio.Task | None = None
         self.__fallback_hosts = self.options.get_fallback_realtime_hosts()
         self.queued_messages = Queue()
+        self.__error_reason = None
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
         current_state = self.__state
         log.info(f'ConnectionManager.enact_state_change(): {current_state} -> {state}')
         self.__state = state
+        self.__error_reason = reason
         self._emit('connectionstate', ConnectionStateChange(current_state, state, state, reason))
 
     def check_connection(self):
@@ -166,13 +168,32 @@ class ConnectionManager(EventEmitter):
                     log.info("No fallback host to try for disconnected protocol message")
 
     async def on_error(self, msg: dict, exception: AblyException):
-        if msg.get('channel') is None:  # RTN15i
-            self.enact_state_change(ConnectionState.FAILED, exception)
-            if self.transport:
-                await self.transport.dispose()
-            raise exception
+        error = msg.get('error')
+        code = error.get('code')
+        if is_token_error(code) and msg.get('channel') is None:
+            if isinstance(self.__error_reason, AblyException):
+                previous_error_code = self.__error_reason.code
+                if not is_token_error(previous_error_code):
+                    try:
+                        await self.ably.auth.authorize()
+                    except Exception as e:
+                        log.exception(f"Attempt to renew token fails: {e}")
+                        self.notify_state(ConnectionState.DISCONNECTED, e)
+                    return
+                self.notify_state(ConnectionState.DISCONNECTED, AblyException.from_dict(error))
+                return
+            await self.ably.auth.authorize()
+        elif code == 40171:
+            log.info(f"No means to renew authentication token: {error}")
+            self.notify_state(ConnectionState.FAILED, AblyException.from_dict(error))
         else:
-            self.on_channel_message(msg)
+            if msg.get('channel') is None:  # RTN15i
+                self.enact_state_change(ConnectionState.FAILED, exception)
+                if self.transport:
+                    await self.transport.dispose()
+                raise exception
+            else:
+                self.on_channel_message(msg)
 
     async def on_closed(self):
         if self.transport:

@@ -21,6 +21,10 @@ def unix_time_ms():
     return round(time.time_ns() / 1_000_000)
 
 
+def is_token_error(code):
+    return 40140 <= code < 40150
+
+
 class Timer:
     def __init__(self, timeout: float, callback: Callable):
         self._timeout = timeout
