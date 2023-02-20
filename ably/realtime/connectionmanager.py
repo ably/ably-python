@@ -24,25 +24,26 @@ class ConnectionManager(EventEmitter):
         self.__state = initial_state
         self.__ping_future = None
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
-        self.transport: WebSocketTransport | None = None
+        self.transport: WebSocketTransport or None = None
         self.__connection_details = None
         self.connection_id = None
         self.__fail_state = ConnectionState.DISCONNECTED
-        self.transition_timer: Timer | None = None
-        self.suspend_timer: Timer | None = None
-        self.retry_timer: Timer | None = None
-        self.connect_base_task: asyncio.Task | None = None
-        self.disconnect_transport_task: asyncio.Task | None = None
+        self.transition_timer: Timer or None = None
+        self.suspend_timer: Timer or None = None
+        self.retry_timer: Timer or None = None
+        self.connect_base_task: asyncio.Task or None = None
+        self.disconnect_transport_task: asyncio.Task or None = None
         self.__fallback_hosts = self.options.get_fallback_realtime_hosts()
         self.queued_messages = Queue()
-        self.__error_reason = None
+        self.__error_reason: AblyException or None = None
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
         current_state = self.__state
         log.info(f'ConnectionManager.enact_state_change(): {current_state} -> {state}')
         self.__state = state
-        self.__error_reason = reason
+        if reason:
+            self.__error_reason = reason
         self._emit('connectionstate', ConnectionStateChange(current_state, state, state, reason))
 
     def check_connection(self):
@@ -168,34 +169,37 @@ class ConnectionManager(EventEmitter):
                     log.info("No fallback host to try for disconnected protocol message")
 
     async def on_error(self, msg: dict, exception: AblyException):
-        error = msg.get('error')
-        code = error.get('code')
-        # RTN14b
-        if is_token_error(code) and msg.get('channel') is None:
-            if isinstance(self.__error_reason, AblyException):
-                previous_error_code = self.__error_reason.code
-                if not is_token_error(previous_error_code):
-                    try:
-                        await self.ably.auth.authorize()
-                    except Exception as e:
-                        log.exception(f"Attempt to renew token fails: {e}")
-                        self.notify_state(ConnectionState.DISCONNECTED, e)
+        if msg.get("channel") is not None:  # RTN15i
+            self.on_channel_message(msg)
+            return
+        if self.transport:
+            await self.transport.dispose()
+        if is_token_error(exception):  # RTN14b
+            if self.__error_reason is None or not is_token_error(self.__error_reason):
+                self.__error_reason = exception
+                try:
+                    await self.ably.auth._ensure_valid_auth_credentials(force=True)
+                except Exception as e:
+                    self.on_error_from_authorize(e)
                     return
-                self.notify_state(ConnectionState.DISCONNECTED, AblyException.from_dict(error))
+                self.notify_state(self.__fail_state, exception, retry_immediately=True)
                 return
-            await self.ably.auth.authorize()
-        # RSA4a
-        elif code == 40171:
-            log.info(f"No means to renew authentication token: {error}")
-            self.notify_state(ConnectionState.FAILED, AblyException.from_dict(error))
+            self.notify_state(self.__fail_state, exception)
         else:
-            if msg.get('channel') is None:  # RTN15i
-                self.enact_state_change(ConnectionState.FAILED, exception)
-                if self.transport:
-                    await self.transport.dispose()
-                raise exception
-            else:
-                self.on_channel_message(msg)
+            self.enact_state_change(ConnectionState.FAILED, exception)
+
+    def on_error_from_authorize(self, exception: AblyException):
+        # RSA4a
+        if exception.code == 40171:
+            self.notify_state(ConnectionState.FAILED, exception)
+        elif exception.status_code == 403:
+            msg = 'Client configured authentication provider returned 403; failing the connection'
+            log.error(f'ConnectionManager.on_error_from_authorize(): {msg}')
+            self.notify_state(ConnectionState.FAILED, AblyException(msg, 80019, 403))
+        else:
+            msg = 'Client configured authentication provider request failed'
+            log.warning = (f'ConnectionManager.on_error_from_authorize: {msg}')
+            self.notify_state(self.__fail_state, AblyException(msg, 80019, 401))
 
     async def on_closed(self):
         if self.transport:

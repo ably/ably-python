@@ -81,18 +81,18 @@ class Auth:
             key_secret = self.__auth_options.key_secret
             return {"key": f"{key_name}:{key_secret}"}
         elif self.__auth_mechanism == Auth.Method.TOKEN:
-            token_details = await self.__ensure_valid_auth_credentials()
+            token_details = await self._ensure_valid_auth_credentials()
             return {"accessToken": token_details.token}
 
     async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
-        token_details = await self.__ensure_valid_auth_credentials(token_params, auth_options, force)
+        token_details = await self._ensure_valid_auth_credentials(token_params, auth_options, force)
 
         if self.ably._is_realtime:
             await self.ably.connection.connection_manager.on_auth_updated(token_details)
 
         return token_details
 
-    async def __ensure_valid_auth_credentials(self, token_params=None, auth_options=None, force=False):
+    async def _ensure_valid_auth_credentials(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
         if token_params is None:
             token_params = dict(self.auth_options.default_token_params)
@@ -121,6 +121,9 @@ class Auth:
         token_details = self.__token_details
         if token_details is None:
             return True
+
+        if not self.__time_offset:
+            return False
 
         expires = token_details.expires
         if expires is None:
@@ -211,7 +214,7 @@ class Auth:
         key_secret = key_secret or self.auth_options.key_secret
         if not key_name or not key_secret:
             log.debug('key_name or key_secret blank')
-            raise AblyException("No key specified: no means to generate a token", 401, 40101)
+            raise AblyException("No key specified: no means to generate a token", 401, 40171)
 
         token_request['key_name'] = key_name
         if token_params.get('timestamp'):

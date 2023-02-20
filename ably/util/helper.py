@@ -21,8 +21,8 @@ def unix_time_ms():
     return round(time.time_ns() / 1_000_000)
 
 
-def is_token_error(code):
-    return 40140 <= code < 40150
+def is_token_error(exception):
+    return 40140 <= exception.code < 40150
 
 
 class Timer:

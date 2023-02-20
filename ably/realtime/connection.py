@@ -80,7 +80,8 @@ class Connection(EventEmitter):  # RTN4
     def _on_state_update(self, state_change):
         log.info(f'Connection state changing from {self.state} to {state_change.current}')
         self.__state = state_change.current
-        self.__error_reason = state_change.reason
+        if state_change.reason is not None:
+            self.__error_reason = state_change.reason
         self.__realtime.options.loop.call_soon(functools.partial(self._emit, state_change.current, state_change))
 
     def _on_connection_update(self, state_change):
