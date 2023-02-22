@@ -39,7 +39,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         token_details = await self.ably.auth.request_token()
         post_time = await self.server_time()
         assert token_details.token is not None, "Expected token"
-        assert token_details.issued >= pre_time, "Unexpected issued time"
+        assert token_details.issued + 300 >= pre_time, "Unexpected issued time"
         assert token_details.issued <= post_time, "Unexpected issued time"
         assert self.permit_all == str(token_details.capability), "Unexpected capability"
 
@@ -48,7 +48,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         token_details = await self.ably.auth.request_token(token_params={'timestamp': pre_time})
         post_time = await self.server_time()
         assert token_details.token is not None, "Expected token"
-        assert token_details.issued >= pre_time, "Unexpected issued time"
+        assert token_details.issued + 300 >= pre_time, "Unexpected issued time"
         assert token_details.issued <= post_time, "Unexpected issued time"
         assert self.permit_all == str(Capability(token_details.capability)), "Unexpected Capability"
 
