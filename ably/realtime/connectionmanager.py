@@ -198,7 +198,7 @@ class ConnectionManager(EventEmitter):
             self.notify_state(ConnectionState.FAILED, AblyException(msg, 403, 80019))
         else:
             msg = 'Client configured authentication provider request failed'
-            log.warning = (f'ConnectionManager.on_error_from_authorize: {msg}')
+            log.warning(f'ConnectionManager.on_error_from_authorize: {msg}')
             self.notify_state(self.__fail_state, AblyException(msg, 401, 80019))
 
     async def on_closed(self):
