@@ -10,7 +10,7 @@ import msgpack
 from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
-from ably.util.exceptions import AblyException, AblyAuthException
+from ably.util.exceptions import AblyException
 from ably.util.helper import is_token_error
 
 log = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def reauth_if_expired(func):
         auth = rest.auth
         token_details = auth.token_details
         if token_details and auth.time_offset is not None and auth.token_details_has_expired():
-            await rest.reauth()
+            await auth.authorize()
             retried = True
         else:
             retried = False
@@ -35,7 +35,7 @@ def reauth_if_expired(func):
             return await func(rest, *args, **kwargs)
         except AblyException as e:
             if is_token_error(e) and not retried:
-                await rest.reauth()
+                await auth.authorize()
                 return await func(rest, *args, **kwargs)
 
             raise
@@ -134,15 +134,6 @@ class Http:
             return msgpack.packb(body, use_bin_type=False)
         else:
             return json.dumps(body, separators=(',', ':'))
-
-    async def reauth(self):
-        try:
-            await self.auth.authorize()
-        except AblyAuthException as e:
-            if e.code == 40171:
-                e.message = ("The provided token is not renewable and there is"
-                             " no means to generate a new token")
-            raise e
 
     def get_rest_hosts(self):
         hosts = self.options.get_rest_hosts()

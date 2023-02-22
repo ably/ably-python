@@ -9,7 +9,7 @@ import httpx
 from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
-from ably.util.exceptions import AblyException, IncompatibleClientIdException
+from ably.util.exceptions import AblyAuthException, AblyException, IncompatibleClientIdException
 
 __all__ = ["Auth"]
 
@@ -178,10 +178,14 @@ class Auth:
 
             token_request = await self.token_request_from_auth_url(
                 auth_method, auth_url, token_params, auth_headers, auth_params)
-        else:
+        elif key_name is not None and key_secret is not None:
             token_request = await self.create_token_request(
                 token_params, key_name=key_name, key_secret=key_secret,
                 query_time=query_time)
+        else:
+            msg = "Need a new token but auth_options does not include a way to request one"
+            log.exception(msg)
+            raise AblyAuthException(msg, 403, 40171)
         if isinstance(token_request, TokenDetails):
             return token_request
         elif isinstance(token_request, dict) and 'issued' in token_request:
@@ -214,7 +218,7 @@ class Auth:
         key_secret = key_secret or self.auth_options.key_secret
         if not key_name or not key_secret:
             log.debug('key_name or key_secret blank')
-            raise AblyException("No key specified: no means to generate a token", 401, 40171)
+            raise AblyException("No key specified: no means to generate a token", 401, 40101)
 
         token_request['key_name'] = key_name
         if token_params.get('timestamp'):
