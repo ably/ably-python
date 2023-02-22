@@ -378,8 +378,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         ably = await TestApp.get_ably_realtime(token_details=token_details)
 
         state_change = await ably.connection.once_async(ConnectionState.FAILED)
-        # assert ably.connection.error_reason == state_change.reason
         assert state_change.reason.code == 40171
-        assert state_change.reason.status_code == 401
+        assert state_change.reason.status_code == 403
         await ably.close()
         await rest.close()

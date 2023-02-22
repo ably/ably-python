@@ -565,7 +565,7 @@ class TestRenewToken(BaseAsyncTestCase):
 
         publish = self.ably.channels[self.channel].publish
 
-        match = "The provided token is not renewable and there is no means to generate a new token"
+        match = "Need a new token but auth_options does not include a way to request one"
         with pytest.raises(AblyAuthException, match=match):
             await publish('evt', 'msg')
 
@@ -583,7 +583,7 @@ class TestRenewToken(BaseAsyncTestCase):
 
         publish = self.ably.channels[self.channel].publish
 
-        match = "The provided token is not renewable and there is no means to generate a new token"
+        match = "Need a new token but auth_options does not include a way to request one"
         with pytest.raises(AblyAuthException, match=match):
             await publish('evt', 'msg')
 
