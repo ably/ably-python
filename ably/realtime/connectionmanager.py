@@ -189,6 +189,7 @@ class ConnectionManager(EventEmitter):
             self.enact_state_change(ConnectionState.FAILED, exception)
 
     def on_error_from_authorize(self, exception: AblyException):
+        log.info("ConnectionManager.on_error_from_authorize(): err = %s", exception)
         # RSA4a
         if exception.code == 40171:
             self.notify_state(ConnectionState.FAILED, exception)
@@ -287,7 +288,11 @@ class ConnectionManager(EventEmitter):
             self.notify_state(self.__fail_state, reason=exception)
 
     async def try_host(self, host):
-        params = await self.__get_transport_params()
+        try:
+            params = await self.__get_transport_params()
+        except AblyException as e:
+            self.on_error_from_authorize(e)
+            return
         self.transport = WebSocketTransport(self, host, params)
         self._emit('transport.pending', self.transport)
         self.transport.connect()
