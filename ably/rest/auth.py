@@ -172,7 +172,10 @@ class Auth:
         log.debug("Token Params: %s" % token_params)
         if auth_callback:
             log.debug("using token auth with authCallback")
-            token_request = await auth_callback(token_params)
+            try:
+                token_request = await auth_callback(token_params)
+            except Exception as e:
+                raise AblyException("auth_callback raised an exception", 401, 40170, cause=e)
         elif auth_url:
             log.debug("using token auth with authUrl")
 
