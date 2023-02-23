@@ -117,7 +117,7 @@ class WebSocketTransport(EventEmitter):
             exception = None
             if error is not None:
                 exception = AblyException.from_dict(error)
-            self.connection_manager.on_disconnected(exception)
+            await self.connection_manager.on_disconnected(exception)
         elif action == ProtocolMessageAction.AUTH:
             try:
                 await self.connection_manager.ably.auth.authorize()

@@ -153,18 +153,27 @@ class ConnectionManager(EventEmitter):
 
         self.ably.channels._on_connected()
 
-    def on_disconnected(self, exception: Optional[AblyException]):
-        self.notify_state(ConnectionState.DISCONNECTED, exception)
+    async def on_disconnected(self, exception: Optional[AblyException]):
+        # RTN15h
+        if self.transport:
+            await self.transport.dispose()
         if exception:
             status_code = exception.status_code
-            if status_code >= 500 or status_code <= 504:  # RTN17f1
+            if status_code >= 500 and status_code <= 504:  # RTN17f1
                 if len(self.__fallback_hosts) > 0:
-                    res = asyncio.create_task(self.connect_with_fallback_hosts(self.__fallback_hosts))
-                    if not res:
-                        return
-                    self.notify_state(self.__fail_state, reason=res)
+                    try:
+                        await self.connect_with_fallback_hosts(self.__fallback_hosts)
+                    except Exception as e:
+                        self.notify_state(self.__fail_state, reason=e)
+                    return
                 else:
                     log.info("No fallback host to try for disconnected protocol message")
+            elif is_token_error(exception):
+                await self.on_token_error(exception)
+            else:
+                self.notify_state(ConnectionState.DISCONNECTED, exception)
+        else:
+            log.warn("DISCONNECTED message received without error")
 
     async def on_token_error(self, exception: AblyException):
         if self.__error_reason is None or not is_token_error(self.__error_reason):
