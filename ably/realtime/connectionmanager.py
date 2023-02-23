@@ -153,13 +153,11 @@ class ConnectionManager(EventEmitter):
 
         self.ably.channels._on_connected()
 
-    def on_disconnected(self, msg: dict):
-        error = msg.get("error")
-        exception = AblyException.from_dict(error)
+    def on_disconnected(self, exception: Optional[AblyException]):
         self.notify_state(ConnectionState.DISCONNECTED, exception)
-        if error:
-            error_status_code = error.get("statusCode")
-            if error_status_code >= 500 or error_status_code <= 504:  # RTN17f1
+        if exception:
+            status_code = exception.status_code
+            if status_code >= 500 or status_code <= 504:  # RTN17f1
                 if len(self.__fallback_hosts) > 0:
                     res = asyncio.create_task(self.connect_with_fallback_hosts(self.__fallback_hosts))
                     if not res:
