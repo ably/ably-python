@@ -139,17 +139,15 @@ class WebSocketTransport(EventEmitter):
             self.connection_manager.on_channel_message(msg)
 
     async def ws_read_loop(self):
-        while True:
-            if self.websocket is not None:
-                try:
-                    raw = await self.websocket.recv()
-                except ConnectionClosedOK:
-                    break
+        if not self.websocket:
+            raise AblyException('ws_read_loop started with no websocket', 500, 50000)
+        try:
+            async for raw in self.websocket:
                 msg = json.loads(raw)
                 task = asyncio.create_task(self.on_protocol_message(msg))
                 task.add_done_callback(self.on_protcol_message_handled)
-            else:
-                raise Exception('ws_read_loop running with no websocket')
+        except ConnectionClosedOK:
+            return
 
     def on_protcol_message_handled(self, task):
         try:
