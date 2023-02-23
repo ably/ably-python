@@ -9,7 +9,7 @@ from ably.types.tokendetails import TokenDetails
 from ably.util.exceptions import AblyException
 from ably.util.eventemitter import EventEmitter
 from datetime import datetime
-from ably.util.helper import get_random_id, Timer
+from ably.util.helper import get_random_id, Timer, is_token_error
 from typing import Optional
 from ably.types.connectiondetails import ConnectionDetails
 from queue import Queue
@@ -24,23 +24,26 @@ class ConnectionManager(EventEmitter):
         self.__state = initial_state
         self.__ping_future = None
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
-        self.transport: WebSocketTransport | None = None
+        self.transport: Optional[WebSocketTransport] = None
         self.__connection_details = None
         self.connection_id = None
         self.__fail_state = ConnectionState.DISCONNECTED
-        self.transition_timer: Timer | None = None
-        self.suspend_timer: Timer | None = None
-        self.retry_timer: Timer | None = None
-        self.connect_base_task: asyncio.Task | None = None
-        self.disconnect_transport_task: asyncio.Task | None = None
+        self.transition_timer: Optional[Timer] = None
+        self.suspend_timer: Optional[Timer] = None
+        self.retry_timer: Optional[Timer] = None
+        self.connect_base_task: Optional[asyncio.Task] = None
+        self.disconnect_transport_task: Optional[asyncio.Task] = None
         self.__fallback_hosts = self.options.get_fallback_realtime_hosts()
         self.queued_messages = Queue()
+        self.__error_reason: Optional[AblyException] = None
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
         current_state = self.__state
         log.info(f'ConnectionManager.enact_state_change(): {current_state} -> {state}')
         self.__state = state
+        if reason:
+            self.__error_reason = reason
         self._emit('connectionstate', ConnectionStateChange(current_state, state, state, reason))
 
     def check_connection(self):
@@ -166,13 +169,38 @@ class ConnectionManager(EventEmitter):
                     log.info("No fallback host to try for disconnected protocol message")
 
     async def on_error(self, msg: dict, exception: AblyException):
-        if msg.get('channel') is None:  # RTN15i
-            self.enact_state_change(ConnectionState.FAILED, exception)
-            if self.transport:
-                await self.transport.dispose()
-            raise exception
-        else:
+        if msg.get("channel") is not None:  # RTN15i
             self.on_channel_message(msg)
+            return
+        if self.transport:
+            await self.transport.dispose()
+        if is_token_error(exception):  # RTN14b
+            if self.__error_reason is None or not is_token_error(self.__error_reason):
+                self.__error_reason = exception
+                try:
+                    await self.ably.auth._ensure_valid_auth_credentials(force=True)
+                except Exception as e:
+                    self.on_error_from_authorize(e)
+                    return
+                self.notify_state(self.__fail_state, exception, retry_immediately=True)
+                return
+            self.notify_state(self.__fail_state, exception)
+        else:
+            self.enact_state_change(ConnectionState.FAILED, exception)
+
+    def on_error_from_authorize(self, exception: AblyException):
+        log.info("ConnectionManager.on_error_from_authorize(): err = %s", exception)
+        # RSA4a
+        if exception.code == 40171:
+            self.notify_state(ConnectionState.FAILED, exception)
+        elif exception.status_code == 403:
+            msg = 'Client configured authentication provider returned 403; failing the connection'
+            log.error(f'ConnectionManager.on_error_from_authorize(): {msg}')
+            self.notify_state(ConnectionState.FAILED, AblyException(msg, 403, 80019))
+        else:
+            msg = 'Client configured authentication provider request failed'
+            log.warning(f'ConnectionManager.on_error_from_authorize: {msg}')
+            self.notify_state(self.__fail_state, AblyException(msg, 401, 80019))
 
     async def on_closed(self):
         if self.transport:
@@ -260,7 +288,11 @@ class ConnectionManager(EventEmitter):
             self.notify_state(self.__fail_state, reason=exception)
 
     async def try_host(self, host):
-        params = await self.__get_transport_params()
+        try:
+            params = await self.__get_transport_params()
+        except AblyException as e:
+            self.on_error_from_authorize(e)
+            return
         self.transport = WebSocketTransport(self, host, params)
         self._emit('transport.pending', self.transport)
         self.transport.connect()

@@ -2,6 +2,7 @@ import asyncio
 import json
 
 import httpx
+import pytest
 from ably.realtime.connection import ConnectionState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState
@@ -12,6 +13,22 @@ from test.ably.utils import BaseAsyncTestCase, random_string
 import urllib.parse
 
 echo_url = 'https://echo.ably.io'
+
+
+async def auth_callback_failure(options, expect_failure=False):
+    realtime = await TestApp.get_ably_realtime(**options)
+
+    state_change = await realtime.connection.once_async()
+
+    if expect_failure:
+        assert state_change.current == ConnectionState.FAILED
+        assert state_change.reason.status_code == 403
+    else:
+        assert state_change.current == ConnectionState.DISCONNECTED
+        assert state_change.reason.status_code == 401
+    assert state_change.reason.code == 80019
+
+    await realtime.close()
 
 
 class TestRealtimeAuth(BaseAsyncTestCase):
@@ -323,3 +340,141 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.auth.token_details is not original_token_details
 
         await ably.close()
+
+    # RTN14b
+    async def test_renew_token_single_attempt(self):
+        rest = await TestApp.get_ably_rest()
+
+        async def callback(params):
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details.token
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+        msg = {
+            "action": ProtocolMessageAction.ERROR,
+            "error": {
+                "code": 40142,
+                "statusCode": 401
+            }
+        }
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        original_token_details = ably.auth.token_details
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+        assert ably.auth.token_details is not original_token_details
+        await ably.close()
+        await rest.close()
+
+    # RTN14b
+    async def test_renew_token_connection_attempt_fails(self):
+        rest = await TestApp.get_ably_rest()
+        call_count = 0
+
+        async def callback(params):
+            nonlocal call_count
+            call_count += 1
+            params = {"ttl": 1}
+            token_details = await rest.auth.request_token(token_params=params)
+            return token_details
+
+        ably = await TestApp.get_ably_realtime(auth_callback=callback)
+
+        await ably.connection.once_async(ConnectionState.DISCONNECTED)
+        assert call_count == 2
+        assert ably.connection.error_reason.code == 40142
+        assert ably.connection.error_reason.status_code == 401
+
+        await ably.close()
+        await rest.close()
+
+    # RSA4a
+    async def test_renew_token_no_renew_means_provided(self):
+        rest = await TestApp.get_ably_rest()
+        token_details = await rest.auth.request_token(token_params={'ttl': 1})
+
+        ably = await TestApp.get_ably_realtime(token_details=token_details)
+
+        state_change = await ably.connection.once_async(ConnectionState.FAILED)
+        assert state_change.reason.code == 40171
+        assert state_change.reason.status_code == 403
+        await ably.close()
+        await rest.close()
+
+    async def test_auth_callback_error(self):
+        async def auth_callback(_):
+            raise Exception("An error from client code that the authCallback might return")
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback
+        })
+
+    @pytest.mark.skip(reason="blocked by https://github.com/ably/ably-python/issues/461")
+    async def test_auth_callback_timeout(self):
+        async def auth_callback(_):
+            await asyncio.sleep(10_000)
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback,
+            'realtime_request_timeout': 100,
+        })
+
+    async def test_auth_callback_nothing(self):
+        async def auth_callback(_):
+            return
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback,
+        })
+
+    async def test_auth_callback_malformed(self):
+        async def auth_callback(_):
+            return {"horse": "ebooks"}
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback,
+        })
+
+    async def test_auth_callback_empty_string(self):
+        async def auth_callback(_):
+            return ""
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback,
+        })
+
+    @pytest.mark.skip(reason="blocked by https://github.com/ably/ably-python/issues/461")
+    async def test_auth_url_timeout(self):
+        await auth_callback_failure({
+            "auth_url": "http://10.255.255.1/"
+        })
+
+    async def test_auth_url_404(self):
+        await auth_callback_failure({
+            "auth_url": "http://example.com/404"
+        })
+
+    async def test_auth_url_wrong_content_type(self):
+        await auth_callback_failure({
+            "auth_url": "http://example.com/"
+        })
+
+    async def test_auth_url_401(self):
+        await auth_callback_failure({
+            "auth_url": echo_url + '/respondwith?status=401'
+        })
+
+    async def test_auth_url_403(self):
+        await auth_callback_failure({
+            "auth_url": echo_url + '/respondwith?status=403'
+        }, expect_failure=True)
+
+    async def test_auth_url_403_custom_error(self):
+        error = json.dumps({
+            "error": {
+                "some_custom": "error",
+            }
+        })
+
+        await auth_callback_failure({
+            "auth_url": echo_url + '/respondwith?status=403&body=' + urllib.parse.quote_plus(error)
+        }, expect_failure=True)

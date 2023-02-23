@@ -9,7 +9,7 @@ import httpx
 from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
-from ably.util.exceptions import AblyException, IncompatibleClientIdException
+from ably.util.exceptions import AblyAuthException, AblyException, IncompatibleClientIdException
 
 __all__ = ["Auth"]
 
@@ -81,18 +81,18 @@ class Auth:
             key_secret = self.__auth_options.key_secret
             return {"key": f"{key_name}:{key_secret}"}
         elif self.__auth_mechanism == Auth.Method.TOKEN:
-            token_details = await self.__ensure_valid_auth_credentials()
+            token_details = await self._ensure_valid_auth_credentials()
             return {"accessToken": token_details.token}
 
     async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
-        token_details = await self.__ensure_valid_auth_credentials(token_params, auth_options, force)
+        token_details = await self._ensure_valid_auth_credentials(token_params, auth_options, force)
 
         if self.ably._is_realtime:
             await self.ably.connection.connection_manager.on_auth_updated(token_details)
 
         return token_details
 
-    async def __ensure_valid_auth_credentials(self, token_params=None, auth_options=None, force=False):
+    async def _ensure_valid_auth_credentials(self, token_params=None, auth_options=None, force=False):
         self.__auth_mechanism = Auth.Method.TOKEN
         if token_params is None:
             token_params = dict(self.auth_options.default_token_params)
@@ -121,6 +121,9 @@ class Auth:
         token_details = self.__token_details
         if token_details is None:
             return True
+
+        if not self.__time_offset:
+            return False
 
         expires = token_details.expires
         if expires is None:
@@ -169,24 +172,40 @@ class Auth:
         log.debug("Token Params: %s" % token_params)
         if auth_callback:
             log.debug("using token auth with authCallback")
-            token_request = await auth_callback(token_params)
+            try:
+                token_request = await auth_callback(token_params)
+            except Exception as e:
+                raise AblyException("auth_callback raised an exception", 401, 40170, cause=e)
         elif auth_url:
             log.debug("using token auth with authUrl")
 
             token_request = await self.token_request_from_auth_url(
                 auth_method, auth_url, token_params, auth_headers, auth_params)
-        else:
+        elif key_name is not None and key_secret is not None:
             token_request = await self.create_token_request(
                 token_params, key_name=key_name, key_secret=key_secret,
                 query_time=query_time)
+        else:
+            msg = "Need a new token but auth_options does not include a way to request one"
+            log.exception(msg)
+            raise AblyAuthException(msg, 403, 40171)
         if isinstance(token_request, TokenDetails):
             return token_request
         elif isinstance(token_request, dict) and 'issued' in token_request:
             return TokenDetails.from_dict(token_request)
         elif isinstance(token_request, dict):
-            token_request = TokenRequest.from_json(token_request)
+            try:
+                token_request = TokenRequest.from_json(token_request)
+            except TypeError as e:
+                msg = "Expected token request callback to call back with a token string, token request object, or \
+                token details object"
+                raise AblyAuthException(msg, 401, 40170, cause=e)
         elif isinstance(token_request, str):
+            if len(token_request) == 0:
+                raise AblyAuthException("Token string is empty", 401, 4017)
             return TokenDetails(token=token_request)
+        elif token_request is None:
+            raise AblyAuthException("Token string was None", 401, 40170)
 
         token_path = "/keys/%s/requestToken" % token_request.key_name
 
@@ -371,8 +390,21 @@ class Auth:
             response = Response(resp)
 
         AblyException.raise_for_response(response)
-        try:
+
+        content_type = response.response.headers.get('content-type')
+
+        if not content_type:
+            raise AblyAuthException("auth_url response missing a content-type header", 401, 40170)
+
+        is_json = "application/json" in content_type
+        is_text = "application/jwt" in content_type or "text/plain" in content_type
+
+        if is_json:
             token_request = response.to_native()
-        except ValueError:
+        elif is_text:
             token_request = response.text
+        else:
+            msg = 'auth_url responded with unacceptable content-type ' + content_type + \
+                ', should be either text/plain, application/jwt or application/json',
+            raise AblyAuthException(msg, 401, 40170)
         return token_request
