@@ -194,9 +194,18 @@ class Auth:
         elif isinstance(token_request, dict) and 'issued' in token_request:
             return TokenDetails.from_dict(token_request)
         elif isinstance(token_request, dict):
-            token_request = TokenRequest.from_json(token_request)
+            try:
+                token_request = TokenRequest.from_json(token_request)
+            except TypeError as e:
+                msg = "Expected token request callback to call back with a token string, token request object, or \
+                token details object"
+                raise AblyAuthException(msg, 401, 40170, cause=e)
         elif isinstance(token_request, str):
+            if len(token_request) == 0:
+                raise AblyAuthException("Token string is empty", 401, 4017)
             return TokenDetails(token=token_request)
+        elif token_request is None:
+            raise AblyAuthException("Token string was None", 401, 40170)
 
         token_path = "/keys/%s/requestToken" % token_request.key_name
 
@@ -381,8 +390,21 @@ class Auth:
             response = Response(resp)
 
         AblyException.raise_for_response(response)
-        try:
+
+        content_type = response.response.headers.get('content-type')
+
+        if not content_type:
+            raise AblyAuthException("auth_url response missing a content-type header", 401, 40170)
+
+        is_json = "application/json" in content_type
+        is_text = "application/jwt" in content_type or "text/plain" in content_type
+
+        if is_json:
             token_request = response.to_native()
-        except ValueError:
+        elif is_text:
             token_request = response.text
+        else:
+            msg = 'auth_url responded with unacceptable content-type ' + content_type + \
+                ', should be either text/plain, application/jwt or application/json',
+            raise AblyAuthException(msg, 401, 40170)
         return token_request

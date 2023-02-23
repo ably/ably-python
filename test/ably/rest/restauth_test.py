@@ -378,7 +378,10 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
             assert parse_qs(request.content.decode('utf-8')) == {'foo': ['token'], 'spam': ['eggs']}
             return Response(
                 status_code=200,
-                content="token_string"
+                content="token_string",
+                headers={
+                    "Content-Type": "text/plain",
+                }
             )
 
         auth_route.side_effect = call_back
@@ -452,7 +455,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         headers = {'foo': 'bar'}
         ably = await TestApp.get_ably_rest(key=None, auth_url=url)
         auth_route = respx.get('http://www.example.com', params={'with': 'query', 'spam': 'eggs'}).mock(
-            return_value=Response(status_code=200, content='token_string'))
+            return_value=Response(status_code=200, content='token_string', headers={"Content-Type": "text/plain"}))
         await ably.auth.request_token(auth_url=url,
                                       auth_headers=headers,
                                       auth_params={'spam': 'eggs'})
