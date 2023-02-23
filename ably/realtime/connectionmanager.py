@@ -168,6 +168,18 @@ class ConnectionManager(EventEmitter):
                 else:
                     log.info("No fallback host to try for disconnected protocol message")
 
+    async def on_token_error(self, exception: AblyException):
+        if self.__error_reason is None or not is_token_error(self.__error_reason):
+            self.__error_reason = exception
+            try:
+                await self.ably.auth._ensure_valid_auth_credentials(force=True)
+            except Exception as e:
+                self.on_error_from_authorize(e)
+                return
+            self.notify_state(self.__fail_state, exception, retry_immediately=True)
+            return
+        self.notify_state(self.__fail_state, exception)
+
     async def on_error(self, msg: dict, exception: AblyException):
         if msg.get("channel") is not None:  # RTN15i
             self.on_channel_message(msg)
@@ -175,16 +187,7 @@ class ConnectionManager(EventEmitter):
         if self.transport:
             await self.transport.dispose()
         if is_token_error(exception):  # RTN14b
-            if self.__error_reason is None or not is_token_error(self.__error_reason):
-                self.__error_reason = exception
-                try:
-                    await self.ably.auth._ensure_valid_auth_credentials(force=True)
-                except Exception as e:
-                    self.on_error_from_authorize(e)
-                    return
-                self.notify_state(self.__fail_state, exception, retry_immediately=True)
-                return
-            self.notify_state(self.__fail_state, exception)
+            await self.on_token_error(exception)
         else:
             self.enact_state_change(ConnectionState.FAILED, exception)
 
