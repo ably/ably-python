@@ -2,6 +2,7 @@ import asyncio
 import json
 
 import httpx
+import pytest
 from ably.realtime.connection import ConnectionState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState
@@ -12,6 +13,22 @@ from test.ably.utils import BaseAsyncTestCase, random_string
 import urllib.parse
 
 echo_url = 'https://echo.ably.io'
+
+
+async def auth_callback_failure(options, expect_failure=False):
+    realtime = await TestApp.get_ably_realtime(**options)
+
+    state_change = await realtime.connection.once_async()
+
+    if expect_failure:
+        assert state_change.current == ConnectionState.FAILED
+        assert state_change.reason.status_code == 403
+    else:
+        assert state_change.current == ConnectionState.DISCONNECTED
+        assert state_change.reason.status_code == 401
+    assert state_change.reason.code == 80019
+
+    await realtime.close()
 
 
 class TestRealtimeAuth(BaseAsyncTestCase):
@@ -382,3 +399,82 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.reason.status_code == 403
         await ably.close()
         await rest.close()
+
+    async def test_auth_callback_error(self):
+        async def auth_callback(_):
+            raise Exception("An error from client code that the authCallback might return")
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback
+        })
+
+    @pytest.mark.skip(reason="blocked by https://github.com/ably/ably-python/issues/461")
+    async def test_auth_callback_timeout(self):
+        async def auth_callback(_):
+            await asyncio.sleep(10_000)
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback,
+            'realtime_request_timeout': 100,
+        })
+
+    async def test_auth_callback_nothing(self):
+        async def auth_callback(_):
+            return
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback,
+        })
+
+    async def test_auth_callback_malformed(self):
+        async def auth_callback(_):
+            return {"horse": "ebooks"}
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback,
+        })
+
+    async def test_auth_callback_empty_string(self):
+        async def auth_callback(_):
+            return ""
+
+        await auth_callback_failure({
+            'auth_callback': auth_callback,
+        })
+
+    @pytest.mark.skip(reason="blocked by https://github.com/ably/ably-python/issues/461")
+    async def test_auth_url_timeout(self):
+        await auth_callback_failure({
+            "auth_url": "http://10.255.255.1/"
+        })
+
+    async def test_auth_url_404(self):
+        await auth_callback_failure({
+            "auth_url": "http://example.com/404"
+        })
+
+    async def test_auth_url_wrong_content_type(self):
+        await auth_callback_failure({
+            "auth_url": "http://example.com/"
+        })
+
+    async def test_auth_url_401(self):
+        await auth_callback_failure({
+            "auth_url": echo_url + '/respondwith?status=401'
+        })
+
+    async def test_auth_url_403(self):
+        await auth_callback_failure({
+            "auth_url": echo_url + '/respondwith?status=403'
+        }, expect_failure=True)
+
+    async def test_auth_url_403_custom_error(self):
+        error = json.dumps({
+            "error": {
+                "some_custom": "error",
+            }
+        })
+
+        await auth_callback_failure({
+            "auth_url": echo_url + '/respondwith?status=403&body=' + urllib.parse.quote_plus(error)
+        }, expect_failure=True)
