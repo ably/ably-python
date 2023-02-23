@@ -358,9 +358,9 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             }
         }
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        transport = await ably.connection.connection_manager.once_async('transport.pending')
         original_token_details = ably.auth.token_details
-        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+        await transport.on_protocol_message(msg)
         assert ably.auth.token_details is not original_token_details
         await ably.close()
         await rest.close()
