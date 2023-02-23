@@ -24,18 +24,18 @@ class ConnectionManager(EventEmitter):
         self.__state = initial_state
         self.__ping_future = None
         self.__timeout_in_secs = self.options.realtime_request_timeout / 1000
-        self.transport: WebSocketTransport or None = None
+        self.transport: Optional[WebSocketTransport] = None
         self.__connection_details = None
         self.connection_id = None
         self.__fail_state = ConnectionState.DISCONNECTED
-        self.transition_timer: Timer or None = None
-        self.suspend_timer: Timer or None = None
-        self.retry_timer: Timer or None = None
-        self.connect_base_task: asyncio.Task or None = None
-        self.disconnect_transport_task: asyncio.Task or None = None
+        self.transition_timer: Optional[Timer] = None
+        self.suspend_timer: Optional[Timer] = None
+        self.retry_timer: Optional[Timer] = None
+        self.connect_base_task: Optional[asyncio.Task] = None
+        self.disconnect_transport_task: Optional[asyncio.Task] = None
         self.__fallback_hosts = self.options.get_fallback_realtime_hosts()
         self.queued_messages = Queue()
-        self.__error_reason: AblyException or None = None
+        self.__error_reason: Optional[AblyException] = None
         super().__init__()
 
     def enact_state_change(self, state, reason=None):
