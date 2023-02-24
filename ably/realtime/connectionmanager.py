@@ -153,20 +153,39 @@ class ConnectionManager(EventEmitter):
 
         self.ably.channels._on_connected()
 
-    def on_disconnected(self, msg: dict):
-        error = msg.get("error")
-        exception = AblyException.from_dict(error)
-        self.notify_state(ConnectionState.DISCONNECTED, exception)
-        if error:
-            error_status_code = error.get("statusCode")
-            if error_status_code >= 500 or error_status_code <= 504:  # RTN17f1
+    async def on_disconnected(self, exception: Optional[AblyException]):
+        # RTN15h
+        if self.transport:
+            await self.transport.dispose()
+        if exception:
+            status_code = exception.status_code
+            if status_code >= 500 and status_code <= 504:  # RTN17f1
                 if len(self.__fallback_hosts) > 0:
-                    res = asyncio.create_task(self.connect_with_fallback_hosts(self.__fallback_hosts))
-                    if not res:
-                        return
-                    self.notify_state(self.__fail_state, reason=res)
+                    try:
+                        await self.connect_with_fallback_hosts(self.__fallback_hosts)
+                    except Exception as e:
+                        self.notify_state(self.__fail_state, reason=e)
+                    return
                 else:
                     log.info("No fallback host to try for disconnected protocol message")
+            elif is_token_error(exception):
+                await self.on_token_error(exception)
+            else:
+                self.notify_state(ConnectionState.DISCONNECTED, exception)
+        else:
+            log.warn("DISCONNECTED message received without error")
+
+    async def on_token_error(self, exception: AblyException):
+        if self.__error_reason is None or not is_token_error(self.__error_reason):
+            self.__error_reason = exception
+            try:
+                await self.ably.auth._ensure_valid_auth_credentials(force=True)
+            except Exception as e:
+                self.on_error_from_authorize(e)
+                return
+            self.notify_state(self.__fail_state, exception, retry_immediately=True)
+            return
+        self.notify_state(self.__fail_state, exception)
 
     async def on_error(self, msg: dict, exception: AblyException):
         if msg.get("channel") is not None:  # RTN15i
@@ -175,16 +194,7 @@ class ConnectionManager(EventEmitter):
         if self.transport:
             await self.transport.dispose()
         if is_token_error(exception):  # RTN14b
-            if self.__error_reason is None or not is_token_error(self.__error_reason):
-                self.__error_reason = exception
-                try:
-                    await self.ably.auth._ensure_valid_auth_credentials(force=True)
-                except Exception as e:
-                    self.on_error_from_authorize(e)
-                    return
-                self.notify_state(self.__fail_state, exception, retry_immediately=True)
-                return
-            self.notify_state(self.__fail_state, exception)
+            await self.on_token_error(exception)
         else:
             self.enact_state_change(ConnectionState.FAILED, exception)
 
