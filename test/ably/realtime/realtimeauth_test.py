@@ -557,3 +557,34 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert ably.auth.token_details is not original_token_details
         await ably.close()
         await rest.close()
+
+    async def test_renew_token_no_renew_means_provided_on_resume(self):
+        rest = await TestApp.get_ably_rest()
+        token_details = await rest.auth.request_token()
+
+        ably = await TestApp.get_ably_realtime(token_details=token_details)
+
+        msg = {
+            "action": ProtocolMessageAction.DISCONNECTED,
+            "error": {
+                "code": 40142,
+                "statusCode": 401
+            }
+        }
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        connection_key = ably.connection.connection_details.connection_key
+        await ably.connection.connection_manager.transport.dispose()
+        ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
+
+        state_change = await ably.connection.once_async(ConnectionState.CONNECTED)
+        assert ably.connection.connection_manager.transport.params["resume"] == connection_key
+
+        assert ably.connection.connection_manager.transport
+        await ably.connection.connection_manager.transport.on_protocol_message(msg)
+
+        state_change = await ably.connection.once_async(ConnectionState.FAILED)
+        assert state_change.reason.code == 40171
+        assert state_change.reason.status_code == 403
+        await ably.close()
+        await rest.close()
