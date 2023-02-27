@@ -82,7 +82,10 @@ class Auth:
             return {"key": f"{key_name}:{key_secret}"}
         elif self.__auth_mechanism == Auth.Method.TOKEN:
             token_details = await self._ensure_valid_auth_credentials()
-            return {"accessToken": token_details.token}
+            auth_credentials = {"accessToken": token_details.token}
+            if token_details.client_id:
+                auth_credentials["client_id"] = token_details.client_id
+            return auth_credentials
 
     async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
         token_details = await self._ensure_valid_auth_credentials(token_params, auth_options, force)
