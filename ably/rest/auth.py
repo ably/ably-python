@@ -26,9 +26,12 @@ class Auth:
         self.__ably = ably
         self.__auth_options = options
 
-        self.__client_id = options.client_id
-        if not self.__client_id and options.token_details:
-            self.__client_id = options.token_details.client_id
+        if not self.ably._is_realtime:
+            self.__client_id = options.client_id
+            if not self.__client_id and options.token_details:
+                self.__client_id = options.token_details.client_id
+        else:
+            self.__client_id = None
         self.__client_id_validated = False
 
         self.__basic_credentials = None
@@ -325,14 +328,18 @@ class Auth:
         return self.__time_offset
 
     def _configure_client_id(self, new_client_id):
+        log.debug("Auth._configure_client_id(): new client_id = %s", new_client_id)
+        original_client_id = self.client_id or self.auth_options.client_id
+
         # If new client ID from Ably is a wildcard, but preconfigured clientId is set,
         # then keep the existing clientId
-        if self.client_id != '*' and new_client_id == '*':
+        if original_client_id != '*' and new_client_id == '*':
             self.__client_id_validated = True
+            self.__client_id = original_client_id
             return
 
         # If client_id is defined and not a wildcard, prevent it changing, this is not supported
-        if self.client_id is not None and self.client_id != '*' and new_client_id != self.client_id:
+        if original_client_id is not None and original_client_id != '*' and new_client_id != original_client_id:
             raise IncompatibleClientIdException(
                 "Client ID is immutable once configured for a client. "
                 "Client ID cannot be changed to '{}'".format(new_client_id), 400, 40102)
@@ -341,12 +348,14 @@ class Auth:
         self.__client_id = new_client_id
 
     def can_assume_client_id(self, assumed_client_id):
+        original_client_id = self.client_id or self.auth_options.client_id
+
         if self.__client_id_validated:
             return self.client_id == '*' or self.client_id == assumed_client_id
-        elif self.client_id is None or self.client_id == '*':
+        elif original_client_id is None or original_client_id == '*':
             return True  # client ID is unknown
         else:
-            return self.client_id == assumed_client_id
+            return original_client_id == assumed_client_id
 
     async def _get_auth_headers(self):
         if self.__auth_mechanism == Auth.Method.BASIC:
