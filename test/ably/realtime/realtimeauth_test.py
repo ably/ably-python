@@ -600,6 +600,9 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         realtime = await TestApp.get_ably_realtime(auth_callback=auth_callback)
 
+        # RTC4a
+        assert realtime.auth.client_id is None
+
         await realtime.connection.once_async(ConnectionState.CONNECTED)
 
         assert realtime.auth.client_id == client_id
@@ -618,6 +621,8 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         realtime = await TestApp.get_ably_realtime(token_details=token_details, client_id="WRONG")
 
+        assert realtime.auth.client_id is None
+
         state_change = await realtime.connection.once_async(ConnectionState.FAILED)
 
         assert state_change.reason.code == 40102
@@ -635,6 +640,8 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         realtime = await TestApp.get_ably_realtime(token_details=token_details, client_id=client_id)
 
+        assert realtime.auth.client_id is None
+
         await realtime.connection.once_async(ConnectionState.CONNECTED)
 
         assert realtime.auth.client_id == client_id
@@ -651,6 +658,8 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         token_details = await rest.auth.request_token({"client_id": client_id})
 
         realtime = await TestApp.get_ably_realtime(token_details=token_details)
+
+        assert realtime.auth.client_id is None
 
         await realtime.connection.once_async(ConnectionState.CONNECTED)
 
