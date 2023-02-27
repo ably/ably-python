@@ -76,16 +76,17 @@ class Auth:
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
     async def get_auth_transport_param(self):
+        auth_credentials = {}
+        if self.__client_id:
+            auth_credentials["client_id"] = self.__client_id
         if self.__auth_mechanism == Auth.Method.BASIC:
             key_name = self.__auth_options.key_name
             key_secret = self.__auth_options.key_secret
-            return {"key": f"{key_name}:{key_secret}"}
+            auth_credentials["key"] = f"{key_name}:{key_secret}"
         elif self.__auth_mechanism == Auth.Method.TOKEN:
             token_details = await self._ensure_valid_auth_credentials()
-            auth_credentials = {"accessToken": token_details.token}
-            if token_details.client_id:
-                auth_credentials["client_id"] = token_details.client_id
-            return auth_credentials
+            auth_credentials["accessToken"] = token_details.token
+        return auth_credentials
 
     async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
         token_details = await self._ensure_valid_auth_credentials(token_params, auth_options, force)
