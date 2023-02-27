@@ -37,7 +37,7 @@ def reauth_if_expired(func):
                 await rest.reauth()
                 return await func(rest, *args, **kwargs)
 
-            raise
+            raise e
 
     return wrapper
 
