@@ -353,3 +353,23 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         await realtime.close()
         await rest.close()
+
+    async def test_connection_client_id_query_params_using_api_key(self):
+        client_id = 'test_client_id'
+
+        ably = await TestApp.get_ably_realtime(client_id=client_id)
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        assert ably.connection.connection_manager.transport.params["client_id"] == client_id
+        assert ably.auth.client_id == client_id
+
+        await ably.close()
+
+    async def test_connection_null_client_id_query_params_using_api_key(self):
+
+        ably = await TestApp.get_ably_realtime()
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        assert ably.connection.connection_manager.transport.params.get("client_id") is None
+        assert ably.auth.client_id is None
+        await ably.close()
