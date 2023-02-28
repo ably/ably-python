@@ -77,8 +77,8 @@ class Auth:
 
     async def get_auth_transport_param(self):
         auth_credentials = {}
-        if self.__client_id:
-            auth_credentials["client_id"] = self.__client_id
+        if self.auth_options.client_id:
+            auth_credentials["client_id"] = self.auth_options.client_id
         if self.__auth_mechanism == Auth.Method.BASIC:
             key_name = self.__auth_options.key_name
             key_secret = self.__auth_options.key_secret
