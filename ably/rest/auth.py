@@ -25,10 +25,10 @@ class Auth:
     def __init__(self, ably, options):
         self.__ably = ably
         self.__auth_options = options
-        if options.token_details:
+
+        self.__client_id = options.client_id
+        if not self.__client_id and options.token_details:
             self.__client_id = options.token_details.client_id
-        else:
-            self.__client_id = options.client_id
         self.__client_id_validated = False
 
         self.__basic_credentials = None
@@ -335,7 +335,7 @@ class Auth:
         if self.client_id is not None and self.client_id != '*' and new_client_id != self.client_id:
             raise IncompatibleClientIdException(
                 "Client ID is immutable once configured for a client. "
-                "Client ID cannot be changed to '{}'".format(new_client_id), 400, 40012)
+                "Client ID cannot be changed to '{}'".format(new_client_id), 400, 40102)
 
         self.__client_id_validated = True
         self.__client_id = new_client_id

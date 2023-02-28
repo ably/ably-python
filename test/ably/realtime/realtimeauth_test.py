@@ -588,3 +588,73 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         assert state_change.reason.status_code == 403
         await ably.close()
         await rest.close()
+
+    # Request a token using client_id, then initialize a connection without one,
+    # and check that the connection inherits the client_id from the token_details
+    async def test_auth_client_id_inheritance_auth_callback(self):
+        rest = await TestApp.get_ably_rest()
+        client_id = 'test_client_id'
+
+        async def auth_callback(_):
+            return await rest.auth.request_token({"client_id": client_id})
+
+        realtime = await TestApp.get_ably_realtime(auth_callback=auth_callback)
+
+        await realtime.connection.once_async(ConnectionState.CONNECTED)
+
+        assert realtime.auth.client_id == client_id
+
+        await realtime.close()
+        await rest.close()
+
+    # Rest token generation with client_id, then connecting with a
+    # different client_id, should fail with a library-generated message
+    # (RSA15a, RSA15c)
+    async def test_auth_client_id_mismatch(self):
+        rest = await TestApp.get_ably_rest()
+        client_id = 'test_client_id'
+
+        token_details = await rest.auth.request_token({"client_id": client_id})
+
+        realtime = await TestApp.get_ably_realtime(token_details=token_details, client_id="WRONG")
+
+        state_change = await realtime.connection.once_async(ConnectionState.FAILED)
+
+        assert state_change.reason.code == 40102
+
+        await realtime.close()
+        await rest.close()
+
+    # Rest token generation with clientId '*', then connecting with just the
+    # token string and a different clientId, should succeed (RSA15b)
+    async def test_auth_client_id_wildcard_token(self):
+        rest = await TestApp.get_ably_rest()
+        client_id = 'test_client_id'
+
+        token_details = await rest.auth.request_token({"client_id": "*"})
+
+        realtime = await TestApp.get_ably_realtime(token_details=token_details, client_id=client_id)
+
+        await realtime.connection.once_async(ConnectionState.CONNECTED)
+
+        assert realtime.auth.client_id == client_id
+
+        await realtime.close()
+        await rest.close()
+
+    # Request a token using clientId, then initialize a connection using just the token string,
+    # and check that the connection inherits the clientId from the connectionDetails
+    async def test_auth_client_id_inheritance_token(self):
+        rest = await TestApp.get_ably_rest()
+        client_id = 'test_client_id'
+
+        token_details = await rest.auth.request_token({"client_id": client_id})
+
+        realtime = await TestApp.get_ably_realtime(token_details=token_details)
+
+        await realtime.connection.once_async(ConnectionState.CONNECTED)
+
+        assert realtime.auth.client_id == client_id
+
+        await realtime.close()
+        await rest.close()

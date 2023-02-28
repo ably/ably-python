@@ -6,7 +6,7 @@ from ably.transport.defaults import Defaults
 from ably.types.connectionerrors import ConnectionErrors
 from ably.types.connectionstate import ConnectionEvent, ConnectionState, ConnectionStateChange
 from ably.types.tokendetails import TokenDetails
-from ably.util.exceptions import AblyException
+from ably.util.exceptions import AblyException, IncompatibleClientIdException
 from ably.util.eventemitter import EventEmitter
 from datetime import datetime
 from ably.util.helper import get_random_id, Timer, is_token_error
@@ -143,6 +143,13 @@ class ConnectionManager(EventEmitter):
 
         self.__connection_details = connection_details
         self.connection_id = connection_id
+
+        if connection_details.client_id:
+            try:
+                self.ably.auth._configure_client_id(connection_details.client_id)
+            except IncompatibleClientIdException as e:
+                self.notify_state(ConnectionState.FAILED, reason=e)
+                return
 
         if self.__state == ConnectionState.CONNECTED:
             state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
