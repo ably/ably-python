@@ -91,9 +91,10 @@ class AblyRealtime(AblyRest):
             except RuntimeError:
                 log.warning('Realtime client created outside event loop')
 
+        self._is_realtime = True
+
         # RTC1
         super().__init__(key, loop=loop, **kwargs)
-        self._is_realtime = True
 
         self.key = key
         self.__connection = Connection(self)
