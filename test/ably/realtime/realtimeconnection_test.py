@@ -323,3 +323,29 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.connection.once_async(ConnectionState.CONNECTED)
         assert ably.connection.connection_manager.transport.host == fallback_host
         await ably.close()
+
+    #  RTN2d
+    async def test_connection_null_client_id_query_params(self):
+        rest = await TestApp.get_ably_rest()
+
+        token_details = await rest.auth.request_token()
+
+        realtime = await TestApp.get_ably_realtime(token_details=token_details)
+
+        await realtime.connection.once_async(ConnectionState.CONNECTED)
+        assert realtime.connection.connection_manager.transport.params.get("client_id") is None
+        assert realtime.auth.client_id is None
+
+        await realtime.close()
+        await rest.close()
+
+    async def test_connection_client_id_query_params(self):
+        client_id = 'test_client_id'
+
+        ably = await TestApp.get_ably_realtime(client_id=client_id)
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        assert ably.connection.connection_manager.transport.params["client_id"] == client_id
+        assert ably.auth.client_id == client_id
+
+        await ably.close()
