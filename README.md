@@ -219,9 +219,18 @@ pip install ably==2.0.0b3
 ```python
 from ably import AblyRealtime
 
+
+# Create a client using an Ably API key
 async def main():
-    # Create a client using an Ably API key
     client = AblyRealtime('api:key')
+
+
+# Create a client using an token auth
+from ably import AblyRest
+async def main():
+    rest_client = AblyRest()
+    token_details = rest_client.request_token()
+    client = AblyRealtime(token_details=token_details)
 ```
 
 #### Subscribe to connection state changes
