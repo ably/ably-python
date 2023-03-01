@@ -1,5 +1,24 @@
 # Change Log
 
+## [v2.0.0-beta.4](https://github.com/ably/ably-python/tree/v2.0.0-beta.4)
+
+This new beta release of the ably-python realtime client implements token authentication for realtime connections, allowing you to use all currently supported token options to authenticate a realtime client (auth_url, auth_callback, jwt, etc). The client will reauthenticate when the token expires or otherwise becomes invalid.
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.0-beta.3...v2.0.0-beta.4)
+
+- Allow token auth methods for realtime constructor [\#425](https://github.com/ably/ably-python/issues/425)
+- Send `AUTH` protocol message when `Auth.authorize` called on realtime client [\#427](https://github.com/ably/ably-python/issues/427)
+- Reauth upon inbound `AUTH` protocol message [\#428](https://github.com/ably/ably-python/issues/428)
+- Handle connection request failure due to token error [\#445](https://github.com/ably/ably-python/issues/445)
+- Handle token `ERROR` response to a resume request [\#444](https://github.com/ably/ably-python/issues/444)
+- Handle `DISCONNECTED` messages containing token errors [\#443](https://github.com/ably/ably-python/issues/443)
+- Pass `clientId` as query string param when opening a new connection [\#449](https://github.com/ably/ably-python/issues/449)
+- Validate `clientId` in `ClientOptions` [\#448](https://github.com/ably/ably-python/issues/448)
+- Apply `Auth#clientId` only after a realtime connection has been established [\#409](https://github.com/ably/ably-python/issues/409)
+- Channels should transition to `INITIALIZED` if `Connection.connect` called from terminal state [\#411](https://github.com/ably/ably-python/issues/411)
+- Calling connect while `CLOSING` should start connect on a new transport [\#410](https://github.com/ably/ably-python/issues/410)
+- Handle realtime channel errors [\#455](https://github.com/ably/ably-python/issues/455)
+
 ## [v2.0.0-beta.3](https://github.com/ably/ably-python/tree/v2.0.0-beta.3)
 
 This new beta release of the ably-python realtime client implements a number of new features to improve the stability of realtime connections, allowing the client to reconnect during a temporary disconnection, use fallback hosts when necessary, and catch up on messages missed while the client was disconnected.
