@@ -2,8 +2,9 @@ ably-python
 -----------
 
 ![.github/workflows/check.yml](https://github.com/ably/ably-python/workflows/.github/workflows/check.yml/badge.svg)
-[![PyPI version](https://badge.fury.io/py/ably.svg)](https://badge.fury.io/py/ably)
+[![Features](https://github.com/ably/ably-python/actions/workflows/features.yml/badge.svg)](https://github.com/ably/ably-python/actions/workflows/features.yml)
 
+[![PyPI version](https://badge.fury.io/py/ably.svg)](https://badge.fury.io/py/ably)
 
 ## Overview
 
@@ -224,6 +225,23 @@ async def main():
 ```
 
 #### Subscribe to connection state changes
+
+```python
+# subscribe to 'failed' connection state
+client.connection.on('failed', listener)
+
+# subscribe to 'connected' connection state
+client.connection.on('connected', listener)
+
+# subscribe to all connection state changes
+client.connection.on(listener)
+
+# wait for the next state change
+await client.connection.once_async()
+
+# wait for the connection to become connected
+await client.connection.once_async('connected')
+```
 
 ```python
 # subscribe to 'failed' connection state

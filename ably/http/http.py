@@ -38,7 +38,7 @@ def reauth_if_expired(func):
                 await auth.authorize()
                 return await func(rest, *args, **kwargs)
 
-            raise
+            raise e
 
     return wrapper
 

@@ -1,6 +1,6 @@
 %YAML 1.2
 ---
-common-version: 1.2.0-alpha.1
+common-version: 1.2.0
 compliance:
   Agent Identifier:
     Agents:
@@ -17,7 +17,6 @@ compliance:
   Protocol:
     JSON:
     MessagePack:
-      .caveats: 'Not supported for realtime'
   Realtime:
     Channel:
       Attach:
@@ -52,7 +51,7 @@ compliance:
         Subscribe:
       Release:
       Status:
-        Channel Details:
+        Channel Details: # https://github.com/ably/ably-python/pull/276
     Opaque Request:
     Push Notifications Administration:
       Channel Subscription:
