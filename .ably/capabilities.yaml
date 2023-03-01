@@ -20,8 +20,8 @@ compliance:
   Realtime:
     Channel:
       Attach:
-      Subscribe:
       State Events:
+      Subscribe:
     Connection:
       Disconnected Retry Timeout:
       Lifecycle control:
