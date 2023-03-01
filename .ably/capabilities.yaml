@@ -24,7 +24,7 @@ compliance:
       Subscribe:
     Connection:
       Disconnected Retry Timeout:
-      Lifecycle control:
+      Lifecycle Control:
       Ping:
       State Events:
       Suspended Retry Timeout:
