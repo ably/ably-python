@@ -214,8 +214,8 @@ pip install ably==2.0.0b3
 ```
 
 ### Using the realtime client
+`Creating a client using API key`
 
-#### Creating a client
 ```python
 from ably import AblyRealtime
 
@@ -223,12 +223,18 @@ from ably import AblyRealtime
 # Create a client using an Ably API key
 async def main():
     client = AblyRealtime('api:key')
+```
 
+`Create a client using an token auth`
 
-# Create a client using an token auth
+```python
+# Create a client using kwargs, which must contain at least one auth option
+# the available auth options are key, token, token_details, auth_url, and auth_callback
+# see https://www.ably.com/docs/rest/usage#client-options for more details
+from ably import AblyRealtime
 from ably import AblyRest
 async def main():
-    rest_client = AblyRest()
+    rest_client = AblyRest('api:key')
     token_details = rest_client.request_token()
     client = AblyRealtime(token_details=token_details)
 ```
