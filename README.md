@@ -206,10 +206,10 @@ Check out the [roadmap](./roadmap.md) to see our plan for the realtime client.
 
 ### Installing the realtime client
 
-The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b3/) package.
+The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b4/) package.
 
 ```
-pip install ably==2.0.0b3
+pip install ably==2.0.0b4
 ```
 
 ### Using the realtime client
@@ -329,8 +329,8 @@ for the set of versions that currently undergo CI testing.
 
 ## Known Limitations
 
-Currently, this SDK only supports [Ably REST](https://ably.com/docs/rest). 
-However, you can use the [MQTT adapter](https://ably.com/docs/mqtt) to implement [Ably's Realtime](https://ably.com/docs/realtime) features using Python.
+Currently, this SDK only supports [Ably REST](https://ably.com/docs/rest), although we currently have [a subscribe-only realtime client in beta](#Realtime-client-beta).
+You can also use the [MQTT adapter](https://ably.com/docs/mqtt) to implement [Ably's Realtime](https://ably.com/docs/realtime) features using Python.
 
 See [our roadmap for this SDK](roadmap.md) for more information.
 
