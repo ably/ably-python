@@ -70,12 +70,11 @@ class TestChannels(BaseAsyncTestCase):
             assert isinstance(channel, Channel)
             assert name == channel.name
 
+    # RSN4a, RSN4b
     def test_channels_release(self):
         self.ably.channels.get('new_channel')
         self.ably.channels.release('new_channel')
-
-        with pytest.raises(KeyError):
-            self.ably.channels.release('new_channel')
+        self.ably.channels.release('new_channel')
 
     def test_channel_has_presence(self):
         channel = self.ably.channels.get('new_channnel')
