@@ -77,13 +77,6 @@ class TestChannels(BaseAsyncTestCase):
         with pytest.raises(KeyError):
             self.ably.channels.release('new_channel')
 
-    def test_channels_del(self):
-        self.ably.channels.get('new_channel')
-        del self.ably.channels['new_channel']
-
-        with pytest.raises(KeyError):
-            del self.ably.channels['new_channel']
-
     def test_channel_has_presence(self):
         channel = self.ably.channels.get('new_channnel')
         assert channel.presence

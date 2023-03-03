@@ -221,6 +221,3 @@ class Channels:
 
     def release(self, key):
         del self.__all[key]
-
-    def __delitem__(self, key):
-        return self.release(key)
