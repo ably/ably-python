@@ -219,8 +219,19 @@ class Channels:
     def __iter__(self) -> Iterator[str]:
         return iter(self.__all.values())
 
-    def release(self, key):
-        del self.__all[key]
+    # RSN4
+    def release(self, name):
+        """Releases a Channel object, deleting it, and enabling it to be garbage collected.
+        If the channel does not exist, nothing happens.
 
-    def __delitem__(self, key):
-        return self.release(key)
+        It also removes any listeners associated with the channel.
+
+        Parameters
+        ----------
+        name: str
+            Channel name
+        """
+
+        if name not in self.__all:
+            return
+        del self.__all[name]
