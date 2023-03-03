@@ -219,7 +219,7 @@ class Channels:
     def __iter__(self) -> Iterator[str]:
         return iter(self.__all.values())
 
-    #RSN4
+    # RSN4
     def release(self, name):
         """Releases a Channel object, deleting it, and enabling it to be garbage collected.
         If the channel does not exist, nothing happens.
