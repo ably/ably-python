@@ -92,7 +92,7 @@ Start receiving messages from the Ably service.
 
 **Objective**: Receive application level messages from the network.
 
-## Milestone 2: Realtime Connectivity Hardening
+## Milestone 2: Realtime Connectivity Hardening ✅
 
 This milestone will add connection error handling to the realtime client,
 allowing it to continue operating in the event of a recoverable connection error.
@@ -110,7 +110,7 @@ Implement the correct behaviour for all potential errors that may occur when est
 
 **Objective**: Achieve confidence that the library has defined behaviour for all errors it may encounter upon establishing a realtime connection.
 
-### Milestone 2b: Retry failed connection attempts
+### Milestone 2b: Retry failed connection attempts ✅
 
 Attempt to re-establish connection upon a recoverable connection attempt failure and give users visibility of the connection state when the library is doing so.
 
@@ -123,7 +123,7 @@ Attempt to re-establish connection upon a recoverable connection attempt failure
 
 **Objective**: Allow the library to re-establish connection in the event of a recoverable connection opening failure.
 
-### Milestone 2c: Use fallback hosts
+### Milestone 2c: Use fallback hosts ✅
 
 Use fallback hosts in the case of a connection error, allowing the library to still connect to Ably when connection to the primary host is unavailable.
 
@@ -135,7 +135,7 @@ Use fallback hosts in the case of a connection error, allowing the library to st
 
 **Objective**: Make the realtime client resilient when one or more realtime endpoints are unavailable.
 
-### Milestone 2d: Handle connection errors once connected
+### Milestone 2d: Handle connection errors once connected ✅
 
 Handle errors which the realtime client may encounter once already in the `CONNECTED` state, resuming the connection and reattaching to channels when appropriate.
 
@@ -156,11 +156,11 @@ Handle errors which the realtime client may encounter once already in the `CONNE
 
 **Objective**: Detect connection errors while connected and handle them appropriately.
 
-## Milestone 3: Token Authentication
+## Milestone 3: Token Authentication ✅
 
 This milestone will add token-based authentication to the realtime client.
 
-### Milestone 3a: Enable token-based authentication and re-authentication
+### Milestone 3a: Enable token-based authentication and re-authentication ✅
 
 Implement the expected behavior for successful token-based authentication and re-authentication.
 
@@ -172,7 +172,7 @@ Implement the expected behavior for successful token-based authentication and re
 
 **Objective**: Create functionality that will allow the client to authenticate with Ably via tokens.
 
-### Milestone 3b: Error scenarios
+### Milestone 3b: Error scenarios ✅
 
 Implement the correct handling of edge cases when there are connectivity issues or authentication errors during token-based authentication.
 
@@ -184,7 +184,7 @@ Implement the correct handling of edge cases when there are connectivity issues 
 
 **Objective**: Display the correct errors and place client in expected state during error scenarios that may arise during authentication process.
 
-### Milestone 3c: Client ID
+### Milestone 3c: Client ID ✅
 
 Properly handle and set `clientId` attribute during token-based authentication.
 
