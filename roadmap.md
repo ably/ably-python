@@ -2,7 +2,7 @@
 
 This document outlines our plans for the evolution of this SDK.
 
-## Milestone 1: Realtime Channel Subscription
+## Milestone 1: Realtime Channel Subscription ✅
 
 Once we've completed the scope and objectives detailed in this milestone,
 we'll be in a good position to make a release in order to start getting feedback from customers.
@@ -19,7 +19,7 @@ That release will come with the following known limitations:
 - No capability to publish over the Realtime connection. To be implemented under [Milestone 4: Realtime Channel Publish](#milestone-4-realtime-channel-publish).
 - No capability to receive or publish member presence messages for a channel over the Realtime connection. To be implemented under [Milestone 5: Realtime Channel Presence](#milestone-5-realtime-channel-presence).
 
-### Milestone 1a: Solidify Existing Foundations
+### Milestone 1a: Solidify Existing Foundations ✅
 
 Ensure the current source code is in a good enough state to build upon.
 This means solving currently known pain points (development environment stabilisation) as well as reassessing our baselines.
@@ -32,7 +32,7 @@ This means solving currently known pain points (development environment stabilis
 
 **Objective**: Achieve confidence that we have foundations we can confidently build upon, knowing what's coming up in future milestones.
 
-### Milestone 1b: Establish Realtime Foundations and Connect
+### Milestone 1b: Establish Realtime Foundations and Connect ✅
 
 **Scope**:
 
@@ -43,7 +43,7 @@ This means solving currently known pain points (development environment stabilis
 
 **Objective**: Successfully connect to Ably Realtime.
 
-### Milestone 1c: Realtime Connection Lifecycle
+### Milestone 1c: Realtime Connection Lifecycle ✅
 
 The basic foundations of Realtime connectivity, plus client identification (`Agent`).
 
@@ -59,7 +59,7 @@ The basic foundations of Realtime connectivity, plus client identification (`Age
 
 **Objective**: Track connection state and offer API to query it.
 
-### Milestone 1d: Basic Realtime-Client-initiated Messages
+### Milestone 1d: Basic Realtime-Client-initiated Messages ✅
 
 Give our users some control.
 
@@ -75,7 +75,7 @@ Give our users some control.
 **Objective**: Provide APIs for sending basic messages to the service,
 resulting in proof-of-life / smoke-test proving interactions with the event model chosen in [1b](#milestone-1b-establish-realtime-foundations-and-connect).
 
-### Milestone 1e: Attach and Subscribe
+### Milestone 1e: Attach and Subscribe ✅
 
 Start receiving messages from the Ably service.
 
@@ -92,13 +92,13 @@ Start receiving messages from the Ably service.
 
 **Objective**: Receive application level messages from the network.
 
-## Milestone 2: Realtime Connectivity Hardening
+## Milestone 2: Realtime Connectivity Hardening ✅
 
 This milestone will add connection error handling to the realtime client,
 allowing it to continue operating in the event of a recoverable connection error.
 It will also improve the visibility of what went wrong in the event of a fatal connection error.
 
-### Milestone 2a: Handle connection opening errors
+### Milestone 2a: Handle connection opening errors ✅
 
 Implement the correct behaviour for all potential errors that may occur when establishing a new realtime connection.
 
@@ -110,7 +110,7 @@ Implement the correct behaviour for all potential errors that may occur when est
 
 **Objective**: Achieve confidence that the library has defined behaviour for all errors it may encounter upon establishing a realtime connection.
 
-### Milestone 2b: Retry failed connection attempts
+### Milestone 2b: Retry failed connection attempts ✅
 
 Attempt to re-establish connection upon a recoverable connection attempt failure and give users visibility of the connection state when the library is doing so.
 
@@ -123,7 +123,7 @@ Attempt to re-establish connection upon a recoverable connection attempt failure
 
 **Objective**: Allow the library to re-establish connection in the event of a recoverable connection opening failure.
 
-### Milestone 2c: Use fallback hosts
+### Milestone 2c: Use fallback hosts ✅
 
 Use fallback hosts in the case of a connection error, allowing the library to still connect to Ably when connection to the primary host is unavailable.
 
@@ -135,7 +135,7 @@ Use fallback hosts in the case of a connection error, allowing the library to st
 
 **Objective**: Make the realtime client resilient when one or more realtime endpoints are unavailable.
 
-### Milestone 2d: Handle connection errors once connected
+### Milestone 2d: Handle connection errors once connected ✅
 
 Handle errors which the realtime client may encounter once already in the `CONNECTED` state, resuming the connection and reattaching to channels when appropriate.
 
@@ -156,11 +156,11 @@ Handle errors which the realtime client may encounter once already in the `CONNE
 
 **Objective**: Detect connection errors while connected and handle them appropriately.
 
-## Milestone 3: Token Authentication
+## Milestone 3: Token Authentication ✅
 
 This milestone will add token-based authentication to the realtime client.
 
-### Milestone 3a: Enable token-based authentication and re-authentication
+### Milestone 3a: Enable token-based authentication and re-authentication ✅
 
 Implement the expected behavior for successful token-based authentication and re-authentication.
 
@@ -172,7 +172,7 @@ Implement the expected behavior for successful token-based authentication and re
 
 **Objective**: Create functionality that will allow the client to authenticate with Ably via tokens.
 
-### Milestone 3b: Error scenarios
+### Milestone 3b: Error scenarios ✅
 
 Implement the correct handling of edge cases when there are connectivity issues or authentication errors during token-based authentication.
 
@@ -184,7 +184,7 @@ Implement the correct handling of edge cases when there are connectivity issues 
 
 **Objective**: Display the correct errors and place client in expected state during error scenarios that may arise during authentication process.
 
-### Milestone 3c: Client ID
+### Milestone 3c: Client ID ✅
 
 Properly handle and set `clientId` attribute during token-based authentication.
 
