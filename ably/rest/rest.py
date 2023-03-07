@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 class AblyRest:
     """Ably Rest Client"""
 
-    def __init__(self, key=None, token=None, token_details=None, **kwargs):
+    def __init__(self, key: str = None, token: str = None, token_details: TokenDetails = None, **kwargs):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -77,8 +77,8 @@ class AblyRest:
         return self
 
     @catch_all
-    async def stats(self, direction=None, start=None, end=None, params=None,
-                    limit=None, paginated=None, unit=None, timeout=None):
+    async def stats(self, direction: str = None, start=None, end=None, params: dict = None,
+                    limit: int = None, paginated=None, unit=None, timeout=None):
         """Returns the stats for this application"""
         params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
         url = '/stats' + params
@@ -93,7 +93,7 @@ class AblyRest:
         return r.to_native()[0]
 
     @property
-    def client_id(self):
+    def client_id(self) -> str:
         return self.options.client_id
 
     @property
@@ -117,7 +117,7 @@ class AblyRest:
     def push(self):
         return self.__push
 
-    async def request(self, method, path, params=None, body=None, headers=None):
+    async def request(self, method: str, path: str, params: dict = None, body=None, headers=None):
         url = path
         if params:
             url += '?' + urlencode(params)

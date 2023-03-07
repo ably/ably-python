@@ -142,7 +142,7 @@ class Auth:
 
         return expires < timestamp + token_details.TOKEN_EXPIRY_BUFFER
 
-    async def authorize(self, token_params=None, auth_options=None):
+    async def authorize(self, token_params: dict = None, auth_options=None):
         return await self.__authorize_when_necessary(token_params, auth_options, force=True)
 
     async def authorise(self, *args, **kwargs):
@@ -151,10 +151,10 @@ class Auth:
             DeprecationWarning)
         return await self.authorize(*args, **kwargs)
 
-    async def request_token(self, token_params=None,
+    async def request_token(self, token_params: dict = None,
                             # auth_options
-                            key_name=None, key_secret=None, auth_callback=None,
-                            auth_url=None, auth_method=None, auth_headers=None,
+                            key_name: str = None, key_secret: str = None, auth_callback=None,
+                            auth_url: str = None, auth_method: str = None, auth_headers: dict = None,
                             auth_params=None, query_time=None):
         token_params = token_params or {}
         token_params = dict(self.auth_options.default_token_params,
@@ -228,8 +228,8 @@ class Auth:
         log.debug("Token: %s" % str(response_dict.get("token")))
         return TokenDetails.from_dict(response_dict)
 
-    async def create_token_request(self, token_params=None,
-                                   key_name=None, key_secret=None, query_time=None):
+    async def create_token_request(self, token_params: dict = None,
+                                   key_name: str = None, key_secret: str = None, query_time=None):
         token_params = token_params or {}
         token_request = {}
 
@@ -385,7 +385,8 @@ class Auth:
     def _random_nonce(self):
         return uuid.uuid4().hex[:16]
 
-    async def token_request_from_auth_url(self, method, url, token_params, headers, auth_params):
+    async def token_request_from_auth_url(self, method: str, url: str, token_params,
+                                          headers, auth_params):
         body = None
         params = None
         if method == 'GET':
