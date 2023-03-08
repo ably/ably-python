@@ -1,8 +1,15 @@
+from __future__ import annotations
 import functools
 import logging
 from ably.realtime.connectionmanager import ConnectionManager
-from ably.types.connectionstate import ConnectionEvent, ConnectionState
+from ably.types.connectiondetails import ConnectionDetails
+from ably.types.connectionstate import ConnectionEvent, ConnectionState, ConnectionStateChange
 from ably.util.eventemitter import EventEmitter
+from ably.util.exceptions import AblyException
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from ably.realtime.realtime import AblyRealtime
 
 log = logging.getLogger(__name__)
 
@@ -30,9 +37,9 @@ class Connection(EventEmitter):  # RTN4
         Pings a realtime connection
     """
 
-    def __init__(self, realtime):
+    def __init__(self, realtime: AblyRealtime):
         self.__realtime = realtime
-        self.__error_reason = None
+        self.__error_reason: Optional[AblyException] = None
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
         self.__connection_manager = ConnectionManager(self.__realtime, self.state)
         self.__connection_manager.on('connectionstate', self._on_state_update)  # RTN4a
@@ -40,7 +47,7 @@ class Connection(EventEmitter):  # RTN4
         super().__init__()
 
     # RTN11
-    def connect(self):
+    def connect(self) -> None:
         """Establishes a realtime connection.
 
         Causes the connection to open, entering the connecting state
@@ -48,7 +55,7 @@ class Connection(EventEmitter):  # RTN4
         self.__error_reason = None
         self.connection_manager.request_state(ConnectionState.CONNECTING)
 
-    async def close(self):
+    async def close(self) -> None:
         """Causes the connection to close, entering the closing state.
 
         Once closed, the library will not attempt to re-establish the
@@ -58,7 +65,7 @@ class Connection(EventEmitter):  # RTN4
         await self.once_async(ConnectionState.CLOSED)
 
     # RTN13
-    async def ping(self):
+    async def ping(self) -> float:
         """Send a ping to the realtime connection
 
         When connected, sends a heartbeat ping to the Ably server and executes
@@ -77,36 +84,36 @@ class Connection(EventEmitter):  # RTN4
         """
         return await self.__connection_manager.ping()
 
-    def _on_state_update(self, state_change):
+    def _on_state_update(self, state_change: ConnectionStateChange) -> None:
         log.info(f'Connection state changing from {self.state} to {state_change.current}')
         self.__state = state_change.current
         if state_change.reason is not None:
             self.__error_reason = state_change.reason
         self.__realtime.options.loop.call_soon(functools.partial(self._emit, state_change.current, state_change))
 
-    def _on_connection_update(self, state_change):
+    def _on_connection_update(self, state_change: ConnectionStateChange) -> None:
         self.__realtime.options.loop.call_soon(functools.partial(self._emit, ConnectionEvent.UPDATE, state_change))
 
     # RTN4d
     @property
-    def state(self):
+    def state(self) -> ConnectionState:
         """The current connection state of the connection"""
         return self.__state
 
     # RTN25
     @property
-    def error_reason(self):
+    def error_reason(self) -> Optional[AblyException]:
         """An object describing the last error which occurred on the channel, if any."""
         return self.__error_reason
 
     @state.setter
-    def state(self, value):
+    def state(self, value: ConnectionState) -> None:
         self.__state = value
 
     @property
-    def connection_manager(self):
+    def connection_manager(self) -> ConnectionManager:
         return self.__connection_manager
 
     @property
-    def connection_details(self):
+    def connection_details(self) -> Optional[ConnectionDetails]:
         return self.__connection_manager.connection_details
