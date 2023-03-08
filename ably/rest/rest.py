@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from urllib.parse import urlencode
 
 from ably.http.http import Http
@@ -18,7 +19,8 @@ log = logging.getLogger(__name__)
 class AblyRest:
     """Ably Rest Client"""
 
-    def __init__(self, key: str = None, token: str = None, token_details: TokenDetails = None, **kwargs):
+    def __init__(self, key: Optional[str] = None, token: Optional[str] = None,
+                 token_details: Optional[TokenDetails] = None, **kwargs):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -77,11 +79,11 @@ class AblyRest:
         return self
 
     @catch_all
-    async def stats(self, direction: str = None, start=None, end=None, params: dict = None,
-                    limit: int = None, paginated=None, unit=None, timeout=None):
+    async def stats(self, direction: Optional[str] = None, start=None, end=None, params: Optional[dict] = None,
+                    limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
         """Returns the stats for this application"""
-        params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
-        url = '/stats' + params
+        formatted_params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
+        url = '/stats' + formatted_params
         return await PaginatedResult.paginated_query(
             self.http, url=url, response_processor=stats_response_processor)
 
@@ -93,7 +95,7 @@ class AblyRest:
         return r.to_native()[0]
 
     @property
-    def client_id(self) -> str:
+    def client_id(self) -> Optional[str]:
         return self.options.client_id
 
     @property
@@ -117,7 +119,7 @@ class AblyRest:
     def push(self):
         return self.__push
 
-    async def request(self, method: str, path: str, params: dict = None, body=None, headers=None):
+    async def request(self, method: str, path: str, params: Optional[dict] = None, body=None, headers=None):
         url = path
         if params:
             url += '?' + urlencode(params)
