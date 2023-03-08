@@ -185,7 +185,7 @@ class Channel(SingleDispatch):
 class Channels:
     def __init__(self, rest):
         self.__ably = rest
-        self.__all = OrderedDict()
+        self.__all: dict = OrderedDict()
 
     def get(self, name, **kwargs):
         if isinstance(name, bytes):

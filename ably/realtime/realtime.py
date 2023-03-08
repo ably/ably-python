@@ -1,9 +1,9 @@
 import logging
 import asyncio
+from typing import Optional
+from ably.realtime.realtime_channel import Channels
 from ably.realtime.connection import Connection, ConnectionState
 from ably.rest.rest import AblyRest
-from ably.rest.channel import Channels as RestChannels
-from ably.realtime.realtime_channel import ChannelState, RealtimeChannel
 
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class AblyRealtime(AblyRest):
         Closes the realtime connection
     """
 
-    def __init__(self, key=None, loop=None, **kwargs):
+    def __init__(self, key: Optional[str] = None, loop: Optional[asyncio.AbstractEventLoop] = None, **kwargs):
         """Constructs a RealtimeClient object using an Ably API key.
 
         Parameters
@@ -91,7 +91,7 @@ class AblyRealtime(AblyRest):
             except RuntimeError:
                 log.warning('Realtime client created outside event loop')
 
-        self._is_realtime = True
+        self._is_realtime: bool = True
 
         # RTC1
         super().__init__(key, loop=loop, **kwargs)
@@ -105,7 +105,7 @@ class AblyRealtime(AblyRest):
             self.connection.connection_manager.request_state(ConnectionState.CONNECTING, force=True)
 
     # RTC15
-    def connect(self):
+    def connect(self) -> None:
         """Establishes a realtime connection.
 
         Explicitly calling connect() is unnecessary unless the autoConnect attribute of the ClientOptions object
@@ -117,7 +117,7 @@ class AblyRealtime(AblyRest):
         self.connection.connect()
 
     # RTC16
-    async def close(self):
+    async def close(self) -> None:
         """Causes the connection to close, entering the closing state.
         Once closed, the library will not attempt to re-establish the
         connection without an explicit call to connect()
@@ -129,111 +129,12 @@ class AblyRealtime(AblyRest):
 
     # RTC2
     @property
-    def connection(self):
+    def connection(self) -> Connection:
         """Returns the realtime connection object"""
         return self.__connection
 
     # RTC3, RTS1
     @property
-    def channels(self):
+    def channels(self) -> Channels:
         """Returns the realtime channel object"""
         return self.__channels
-
-
-class Channels(RestChannels):
-    """Creates and destroys RealtimeChannel objects.
-
-    Methods
-    -------
-    get(name)
-        Gets a channel
-    release(name)
-        Releases a channel
-    """
-
-    # RTS3
-    def get(self, name) -> RealtimeChannel:
-        """Creates a new RealtimeChannel object, or returns the existing channel object.
-
-        Parameters
-        ----------
-
-        name: str
-            Channel name
-        """
-        if name not in self.__all:
-            channel = self.__all[name] = RealtimeChannel(self.__ably, name)
-        else:
-            channel = self.__all[name]
-        return channel
-
-    # RTS4
-    def release(self, name):
-        """Releases a RealtimeChannel object, deleting it, and enabling it to be garbage collected
-
-        It also removes any listeners associated with the channel.
-        To release a channel, the channel state must be INITIALIZED, DETACHED, or FAILED.
-
-
-        Parameters
-        ----------
-        name: str
-            Channel name
-        """
-        if name not in self.__all:
-            return
-        del self.__all[name]
-
-    def _on_channel_message(self, msg):
-        channel_name = msg.get('channel')
-        if not channel_name:
-            log.error(
-                'Channels.on_channel_message()',
-                f'received event without channel, action = {msg.get("action")}'
-            )
-            return
-
-        channel = self.__all[channel_name]
-        if not channel:
-            log.warning(
-                'Channels.on_channel_message()',
-                f'receieved event for non-existent channel: {channel_name}'
-            )
-            return
-
-        channel._on_message(msg)
-
-    def _propagate_connection_interruption(self, state: ConnectionState, reason):
-        from_channel_states = (
-            ChannelState.ATTACHING,
-            ChannelState.ATTACHED,
-            ChannelState.DETACHING,
-            ChannelState.SUSPENDED,
-        )
-
-        connection_to_channel_state = {
-            ConnectionState.CLOSING: ChannelState.DETACHED,
-            ConnectionState.CLOSED: ChannelState.DETACHED,
-            ConnectionState.FAILED: ChannelState.FAILED,
-            ConnectionState.SUSPENDED: ChannelState.SUSPENDED,
-        }
-
-        for channel_name in self.__all:
-            channel = self.__all[channel_name]
-            if channel.state in from_channel_states:
-                channel._notify_state(connection_to_channel_state[state], reason)
-
-    def _on_connected(self):
-        for channel_name in self.__all:
-            channel = self.__all[channel_name]
-            if channel.state == ChannelState.ATTACHING or channel.state == ChannelState.DETACHING:
-                channel._check_pending_state()
-            elif channel.state == ChannelState.SUSPENDED:
-                asyncio.create_task(channel.attach())
-            elif channel.state == ChannelState.ATTACHED:
-                channel._request_state(ChannelState.ATTACHING)
-
-    def _initialize_channels(self):
-        for channel_name in self.__all:
-            channel = self.__all[channel_name]
-            channel._request_state(ChannelState.INITIALIZED)
