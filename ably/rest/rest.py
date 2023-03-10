@@ -88,7 +88,7 @@ class AblyRest:
             self.http, url=url, response_processor=stats_response_processor)
 
     @catch_all
-    async def time(self, timeout=None):
+    async def time(self, timeout: Optional[float] = None):
         """Returns the current server time in ms since the unix epoch"""
         r = await self.http.get('/time', skip_auth=True, timeout=timeout)
         AblyException.raise_for_response(r)
