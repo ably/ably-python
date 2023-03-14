@@ -200,8 +200,8 @@ await client.close()
 ## Realtime client (beta)
 
 We currently have a preview version of our first ever Python realtime client available for beta testing.
-Currently the realtime client only supports authentication using basic auth and message subscription.
-Realtime publishing, token authentication, and realtime presence are upcoming but not yet supported.
+Currently the realtime client supports basic and token-based authentication and message subscription.
+Realtime publishing and realtime presence are upcoming but not yet supported.
 Check out the [roadmap](./roadmap.md) to see our plan for the realtime client.
 
 ### Installing the realtime client
