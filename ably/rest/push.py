@@ -1,3 +1,4 @@
+from typing import Optional
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.device import DeviceDetails, device_details_response_processor
 from ably.types.channelsubscription import PushChannelSubscription, channel_subscriptions_response_processor
@@ -34,7 +35,7 @@ class PushAdmin:
     def channel_subscriptions(self):
         return self.__channel_subscriptions
 
-    async def publish(self, recipient, data, timeout=None):
+    async def publish(self, recipient: dict, data: dict, timeout: Optional[float] = None):
         """Publish a push notification to a single device.
 
         :Parameters:
@@ -67,7 +68,7 @@ class PushDeviceRegistrations:
     def ably(self):
         return self.__ably
 
-    async def get(self, device_id):
+    async def get(self, device_id: str):
         """Returns a DeviceDetails object if the device id is found or results
         in a not found error if the device cannot be found.
 
@@ -91,7 +92,7 @@ class PushDeviceRegistrations:
             self.ably.http, url=path,
             response_processor=device_details_response_processor)
 
-    async def save(self, device):
+    async def save(self, device: dict):
         """Creates or updates the device. Returns a DeviceDetails object.
 
         :Parameters:
@@ -104,7 +105,7 @@ class PushDeviceRegistrations:
         obj = response.to_native()
         return DeviceDetails.from_dict(obj)
 
-    async def remove(self, device_id):
+    async def remove(self, device_id: str):
         """Deletes the registered device identified by the given device id.
 
         :Parameters:
@@ -154,7 +155,7 @@ class PushChannelSubscriptions:
         return await PaginatedResult.paginated_query(self.ably.http, url=path,
                                                      response_processor=channels_response_processor)
 
-    async def save(self, subscription):
+    async def save(self, subscription: dict):
         """Creates or updates the subscription. Returns a
         PushChannelSubscription object.
 
@@ -168,7 +169,7 @@ class PushChannelSubscriptions:
         obj = response.to_native()
         return PushChannelSubscription.from_dict(obj)
 
-    async def remove(self, subscription):
+    async def remove(self, subscription: dict):
         """Deletes the given subscription.
 
         :Parameters:
