@@ -3,7 +3,6 @@ ably-python
 
 ![.github/workflows/check.yml](https://github.com/ably/ably-python/workflows/.github/workflows/check.yml/badge.svg)
 [![Features](https://github.com/ably/ably-python/actions/workflows/features.yml/badge.svg)](https://github.com/ably/ably-python/actions/workflows/features.yml)
-
 [![PyPI version](https://badge.fury.io/py/ably.svg)](https://badge.fury.io/py/ably)
 
 ## Overview
