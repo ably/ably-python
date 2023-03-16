@@ -4,7 +4,6 @@ import time
 import uuid
 import base64
 
-import warnings
 from urllib.parse import parse_qs
 import mock
 import pytest
@@ -183,7 +182,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
 
         await self.ably.auth.authorize()
 
-        assert Auth.Method.TOKEN == self.ably.auth.auth_mechanism, "Authorise should change the Auth method"
+        assert Auth.Method.TOKEN == self.ably.auth.auth_mechanism, "Authorize should change the Auth method"
 
     # RSA10a
     @dont_vary_protocol
@@ -217,7 +216,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         token_called, auth_called = request_mock.call_args
         assert token_called[0] == token_params
 
-        # Authorise may call request_token with some default auth_options.
+        # Authorize may call request_token with some default auth_options.
         for arg, value in auth_params.items():
             assert auth_called[arg] == value, "%s called with wrong value: %s" % (arg, value)
 
@@ -318,20 +317,6 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         history = await channel.history()
         assert history.items[0].client_id == client_id
         await ably.close()
-
-    # RSA10l
-    @dont_vary_protocol
-    async def test_authorise(self):
-        with warnings.catch_warnings(record=True) as ws:
-            # Cause all warnings to always be triggered
-            warnings.simplefilter("always")
-
-            token = await self.ably.auth.authorise()
-            assert isinstance(token, TokenDetails)
-
-            # Verify warning is raised
-            ws = [w for w in ws if issubclass(w.category, DeprecationWarning)]
-            assert len(ws) == 1
 
 
 class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):

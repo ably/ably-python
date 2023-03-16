@@ -5,7 +5,6 @@ import logging
 import time
 from typing import Optional, TYPE_CHECKING, Union
 import uuid
-import warnings
 import httpx
 
 from ably.types.options import Options
@@ -151,12 +150,6 @@ class Auth:
 
     async def authorize(self, token_params: Optional[dict] = None, auth_options=None):
         return await self.__authorize_when_necessary(token_params, auth_options, force=True)
-
-    async def authorise(self, *args, **kwargs):
-        warnings.warn(
-            "authorise is deprecated and will be removed in v2.0, please use authorize",
-            DeprecationWarning)
-        return await self.authorize(*args, **kwargs)
 
     async def request_token(self, token_params: Optional[dict] = None,
                             # auth_options
