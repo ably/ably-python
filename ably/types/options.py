@@ -1,5 +1,4 @@
 import random
-import warnings
 import logging
 
 from ably.transport.defaults import Defaults
@@ -13,9 +12,9 @@ class Options(AuthOptions):
                  tls_port=0, use_binary_protocol=True, queue_messages=False, recover=False, environment=None,
                  http_open_timeout=None, http_request_timeout=None, realtime_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
-                 fallback_hosts_use_default=None, fallback_retry_timeout=None, disconnected_retry_timeout=None,
-                 idempotent_rest_publishing=None, loop=None, auto_connect=True, suspended_retry_timeout=None,
-                 connectivity_check_url=None, channel_retry_timeout=Defaults.channel_retry_timeout, **kwargs):
+                 fallback_retry_timeout=None, disconnected_retry_timeout=None, idempotent_rest_publishing=None,
+                 loop=None, auto_connect=True, suspended_retry_timeout=None, connectivity_check_url=None,
+                 channel_retry_timeout=Defaults.channel_retry_timeout, **kwargs):
         super().__init__(**kwargs)
 
         # TODO check these defaults
@@ -66,7 +65,6 @@ class Options(AuthOptions):
         self.__http_max_retry_count = http_max_retry_count
         self.__http_max_retry_duration = http_max_retry_duration
         self.__fallback_hosts = fallback_hosts
-        self.__fallback_hosts_use_default = fallback_hosts_use_default
         self.__fallback_retry_timeout = fallback_retry_timeout
         self.__disconnected_retry_timeout = disconnected_retry_timeout
         self.__channel_retry_timeout = channel_retry_timeout
@@ -207,10 +205,6 @@ class Options(AuthOptions):
         return self.__fallback_hosts
 
     @property
-    def fallback_hosts_use_default(self):
-        return self.__fallback_hosts_use_default
-
-    @property
     def fallback_retry_timeout(self):
         return self.__fallback_retry_timeout
 
@@ -283,26 +277,12 @@ class Options(AuthOptions):
         # Fallback hosts
         fallback_hosts = self.fallback_hosts
         if fallback_hosts is None:
-            if host == Defaults.rest_host or self.fallback_hosts_use_default:
+            if host == Defaults.rest_host:
                 fallback_hosts = Defaults.fallback_hosts
             elif environment != 'production':
                 fallback_hosts = Defaults.get_environment_fallback_hosts(environment)
             else:
                 fallback_hosts = []
-
-        # Explicit warning about deprecating the option
-        if self.fallback_hosts_use_default:
-            if environment != Defaults.environment:
-                warnings.warn(
-                    "It is no longer required to set 'fallback_hosts_use_default', the correct fallback hosts "
-                    "are now inferred from the environment, 'fallback_hosts': {}"
-                    .format(','.join(fallback_hosts)), DeprecationWarning
-                )
-            else:
-                warnings.warn(
-                    "It is no longer required to set 'fallback_hosts_use_default': 'fallback_hosts': {}"
-                    .format(','.join(fallback_hosts)), DeprecationWarning
-                )
 
         # Shuffle
         fallback_hosts = list(fallback_hosts)
