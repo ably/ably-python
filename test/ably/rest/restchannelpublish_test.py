@@ -529,10 +529,8 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
 
     # RSL1k4
     async def test_idempotent_library_generated_retry(self):
-        ably = await self.get_ably_rest(idempotent_rest_publishing=True)
-        if not ably.options.fallback_hosts:
-            host = ably.options.get_rest_host()
-            ably = await self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
+        test_vars = await TestApp.get_test_vars()
+        ably = await self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[test_vars["host"]] * 3)
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}
