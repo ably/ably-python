@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.ably = await TestApp.get_ably_rest()
+        self.ably = await TestApp.get_ably_rest(fallback_hosts=[])
         self.test_vars = await TestApp.get_test_vars()
 
     async def asyncTearDown(self):

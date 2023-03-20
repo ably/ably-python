@@ -317,6 +317,7 @@ class Options(AuthOptions):
     def __get_realtime_hosts(self):
         if self.realtime_host is not None:
             host = self.realtime_host
+            return [host]
         elif self.environment != "production":
             host = f'{self.environment}-{Defaults.realtime_host}'
         else:
