@@ -142,10 +142,8 @@ def generate_random_key(length=DEFAULT_KEYLENGTH):
 
 
 def get_default_params(params=None):
-    # Backwards compatibility
     if type(params) in [str, bytes]:
-        log.warning("Calling get_default_params with a key directly is deprecated, it expects a params dict")
-        return get_default_params({'key': params})
+        raise ValueError("Calling get_default_params with a key directly is deprecated, it expects a params dict")
 
     key = params.get('key')
     algorithm = params.get('algorithm') or 'AES'

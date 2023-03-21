@@ -288,40 +288,61 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_fallback_host(self):
-        fallback_host = 'sandbox-realtime.ably.io'
-        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
-                                               fallback_hosts=[fallback_host])
+        ably = await TestApp.get_ably_realtime()
+
+        await ably.connection.connection_manager.once_async('transport.pending')
+        assert ably.connection.connection_manager.transport
+        ably.connection.connection_manager.transport._emit('failed', AblyException("test exception", 502, 50200))
+
         await ably.connection.once_async(ConnectionState.CONNECTED)
-        assert ably.connection.connection_manager.transport.host == fallback_host
-        assert ably.options.fallback_realtime_host == fallback_host
+
+        assert ably.connection.connection_manager.transport.host != self.test_vars["realtime_host"]
+        assert ably.options.fallback_realtime_host != self.test_vars["realtime_host"]
         await ably.close()
 
     async def test_fallback_host_no_connection(self):
-        fallback_host = 'sandbox-realtime.ably.io'
-        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
-                                               fallback_hosts=[fallback_host])
+        ably = await TestApp.get_ably_realtime()
+
+        await ably.connection.connection_manager.once_async('transport.pending')
+        assert ably.connection.connection_manager.transport
 
         def check_connection():
             return False
 
         ably.connection.connection_manager.check_connection = check_connection
 
+        asyncio.create_task(ably.connection.connection_manager.transport.on_protocol_message({
+            "action": ProtocolMessageAction.DISCONNECTED,
+            "error": {
+                "statusCode": 502,
+                "code": 50200,
+                "message": "test exception"
+            }
+        }))
+
         await ably.connection.once_async(ConnectionState.DISCONNECTED)
-        assert ably.connection.connection_manager.transport.host == "iamnotahost"
+
+        assert ably.options.fallback_realtime_host is None
         await ably.close()
 
     async def test_fallback_host_disconnected_protocol_msg(self):
-        fallback_host = 'sandbox-realtime.ably.io'
-        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost", disconnected_retry_timeout=400000,
-                                               fallback_hosts=[fallback_host])
+        ably = await TestApp.get_ably_realtime()
 
-        async def on_transport_pending(transport):
-            await transport.on_protocol_message({'action': 6, "error": {"statusCode": 500, "code": 500}})
-
-        ably.connection.connection_manager.once('transport.pending', on_transport_pending)
+        await ably.connection.connection_manager.once_async('transport.pending')
+        assert ably.connection.connection_manager.transport
+        asyncio.create_task(ably.connection.connection_manager.transport.on_protocol_message({
+            "action": ProtocolMessageAction.DISCONNECTED,
+            "error": {
+                "statusCode": 502,
+                "code": 50200,
+                "message": "test exception"
+            }
+        }))
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
-        assert ably.connection.connection_manager.transport.host == fallback_host
+
+        assert ably.connection.connection_manager.transport.host != self.test_vars["realtime_host"]
+        assert ably.options.fallback_realtime_host != self.test_vars["realtime_host"]
         await ably.close()
 
     #  RTN2d

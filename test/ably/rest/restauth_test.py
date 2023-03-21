@@ -4,7 +4,6 @@ import time
 import uuid
 import base64
 
-import warnings
 from urllib.parse import parse_qs
 import mock
 import pytest
@@ -183,7 +182,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
 
         await self.ably.auth.authorize()
 
-        assert Auth.Method.TOKEN == self.ably.auth.auth_mechanism, "Authorise should change the Auth method"
+        assert Auth.Method.TOKEN == self.ably.auth.auth_mechanism, "Authorize should change the Auth method"
 
     # RSA10a
     @dont_vary_protocol
@@ -217,7 +216,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         token_called, auth_called = request_mock.call_args
         assert token_called[0] == token_params
 
-        # Authorise may call request_token with some default auth_options.
+        # Authorize may call request_token with some default auth_options.
         for arg, value in auth_params.items():
             assert auth_called[arg] == value, "%s called with wrong value: %s" % (arg, value)
 
@@ -318,20 +317,6 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         history = await channel.history()
         assert history.items[0].client_id == client_id
         await ably.close()
-
-    # RSA10l
-    @dont_vary_protocol
-    async def test_authorise(self):
-        with warnings.catch_warnings(record=True) as ws:
-            # Cause all warnings to always be triggered
-            warnings.simplefilter("always")
-
-            token = await self.ably.auth.authorise()
-            assert isinstance(token, TokenDetails)
-
-            # Verify warning is raised
-            ws = [w for w in ws if issubclass(w.category, DeprecationWarning)]
-            assert len(ws) == 1
 
 
 class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
@@ -496,14 +481,14 @@ class TestRenewToken(BaseAsyncTestCase):
 
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
-        self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
+        self.host = 'fake-host.ably.io'
+        self.ably = await TestApp.get_ably_rest(use_binary_protocol=False, rest_host=self.host)
         # with headers
         self.publish_attempts = 0
         self.channel = uuid.uuid4().hex
-        host = self.test_vars['host']
         tokens = ['a_token', 'another_token']
         headers = {'Content-Type': 'application/json'}
-        self.mocked_api = respx.mock(base_url='https://{}'.format(host))
+        self.mocked_api = respx.mock(base_url='https://{}'.format(self.host))
         self.request_token_route = self.mocked_api.post(
             "/keys/{}/requestToken".format(self.test_vars["keys"][0]['key_name']),
             name="request_token_route")
@@ -561,6 +546,7 @@ class TestRenewToken(BaseAsyncTestCase):
 
         self.ably = await TestApp.get_ably_rest(
             key=None,
+            rest_host=self.host,
             token='token ID cannot be used to create a new token',
             use_binary_protocol=False)
         await self.ably.channels[self.channel].publish('evt', 'msg')
@@ -579,6 +565,7 @@ class TestRenewToken(BaseAsyncTestCase):
         token_details = TokenDetails(token='a_dummy_token')
         self.ably = await TestApp.get_ably_rest(
             key=None,
+            rest_host=self.host,
             token_details=token_details,
             use_binary_protocol=False)
         await self.ably.channels[self.channel].publish('evt', 'msg')
@@ -600,11 +587,11 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
         self.publish_attempts = 0
         self.channel = uuid.uuid4().hex
 
-        host = self.test_vars['host']
+        self.host = 'fake-host.ably.io'
         key = self.test_vars["keys"][0]['key_name']
         headers = {'Content-Type': 'application/json'}
 
-        self.mocked_api = respx.mock(base_url='https://{}'.format(host))
+        self.mocked_api = respx.mock(base_url='https://{}'.format(self.host))
         self.request_token_route = self.mocked_api.post("/keys/{}/requestToken".format(key),
                                                         name="request_token_route")
         self.request_token_route.return_value = Response(
@@ -648,7 +635,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
 
     # RSA4b1
     async def test_query_time_false(self):
-        ably = await TestApp.get_ably_rest()
+        ably = await TestApp.get_ably_rest(rest_host=self.host)
         await ably.auth.authorize()
         self.publish_fail = True
         await ably.channels[self.channel].publish('evt', 'msg')
@@ -657,7 +644,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
 
     # RSA4b1
     async def test_query_time_true(self):
-        ably = await TestApp.get_ably_rest(query_time=True)
+        ably = await TestApp.get_ably_rest(query_time=True, rest_host=self.host)
         await ably.auth.authorize()
         self.publish_fail = False
         await ably.channels[self.channel].publish('evt', 'msg')

@@ -94,11 +94,9 @@ class TestRestHttp(BaseAsyncTestCase):
         await ably.close()
 
     # RSC15f
-    # Ignore library warning regarding fallback_hosts_use_default
-    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_cached_fallback(self):
         timeout = 2000
-        ably = await TestApp.get_ably_rest(fallback_hosts_use_default=True, fallback_retry_timeout=timeout)
+        ably = await TestApp.get_ably_rest(fallback_retry_timeout=timeout)
         host = ably.options.get_rest_host()
 
         state = {'errors': 0}

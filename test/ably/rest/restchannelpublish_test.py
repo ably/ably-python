@@ -279,9 +279,8 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         # works if same
         channel = self.ably_with_client_id.channels[
             self.get_channel_name('persisted:with_client_id_identified_client')]
-        await channel.publish(name='publish',
-                              data='test',
-                              client_id=self.ably_with_client_id.client_id)
+        message = Message(name='publish', data='test', client_id=self.ably_with_client_id.client_id)
+        await channel.publish(message)
 
         history = await channel.history()
         messages = history.items
@@ -291,9 +290,10 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
         assert messages[0].client_id == self.ably_with_client_id.client_id
 
+        message = Message(name='publish', data='test', client_id='invalid')
         # fails if different
         with pytest.raises(IncompatibleClientIdException):
-            await channel.publish(name='publish', data='test', client_id='invalid')
+            await channel.publish(message)
 
     async def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
         new_token = await self.ably.auth.authorize(token_params={'client_id': uuid.uuid4().hex})
@@ -304,8 +304,9 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = new_ably.channels[
             self.get_channel_name('persisted:wrong_client_id_implicit_client')]
 
+        message = Message(name='publish', data='test', client_id='invalid')
         with pytest.raises(AblyException) as excinfo:
-            await channel.publish(name='publish', data='test', client_id='invalid')
+            await channel.publish(message)
 
         assert 400 == excinfo.value.status_code
         assert 40012 == excinfo.value.code
@@ -324,8 +325,8 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             self.get_channel_name('persisted:wildcard_client_id')]
         await channel.publish(name='publish1', data='no client_id')
         some_client_id = uuid.uuid4().hex
-        await channel.publish(name='publish2', data='some client_id',
-                              client_id=some_client_id)
+        message = Message(name='publish2', data='some client_id', client_id=some_client_id)
+        await channel.publish(message)
 
         history = await channel.history()
         messages = history.items
@@ -358,7 +359,8 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                 'notification': {"title": "Testing"},
             }
         }
-        await channel.publish(name='test-name', data='test-data', extras=extras)
+        message = Message(name='test-name', data='test-data', extras=extras)
+        await channel.publish(message)
 
         # Get the history for this channel
         history = await channel.history()
@@ -527,10 +529,8 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
 
     # RSL1k4
     async def test_idempotent_library_generated_retry(self):
-        ably = await self.get_ably_rest(idempotent_rest_publishing=True)
-        if not ably.options.fallback_hosts:
-            host = ably.options.get_rest_host()
-            ably = await self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[host] * 3)
+        test_vars = await TestApp.get_test_vars()
+        ably = await self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[test_vars["host"]] * 3)
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}

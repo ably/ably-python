@@ -1,5 +1,6 @@
 import httpx
 import pytest
+import respx
 
 from ably import AblyRest
 from ably.http.paginatedresult import HttpPaginatedResponse
@@ -90,8 +91,6 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
     # RSC19e
     @dont_vary_protocol
-    # Ignore library warning regarding fallback_hosts_use_default
-    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_timeout(self):
         # Timeout
         timeout = 0.000001
@@ -101,17 +100,19 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
             await ably.request('GET', '/time')
         await ably.close()
 
-        # Bad host, use fallback
-        ably = AblyRest(key=self.test_vars["keys"][0]["key_str"],
-                        rest_host='some.other.host',
-                        port=self.test_vars["port"],
-                        tls_port=self.test_vars["tls_port"],
-                        tls=self.test_vars["tls"],
-                        fallback_hosts_use_default=True)
-        result = await ably.request('GET', '/time')
-        assert isinstance(result, HttpPaginatedResponse)
-        assert len(result.items) == 1
-        assert isinstance(result.items[0], int)
+        default_endpoint = 'https://sandbox-rest.ably.io/time'
+        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        fallback_endpoint = f'https://{fallback_host}/time'
+        ably = await TestApp.get_ably_rest(fallback_hosts=[fallback_host])
+        with respx.mock:
+            default_route = respx.get(default_endpoint)
+            fallback_route = respx.get(fallback_endpoint)
+            headers = {
+                "Content-Type": "application/json"
+            }
+            default_route.side_effect = httpx.ConnectError('')
+            fallback_route.return_value = httpx.Response(200, headers=headers, text='[123]')
+            await ably.request('GET', '/time')
         await ably.close()
 
         # Bad host, no Fallback

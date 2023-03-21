@@ -5,7 +5,6 @@ import json
 import os
 from typing import Iterator
 from urllib import parse
-import warnings
 
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
@@ -100,15 +99,8 @@ class Channel(SingleDispatch):
         return await self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @_publish.register(str)
-    async def publish_name_data(self, name, data, client_id=None, extras=None, timeout=None):
-        # RSL1h
-        if client_id or extras:
-            warnings.warn(
-                "Support for client_id and extras will be removed in 2.0",
-                DeprecationWarning
-            )
-
-        messages = [Message(name, data, client_id, extras=extras)]
+    async def publish_name_data(self, name, data, timeout=None):
+        messages = [Message(name, data)]
         return await self.publish_messages(messages, timeout=timeout)
 
     async def publish(self, *args, **kwargs):
