@@ -1,3 +1,4 @@
+import base64
 import re
 import time
 
@@ -195,6 +196,29 @@ class TestRestHttp(BaseAsyncTestCase):
         assert 'Ably-Agent' in r.request.headers
         expr = r"^ably-python\/\d.\d.\d python\/\d.\d+.\d+$"
         assert re.search(expr, r.request.headers['Ably-Agent'])
+        await ably.close()
+
+    # RSC7c
+    async def test_add_request_ids(self):
+        # With request id
+        ably = await RestSetup.get_ably_rest(add_request_ids=True)
+        r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
+        assert 'request_id' in r.request.url.params
+        request_id1 = r.request.url.params['request_id']
+        assert len(base64.urlsafe_b64decode(request_id1)) == 12
+
+        # With request id and new request
+        r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
+        assert 'request_id' in r.request.url.params
+        request_id2 = r.request.url.params['request_id']
+        assert len(base64.urlsafe_b64decode(request_id2)) == 12
+        assert request_id1 != request_id2
+        await ably.close()
+
+        # With request id and new request
+        ably = await RestSetup.get_ably_rest()
+        r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
+        assert 'request_id' not in r.request.url.params
         await ably.close()
 
     async def test_request_over_http2(self):

@@ -1,3 +1,5 @@
+import base64
+import os
 import platform
 
 import ably
@@ -36,3 +38,12 @@ class HttpUtils:
         return {
             'Host': host,
         }
+
+    @staticmethod
+    def get_query_params(options):
+        params = {}
+
+        if options.add_request_ids:
+            params['request_id'] = base64.urlsafe_b64encode(os.urandom(12)).decode('ascii')
+
+        return params

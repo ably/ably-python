@@ -12,7 +12,7 @@ class Options(AuthOptions):
                  http_open_timeout=None, http_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None,
                  fallback_hosts=None, fallback_hosts_use_default=None, fallback_retry_timeout=None,
-                 idempotent_rest_publishing=None,
+                 idempotent_rest_publishing=None, add_request_ids=False,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -46,6 +46,7 @@ class Options(AuthOptions):
         self.__fallback_hosts_use_default = fallback_hosts_use_default
         self.__fallback_retry_timeout = fallback_retry_timeout
         self.__idempotent_rest_publishing = idempotent_rest_publishing
+        self.__add_request_ids = add_request_ids
 
         self.__rest_hosts = self.__get_rest_hosts()
 
@@ -180,6 +181,10 @@ class Options(AuthOptions):
     @property
     def idempotent_rest_publishing(self):
         return self.__idempotent_rest_publishing
+
+    @property
+    def add_request_ids(self):
+        return self.__add_request_ids
 
     def __get_rest_hosts(self):
         """
