@@ -201,14 +201,17 @@ await client.close()
 We currently have a preview version of our first ever Python realtime client available for beta testing.
 Currently the realtime client supports basic and token-based authentication and message subscription.
 Realtime publishing and realtime presence are upcoming but not yet supported.
+The 2.0 beta version contains a few minor breaking changes, removing already soft-deprecated features from the 1.x branch.
+Most users will not be affected by these changes since the library was already warning that these features were deprecated.
+For information on how to migrate, please consult the [migration guide](./UPDATING.md).
 Check out the [roadmap](./roadmap.md) to see our plan for the realtime client.
 
 ### Installing the realtime client
 
-The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b4/) package.
+The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b5/) package.
 
 ```
-pip install ably==2.0.0b4
+pip install ably==2.0.0b5
 ```
 
 ### Using the realtime client
