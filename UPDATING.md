@@ -1,5 +1,46 @@
 # Upgrade / Migration Guide
 
+## Version 1.2.x to 2.x
+
+The 2.0 version of ably-python introduces our first Python realtime client. For guidance on how to use the realtime client, refer to the usage examples in the [README](./README.md).
+
+In addition to this, we have also made some minor breaking changes, these include:
+
+  - Removed `Auth.authorise` (in favour of `Auth.authorize`)
+  - Removed `Options.fallback_hosts_use_default`
+  - Removed `Crypto.get_default_params(key)` signature.
+  - Removed the `client_id` and `extras` kwargs from `Channel.publish`
+  - Calling `channels.release()` no longer raises a `KeyError` if the channel does not yet exist
+
+### Deprecation of `Auth.authorise`
+
+If you were using `Auth.authorise` before, all you need to do to migrate is switch over to `Auth.authorize` (with a 'z')
+
+### Deprecation of `Options.fallback_hosts_use_default`
+
+This option is no longer required since the correct fallback hosts are inferred from the `environment` option. If you are still using it then you can safely remove it.
+
+### Deprecation of `Crypto.get_default_params(key)` signature
+
+This method now requires a params argument and will raise an error if it is called with just a key. If you were using this signature, you can still call the method using `{'key': key}` as the params argument.
+
+### Deprecation of `client_id` and `extras` kwargs for `Channel.publish`
+
+In order to use these options when publishing a message, you will now need to create an instance of the `Message` class.
+
+Example 1.2.x code:
+
+```python
+await channel.publish(name='name', data='data', client_id='client_id', extras={'some': 'extras'})
+```
+
+Example 2.x code:
+```python
+from ably.types.message import Message
+message = Message(name='name', data='data', client_id='client_id', extras={'some': 'extras'})
+await channel.publish(message)
+```
+
 ## Version 1.1.1 to 1.2.0
 
 We have made **breaking changes** in the version 1.2 release of this SDK.
