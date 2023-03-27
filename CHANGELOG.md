@@ -1,5 +1,16 @@
 # Change Log
 
+## [v2.0.0-beta.5](https://github.com/ably/ably-python/tree/v2.0.0-beta.5)
+
+The latest beta release of ably-python 2.0 makes some minor breaking changes, removing already soft-deprecated features from the 1.x branch. Most users will not be affected by these changes since the library was already warning that these features were deprecated. For information on how to migrate, please consult the [migration guide](https://github.com/ably/ably-python/blob/main/UPDATING.md).
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.0-beta.4...v2.0.0-beta.5)
+
+- Remove soft-deprecated APIs [\#482](https://github.com/ably/ably-python/issues/482)
+- Improve realtime client typings [\#476](https://github.com/ably/ably-python/issues/476)
+- Improve REST client typings [\#477](https://github.com/ably/ably-python/issues/477)
+- Stop raising `KeyError` when releasing a channel which doesn't exist [\#474](https://github.com/ably/ably-python/issues/474)
+
 ## [v2.0.0-beta.4](https://github.com/ably/ably-python/tree/v2.0.0-beta.4)
 
 This new beta release of the ably-python realtime client implements token authentication for realtime connections, allowing you to use all currently supported token options to authenticate a realtime client (auth_url, auth_callback, jwt, etc). The client will reauthenticate when the token expires or otherwise becomes invalid.
