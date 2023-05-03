@@ -370,3 +370,30 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.auth.client_id == client_id
 
         await ably.close()
+
+    async def test_lost_connection_lifecycle(self):
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000, disconnected_retry_timeout=2000)
+
+        # when client connectivity is lost, the transport will become aware of a connectivity issue
+        # when it stops seeing activity from realtime within maxIdleInterval, therefore setting the max idle
+        # interval arbitrarily low will simulate client behaviour when connectivity is lost.
+        def on_transport_pending(transport):
+            original_on_protocol_message = transport.on_protocol_message
+
+            async def on_protocol_message(msg):
+                if msg["action"] == ProtocolMessageAction.CONNECTED:
+                    msg["connectionDetails"]["maxIdleInterval"] = 1000
+
+                await original_on_protocol_message(msg)
+
+            transport.on_protocol_message = on_protocol_message
+
+        ably.connection.connection_manager.once('transport.pending', on_transport_pending)
+
+        # should transition to disconnected due to lack of activity from realtime
+        await ably.connection.once_async(ConnectionState.DISCONNECTED)
+
+        # should re-establish connection after disconnected_retry_timeout
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+
+        await ably.close()
