@@ -44,7 +44,7 @@ class ConnectionManager(EventEmitter):
 
     def enact_state_change(self, state: ConnectionState, reason: Optional[AblyException] = None) -> None:
         current_state = self.__state
-        log.info(f'ConnectionManager.enact_state_change(): {current_state} -> {state}')
+        log.info(f'ConnectionManager.enact_state_change(): {current_state} -> {state}; reason = {reason}')
         self.__state = state
         if reason:
             self.__error_reason = reason
