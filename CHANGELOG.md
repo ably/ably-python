@@ -1,5 +1,12 @@
 # Change Log
 
+## [v2.0.0-beta.6](https://github.com/ably/ably-python/tree/v2.0.0-beta.6)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.0-beta.5...v2.0.0-beta.6)
+
+- Improve logger output upon disconnection [\#492](https://github.com/ably/ably-python/issues/492)
+- Fix an issue where in some cases the client was unable to recover after loss of connectivity [\#493](https://github.com/ably/ably-python/issues/493)
+
 ## [v2.0.0-beta.5](https://github.com/ably/ably-python/tree/v2.0.0-beta.5)
 
 The latest beta release of ably-python 2.0 makes some minor breaking changes, removing already soft-deprecated features from the 1.x branch. Most users will not be affected by these changes since the library was already warning that these features were deprecated. For information on how to migrate, please consult the [migration guide](https://github.com/ably/ably-python/blob/main/UPDATING.md).
