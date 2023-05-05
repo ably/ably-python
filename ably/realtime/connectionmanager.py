@@ -243,7 +243,7 @@ class ConnectionManager(EventEmitter):
 
     def deactivate_transport(self, reason: Optional[AblyException] = None):
         self.transport = None
-        self.enact_state_change(ConnectionState.DISCONNECTED, reason)
+        self.notify_state(ConnectionState.DISCONNECTED, reason)
 
     def request_state(self, state: ConnectionState, force=False) -> None:
         log.info(f'ConnectionManager.request_state(): state = {state}')
