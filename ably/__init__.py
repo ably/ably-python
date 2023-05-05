@@ -15,4 +15,4 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 api_version = '1.2'
-lib_version = '2.0.0-beta.5'
+lib_version = '2.0.0-beta.6'
