@@ -25,7 +25,7 @@ class TestRestHttp(BaseAsyncTestCase):
 
         with mock.patch('httpx.AsyncClient.send', side_effect=httpx.RequestError('')) as send_mock:
             with pytest.raises(httpx.RequestError):
-                await ably.http.make_request('GET', '/', skip_auth=True)
+                await ably.http.make_request('GET', '/', version=Defaults.protocol_version, skip_auth=True)
 
             assert send_mock.call_count == Defaults.http_max_retry_count
             assert send_mock.call_args == mock.call(mock.ANY)

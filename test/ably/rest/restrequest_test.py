@@ -4,6 +4,7 @@ import respx
 
 from ably import AblyRest
 from ably.http.paginatedresult import HttpPaginatedResponse
+from ably.transport.defaults import Defaults
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
@@ -21,7 +22,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         self.path = '/channels/%s/messages' % self.channel
         for i in range(20):
             body = {'name': 'event%s' % i, 'data': 'lorem ipsum %s' % i}
-            await self.ably.request('POST', self.path, body=body)
+            await self.ably.request('POST', self.path, body=body, version=Defaults.protocol_version)
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -32,7 +33,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
     async def test_post(self):
         body = {'name': 'test-post', 'data': 'lorem ipsum'}
-        result = await self.ably.request('POST', self.path, body=body)
+        result = await self.ably.request('POST', self.path, body=body, version=Defaults.protocol_version)
 
         assert isinstance(result, HttpPaginatedResponse)  # RSC19d
         # HP3
@@ -43,7 +44,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
     async def test_get(self):
         params = {'limit': 10, 'direction': 'forwards'}
-        result = await self.ably.request('GET', self.path, params=params)
+        result = await self.ably.request('GET', self.path, params=params, version=Defaults.protocol_version)
 
         assert isinstance(result, HttpPaginatedResponse)  # RSC19d
 
@@ -68,7 +69,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
     @dont_vary_protocol
     async def test_not_found(self):
-        result = await self.ably.request('GET', '/not-found')
+        result = await self.ably.request('GET', '/not-found', version=Defaults.protocol_version)
         assert isinstance(result, HttpPaginatedResponse)  # RSC19d
         assert result.status_code == 404             # HP4
         assert result.success is False               # HP5
@@ -76,7 +77,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     @dont_vary_protocol
     async def test_error(self):
         params = {'limit': 'abc'}
-        result = await self.ably.request('GET', self.path, params=params)
+        result = await self.ably.request('GET', self.path, params=params, version=Defaults.protocol_version)
         assert isinstance(result, HttpPaginatedResponse)  # RSC19d
         assert result.status_code == 400  # HP4
         assert not result.success
@@ -86,7 +87,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     async def test_headers(self):
         key = 'X-Test'
         value = 'lorem ipsum'
-        result = await self.ably.request('GET', '/time', headers={key: value})
+        result = await self.ably.request('GET', '/time', headers={key: value}, version=Defaults.protocol_version)
         assert result.response.request.headers[key] == value
 
     # RSC19e
@@ -97,7 +98,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         ably = AblyRest(token="foo", http_request_timeout=timeout)
         assert ably.http.http_request_timeout == timeout
         with pytest.raises(httpx.ReadTimeout):
-            await ably.request('GET', '/time')
+            await ably.request('GET', '/time', version=Defaults.protocol_version)
         await ably.close()
 
         default_endpoint = 'https://sandbox-rest.ably.io/time'
@@ -112,7 +113,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
             }
             default_route.side_effect = httpx.ConnectError('')
             fallback_route.return_value = httpx.Response(200, headers=headers, text='[123]')
-            await ably.request('GET', '/time')
+            await ably.request('GET', '/time', version=Defaults.protocol_version)
         await ably.close()
 
         # Bad host, no Fallback
@@ -122,5 +123,10 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
                         tls_port=self.test_vars["tls_port"],
                         tls=self.test_vars["tls"])
         with pytest.raises(httpx.ConnectError):
-            await ably.request('GET', '/time')
+            await ably.request('GET', '/time', version=Defaults.protocol_version)
         await ably.close()
+
+    async def test_version(self):
+        version = "150"  # chosen arbitrarily
+        result = await self.ably.request('GET', '/time', "150")
+        assert result.response.request.headers["X-Ably-Version"] == version

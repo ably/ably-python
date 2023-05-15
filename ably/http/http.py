@@ -44,18 +44,19 @@ def reauth_if_expired(func):
 
 
 class Request:
-    def __init__(self, method='GET', url='/', headers=None, body=None,
+    def __init__(self, method='GET', url='/', version=None, headers=None, body=None,
                  skip_auth=False, raise_on_error=True):
         self.__method = method
         self.__headers = headers or {}
         self.__body = body
         self.__skip_auth = skip_auth
         self.__url = url
+        self.__version = version
         self.raise_on_error = raise_on_error
 
     def with_relative_url(self, relative_url):
         url = urljoin(self.url, relative_url)
-        return Request(self.method, url, self.headers, self.body,
+        return Request(self.method, url, self.version, self.headers, self.body,
                        self.skip_auth, self.raise_on_error)
 
     @property
@@ -77,6 +78,10 @@ class Request:
     @property
     def skip_auth(self):
         return self.__skip_auth
+
+    @property
+    def version(self):
+        return self.__version
 
 
 class Response:
@@ -152,16 +157,16 @@ class Http:
         return hosts
 
     @reauth_if_expired
-    async def make_request(self, method, path, headers=None, body=None,
+    async def make_request(self, method, path, version=None, headers=None, body=None,
                            skip_auth=False, timeout=None, raise_on_error=True):
 
         if body is not None and type(body) not in (bytes, str):
             body = self.dump_body(body)
 
         if body:
-            all_headers = HttpUtils.default_post_headers(self.options.use_binary_protocol)
+            all_headers = HttpUtils.default_post_headers(self.options.use_binary_protocol, version=version)
         else:
-            all_headers = HttpUtils.default_get_headers(self.options.use_binary_protocol)
+            all_headers = HttpUtils.default_get_headers(self.options.use_binary_protocol, version=version)
 
         if not skip_auth:
             if self.auth.auth_mechanism == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':

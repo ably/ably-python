@@ -14,8 +14,8 @@ class HttpUtils:
     }
 
     @staticmethod
-    def default_get_headers(binary=False):
-        headers = HttpUtils.default_headers()
+    def default_get_headers(binary=False, version=None):
+        headers = HttpUtils.default_headers(version=version)
         if binary:
             headers["Accept"] = HttpUtils.mime_types['binary']
         else:
@@ -23,8 +23,8 @@ class HttpUtils:
         return headers
 
     @staticmethod
-    def default_post_headers(binary=False):
-        headers = HttpUtils.default_get_headers(binary=binary)
+    def default_post_headers(binary=False, version=None):
+        headers = HttpUtils.default_get_headers(binary=binary, version=version)
         headers["Content-Type"] = headers["Accept"]
         return headers
 
@@ -35,8 +35,10 @@ class HttpUtils:
         }
 
     @staticmethod
-    def default_headers():
+    def default_headers(version=None):
+        if version is None:
+            version = ably.api_version
         return {
-            "X-Ably-Version": ably.api_version,
+            "X-Ably-Version": version,
             "Ably-Agent": 'ably-python/%s python/%s' % (ably.lib_version, platform.python_version())
         }
