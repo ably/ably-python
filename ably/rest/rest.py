@@ -119,7 +119,11 @@ class AblyRest:
     def push(self):
         return self.__push
 
-    async def request(self, method: str, path: str, params: Optional[dict] = None, body=None, headers=None):
+    async def request(self, method: str, path: str, version: str, params:
+                      Optional[dict] = None, body=None, headers=None):
+        if version is None:
+            raise AblyException("No version parameter", 400, 40000)
+
         url = path
         if params:
             url += '?' + urlencode(params)
@@ -133,7 +137,7 @@ class AblyRest:
             return items
 
         return await HttpPaginatedResponse.paginated_query(
-            self.http, method, url, body=body, headers=headers,
+            self.http, method, url, version=version, body=body, headers=headers,
             response_processor=response_processor,
             raise_on_error=False)
 
