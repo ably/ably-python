@@ -57,6 +57,7 @@ class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
                 'clientId': self.get_client_id(),
                 'platform': random.choice(['android', 'ios']),
                 'formFactor': 'phone',
+                'deviceSecret': 'test-secret',
                 'push': {
                     'recipient': {
                         'transportType': 'apns',

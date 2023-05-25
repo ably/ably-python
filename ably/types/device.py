@@ -10,7 +10,7 @@ class DeviceDetails:
 
     def __init__(self, id, client_id=None, form_factor=None, metadata=None,
                  platform=None, push=None, update_token=None, app_id=None,
-                 device_identity_token=None, modified=None):
+                 device_identity_token=None, modified=None, device_secret=None):
 
         if push:
             recipient = push.get('recipient')
@@ -35,6 +35,7 @@ class DeviceDetails:
         self.__app_id = app_id
         self.__device_identity_token = device_identity_token
         self.__modified = modified
+        self.__device_secret = device_secret
 
     @property
     def id(self):
@@ -76,9 +77,13 @@ class DeviceDetails:
     def modified(self):
         return self.__modified
 
+    @property
+    def device_secret(self):
+        return self.__device_secret
+
     def as_dict(self):
         keys = ['id', 'client_id', 'form_factor', 'metadata', 'platform',
-                'push', 'update_token', 'app_id', 'device_identity_token', 'modified']
+                'push', 'update_token', 'app_id', 'device_identity_token', 'modified', 'device_secret']
 
         obj = {}
         for key in keys:
