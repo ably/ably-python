@@ -6,11 +6,32 @@ The 2.0 version of ably-python introduces our first Python realtime client. For 
 
 In addition to this, we have also made some minor breaking changes, these include:
 
+  - Added mandatory version param to `AblyRest.request`
+  - Changed return type of `AblyRest.stats`
   - Removed `Auth.authorise` (in favour of `Auth.authorize`)
   - Removed `Options.fallback_hosts_use_default`
   - Removed `Crypto.get_default_params(key)` signature.
   - Removed the `client_id` and `extras` kwargs from `Channel.publish`
   - Calling `channels.release()` no longer raises a `KeyError` if the channel does not yet exist
+
+### Added mandatory version param to `AblyRest.request`
+
+If you were using the generic `request` method to query the Ably REST API, you will now need to pass a version string as the third parameter. The version string represents the version of the Ably REST API to use, allowing you to upgrade to newer versions of REST endpoints as soon as they are released.
+
+```python
+await rest.request("GET", "/time", "1.2")
+```
+
+### Changed return type of `AblyRest.stats`
+
+The return type of the `stats` method has changed so that all statistics are now contained in a single `dict[string, int]` and the json schema for the entries is included in the response:
+
+```python
+stats_pages = rest.stats(params)
+stat = stats_pages.items[0]
+print(stat.schema) # contains the canonical url for the statistics json schema
+print(stat.entries["messages.inbound.realtime.all.count"]) # all statistics are now included as fields in the Stats.entries dict
+```
 
 ### Deprecation of `Auth.authorise`
 
