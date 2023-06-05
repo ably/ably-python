@@ -19,7 +19,10 @@ class AblyException(Exception):
         self.cause = cause
 
     def __str__(self):
-        return '%s %s %s' % (self.code, self.status_code, self.message)
+        str = '%s %s %s' % (self.code, self.status_code, self.message)
+        if self.cause is not None:
+            str += ' (cause: %s)' % self.cause
+        return str
 
     @property
     def is_server_error(self):
