@@ -44,7 +44,7 @@ class ConnectionManager(EventEmitter):
 
     def enact_state_change(self, state: ConnectionState, reason: Optional[AblyException] = None) -> None:
         current_state = self.__state
-        log.info(f'ConnectionManager.enact_state_change(): {current_state} -> {state}; reason = {reason}')
+        log.debug(f'ConnectionManager.enact_state_change(): {current_state} -> {state}; reason = {reason}')
         self.__state = state
         if reason:
             self.__error_reason = reason
@@ -246,7 +246,7 @@ class ConnectionManager(EventEmitter):
         self.notify_state(ConnectionState.DISCONNECTED, reason)
 
     def request_state(self, state: ConnectionState, force=False) -> None:
-        log.info(f'ConnectionManager.request_state(): state = {state}')
+        log.debug(f'ConnectionManager.request_state(): state = {state}')
 
         if not force and state == self.state:
             return
@@ -322,7 +322,7 @@ class ConnectionManager(EventEmitter):
         future = asyncio.Future()
 
         def on_transport_connected():
-            log.info('ConnectionManager.try_a_host(): transport connected')
+            log.debug('ConnectionManager.try_a_host(): transport connected')
             if self.transport:
                 self.transport.off('failed', on_transport_failed)
             if not future.done():
@@ -349,7 +349,7 @@ class ConnectionManager(EventEmitter):
         retry_immediately = (retry_immediately is not False) and (
             state == ConnectionState.DISCONNECTED and self.__state == ConnectionState.CONNECTED)
 
-        log.info(
+        log.debug(
             f'ConnectionManager.notify_state(): new state: {state}'
             + ('; will retry immediately' if retry_immediately else '')
         )
