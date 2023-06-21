@@ -103,7 +103,7 @@ class RealtimeChannel(EventEmitter, Channel):
             raise state_change.reason
 
     def _attach_impl(self):
-        log.info("RealtimeChannel.attach_impl(): sending ATTACH protocol message")
+        log.debug("RealtimeChannel.attach_impl(): sending ATTACH protocol message")
 
         # RTL4c
         attach_msg = {
@@ -169,7 +169,7 @@ class RealtimeChannel(EventEmitter, Channel):
             raise state_change.reason
 
     def _detach_impl(self) -> None:
-        log.info("RealtimeChannel.detach_impl(): sending DETACH protocol message")
+        log.debug("RealtimeChannel.detach_impl(): sending DETACH protocol message")
 
         # RTL5d
         detach_msg = {
@@ -333,13 +333,13 @@ class RealtimeChannel(EventEmitter, Channel):
             self._notify_state(ChannelState.FAILED, reason=error)
 
     def _request_state(self, state: ChannelState) -> None:
-        log.info(f'RealtimeChannel._request_state(): state = {state}')
+        log.debug(f'RealtimeChannel._request_state(): state = {state}')
         self._notify_state(state)
         self._check_pending_state()
 
     def _notify_state(self, state: ChannelState, reason: Optional[AblyException] = None,
                       resumed: bool = False) -> None:
-        log.info(f'RealtimeChannel._notify_state(): state = {state}')
+        log.debug(f'RealtimeChannel._notify_state(): state = {state}')
 
         self.__clear_state_timer()
 
@@ -380,7 +380,7 @@ class RealtimeChannel(EventEmitter, Channel):
         connection_state = self.__realtime.connection.connection_manager.state
 
         if connection_state is not ConnectionState.CONNECTED:
-            log.info(f"RealtimeChannel._check_pending_state(): connection state = {connection_state}")
+            log.debug(f"RealtimeChannel._check_pending_state(): connection state = {connection_state}")
             return
 
         if self.state == ChannelState.ATTACHING:
@@ -393,7 +393,7 @@ class RealtimeChannel(EventEmitter, Channel):
     def __start_state_timer(self) -> None:
         if not self.__state_timer:
             def on_timeout() -> None:
-                log.info('RealtimeChannel.start_state_timer(): timer expired')
+                log.debug('RealtimeChannel.start_state_timer(): timer expired')
                 self.__state_timer = None
                 self.__timeout_pending_state()
 
