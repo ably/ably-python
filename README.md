@@ -7,7 +7,7 @@ ably-python
 
 ## Overview
 
-This is a Python client library for Ably. The library currently targets the [Ably 1.1 client library specification](https://ably.com/docs/client-lib-development-guide/features).
+This is a Python client library for Ably. The library currently targets the [Ably 2.0 client library specification](https://sdk.ably.com/builds/ably/specification/main/features/).
 
 ## Running example
 
@@ -197,27 +197,9 @@ await client.time()
 await client.close()
 ```
 
-## Realtime client (beta)
+## Using the realtime client
 
-We currently have a preview version of our first ever Python realtime client available for beta testing.
-Currently the realtime client supports basic and token-based authentication and message subscription.
-Realtime publishing and realtime presence are upcoming but not yet supported.
-The 2.0 beta version contains a few minor breaking changes, removing already soft-deprecated features from the 1.x branch.
-Most users will not be affected by these changes since the library was already warning that these features were deprecated.
-For information on how to migrate, please consult the [migration guide](./UPDATING.md).
-Check out the [roadmap](./roadmap.md) to see our plan for the realtime client.
-
-### Installing the realtime client
-
-The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b6/) package.
-
-```
-pip install ably==2.0.0b6
-```
-
-### Using the realtime client
-
-#### Creating a client using API key
+### Create a client using an API key
 
 ```python
 from ably import AblyRealtime
@@ -228,7 +210,7 @@ async def main():
     client = AblyRealtime('api:key')
 ```
 
-#### Create a client using an token auth
+### Create a client using token auth
 
 ```python
 # Create a client using kwargs, which must contain at least one auth option
@@ -242,7 +224,7 @@ async def main():
     client = AblyRealtime(token_details=token_details)
 ```
 
-#### Subscribe to connection state changes
+### Subscribe to connection state changes
 
 ```python
 # subscribe to 'failed' connection state
@@ -278,11 +260,14 @@ await client.connection.once_async()
 await client.connection.once_async('connected')
 ```
 
-#### Get a realtime channel instance
+### Get a realtime channel instance
+
 ```python
 channel = client.channels.get('channel_name')
 ```
-#### Subscribing to messages on a channel
+
+### Subscribing to messages on a channel
+
 ```python
 
 def listener(message):
@@ -294,9 +279,11 @@ await channel.subscribe('event', listener)
 # Subscribe to all messages on a channel
 await channel.subscribe(listener)
 ```
+
 Note that `channel.subscribe` is a coroutine function and will resolve when the channel is attached
 
-#### Unsubscribing from messages on a channel
+### Unsubscribing from messages on a channel
+
 ```python
 # unsubscribe the listener from the channel
 channel.unsubscribe('event', listener)
@@ -305,16 +292,20 @@ channel.unsubscribe('event', listener)
 channel.unsubscribe()
 ```
 
-#### Attach to a channel
+### Attach to a channel
+
 ```python
 await channel.attach()
 ```
-#### Detach from a channel
+
+### Detach from a channel
+
 ```python
 await channel.detach()
 ```
 
-#### Managing a connection
+### Managing a connection
+
 ```python
 # Establish a realtime connection.
 # Explicitly calling connect() is unnecessary unless the autoConnect attribute of the ClientOptions object is false
@@ -326,6 +317,7 @@ await client.close()
 # Send a ping
 time_in_ms = await client.connection.ping()
 ```
+
 ## Resources
 
 Visit https://ably.com/docs for a complete API reference and more examples.
