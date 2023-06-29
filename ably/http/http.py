@@ -168,6 +168,8 @@ class Http:
         else:
             all_headers = HttpUtils.default_get_headers(self.options.use_binary_protocol, version=version)
 
+        params = HttpUtils.get_query_params(self.options)
+
         if not skip_auth:
             if self.auth.auth_mechanism == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
                 raise AblyException(
@@ -194,6 +196,7 @@ class Http:
                 method=method,
                 url=url,
                 content=body,
+                params=params,
                 headers=all_headers,
                 timeout=timeout,
             )

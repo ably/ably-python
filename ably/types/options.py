@@ -14,7 +14,8 @@ class Options(AuthOptions):
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
                  fallback_retry_timeout=None, disconnected_retry_timeout=None, idempotent_rest_publishing=None,
                  loop=None, auto_connect=True, suspended_retry_timeout=None, connectivity_check_url=None,
-                 channel_retry_timeout=Defaults.channel_retry_timeout, **kwargs):
+                 channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False, **kwargs):
+
         super().__init__(**kwargs)
 
         # TODO check these defaults
@@ -75,6 +76,7 @@ class Options(AuthOptions):
         self.__suspended_retry_timeout = suspended_retry_timeout
         self.__connectivity_check_url = connectivity_check_url
         self.__fallback_realtime_host = None
+        self.__add_request_ids = add_request_ids
 
         self.__rest_hosts = self.__get_rest_hosts()
         self.__realtime_hosts = self.__get_realtime_hosts()
@@ -252,6 +254,10 @@ class Options(AuthOptions):
     @fallback_realtime_host.setter
     def fallback_realtime_host(self, value):
         self.__fallback_realtime_host = value
+
+    @property
+    def add_request_ids(self):
+        return self.__add_request_ids
 
     def __get_rest_hosts(self):
         """

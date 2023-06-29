@@ -3,7 +3,6 @@ ably-python
 
 ![.github/workflows/check.yml](https://github.com/ably/ably-python/workflows/.github/workflows/check.yml/badge.svg)
 [![Features](https://github.com/ably/ably-python/actions/workflows/features.yml/badge.svg)](https://github.com/ably/ably-python/actions/workflows/features.yml)
-
 [![PyPI version](https://badge.fury.io/py/ably.svg)](https://badge.fury.io/py/ably)
 
 ## Overview
@@ -201,27 +200,46 @@ await client.close()
 ## Realtime client (beta)
 
 We currently have a preview version of our first ever Python realtime client available for beta testing.
-Currently the realtime client only supports authentication using basic auth and message subscription.
-Realtime publishing, token authentication, and realtime presence are upcoming but not yet supported.
+Currently the realtime client supports basic and token-based authentication and message subscription.
+Realtime publishing and realtime presence are upcoming but not yet supported.
+The 2.0 beta version contains a few minor breaking changes, removing already soft-deprecated features from the 1.x branch.
+Most users will not be affected by these changes since the library was already warning that these features were deprecated.
+For information on how to migrate, please consult the [migration guide](./UPDATING.md).
 Check out the [roadmap](./roadmap.md) to see our plan for the realtime client.
 
 ### Installing the realtime client
 
-The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b3/) package.
+The beta realtime client is available as a [PyPI](https://pypi.org/project/ably/2.0.0b6/) package.
 
 ```
-pip install ably==2.0.0b3
+pip install ably==2.0.0b6
 ```
 
 ### Using the realtime client
 
-#### Creating a client
+#### Creating a client using API key
+
 ```python
 from ably import AblyRealtime
 
+
+# Create a client using an Ably API key
 async def main():
-    # Create a client using an Ably API key
     client = AblyRealtime('api:key')
+```
+
+#### Create a client using an token auth
+
+```python
+# Create a client using kwargs, which must contain at least one auth option
+# the available auth options are key, token, token_details, auth_url, and auth_callback
+# see https://www.ably.com/docs/rest/usage#client-options for more details
+from ably import AblyRealtime
+from ably import AblyRest
+async def main():
+    rest_client = AblyRest('api:key')
+    token_details = rest_client.request_token()
+    client = AblyRealtime(token_details=token_details)
 ```
 
 #### Subscribe to connection state changes

@@ -1,3 +1,5 @@
+import base64
+import os
 import platform
 
 import ably
@@ -42,3 +44,12 @@ class HttpUtils:
             "X-Ably-Version": version,
             "Ably-Agent": 'ably-python/%s python/%s' % (ably.lib_version, platform.python_version())
         }
+
+    @staticmethod
+    def get_query_params(options):
+        params = {}
+
+        if options.add_request_ids:
+            params['request_id'] = base64.urlsafe_b64encode(os.urandom(12)).decode('ascii')
+
+        return params
