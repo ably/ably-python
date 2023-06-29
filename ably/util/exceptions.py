@@ -6,19 +6,23 @@ log = logging.getLogger(__name__)
 
 
 class AblyException(Exception):
-    def __new__(cls, message, status_code, code):
+    def __new__(cls, message, status_code, code, cause=None):
         if cls == AblyException and status_code == 401:
-            return AblyAuthException(message, status_code, code)
-        return super().__new__(cls, message, status_code, code)
+            return AblyAuthException(message, status_code, code, cause)
+        return super().__new__(cls, message, status_code, code, cause)
 
-    def __init__(self, message, status_code, code):
+    def __init__(self, message, status_code, code, cause=None):
         super().__init__()
         self.message = message
         self.code = code
         self.status_code = status_code
+        self.cause = cause
 
     def __str__(self):
-        return '%s %s %s' % (self.code, self.status_code, self.message)
+        str = '%s %s %s' % (self.code, self.status_code, self.message)
+        if self.cause is not None:
+            str += ' (cause: %s)' % self.cause
+        return str
 
     @property
     def is_server_error(self):
@@ -62,6 +66,10 @@ class AblyException(Exception):
         if isinstance(e, AblyException):
             return e
         return AblyException("Unexpected exception: %s" % e, 500, 50000)
+
+    @staticmethod
+    def from_dict(value: dict):
+        return AblyException(value.get('message'), value.get('statusCode'), value.get('code'))
 
 
 def catch_all(func):

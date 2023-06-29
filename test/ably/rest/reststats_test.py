@@ -8,7 +8,7 @@ from ably.types.stats import Stats
 from ably.util.exceptions import AblyException
 from ably.http.paginatedresult import PaginatedResult
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
@@ -26,8 +26,8 @@ class TestRestAppStatsSetup:
         }
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
-        self.ably_text = await RestSetup.get_ably_rest(use_binary_protocol=False)
+        self.ably = await TestApp.get_ably_rest()
+        self.ably_text = await TestApp.get_ably_rest(use_binary_protocol=False)
 
         self.last_year = datetime.now().year - 1
         self.previous_year = datetime.now().year - 2
@@ -98,14 +98,14 @@ class TestDirectionForwards(TestRestAppStatsSetup, BaseAsyncTestCase,
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.inbound.realtime.all.count == 50
+        assert stat.entries["messages.inbound.realtime.all.count"] == 50
 
     async def test_three_pages(self):
         stats_pages = await self.ably.stats(**self.get_params())
         assert not stats_pages.is_last()
         page2 = await stats_pages.next()
         page3 = await page2.next()
-        assert page3.items[0].inbound.realtime.all.count == 70
+        assert page3.items[0].entries["messages.inbound.realtime.all.count"] == 70
 
 
 class TestDirectionBackwards(TestRestAppStatsSetup, BaseAsyncTestCase,
@@ -123,7 +123,7 @@ class TestDirectionBackwards(TestRestAppStatsSetup, BaseAsyncTestCase,
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.inbound.realtime.all.count == 70
+        assert stat.entries["messages.inbound.realtime.all.count"] == 70
 
     async def test_three_pages(self):
         stats_pages = await self.ably.stats(**self.get_params())
@@ -131,7 +131,7 @@ class TestDirectionBackwards(TestRestAppStatsSetup, BaseAsyncTestCase,
         page2 = await stats_pages.next()
         page3 = await page2.next()
         assert not stats_pages.is_last()
-        assert page3.items[0].inbound.realtime.all.count == 50
+        assert page3.items[0].entries["messages.inbound.realtime.all.count"] == 50
 
 
 class TestOnlyLastYear(TestRestAppStatsSetup, BaseAsyncTestCase,
@@ -147,8 +147,8 @@ class TestOnlyLastYear(TestRestAppStatsSetup, BaseAsyncTestCase,
     async def test_default_is_backwards(self):
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
-        assert stats[0].inbound.realtime.messages.count == 70
-        assert stats[-1].inbound.realtime.messages.count == 50
+        assert stats[0].entries["messages.inbound.realtime.messages.count"] == 70
+        assert stats[-1].entries["messages.inbound.realtime.messages.count"] == 50
 
 
 class TestPreviousYear(TestRestAppStatsSetup, BaseAsyncTestCase,
@@ -194,8 +194,8 @@ class TestRestAppStats(TestRestAppStatsSetup, BaseAsyncTestCase,
             stats_pages = await self.ably.stats(**params)
             stat = stats_pages.items[0]
             assert len(stats_pages.items) == 1
-            assert stat.all.messages.count == 50 + 20 + 60 + 10 + 70 + 40
-            assert stat.all.messages.data == 5000 + 2000 + 6000 + 1000 + 7000 + 4000
+            assert stat.entries["messages.all.messages.count"] == 50 + 20 + 60 + 10 + 70 + 40
+            assert stat.entries["messages.all.messages.data"] == 5000 + 2000 + 6000 + 1000 + 7000 + 4000
 
     @dont_vary_protocol
     async def test_when_argument_start_is_after_end(self):
@@ -222,96 +222,89 @@ class TestRestAppStats(TestRestAppStatsSetup, BaseAsyncTestCase,
         }
         stats_pages = await self.ably.stats(**params)
         self.stat = stats_pages.items[0]
-        assert self.stat.interval_granularity == 'minute'
+        assert self.stat.unit == 'minute'
 
     async def test_got_1_record(self):
         stats_pages = await self.ably.stats(**self.get_params())
         assert 1 == len(stats_pages.items), "Expected 1 record"
-
-    async def test_zero_by_default(self):
-        stats_pages = await self.ably.stats(**self.get_params())
-        stats = stats_pages.items
-        stat = stats[0]
-        assert stat.channels.refused == 0
-        assert stat.outbound.webhook.all.count == 0
 
     async def test_return_aggregated_message_data(self):
         # returns aggregated message data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.all.messages.count == 70 + 40
-        assert stat.all.messages.data == 7000 + 4000
+        assert stat.entries["messages.all.messages.count"] == 70 + 40
+        assert stat.entries["messages.all.messages.data"] == 7000 + 4000
 
     async def test_inbound_realtime_all_data(self):
         # returns inbound realtime all data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.inbound.realtime.all.count == 70
-        assert stat.inbound.realtime.all.data == 7000
+        assert stat.entries["messages.inbound.realtime.all.count"] == 70
+        assert stat.entries["messages.inbound.realtime.all.data"] == 7000
 
     async def test_inboud_realtime_message_data(self):
         # returns inbound realtime message data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.inbound.realtime.messages.count == 70
-        assert stat.inbound.realtime.messages.data == 7000
+        assert stat.entries["messages.inbound.realtime.messages.count"] == 70
+        assert stat.entries["messages.inbound.realtime.messages.data"] == 7000
 
     async def test_outbound_realtime_all_data(self):
         # returns outboud realtime all data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.outbound.realtime.all.count == 40
-        assert stat.outbound.realtime.all.data == 4000
+        assert stat.entries["messages.outbound.realtime.all.count"] == 40
+        assert stat.entries["messages.outbound.realtime.all.data"] == 4000
 
     async def test_persisted_data(self):
         # returns persisted presence all data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.persisted.all.count == 20
-        assert stat.persisted.all.data == 2000
+        assert stat.entries["messages.persisted.all.count"] == 20
+        assert stat.entries["messages.persisted.all.data"] == 2000
 
     async def test_connections_data(self):
         # returns connections all data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.connections.tls.peak == 20
-        assert stat.connections.tls.opened == 10
+        assert stat.entries["connections.all.peak"] == 20
+        assert stat.entries["connections.all.opened"] == 10
 
     async def test_channels_all_data(self):
         # returns channels all data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.channels.peak == 50
-        assert stat.channels.opened == 30
+        assert stat.entries["channels.peak"] == 50
+        assert stat.entries["channels.opened"] == 30
 
     async def test_api_requests_data(self):
         # returns api_requests data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.api_requests.succeeded == 50
-        assert stat.api_requests.failed == 10
+        assert stat.entries["apiRequests.other.succeeded"] == 50
+        assert stat.entries["apiRequests.other.failed"] == 10
 
     async def test_token_requests(self):
         # returns token_requests data
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.token_requests.succeeded == 60
-        assert stat.token_requests.failed == 20
+        assert stat.entries["apiRequests.tokenRequests.succeeded"] == 60
+        assert stat.entries["apiRequests.tokenRequests.failed"] == 20
 
     async def test_interval(self):
         # interval
         stats_pages = await self.ably.stats(**self.get_params())
         stats = stats_pages.items
         stat = stats[0]
-        assert stat.interval_granularity == 'minute'
+        assert stat.unit == 'minute'
         assert stat.interval_id == self.last_interval.strftime('%Y-%m-%d:%H:%M')
         assert stat.interval_time == self.last_interval

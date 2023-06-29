@@ -10,7 +10,8 @@ import msgpack
 from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
-from ably.util.exceptions import AblyException, AblyAuthException
+from ably.util.exceptions import AblyException
+from ably.util.helper import is_token_error
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def reauth_if_expired(func):
         auth = rest.auth
         token_details = auth.token_details
         if token_details and auth.time_offset is not None and auth.token_details_has_expired():
-            await rest.reauth()
+            await auth.authorize()
             retried = True
         else:
             retried = False
@@ -33,8 +34,8 @@ def reauth_if_expired(func):
         try:
             return await func(rest, *args, **kwargs)
         except AblyException as e:
-            if 40140 <= e.code < 40150 and not retried:
-                await rest.reauth()
+            if is_token_error(e) and not retried:
+                await auth.authorize()
                 return await func(rest, *args, **kwargs)
 
             raise e
@@ -43,18 +44,19 @@ def reauth_if_expired(func):
 
 
 class Request:
-    def __init__(self, method='GET', url='/', headers=None, body=None,
+    def __init__(self, method='GET', url='/', version=None, headers=None, body=None,
                  skip_auth=False, raise_on_error=True):
         self.__method = method
         self.__headers = headers or {}
         self.__body = body
         self.__skip_auth = skip_auth
         self.__url = url
+        self.__version = version
         self.raise_on_error = raise_on_error
 
     def with_relative_url(self, relative_url):
         url = urljoin(self.url, relative_url)
-        return Request(self.method, url, self.headers, self.body,
+        return Request(self.method, url, self.version, self.headers, self.body,
                        self.skip_auth, self.raise_on_error)
 
     @property
@@ -76,6 +78,10 @@ class Request:
     @property
     def skip_auth(self):
         return self.__skip_auth
+
+    @property
+    def version(self):
+        return self.__version
 
 
 class Response:
@@ -134,18 +140,9 @@ class Http:
         else:
             return json.dumps(body, separators=(',', ':'))
 
-    async def reauth(self):
-        try:
-            await self.auth.authorize()
-        except AblyAuthException as e:
-            if e.code == 40101:
-                e.message = ("The provided token is not renewable and there is"
-                             " no means to generate a new token")
-            raise e
-
     def get_rest_hosts(self):
         hosts = self.options.get_rest_hosts()
-        host = self.__host
+        host = self.__host or self.options.fallback_realtime_host
         if host is None:
             return hosts
 
@@ -160,16 +157,16 @@ class Http:
         return hosts
 
     @reauth_if_expired
-    async def make_request(self, method, path, headers=None, body=None,
+    async def make_request(self, method, path, version=None, headers=None, body=None,
                            skip_auth=False, timeout=None, raise_on_error=True):
 
         if body is not None and type(body) not in (bytes, str):
             body = self.dump_body(body)
 
         if body:
-            all_headers = HttpUtils.default_post_headers(self.options.use_binary_protocol)
+            all_headers = HttpUtils.default_post_headers(self.options.use_binary_protocol, version=version)
         else:
-            all_headers = HttpUtils.default_get_headers(self.options.use_binary_protocol)
+            all_headers = HttpUtils.default_get_headers(self.options.use_binary_protocol, version=version)
 
         params = HttpUtils.get_query_params(self.options)
 

@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from urllib.parse import urlencode
 
 from ably.http.http import Http
@@ -18,7 +19,8 @@ log = logging.getLogger(__name__)
 class AblyRest:
     """Ably Rest Client"""
 
-    def __init__(self, key=None, token=None, token_details=None, **kwargs):
+    def __init__(self, key: Optional[str] = None, token: Optional[str] = None,
+                 token_details: Optional[TokenDetails] = None, **kwargs):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -60,6 +62,11 @@ class AblyRest:
         else:
             options = Options(**kwargs)
 
+        try:
+            self._is_realtime
+        except AttributeError:
+            self._is_realtime = False
+
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
         self.__http.auth = self.__auth
@@ -72,23 +79,23 @@ class AblyRest:
         return self
 
     @catch_all
-    async def stats(self, direction=None, start=None, end=None, params=None,
-                    limit=None, paginated=None, unit=None, timeout=None):
+    async def stats(self, direction: Optional[str] = None, start=None, end=None, params: Optional[dict] = None,
+                    limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
         """Returns the stats for this application"""
-        params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
-        url = '/stats' + params
+        formatted_params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
+        url = '/stats' + formatted_params
         return await PaginatedResult.paginated_query(
             self.http, url=url, response_processor=stats_response_processor)
 
     @catch_all
-    async def time(self, timeout=None):
+    async def time(self, timeout: Optional[float] = None) -> float:
         """Returns the current server time in ms since the unix epoch"""
         r = await self.http.get('/time', skip_auth=True, timeout=timeout)
         AblyException.raise_for_response(r)
         return r.to_native()[0]
 
     @property
-    def client_id(self):
+    def client_id(self) -> Optional[str]:
         return self.options.client_id
 
     @property
@@ -112,7 +119,11 @@ class AblyRest:
     def push(self):
         return self.__push
 
-    async def request(self, method, path, params=None, body=None, headers=None):
+    async def request(self, method: str, path: str, version: str, params:
+                      Optional[dict] = None, body=None, headers=None):
+        if version is None:
+            raise AblyException("No version parameter", 400, 40000)
+
         url = path
         if params:
             url += '?' + urlencode(params)
@@ -126,7 +137,7 @@ class AblyRest:
             return items
 
         return await HttpPaginatedResponse.paginated_query(
-            self.http, method, url, body=body, headers=headers,
+            self.http, method, url, version=version, body=body, headers=headers,
             response_processor=response_processor,
             raise_on_error=False)
 

@@ -77,11 +77,11 @@ class PaginatedResult:
         return await self.paginated_query_with_request(self.__http, rel_req, self.__response_processor)
 
     @classmethod
-    async def paginated_query(cls, http, method='GET', url='/', body=None,
+    async def paginated_query(cls, http, method='GET', url='/', version=None, body=None,
                               headers=None, response_processor=None,
                               raise_on_error=True):
         headers = headers or {}
-        req = Request(method, url, body=body, headers=headers, skip_auth=False,
+        req = Request(method, url, version=version, body=body, headers=headers, skip_auth=False,
                       raise_on_error=raise_on_error)
         return await cls.paginated_query_with_request(http, req, response_processor)
 
@@ -89,9 +89,9 @@ class PaginatedResult:
     async def paginated_query_with_request(cls, http, request, response_processor,
                                            raise_on_error=True):
         response = await http.make_request(
-            request.method, request.url, headers=request.headers,
-            body=request.body, skip_auth=request.skip_auth,
-            raise_on_error=request.raise_on_error)
+            request.method, request.url, version=request.version,
+            headers=request.headers, body=request.body,
+            skip_auth=request.skip_auth, raise_on_error=request.raise_on_error)
 
         items = response_processor(response)
 

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ably"
-version = "1.2.2"
-description = "Python REST client library SDK for Ably realtime messaging service"
+version = "2.0.0"
+description = "Python REST and Realtime client library SDK for Ably realtime messaging service"
 license = "Apache-2.0"
 authors = ["Ably <support@ably.com>"]
 readme = "LONG_DESCRIPTION.rst"
@@ -33,6 +33,8 @@ h2 = "^4.0.0"
 # Optional dependencies
 pycrypto = { version = "^2.6.1", optional = true }
 pycryptodome = { version = "*", optional = true }
+websockets = "^10.3"
+pyee = "^9.0.4"
 
 [tool.poetry.extras]
 oldcrypto = ["pycrypto"]

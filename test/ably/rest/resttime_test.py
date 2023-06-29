@@ -4,7 +4,7 @@ import pytest
 
 from ably import AblyException
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 
@@ -15,7 +15,7 @@ class TestRestTime(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         self.use_binary_protocol = use_binary_protocol
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
+        self.ably = await TestApp.get_ably_rest()
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -36,7 +36,7 @@ class TestRestTime(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @dont_vary_protocol
     async def test_time_fails_without_valid_host(self):
-        ably = await RestSetup.get_ably_rest(key=None, token='foo', rest_host="this.host.does.not.exist")
+        ably = await TestApp.get_ably_rest(key=None, token='foo', rest_host="this.host.does.not.exist")
         with pytest.raises(AblyException):
             await ably.time()
 

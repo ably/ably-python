@@ -1,5 +1,5 @@
 class Defaults:
-    protocol_version = 1
+    protocol_version = "2"
     fallback_hosts = [
         "a.ably-realtime.com",
         "b.ably-realtime.com",
@@ -9,7 +9,8 @@ class Defaults:
     ]
 
     rest_host = "rest.ably.io"
-    realtime_host = "realtime.ably.io"
+    realtime_host = "realtime.ably.io"  # RTN2
+    connectivity_check_url = "https://internet-up.ably-realtime.com/is-the-internet-up.txt"
     environment = 'production'
 
     port = 80
@@ -19,6 +20,11 @@ class Defaults:
     suspended_timeout = 60000
     comet_recv_timeout = 90000
     comet_send_timeout = 10000
+    realtime_request_timeout = 10000
+    channel_retry_timeout = 15000
+    disconnected_retry_timeout = 15000
+    connection_state_ttl = 120000
+    suspended_retry_timeout = 30000
 
     transports = []  # ["web_socket", "comet"]
 

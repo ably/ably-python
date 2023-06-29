@@ -1,15 +1,21 @@
+from __future__ import annotations
 import base64
 from datetime import timedelta
 import logging
 import time
+from typing import Optional, TYPE_CHECKING, Union
 import uuid
-import warnings
 import httpx
+
+from ably.types.options import Options
+if TYPE_CHECKING:
+    from ably.rest.rest import AblyRest
+    from ably.realtime.realtime import AblyRealtime
 
 from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
-from ably.util.exceptions import AblyException, IncompatibleClientIdException
+from ably.util.exceptions import AblyAuthException, AblyException, IncompatibleClientIdException
 
 __all__ = ["Auth"]
 
@@ -22,19 +28,22 @@ class Auth:
         BASIC = "BASIC"
         TOKEN = "TOKEN"
 
-    def __init__(self, ably, options):
+    def __init__(self, ably: Union[AblyRest, AblyRealtime], options: Options):
         self.__ably = ably
         self.__auth_options = options
-        if options.token_details:
-            self.__client_id = options.token_details.client_id
-        else:
-            self.__client_id = options.client_id
-        self.__client_id_validated = False
 
-        self.__basic_credentials = None
-        self.__auth_params = None
-        self.__token_details = None
-        self.__time_offset = None
+        if not self.ably._is_realtime:
+            self.__client_id = options.client_id
+            if not self.__client_id and options.token_details:
+                self.__client_id = options.token_details.client_id
+        else:
+            self.__client_id = None
+        self.__client_id_validated: bool = False
+
+        self.__basic_credentials: Optional[str] = None
+        self.__auth_params: Optional[dict] = None
+        self.__token_details: Optional[TokenDetails] = None
+        self.__time_offset: Optional[int] = None
 
         must_use_token_auth = options.use_token_auth is True
         must_not_use_token_auth = options.use_token_auth is False
@@ -75,9 +84,29 @@ class Auth:
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
-        self.__auth_mechanism = Auth.Method.TOKEN
+    async def get_auth_transport_param(self):
+        auth_credentials = {}
+        if self.auth_options.client_id:
+            auth_credentials["client_id"] = self.auth_options.client_id
+        if self.__auth_mechanism == Auth.Method.BASIC:
+            key_name = self.__auth_options.key_name
+            key_secret = self.__auth_options.key_secret
+            auth_credentials["key"] = f"{key_name}:{key_secret}"
+        elif self.__auth_mechanism == Auth.Method.TOKEN:
+            token_details = await self._ensure_valid_auth_credentials()
+            auth_credentials["accessToken"] = token_details.token
+        return auth_credentials
 
+    async def __authorize_when_necessary(self, token_params=None, auth_options=None, force=False):
+        token_details = await self._ensure_valid_auth_credentials(token_params, auth_options, force)
+
+        if self.ably._is_realtime:
+            await self.ably.connection.connection_manager.on_auth_updated(token_details)
+
+        return token_details
+
+    async def _ensure_valid_auth_credentials(self, token_params=None, auth_options=None, force=False):
+        self.__auth_mechanism = Auth.Method.TOKEN
         if token_params is None:
             token_params = dict(self.auth_options.default_token_params)
         else:
@@ -98,12 +127,16 @@ class Auth:
 
         self.__token_details = await self.request_token(token_params, **auth_options)
         self._configure_client_id(self.__token_details.client_id)
+
         return self.__token_details
 
     def token_details_has_expired(self):
         token_details = self.__token_details
         if token_details is None:
             return True
+
+        if not self.__time_offset:
+            return False
 
         expires = token_details.expires
         if expires is None:
@@ -115,20 +148,15 @@ class Auth:
 
         return expires < timestamp + token_details.TOKEN_EXPIRY_BUFFER
 
-    async def authorize(self, token_params=None, auth_options=None):
+    async def authorize(self, token_params: Optional[dict] = None, auth_options=None):
         return await self.__authorize_when_necessary(token_params, auth_options, force=True)
 
-    async def authorise(self, *args, **kwargs):
-        warnings.warn(
-            "authorise is deprecated and will be removed in v2.0, please use authorize",
-            DeprecationWarning)
-        return await self.authorize(*args, **kwargs)
-
-    async def request_token(self, token_params=None,
+    async def request_token(self, token_params: Optional[dict] = None,
                             # auth_options
-                            key_name=None, key_secret=None, auth_callback=None,
-                            auth_url=None, auth_method=None, auth_headers=None,
-                            auth_params=None, query_time=None):
+                            key_name: Optional[str] = None, key_secret: Optional[str] = None, auth_callback=None,
+                            auth_url: Optional[str] = None, auth_method: Optional[str] = None,
+                            auth_headers: Optional[dict] = None, auth_params: Optional[dict] = None,
+                            query_time=None):
         token_params = token_params or {}
         token_params = dict(self.auth_options.default_token_params,
                             **token_params)
@@ -152,24 +180,40 @@ class Auth:
         log.debug("Token Params: %s" % token_params)
         if auth_callback:
             log.debug("using token auth with authCallback")
-            token_request = await auth_callback(token_params)
+            try:
+                token_request = await auth_callback(token_params)
+            except Exception as e:
+                raise AblyException("auth_callback raised an exception", 401, 40170, cause=e)
         elif auth_url:
             log.debug("using token auth with authUrl")
 
             token_request = await self.token_request_from_auth_url(
                 auth_method, auth_url, token_params, auth_headers, auth_params)
-        else:
+        elif key_name is not None and key_secret is not None:
             token_request = await self.create_token_request(
                 token_params, key_name=key_name, key_secret=key_secret,
                 query_time=query_time)
+        else:
+            msg = "Need a new token but auth_options does not include a way to request one"
+            log.exception(msg)
+            raise AblyAuthException(msg, 403, 40171)
         if isinstance(token_request, TokenDetails):
             return token_request
         elif isinstance(token_request, dict) and 'issued' in token_request:
             return TokenDetails.from_dict(token_request)
         elif isinstance(token_request, dict):
-            token_request = TokenRequest.from_json(token_request)
+            try:
+                token_request = TokenRequest.from_json(token_request)
+            except TypeError as e:
+                msg = "Expected token request callback to call back with a token string, token request object, or \
+                token details object"
+                raise AblyAuthException(msg, 401, 40170, cause=e)
         elif isinstance(token_request, str):
+            if len(token_request) == 0:
+                raise AblyAuthException("Token string is empty", 401, 4017)
             return TokenDetails(token=token_request)
+        elif token_request is None:
+            raise AblyAuthException("Token string was None", 401, 40170)
 
         token_path = "/keys/%s/requestToken" % token_request.key_name
 
@@ -185,8 +229,8 @@ class Auth:
         log.debug("Token: %s" % str(response_dict.get("token")))
         return TokenDetails.from_dict(response_dict)
 
-    async def create_token_request(self, token_params=None,
-                                   key_name=None, key_secret=None, query_time=None):
+    async def create_token_request(self, token_params: Optional[dict] = None, key_name: Optional[str] = None,
+                                   key_secret: Optional[str] = None, query_time=None):
         token_params = token_params or {}
         token_request = {}
 
@@ -236,18 +280,18 @@ class Auth:
         # simply for testing purposes
         token_request["nonce"] = token_params.get('nonce') or self._random_nonce()
 
-        token_request = TokenRequest(**token_request)
+        token_req = TokenRequest(**token_request)
 
         if token_params.get('mac') is None:
             # Note: There is no expectation that the client
             # specifies the mac; this is done by the library
             # However, this can be overridden by the client
             # simply for testing purposes.
-            token_request.sign_request(key_secret.encode('utf8'))
+            token_req.sign_request(key_secret.encode('utf8'))
         else:
-            token_request.mac = token_params['mac']
+            token_req.mac = token_params['mac']
 
-        return token_request
+        return token_req
 
     @property
     def ably(self):
@@ -289,28 +333,34 @@ class Auth:
         return self.__time_offset
 
     def _configure_client_id(self, new_client_id):
+        log.debug("Auth._configure_client_id(): new client_id = %s", new_client_id)
+        original_client_id = self.client_id or self.auth_options.client_id
+
         # If new client ID from Ably is a wildcard, but preconfigured clientId is set,
         # then keep the existing clientId
-        if self.client_id != '*' and new_client_id == '*':
+        if original_client_id != '*' and new_client_id == '*':
             self.__client_id_validated = True
+            self.__client_id = original_client_id
             return
 
         # If client_id is defined and not a wildcard, prevent it changing, this is not supported
-        if self.client_id is not None and self.client_id != '*' and new_client_id != self.client_id:
+        if original_client_id is not None and original_client_id != '*' and new_client_id != original_client_id:
             raise IncompatibleClientIdException(
                 "Client ID is immutable once configured for a client. "
-                "Client ID cannot be changed to '{}'".format(new_client_id), 400, 40012)
+                "Client ID cannot be changed to '{}'".format(new_client_id), 400, 40102)
 
         self.__client_id_validated = True
         self.__client_id = new_client_id
 
     def can_assume_client_id(self, assumed_client_id):
+        original_client_id = self.client_id or self.auth_options.client_id
+
         if self.__client_id_validated:
             return self.client_id == '*' or self.client_id == assumed_client_id
-        elif self.client_id is None or self.client_id == '*':
+        elif original_client_id is None or original_client_id == '*':
             return True  # client ID is unknown
         else:
-            return self.client_id == assumed_client_id
+            return original_client_id == assumed_client_id
 
     async def _get_auth_headers(self):
         if self.__auth_mechanism == Auth.Method.BASIC:
@@ -336,13 +386,16 @@ class Auth:
     def _random_nonce(self):
         return uuid.uuid4().hex[:16]
 
-    async def token_request_from_auth_url(self, method, url, token_params, headers, auth_params):
+    async def token_request_from_auth_url(self, method: str, url: str, token_params,
+                                          headers, auth_params):
         body = None
         params = None
         if method == 'GET':
             body = {}
             params = dict(auth_params, **token_params)
         elif method == 'POST':
+            if isinstance(auth_params, TokenDetails):
+                auth_params = auth_params.to_dict()
             params = {}
             body = dict(auth_params, **token_params)
 
@@ -352,8 +405,21 @@ class Auth:
             response = Response(resp)
 
         AblyException.raise_for_response(response)
-        try:
+
+        content_type = response.response.headers.get('content-type')
+
+        if not content_type:
+            raise AblyAuthException("auth_url response missing a content-type header", 401, 40170)
+
+        is_json = "application/json" in content_type
+        is_text = "application/jwt" in content_type or "text/plain" in content_type
+
+        if is_json:
             token_request = response.to_native()
-        except ValueError:
+        elif is_text:
             token_request = response.text
+        else:
+            msg = 'auth_url responded with unacceptable content-type ' + content_type + \
+                ', should be either text/plain, application/jwt or application/json',
+            raise AblyAuthException(msg, 401, 40170)
         return token_request

@@ -1,31 +1,53 @@
 import random
-import warnings
+import logging
 
 from ably.transport.defaults import Defaults
 from ably.types.authoptions import AuthOptions
 
+log = logging.getLogger(__name__)
+
 
 class Options(AuthOptions):
-    def __init__(self, client_id=None, log_level=0, tls=True, rest_host=None,
-                 realtime_host=None, port=0, tls_port=0, use_binary_protocol=True,
-                 queue_messages=False, recover=False, environment=None,
-                 http_open_timeout=None, http_request_timeout=None,
-                 http_max_retry_count=None, http_max_retry_duration=None,
-                 fallback_hosts=None, fallback_hosts_use_default=None, fallback_retry_timeout=None,
-                 idempotent_rest_publishing=None, add_request_ids=False,
-                 **kwargs):
+    def __init__(self, client_id=None, log_level=0, tls=True, rest_host=None, realtime_host=None, port=0,
+                 tls_port=0, use_binary_protocol=True, queue_messages=False, recover=False, environment=None,
+                 http_open_timeout=None, http_request_timeout=None, realtime_request_timeout=None,
+                 http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
+                 fallback_retry_timeout=None, disconnected_retry_timeout=None, idempotent_rest_publishing=None,
+                 loop=None, auto_connect=True, suspended_retry_timeout=None, connectivity_check_url=None,
+                 channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False, **kwargs):
+
         super().__init__(**kwargs)
 
         # TODO check these defaults
         if fallback_retry_timeout is None:
             fallback_retry_timeout = Defaults.fallback_retry_timeout
 
+        if realtime_request_timeout is None:
+            realtime_request_timeout = Defaults.realtime_request_timeout
+
+        if disconnected_retry_timeout is None:
+            disconnected_retry_timeout = Defaults.disconnected_retry_timeout
+
+        if connectivity_check_url is None:
+            connectivity_check_url = Defaults.connectivity_check_url
+
+        connection_state_ttl = Defaults.connection_state_ttl
+
+        if suspended_retry_timeout is None:
+            suspended_retry_timeout = Defaults.suspended_retry_timeout
+
         if environment is not None and rest_host is not None:
             raise ValueError('specify rest_host or environment, not both')
+
+        if environment is not None and realtime_host is not None:
+            raise ValueError('specify realtime_host or environment, not both')
 
         if idempotent_rest_publishing is None:
             from ably import api_version
             idempotent_rest_publishing = api_version >= '1.2'
+
+        if environment is None:
+            environment = Defaults.environment
 
         self.__client_id = client_id
         self.__log_level = log_level
@@ -40,15 +62,24 @@ class Options(AuthOptions):
         self.__environment = environment
         self.__http_open_timeout = http_open_timeout
         self.__http_request_timeout = http_request_timeout
+        self.__realtime_request_timeout = realtime_request_timeout
         self.__http_max_retry_count = http_max_retry_count
         self.__http_max_retry_duration = http_max_retry_duration
         self.__fallback_hosts = fallback_hosts
-        self.__fallback_hosts_use_default = fallback_hosts_use_default
         self.__fallback_retry_timeout = fallback_retry_timeout
+        self.__disconnected_retry_timeout = disconnected_retry_timeout
+        self.__channel_retry_timeout = channel_retry_timeout
         self.__idempotent_rest_publishing = idempotent_rest_publishing
+        self.__loop = loop
+        self.__auto_connect = auto_connect
+        self.__connection_state_ttl = connection_state_ttl
+        self.__suspended_retry_timeout = suspended_retry_timeout
+        self.__connectivity_check_url = connectivity_check_url
+        self.__fallback_realtime_host = None
         self.__add_request_ids = add_request_ids
 
         self.__rest_hosts = self.__get_rest_hosts()
+        self.__realtime_hosts = self.__get_realtime_hosts()
 
     @property
     def client_id(self):
@@ -82,6 +113,7 @@ class Options(AuthOptions):
     def rest_host(self, value):
         self.__rest_host = value
 
+    # RTC1d
     @property
     def realtime_host(self):
         return self.__realtime_host
@@ -146,6 +178,10 @@ class Options(AuthOptions):
     def http_request_timeout(self):
         return self.__http_request_timeout
 
+    @property
+    def realtime_request_timeout(self):
+        return self.__realtime_request_timeout
+
     @http_request_timeout.setter
     def http_request_timeout(self, value):
         self.__http_request_timeout = value
@@ -171,16 +207,53 @@ class Options(AuthOptions):
         return self.__fallback_hosts
 
     @property
-    def fallback_hosts_use_default(self):
-        return self.__fallback_hosts_use_default
-
-    @property
     def fallback_retry_timeout(self):
         return self.__fallback_retry_timeout
 
     @property
+    def disconnected_retry_timeout(self):
+        return self.__disconnected_retry_timeout
+
+    @property
+    def channel_retry_timeout(self):
+        return self.__channel_retry_timeout
+
+    @property
     def idempotent_rest_publishing(self):
         return self.__idempotent_rest_publishing
+
+    @property
+    def loop(self):
+        return self.__loop
+
+    # RTC1b
+    @property
+    def auto_connect(self):
+        return self.__auto_connect
+
+    @property
+    def connection_state_ttl(self):
+        return self.__connection_state_ttl
+
+    @connection_state_ttl.setter
+    def connection_state_ttl(self, value):
+        self.__connection_state_ttl = value
+
+    @property
+    def suspended_retry_timeout(self):
+        return self.__suspended_retry_timeout
+
+    @property
+    def connectivity_check_url(self):
+        return self.__connectivity_check_url
+
+    @property
+    def fallback_realtime_host(self):
+        return self.__fallback_realtime_host
+
+    @fallback_realtime_host.setter
+    def fallback_realtime_host(self, value):
+        self.__fallback_realtime_host = value
 
     @property
     def add_request_ids(self):
@@ -198,8 +271,6 @@ class Options(AuthOptions):
             host = Defaults.rest_host
 
         environment = self.environment
-        if environment is None:
-            environment = Defaults.environment
 
         http_max_retry_count = self.http_max_retry_count
         if http_max_retry_count is None:
@@ -212,35 +283,33 @@ class Options(AuthOptions):
         # Fallback hosts
         fallback_hosts = self.fallback_hosts
         if fallback_hosts is None:
-            if host == Defaults.rest_host or self.fallback_hosts_use_default:
+            if host == Defaults.rest_host:
                 fallback_hosts = Defaults.fallback_hosts
             elif environment != 'production':
                 fallback_hosts = Defaults.get_environment_fallback_hosts(environment)
             else:
                 fallback_hosts = []
 
-        # Explicit warning about deprecating the option
-        if self.fallback_hosts_use_default:
-            if environment != Defaults.environment:
-                warnings.warn(
-                    "It is no longer required to set 'fallback_hosts_use_default', the correct fallback hosts "
-                    "are now inferred from the environment, 'fallback_hosts': {}"
-                    .format(','.join(fallback_hosts)), DeprecationWarning
-                )
-            else:
-                warnings.warn(
-                    "It is no longer required to set 'fallback_hosts_use_default': 'fallback_hosts': {}"
-                    .format(','.join(fallback_hosts)), DeprecationWarning
-                )
-
         # Shuffle
         fallback_hosts = list(fallback_hosts)
         random.shuffle(fallback_hosts)
+        self.__fallback_hosts = fallback_hosts
 
         # First main host
         hosts = [host] + fallback_hosts
         hosts = hosts[:http_max_retry_count]
         return hosts
+
+    def __get_realtime_hosts(self):
+        if self.realtime_host is not None:
+            host = self.realtime_host
+            return [host]
+        elif self.environment != "production":
+            host = f'{self.environment}-{Defaults.realtime_host}'
+        else:
+            host = Defaults.realtime_host
+
+        return [host] + self.__fallback_hosts
 
     def get_rest_hosts(self):
         return self.__rest_hosts
@@ -248,5 +317,14 @@ class Options(AuthOptions):
     def get_rest_host(self):
         return self.__rest_hosts[0]
 
+    def get_realtime_hosts(self):
+        return self.__realtime_hosts
+
+    def get_realtime_host(self):
+        return self.__realtime_hosts[0]
+
     def get_fallback_rest_hosts(self):
         return self.__rest_hosts[1:]
+
+    def get_fallback_realtime_hosts(self):
+        return self.__realtime_hosts[1:]

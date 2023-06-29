@@ -3,8 +3,8 @@ from collections import OrderedDict
 import logging
 import json
 import os
+from typing import Iterator
 from urllib import parse
-import warnings
 
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
@@ -29,7 +29,7 @@ class Channel(SingleDispatch):
         self.__presence = Presence(self)
 
     @catch_all
-    async def history(self, direction=None, limit=None, start=None, end=None):
+    async def history(self, direction=None, limit: int = None, start=None, end=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
         path = self.__base_path + 'messages' + params
@@ -99,15 +99,8 @@ class Channel(SingleDispatch):
         return await self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @_publish.register(str)
-    async def publish_name_data(self, name, data, client_id=None, extras=None, timeout=None):
-        # RSL1h
-        if client_id or extras:
-            warnings.warn(
-                "Support for client_id and extras will be removed in 2.0",
-                DeprecationWarning
-            )
-
-        messages = [Message(name, data, client_id, extras=extras)]
+    async def publish_name_data(self, name, data, timeout=None):
+        messages = [Message(name, data)]
         return await self.publish_messages(messages, timeout=timeout)
 
     async def publish(self, *args, **kwargs):
@@ -184,16 +177,16 @@ class Channel(SingleDispatch):
 class Channels:
     def __init__(self, rest):
         self.__ably = rest
-        self.__attached = OrderedDict()
+        self.__all: dict = OrderedDict()
 
     def get(self, name, **kwargs):
         if isinstance(name, bytes):
             name = name.decode('ascii')
 
-        if name not in self.__attached:
-            result = self.__attached[name] = Channel(self.__ably, name, kwargs)
+        if name not in self.__all:
+            result = self.__all[name] = Channel(self.__ably, name, kwargs)
         else:
-            result = self.__attached[name]
+            result = self.__all[name]
             if len(kwargs) != 0:
                 result.options = kwargs
 
@@ -203,10 +196,7 @@ class Channels:
         return self.get(key)
 
     def __getattr__(self, name):
-        try:
-            return super().__getattr__(name)
-        except AttributeError:
-            return self.get(name)
+        return self.get(name)
 
     def __contains__(self, item):
         if isinstance(item, Channel):
@@ -216,13 +206,24 @@ class Channels:
         else:
             name = item
 
-        return name in self.__attached
+        return name in self.__all
 
-    def __iter__(self):
-        return iter(self.__attached.values())
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.__all.values())
 
-    def release(self, key):
-        del self.__attached[key]
+    # RSN4
+    def release(self, name: str):
+        """Releases a Channel object, deleting it, and enabling it to be garbage collected.
+        If the channel does not exist, nothing happens.
 
-    def __delitem__(self, key):
-        return self.release(key)
+        It also removes any listeners associated with the channel.
+
+        Parameters
+        ----------
+        name: str
+            Channel name
+        """
+
+        if name not in self.__all:
+            return
+        del self.__all[name]

@@ -1,4 +1,3 @@
-import warnings
 from mock import patch
 import pytest
 from httpx import AsyncClient
@@ -8,14 +7,14 @@ from ably import AblyException
 from ably.transport.defaults import Defaults
 from ably.types.tokendetails import TokenDetails
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 
 class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
+        self.test_vars = await TestApp.get_test_vars()
 
     @dont_vary_protocol
     def test_key_only(self):
@@ -91,8 +90,6 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     # RSC15
     @dont_vary_protocol
-    # Ignore library warning regarding fallback_hosts_use_default
-    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     def test_fallback_hosts(self):
         # Specify the fallback_hosts (RSC15a)
         fallback_hosts = [
@@ -114,25 +111,11 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         ably = AblyRest(token='foo', http_max_retry_count=10)
         assert sorted(Defaults.fallback_hosts) == sorted(ably.options.get_fallback_rest_hosts())
 
-        # Specify environment and fallback_hosts_use_default, no fallback hosts (RSC15g4)
-        # We specify http_max_retry_count=10 so all the fallback hosts get in the list
-        ably = AblyRest(token='foo', environment='not_considered', fallback_hosts_use_default=True,
-                        http_max_retry_count=10)
-        assert sorted(Defaults.fallback_hosts) == sorted(ably.options.get_fallback_rest_hosts())
-
         # RSC15f
         ably = AblyRest(token='foo')
         assert 600000 == ably.options.fallback_retry_timeout
         ably = AblyRest(token='foo', fallback_retry_timeout=1000)
         assert 1000 == ably.options.fallback_retry_timeout
-
-        with warnings.catch_warnings(record=True) as ws:
-            # Cause all warnings to always be triggered
-            warnings.simplefilter("always")
-            AblyRest(token='foo', fallback_hosts_use_default=True)
-            # Verify warning is raised for fallback_hosts_use_default
-            ws = [w for w in ws if issubclass(w.category, DeprecationWarning)]
-            assert len(ws) == 1
 
     @dont_vary_protocol
     def test_specified_realtime_host(self):
@@ -181,8 +164,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     # RSA10k
     async def test_query_time_param(self):
-        ably = await RestSetup.get_ably_rest(query_time=True,
-                                             use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(query_time=True,
+                                           use_binary_protocol=self.use_binary_protocol)
 
         timestamp = ably.auth._timestamp
         with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\

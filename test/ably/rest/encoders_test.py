@@ -10,7 +10,7 @@ from ably import CipherParams
 from ably.util.crypto import get_cipher
 from ably.types.message import Message
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
 if sys.version_info >= (3, 8):
@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 class TestTextEncodersNoEncryption(BaseAsyncTestCase):
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
+        self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -145,7 +145,7 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
 
 class TestTextEncodersEncryption(BaseAsyncTestCase):
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest(use_binary_protocol=False)
+        self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
         self.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
                                           algorithm='aes')
 
@@ -259,7 +259,7 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
 class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
+        self.ably = await TestApp.get_ably_rest()
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -350,7 +350,7 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
 class TestBinaryEncodersEncryption(BaseAsyncTestCase):
 
     async def asyncSetUp(self):
-        self.ably = await RestSetup.get_ably_rest()
+        self.ably = await TestApp.get_ably_rest()
         self.cipher_params = CipherParams(secret_key='keyfordecrypt_16', algorithm='aes')
 
     async def asyncTearDown(self):

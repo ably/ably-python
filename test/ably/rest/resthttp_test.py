@@ -14,7 +14,7 @@ from ably import AblyRest
 from ably.transport.defaults import Defaults
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
 
@@ -26,7 +26,7 @@ class TestRestHttp(BaseAsyncTestCase):
 
         with mock.patch('httpx.AsyncClient.send', side_effect=httpx.RequestError('')) as send_mock:
             with pytest.raises(httpx.RequestError):
-                await ably.http.make_request('GET', '/', skip_auth=True)
+                await ably.http.make_request('GET', '/', version=Defaults.protocol_version, skip_auth=True)
 
             assert send_mock.call_count == Defaults.http_max_retry_count
             assert send_mock.call_args == mock.call(mock.ANY)
@@ -95,11 +95,9 @@ class TestRestHttp(BaseAsyncTestCase):
         await ably.close()
 
     # RSC15f
-    # Ignore library warning regarding fallback_hosts_use_default
-    @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     async def test_cached_fallback(self):
         timeout = 2000
-        ably = await RestSetup.get_ably_rest(fallback_hosts_use_default=True, fallback_retry_timeout=timeout)
+        ably = await TestApp.get_ably_rest(fallback_retry_timeout=timeout)
         host = ably.options.get_rest_host()
 
         state = {'errors': 0}
@@ -185,23 +183,23 @@ class TestRestHttp(BaseAsyncTestCase):
 
     # RSC7a, RSC7b
     async def test_request_headers(self):
-        ably = await RestSetup.get_ably_rest()
+        ably = await TestApp.get_ably_rest()
         r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
 
         # API
         assert 'X-Ably-Version' in r.request.headers
-        assert r.request.headers['X-Ably-Version'] == '1.2'
+        assert r.request.headers['X-Ably-Version'] == '3'
 
         # Agent
         assert 'Ably-Agent' in r.request.headers
-        expr = r"^ably-python\/\d.\d.\d python\/\d.\d+.\d+$"
+        expr = r"^ably-python\/\d.\d.\d(-beta\.\d)? python\/\d.\d+.\d+$"
         assert re.search(expr, r.request.headers['Ably-Agent'])
         await ably.close()
 
     # RSC7c
     async def test_add_request_ids(self):
         # With request id
-        ably = await RestSetup.get_ably_rest(add_request_ids=True)
+        ably = await TestApp.get_ably_rest(add_request_ids=True)
         r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
         assert 'request_id' in r.request.url.params
         request_id1 = r.request.url.params['request_id']
@@ -216,7 +214,7 @@ class TestRestHttp(BaseAsyncTestCase):
         await ably.close()
 
         # With request id and new request
-        ably = await RestSetup.get_ably_rest()
+        ably = await TestApp.get_ably_rest()
         r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
         assert 'request_id' not in r.request.url.params
         await ably.close()
@@ -225,7 +223,7 @@ class TestRestHttp(BaseAsyncTestCase):
         url = 'https://www.example.com'
         respx.get(url).mock(return_value=Response(status_code=200))
 
-        ably = await RestSetup.get_ably_rest(rest_host=url)
+        ably = await TestApp.get_ably_rest(rest_host=url)
         r = await ably.http.make_request('GET', url, skip_auth=True)
         assert r.http_version == 'HTTP/2'
         await ably.close()

@@ -6,7 +6,7 @@ from ably import AblyException
 from ably.rest.channel import Channel, Channels, Presence
 from ably.util.crypto import generate_random_key
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
 
@@ -14,8 +14,8 @@ from test.ably.utils import BaseAsyncTestCase
 class TestChannels(BaseAsyncTestCase):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
-        self.ably = await RestSetup.get_ably_rest()
+        self.test_vars = await TestApp.get_test_vars()
+        self.ably = await TestApp.get_ably_rest()
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -70,19 +70,11 @@ class TestChannels(BaseAsyncTestCase):
             assert isinstance(channel, Channel)
             assert name == channel.name
 
+    # RSN4a, RSN4b
     def test_channels_release(self):
         self.ably.channels.get('new_channel')
         self.ably.channels.release('new_channel')
-
-        with pytest.raises(KeyError):
-            self.ably.channels.release('new_channel')
-
-    def test_channels_del(self):
-        self.ably.channels.get('new_channel')
-        del self.ably.channels['new_channel']
-
-        with pytest.raises(KeyError):
-            del self.ably.channels['new_channel']
+        self.ably.channels.release('new_channel')
 
     def test_channel_has_presence(self):
         channel = self.ably.channels.get('new_channnel')
@@ -91,7 +83,7 @@ class TestChannels(BaseAsyncTestCase):
 
     async def test_without_permissions(self):
         key = self.test_vars["keys"][2]
-        ably = await RestSetup.get_ably_rest(key=key["key_str"])
+        ably = await TestApp.get_ably_rest(key=key["key_str"])
         with pytest.raises(AblyException) as excinfo:
             await ably.channels['test_publish_without_permission'].publish('foo', 'woop')
 

@@ -11,7 +11,7 @@ from ably.util.crypto import CipherParams, get_cipher, generate_random_key, get_
 
 from Crypto import Random
 
-from test.ably.restsetup import RestSetup
+from test.ably.testapp import TestApp
 from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
@@ -20,9 +20,9 @@ log = logging.getLogger(__name__)
 class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def asyncSetUp(self):
-        self.test_vars = await RestSetup.get_test_vars()
-        self.ably = await RestSetup.get_ably_rest()
-        self.ably2 = await RestSetup.get_ably_rest()
+        self.test_vars = await TestApp.get_test_vars()
+        self.ably = await TestApp.get_ably_rest()
+        self.ably2 = await TestApp.get_ably_rest()
 
     async def asyncTearDown(self):
         await self.ably.close()
@@ -204,7 +204,8 @@ class AbstractTestCryptoWithFixture:
 
     @classmethod
     def setUpClass(cls):
-        with open(os.path.dirname(__file__) + '/../../submodules/test-resources/%s' % cls.fixture_file, 'r') as f:
+        resources_path = os.path.dirname(__file__) + '/../../../submodules/test-resources/%s' % cls.fixture_file
+        with open(resources_path, 'r') as f:
             cls.fixture = json.loads(f.read())
             cls.params = {
                 'secret_key': base64.b64decode(cls.fixture['key'].encode('ascii')),

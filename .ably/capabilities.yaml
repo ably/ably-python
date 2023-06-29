@@ -17,6 +17,20 @@ compliance:
   Protocol:
     JSON:
     MessagePack:
+  Realtime:
+    Authentication:
+      Get Confirmed Client Identifier:
+    Channel:
+      Attach:
+      Retry Timeout:
+      State Events:
+      Subscribe:
+    Connection:
+      Disconnected Retry Timeout:
+      Lifecycle Control:
+      Ping:
+      State Events:
+      Suspended Retry Timeout:
   REST:
     Authentication:
       Authorize:
@@ -54,6 +68,7 @@ compliance:
         Remove:
         Save:
       Publish:
+    Request Identifiers:
     Request Timeout:
     Service:
       Get Time:
