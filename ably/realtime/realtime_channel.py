@@ -288,17 +288,18 @@ class RealtimeChannel(EventEmitter, Channel):
             # RTL8a
             self.__message_emitter.off(listener)
 
-    def _on_message(self, msg: dict) -> None:
-        action = msg.get('action')
-
+    def _on_message(self, proto_msg: dict) -> None:
+        action = proto_msg.get('action')
         # RTL4c1
-        channel_serial = msg.get('channelSerial')
+        channel_serial = proto_msg.get('channelSerial')
         if channel_serial:
             self.__channel_serial = channel_serial
+        # TM2a, TM2c, TM2f
+        Message.update_inner_message_fields(proto_msg)
 
         if action == ProtocolMessageAction.ATTACHED:
-            flags = msg.get('flags')
-            error = msg.get("error")
+            flags = proto_msg.get('flags')
+            error = proto_msg.get("error")
             exception = None
             resumed = False
 
@@ -325,12 +326,11 @@ class RealtimeChannel(EventEmitter, Channel):
             else:
                 self._request_state(ChannelState.ATTACHING)
         elif action == ProtocolMessageAction.MESSAGE:
-            messages = Message.from_encoded_array(msg.get('messages'))
+            messages = Message.from_encoded_array(proto_msg.get('messages'))
             for message in messages:
-                message.update_empty_fields(msg)
                 self.__message_emitter._emit(message.name, message)
         elif action == ProtocolMessageAction.ERROR:
-            error = AblyException.from_dict(msg.get('error'))
+            error = AblyException.from_dict(proto_msg.get('error'))
             self._notify_state(ChannelState.FAILED, reason=error)
 
     def _request_state(self, state: ChannelState) -> None:
