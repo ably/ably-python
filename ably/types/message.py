@@ -22,19 +22,18 @@ def to_text(value):
 
 
 class Message(EncodeDataMixin):
-
-    def __init__(self,
-                 name=None,  # TM2g
-                 data=None,  # TM2d
-                 client_id=None,  # TM2b
-                 id=None,  # TM2a
-                 connection_id=None,  # TM2c
-                 connection_key=None,  # TM2h
-                 encoding='',  # TM2e
-                 timestamp=None,  # TM2f
-                 extras=None,  # TM2i
-                 ):
-
+    def __init__(
+        self,
+        name=None,  # TM2g
+        data=None,  # TM2d
+        client_id=None,  # TM2b
+        id=None,  # TM2a
+        connection_id=None,  # TM2c
+        connection_key=None,  # TM2h
+        encoding="",  # TM2e
+        timestamp=None,  # TM2f
+        extras=None,  # TM2i
+    ):
         super().__init__(encoding)
 
         self.__name = to_text(name)
@@ -48,10 +47,12 @@ class Message(EncodeDataMixin):
 
     def __eq__(self, other):
         if isinstance(other, Message):
-            return (self.name == other.name
-                    and self.data == other.data
-                    and self.client_id == other.client_id
-                    and self.timestamp == other.timestamp)
+            return (
+                self.name == other.name
+                and self.data == other.data
+                and self.client_id == other.client_id
+                and self.timestamp == other.timestamp
+            )
         return NotImplemented
 
     def __ne__(self, other):
@@ -102,18 +103,19 @@ class Message(EncodeDataMixin):
             return
 
         elif isinstance(self.data, str):
-            self._encoding_array.append('utf-8')
+            self._encoding_array.append("utf-8")
 
         if isinstance(self.data, dict) or isinstance(self.data, list):
-            self._encoding_array.append('json')
-            self._encoding_array.append('utf-8')
+            self._encoding_array.append("json")
+            self._encoding_array.append("utf-8")
 
         typed_data = TypedBuffer.from_obj(self.data)
         if typed_data.buffer is None:
             return True
         encrypted_data = channel_cipher.encrypt(typed_data.buffer)
-        self.__data = CipherData(encrypted_data, typed_data.type,
-                                 cipher_type=channel_cipher.cipher_type)
+        self.__data = CipherData(
+            encrypted_data, typed_data.type, cipher_type=channel_cipher.cipher_type
+        )
 
     @staticmethod
     def decrypt_data(channel_cipher, data):
@@ -135,20 +137,20 @@ class Message(EncodeDataMixin):
         encoding = self._encoding_array[:]
 
         if isinstance(data, (dict, list)):
-            encoding.append('json')
+            encoding.append("json")
             data = json.dumps(data)
             data = str(data)
         elif isinstance(data, str) and not binary:
             pass
         elif not binary and isinstance(data, (bytearray, bytes)):
-            data = base64.b64encode(data).decode('ascii')
-            encoding.append('base64')
+            data = base64.b64encode(data).decode("ascii")
+            encoding.append("base64")
         elif isinstance(data, CipherData):
             encoding.append(data.encoding_str)
             data_type = data.type
             if not binary:
-                data = base64.b64encode(data.buffer).decode('ascii')
-                encoding.append('base64')
+                data = base64.b64encode(data.buffer).decode("ascii")
+                encoding.append("base64")
             else:
                 data = data.buffer
         elif binary and isinstance(data, bytearray):
@@ -158,19 +160,19 @@ class Message(EncodeDataMixin):
             raise AblyException("Invalid data payload", 400, 40011)
 
         request_body = {
-            'name': self.name,
-            'data': data,
-            'timestamp': self.timestamp or None,
-            'type': data_type or None,
-            'clientId': self.client_id or None,
-            'id': self.id or None,
-            'connectionId': self.connection_id or None,
-            'connectionKey': self.connection_key or None,
-            'extras': self.extras,
+            "name": self.name,
+            "data": data,
+            "timestamp": self.timestamp or None,
+            "type": data_type or None,
+            "clientId": self.client_id or None,
+            "id": self.id or None,
+            "connectionId": self.connection_id or None,
+            "connectionKey": self.connection_key or None,
+            "extras": self.extras,
         }
 
         if encoding:
-            request_body['encoding'] = '/'.join(encoding).strip('/')
+            request_body["encoding"] = "/".join(encoding).strip("/")
 
         # None values aren't included
         request_body = {k: v for k, v in request_body.items() if v is not None}
@@ -179,14 +181,14 @@ class Message(EncodeDataMixin):
 
     @staticmethod
     def from_encoded(obj, cipher=None):
-        id = obj.get('id')
-        name = obj.get('name')
-        data = obj.get('data')
-        client_id = obj.get('clientId')
-        connection_id = obj.get('connectionId')
-        timestamp = obj.get('timestamp')
-        encoding = obj.get('encoding', '')
-        extras = obj.get('extras', None)
+        id = obj.get("id")
+        name = obj.get("name")
+        data = obj.get("data")
+        client_id = obj.get("clientId")
+        connection_id = obj.get("connectionId")
+        timestamp = obj.get("timestamp")
+        encoding = obj.get("encoding", "")
+        extras = obj.get("extras", None)
 
         decoded_data = Message.decode(data, encoding, cipher)
 
@@ -197,22 +199,22 @@ class Message(EncodeDataMixin):
             client_id=client_id,
             timestamp=timestamp,
             extras=extras,
-            **decoded_data
+            **decoded_data,
         )
 
     @staticmethod
     def __update_empty_fields(proto_msg: dict, msg: dict, msg_index: int):
-        if msg.get("id") is None or msg.get("id") is '':
-            msg['id'] = f"{proto_msg.get('id')}:{msg_index}"
-        if msg.get("connectionid") is None or msg.get("connectionid") is '':
-            msg['connectionid'] = proto_msg.get('connectionid')
+        if msg.get("id") is None or msg.get("id") is "":
+            msg["id"] = f"{proto_msg.get('id')}:{msg_index}"
+        if msg.get("connectionid") is None or msg.get("connectionid") is "":
+            msg["connectionid"] = proto_msg.get("connectionid")
         if msg.get("timestamp") is None or msg.get("timestamp") is 0:
-            msg['timestamp'] = proto_msg.get('timestamp')
+            msg["timestamp"] = proto_msg.get("timestamp")
 
     @staticmethod
     def update_inner_message_fields(proto_msg: dict):
-        messages: list[dict] = proto_msg.get('messages')
-        presence_messages: list[dict] = proto_msg.get('presence')
+        messages: list[dict] = proto_msg.get("messages")
+        presence_messages: list[dict] = proto_msg.get("presence")
         if messages is not None:
             msg_index = 0
             for msg in messages:
@@ -222,7 +224,9 @@ class Message(EncodeDataMixin):
         if presence_messages is not None:
             msg_index = 0
             for presence_msg in presence_messages:
-                Message.__update_empty_fields(proto_msg, presence_msg.get('message'), msg_index)
+                Message.__update_empty_fields(
+                    proto_msg, presence_msg.get("message"), msg_index
+                )
                 msg_index = msg_index + 1
 
 
@@ -230,5 +234,5 @@ def make_message_response_handler(cipher):
     def encrypted_message_response_handler(response):
         messages = response.to_native()
         return Message.from_encoded_array(messages, cipher=cipher)
-    return encrypted_message_response_handler
 
+    return encrypted_message_response_handler
