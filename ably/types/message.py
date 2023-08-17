@@ -85,6 +85,10 @@ class Message(EncodeDataMixin):
     def connection_id(self):
         return self.__connection_id
 
+    @connection_id.setter
+    def connection_id(self, value):
+        self.__connection_id = value
+
     @property
     def connection_key(self):
         return self.__connection_key
@@ -92,6 +96,10 @@ class Message(EncodeDataMixin):
     @property
     def timestamp(self):
         return self.__timestamp
+
+    @timestamp.setter
+    def timestamp(self, value):
+        self.__timestamp = value
 
     @property
     def extras(self):
@@ -199,6 +207,14 @@ class Message(EncodeDataMixin):
             extras=extras,
             **decoded_data
         )
+
+    def update_empty_fields(self, msg: dict):
+        if self.id == '' or self.id is None:
+            self.id = msg.get('id')
+        if self.connection_id == '' or self.connection_id is None:
+            self.connection_id = msg.get('connectionid')
+        if self.timestamp == 0 or self.timestamp is None:
+            self.timestamp = msg.get('timestamp')
 
 
 def make_message_response_handler(cipher):

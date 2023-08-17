@@ -327,6 +327,7 @@ class RealtimeChannel(EventEmitter, Channel):
         elif action == ProtocolMessageAction.MESSAGE:
             messages = Message.from_encoded_array(msg.get('messages'))
             for message in messages:
+                message.update_empty_fields(msg)
                 self.__message_emitter._emit(message.name, message)
         elif action == ProtocolMessageAction.ERROR:
             error = AblyException.from_dict(msg.get('error'))
