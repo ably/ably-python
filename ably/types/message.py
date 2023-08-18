@@ -200,6 +200,31 @@ class Message(EncodeDataMixin):
             **decoded_data
         )
 
+    @staticmethod
+    def __update_empty_fields(proto_msg: dict, msg: dict, msg_index: int):
+        if msg.get("id") is None or msg.get("id") == '':
+            msg['id'] = f"{proto_msg.get('id')}:{msg_index}"
+        if msg.get("connectionid") is None or msg.get("connectionid") == '':
+            msg['connectionid'] = proto_msg.get('connectionid')
+        if msg.get("timestamp") is None or msg.get("timestamp") == 0:
+            msg['timestamp'] = proto_msg.get('timestamp')
+
+    @staticmethod
+    def update_inner_message_fields(proto_msg: dict):
+        messages: list[dict] = proto_msg.get('messages')
+        presence_messages: list[dict] = proto_msg.get('presence')
+        if messages is not None:
+            msg_index = 0
+            for msg in messages:
+                Message.__update_empty_fields(proto_msg, msg, msg_index)
+                msg_index = msg_index + 1
+
+        if presence_messages is not None:
+            msg_index = 0
+            for presence_msg in presence_messages:
+                Message.__update_empty_fields(proto_msg, presence_msg.get('message'), msg_index)
+                msg_index = msg_index + 1
+
 
 def make_message_response_handler(cipher):
     def encrypted_message_response_handler(response):

@@ -81,6 +81,33 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
         await ably.close()
 
+    # TM2a, TM2c, TM2f
+    async def test_check_inner_fields_updated(self):
+        ably = await TestApp.get_ably_realtime()
+
+        message_future = asyncio.Future()
+
+        def listener(msg: Message):
+            if not message_future.done():
+                message_future.set_result(msg)
+
+        await ably.connection.once_async(ConnectionState.CONNECTED)
+        channel = ably.channels.get('my_channel')
+        await channel.attach()
+        await channel.subscribe('event', listener)
+
+        # publish a message using rest client
+        await channel.publish('event', 'data')
+        message = await message_future
+
+        assert isinstance(message, Message)
+        assert message.name == 'event'
+        assert message.data == 'data'
+        assert message.id is not None
+        assert message.timestamp is not None
+
+        await ably.close()
+
     async def test_subscribe_coroutine(self):
         ably = await TestApp.get_ably_realtime()
         await ably.connection.once_async(ConnectionState.CONNECTED)
