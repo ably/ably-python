@@ -32,10 +32,8 @@ def test_update_inner_message_fields_for_presence_msg_tm2():
         'timestamp': 23134,
         'presence': [
             {
-                'message': {
-                    'event': 'test',
-                    'data': 'hello there'
-                },
+                'event': 'test',
+                'data': 'hello there'
             }
         ]
     }
@@ -43,8 +41,7 @@ def test_update_inner_message_fields_for_presence_msg_tm2():
     presence_messages: list[dict] = proto_msg.get('presence')
     msg_index = 0
     for presence_msg in presence_messages:
-        msg = presence_msg.get('message')
-        assert msg.get('id') == f"abcdefg:{msg_index}"
-        assert msg.get('connectionId') == 'custom_connection_id'
-        assert msg.get('timestamp') == 23134
+        assert presence_msg.get('id') == f"abcdefg:{msg_index}"
+        assert presence_msg.get('connectionId') == 'custom_connection_id'
+        assert presence_msg.get('timestamp') == 23134
         msg_index = msg_index + 1

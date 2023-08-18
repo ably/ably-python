@@ -222,7 +222,7 @@ class Message(EncodeDataMixin):
         if presence_messages is not None:
             msg_index = 0
             for presence_msg in presence_messages:
-                Message.__update_empty_fields(proto_msg, presence_msg.get('message'), msg_index)
+                Message.__update_empty_fields(proto_msg, presence_msg, msg_index)
                 msg_index = msg_index + 1
 
 
