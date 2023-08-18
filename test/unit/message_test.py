@@ -5,12 +5,12 @@ import ably.types.message
 def test_update_inner_message_fields_tm2():
     proto_msg: dict = {
         'id': 'abcdefg',
-        'connectionid': 'custom_connection_id',
+        'connectionId': 'custom_connection_id',
         'timestamp': 23134,
         'messages': [
             {
                 'event': 'test',
-                'data': 'hello there'
+                'data': 'hello there'''
             }
         ]
     }
@@ -19,7 +19,7 @@ def test_update_inner_message_fields_tm2():
     msg_index = 0
     for msg in messages:
         assert msg.get('id') == f"abcdefg:{msg_index}"
-        assert msg.get('connectionid') == 'custom_connection_id'
+        assert msg.get('connectionId') == 'custom_connection_id'
         assert msg.get('timestamp') == 23134
         msg_index = msg_index + 1
 
@@ -28,7 +28,7 @@ def test_update_inner_message_fields_tm2():
 def test_update_inner_message_fields_for_presence_msg_tm2():
     proto_msg: dict = {
         'id': 'abcdefg',
-        'connectionid': 'custom_connection_id',
+        'connectionId': 'custom_connection_id',
         'timestamp': 23134,
         'presence': [
             {
@@ -45,6 +45,6 @@ def test_update_inner_message_fields_for_presence_msg_tm2():
     for presence_msg in presence_messages:
         msg = presence_msg.get('message')
         assert msg.get('id') == f"abcdefg:{msg_index}"
-        assert msg.get('connectionid') == 'custom_connection_id'
+        assert msg.get('connectionId') == 'custom_connection_id'
         assert msg.get('timestamp') == 23134
         msg_index = msg_index + 1
