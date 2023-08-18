@@ -204,8 +204,8 @@ class Message(EncodeDataMixin):
     def __update_empty_fields(proto_msg: dict, msg: dict, msg_index: int):
         if msg.get("id") is None or msg.get("id") == '':
             msg['id'] = f"{proto_msg.get('id')}:{msg_index}"
-        if msg.get("connectionid") is None or msg.get("connectionid") == '':
-            msg['connectionid'] = proto_msg.get('connectionid')
+        if msg.get("connectionId") is None or msg.get("connectionId") == '':
+            msg['connectionId'] = proto_msg.get('connectionId')
         if msg.get("timestamp") is None or msg.get("timestamp") == 0:
             msg['timestamp'] = proto_msg.get('timestamp')
 
