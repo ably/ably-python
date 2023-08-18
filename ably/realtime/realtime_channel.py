@@ -74,7 +74,7 @@ class RealtimeChannel(EventEmitter, Channel):
             If unable to attach channel
         """
 
-        log.info(f"RealtimeChannel.attach() called, channel = {self.name}")
+        log.info(f'RealtimeChannel.attach() called, channel = {self.name}')
 
         # RTL4a - if channel is attached do nothing
         if self.state == ChannelState.ATTACHED:
@@ -86,12 +86,12 @@ class RealtimeChannel(EventEmitter, Channel):
         if self.__realtime.connection.state not in [
             ConnectionState.CONNECTING,
             ConnectionState.CONNECTED,
-            ConnectionState.DISCONNECTED,
+            ConnectionState.DISCONNECTED
         ]:
             raise AblyException(
                 message=f"Unable to attach; channel state = {self.state}",
                 code=90001,
-                status_code=400,
+                status_code=400
             )
 
         if self.state != ChannelState.ATTACHING:
@@ -132,17 +132,14 @@ class RealtimeChannel(EventEmitter, Channel):
             If unable to detach channel
         """
 
-        log.info(f"RealtimeChannel.detach() called, channel = {self.name}")
+        log.info(f'RealtimeChannel.detach() called, channel = {self.name}')
 
         # RTL5g, RTL5b - raise exception if state invalid
-        if self.__realtime.connection.state in [
-            ConnectionState.CLOSING,
-            ConnectionState.FAILED,
-        ]:
+        if self.__realtime.connection.state in [ConnectionState.CLOSING, ConnectionState.FAILED]:
             raise AblyException(
                 message=f"Unable to detach; channel state = {self.state}",
                 code=90001,
-                status_code=400,
+                status_code=400
             )
 
         # RTL5a - if channel already detached do nothing
@@ -167,9 +164,7 @@ class RealtimeChannel(EventEmitter, Channel):
         if new_state == ChannelState.DETACHED:
             return
         elif new_state == ChannelState.ATTACHING:
-            raise AblyException(
-                "Detach request superseded by a subsequent attach request", 90000, 409
-            )
+            raise AblyException("Detach request superseded by a subsequent attach request", 90000, 409)
         else:
             raise state_change.reason
 
@@ -219,19 +214,15 @@ class RealtimeChannel(EventEmitter, Channel):
             if not args[1]:
                 raise ValueError("channel.subscribe called without listener")
             if not is_callable_or_coroutine(args[1]):
-                raise ValueError(
-                    "subscribe listener must be function or coroutine function"
-                )
+                raise ValueError("subscribe listener must be function or coroutine function")
             listener = args[1]
         elif is_callable_or_coroutine(args[0]):
             listener = args[0]
             event = None
         else:
-            raise ValueError("invalid subscribe arguments")
+            raise ValueError('invalid subscribe arguments')
 
-        log.info(
-            f"RealtimeChannel.subscribe called, channel = {self.name}, event = {event}"
-        )
+        log.info(f'RealtimeChannel.subscribe called, channel = {self.name}, event = {event}')
 
         if event is not None:
             # RTL7b
@@ -277,19 +268,15 @@ class RealtimeChannel(EventEmitter, Channel):
             if not args[1]:
                 raise ValueError("channel.unsubscribe called without listener")
             if not is_callable_or_coroutine(args[1]):
-                raise ValueError(
-                    "unsubscribe listener must be a function or coroutine function"
-                )
+                raise ValueError("unsubscribe listener must be a function or coroutine function")
             listener = args[1]
         elif is_callable_or_coroutine(args[0]):
             listener = args[0]
             event = None
         else:
-            raise ValueError("invalid unsubscribe arguments")
+            raise ValueError('invalid unsubscribe arguments')
 
-        log.info(
-            f"RealtimeChannel.unsubscribe called, channel = {self.name}, event = {event}"
-        )
+        log.info(f'RealtimeChannel.unsubscribe called, channel = {self.name}, event = {event}')
 
         if listener is None:
             # RTL8c
@@ -302,16 +289,16 @@ class RealtimeChannel(EventEmitter, Channel):
             self.__message_emitter.off(listener)
 
     def _on_message(self, proto_msg: dict) -> None:
-        action = proto_msg.get("action")
+        action = proto_msg.get('action')
         # RTL4c1
-        channel_serial = proto_msg.get("channelSerial")
+        channel_serial = proto_msg.get('channelSerial')
         if channel_serial:
             self.__channel_serial = channel_serial
         # TM2a, TM2c, TM2f
         Message.update_inner_message_fields(proto_msg)
 
         if action == ProtocolMessageAction.ATTACHED:
-            flags = proto_msg.get("flags")
+            flags = proto_msg.get('flags')
             error = proto_msg.get("error")
             exception = None
             resumed = False
@@ -325,16 +312,12 @@ class RealtimeChannel(EventEmitter, Channel):
             #  RTL12
             if self.state == ChannelState.ATTACHED:
                 if not resumed:
-                    state_change = ChannelStateChange(
-                        self.state, ChannelState.ATTACHED, resumed, exception
-                    )
+                    state_change = ChannelStateChange(self.state, ChannelState.ATTACHED, resumed, exception)
                     self._emit("update", state_change)
             elif self.state == ChannelState.ATTACHING:
                 self._notify_state(ChannelState.ATTACHED, resumed=resumed)
             else:
-                log.warn(
-                    "RealtimeChannel._on_message(): ATTACHED received while not attaching"
-                )
+                log.warn("RealtimeChannel._on_message(): ATTACHED received while not attaching")
         elif action == ProtocolMessageAction.DETACHED:
             if self.state == ChannelState.DETACHING:
                 self._notify_state(ChannelState.DETACHED)
@@ -343,25 +326,21 @@ class RealtimeChannel(EventEmitter, Channel):
             else:
                 self._request_state(ChannelState.ATTACHING)
         elif action == ProtocolMessageAction.MESSAGE:
-            messages = Message.from_encoded_array(proto_msg.get("messages"))
+            messages = Message.from_encoded_array(proto_msg.get('messages'))
             for message in messages:
                 self.__message_emitter._emit(message.name, message)
         elif action == ProtocolMessageAction.ERROR:
-            error = AblyException.from_dict(proto_msg.get("error"))
+            error = AblyException.from_dict(proto_msg.get('error'))
             self._notify_state(ChannelState.FAILED, reason=error)
 
     def _request_state(self, state: ChannelState) -> None:
-        log.debug(f"RealtimeChannel._request_state(): state = {state}")
+        log.debug(f'RealtimeChannel._request_state(): state = {state}')
         self._notify_state(state)
         self._check_pending_state()
 
-    def _notify_state(
-        self,
-        state: ChannelState,
-        reason: Optional[AblyException] = None,
-        resumed: bool = False,
-    ) -> None:
-        log.debug(f"RealtimeChannel._notify_state(): state = {state}")
+    def _notify_state(self, state: ChannelState, reason: Optional[AblyException] = None,
+                      resumed: bool = False) -> None:
+        log.debug(f'RealtimeChannel._notify_state(): state = {state}')
 
         self.__clear_state_timer()
 
@@ -374,10 +353,7 @@ class RealtimeChannel(EventEmitter, Channel):
         if state == ChannelState.INITIALIZED:
             self.__error_reason = None
 
-        if (
-            state == ChannelState.SUSPENDED
-            and self.ably.connection.state == ConnectionState.CONNECTED
-        ):
+        if state == ChannelState.SUSPENDED and self.ably.connection.state == ConnectionState.CONNECTED:
             self.__start_retry_timer()
         else:
             self.__cancel_retry_timer()
@@ -389,11 +365,7 @@ class RealtimeChannel(EventEmitter, Channel):
             self.__attach_resume = False
 
         # RTP5a1
-        if state in (
-            ChannelState.DETACHED,
-            ChannelState.SUSPENDED,
-            ChannelState.FAILED,
-        ):
+        if state in (ChannelState.DETACHED, ChannelState.SUSPENDED, ChannelState.FAILED):
             self.__channel_serial = None
 
         state_change = ChannelStateChange(self.__state, state, resumed, reason=reason)
@@ -403,17 +375,13 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__internal_state_emitter._emit(state, state_change)
 
     def _send_message(self, msg: dict) -> None:
-        asyncio.create_task(
-            self.__realtime.connection.connection_manager.send_protocol_message(msg)
-        )
+        asyncio.create_task(self.__realtime.connection.connection_manager.send_protocol_message(msg))
 
     def _check_pending_state(self):
         connection_state = self.__realtime.connection.connection_manager.state
 
         if connection_state is not ConnectionState.CONNECTED:
-            log.debug(
-                f"RealtimeChannel._check_pending_state(): connection state = {connection_state}"
-            )
+            log.debug(f"RealtimeChannel._check_pending_state(): connection state = {connection_state}")
             return
 
         if self.state == ChannelState.ATTACHING:
@@ -425,15 +393,12 @@ class RealtimeChannel(EventEmitter, Channel):
 
     def __start_state_timer(self) -> None:
         if not self.__state_timer:
-
             def on_timeout() -> None:
-                log.debug("RealtimeChannel.start_state_timer(): timer expired")
+                log.debug('RealtimeChannel.start_state_timer(): timer expired')
                 self.__state_timer = None
                 self.__timeout_pending_state()
 
-            self.__state_timer = Timer(
-                self.__realtime.options.realtime_request_timeout, on_timeout
-            )
+            self.__state_timer = Timer(self.__realtime.options.realtime_request_timeout, on_timeout)
 
     def __clear_state_timer(self) -> None:
         if self.__state_timer:
@@ -443,14 +408,9 @@ class RealtimeChannel(EventEmitter, Channel):
     def __timeout_pending_state(self) -> None:
         if self.state == ChannelState.ATTACHING:
             self._notify_state(
-                ChannelState.SUSPENDED,
-                reason=AblyException("Channel attach timed out", 408, 90007),
-            )
+                ChannelState.SUSPENDED, reason=AblyException("Channel attach timed out", 408, 90007))
         elif self.state == ChannelState.DETACHING:
-            self._notify_state(
-                ChannelState.ATTACHED,
-                reason=AblyException("Channel detach timed out", 408, 90007),
-            )
+            self._notify_state(ChannelState.ATTACHED, reason=AblyException("Channel detach timed out", 408, 90007))
         else:
             self._check_pending_state()
 
@@ -458,9 +418,7 @@ class RealtimeChannel(EventEmitter, Channel):
         if self.__retry_timer:
             return
 
-        self.__retry_timer = Timer(
-            self.ably.options.channel_retry_timeout, self.__on_retry_timer_expire
-        )
+        self.__retry_timer = Timer(self.ably.options.channel_retry_timeout, self.__on_retry_timer_expire)
 
     def __cancel_retry_timer(self) -> None:
         if self.__retry_timer:
@@ -468,10 +426,7 @@ class RealtimeChannel(EventEmitter, Channel):
             self.__retry_timer = None
 
     def __on_retry_timer_expire(self) -> None:
-        if (
-            self.state == ChannelState.SUSPENDED
-            and self.ably.connection.state == ConnectionState.CONNECTED
-        ):
+        if self.state == ChannelState.SUSPENDED and self.ably.connection.state == ConnectionState.CONNECTED:
             self.__retry_timer = None
             log.info("RealtimeChannel retry timer expired, attempting a new attach")
             self._request_state(ChannelState.ATTACHING)
@@ -544,27 +499,25 @@ class Channels(RestChannels):
         del self.__all[name]
 
     def _on_channel_message(self, msg: dict) -> None:
-        channel_name = msg.get("channel")
+        channel_name = msg.get('channel')
         if not channel_name:
             log.error(
-                "Channels.on_channel_message()",
-                f'received event without channel, action = {msg.get("action")}',
+                'Channels.on_channel_message()',
+                f'received event without channel, action = {msg.get("action")}'
             )
             return
 
         channel = self.__all[channel_name]
         if not channel:
             log.warning(
-                "Channels.on_channel_message()",
-                f"receieved event for non-existent channel: {channel_name}",
+                'Channels.on_channel_message()',
+                f'receieved event for non-existent channel: {channel_name}'
             )
             return
 
         channel._on_message(msg)
 
-    def _propagate_connection_interruption(
-        self, state: ConnectionState, reason: Optional[AblyException]
-    ) -> None:
+    def _propagate_connection_interruption(self, state: ConnectionState, reason: Optional[AblyException]) -> None:
         from_channel_states = (
             ChannelState.ATTACHING,
             ChannelState.ATTACHED,
@@ -587,10 +540,7 @@ class Channels(RestChannels):
     def _on_connected(self) -> None:
         for channel_name in self.__all:
             channel = self.__all[channel_name]
-            if (
-                channel.state == ChannelState.ATTACHING
-                or channel.state == ChannelState.DETACHING
-            ):
+            if channel.state == ChannelState.ATTACHING or channel.state == ChannelState.DETACHING:
                 channel._check_pending_state()
             elif channel.state == ChannelState.SUSPENDED:
                 asyncio.create_task(channel.attach())
