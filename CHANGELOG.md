@@ -1,5 +1,17 @@
 # Change Log
 
+## [v2.0.1](https://github.com/ably/ably-python/tree/v2.0.1)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.0...v2.0.1)
+
+**Closed issues:**
+
+- Implement / Add tests for TM1,TM2,TM3 Message spec [\#516](https://github.com/ably/ably-python/issues/516)
+
+**Merged pull requests:**
+
+- \[SDK-3807\] Implement and test empty inner message fields [\#517](https://github.com/ably/ably-python/pull/517) ([sacOO7](https://github.com/sacOO7))
+
 ## [v2.0.0](https://github.com/ably/ably-python/tree/v2.0.0)
 
 **New ably-python realtime client**: This new release features our first ever python realtime client! Currently the realtime client only supports realtime message subscription. Check out the README for usage examples. There have been some minor breaking changes from the 1.2 version, please consult the [migration guide](https://github.com/ably/ably-python/blob/main/UPDATING.md) for instructions on how to upgrade to 2.0.
