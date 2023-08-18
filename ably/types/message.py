@@ -202,11 +202,11 @@ class Message(EncodeDataMixin):
 
     @staticmethod
     def __update_empty_fields(proto_msg: dict, msg: dict, msg_index: int):
-        if msg.get("id") is None or msg.get("id") is '':
+        if msg.get("id") is None or msg.get("id") == '':
             msg['id'] = f"{proto_msg.get('id')}:{msg_index}"
-        if msg.get("connectionid") is None or msg.get("connectionid") is '':
+        if msg.get("connectionid") is None or msg.get("connectionid") == '':
             msg['connectionid'] = proto_msg.get('connectionid')
-        if msg.get("timestamp") is None or msg.get("timestamp") is 0:
+        if msg.get("timestamp") is None or msg.get("timestamp") == 0:
             msg['timestamp'] = proto_msg.get('timestamp')
 
     @staticmethod
@@ -231,4 +231,3 @@ def make_message_response_handler(cipher):
         messages = response.to_native()
         return Message.from_encoded_array(messages, cipher=cipher)
     return encrypted_message_response_handler
-
