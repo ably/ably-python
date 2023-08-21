@@ -290,10 +290,12 @@ class RealtimeChannel(EventEmitter, Channel):
 
     def _on_message(self, proto_msg: dict) -> None:
         action = proto_msg.get('action')
+
         # RTL4c1
         channel_serial = proto_msg.get('channelSerial')
         if channel_serial:
             self.__channel_serial = channel_serial
+
         # TM2a, TM2c, TM2f
         Message.update_inner_message_fields(proto_msg)
 

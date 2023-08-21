@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+from typing import Optional, List
 
 from ably.types.typedbuffer import TypedBuffer
 from ably.types.mixins import EncodeDataMixin
@@ -201,29 +202,22 @@ class Message(EncodeDataMixin):
         )
 
     @staticmethod
-    def __update_empty_fields(proto_msg: dict, msg: dict, msg_index: int):
-        if msg.get("id") is None or msg.get("id") == '':
-            msg['id'] = f"{proto_msg.get('id')}:{msg_index}"
-        if msg.get("connectionId") is None or msg.get("connectionId") == '':
-            msg['connectionId'] = proto_msg.get('connectionId')
-        if msg.get("timestamp") is None or msg.get("timestamp") == 0:
-            msg['timestamp'] = proto_msg.get('timestamp')
+    def __update_empty_fields(proto_msg: dict, msg_list: List[dict]):
+        for msg_index, msg in enumerate(msg_list):
+            msg.setdefault('id', f"{proto_msg['id']}:{msg_index}")
+            msg.setdefault('connectionId', proto_msg.get('connectionId'))
+            msg.setdefault('timestamp', proto_msg.get('timestamp'))
 
     @staticmethod
     def update_inner_message_fields(proto_msg: dict):
-        messages: list[dict] = proto_msg.get('messages')
-        presence_messages: list[dict] = proto_msg.get('presence')
+        messages: Optional[List[dict]] = proto_msg.get('messages')
+        presence_messages: Optional[List[dict]] = proto_msg.get('presence')
+
         if messages is not None:
-            msg_index = 0
-            for msg in messages:
-                Message.__update_empty_fields(proto_msg, msg, msg_index)
-                msg_index = msg_index + 1
+            Message.__update_empty_fields(proto_msg, messages)
 
         if presence_messages is not None:
-            msg_index = 0
-            for presence_msg in presence_messages:
-                Message.__update_empty_fields(proto_msg, presence_msg, msg_index)
-                msg_index = msg_index + 1
+            Message.__update_empty_fields(proto_msg, presence_messages)
 
 
 def make_message_response_handler(cipher):

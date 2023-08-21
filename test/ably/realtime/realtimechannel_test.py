@@ -87,6 +87,25 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
         message_future = asyncio.Future()
 
+        def on_transport_pending(transport):
+            original_on_protocol_message = transport.on_protocol_message
+
+            # ensure that any inbound messages have no id, connectionId, or timestamp.
+            # these should be automatically populated by the client from the protocol message
+            # if not already present.
+            async def on_protocol_message(msg):
+                if msg["action"] == ProtocolMessageAction.MESSAGE:
+                    for msg in msg.get('messages'):
+                        del msg["id"]
+                        del msg["connectionId"]
+                        del msg["timestamp"]
+
+                await original_on_protocol_message(msg)
+
+            transport.on_protocol_message = on_protocol_message
+
+        ably.connection.connection_manager.on('transport.pending', on_transport_pending)
+
         def listener(msg: Message):
             if not message_future.done():
                 message_future.set_result(msg)
@@ -105,6 +124,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         assert message.data == 'data'
         assert message.id is not None
         assert message.timestamp is not None
+        assert message.connection_id is not None
 
         await ably.close()
 
