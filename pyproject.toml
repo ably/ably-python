@@ -27,7 +27,7 @@ python = "^3.7"
 # Mandatory dependencies
 methoddispatch = "^3.0.2"
 msgpack = "^1.0.0"
-httpx = "^0.23.0"
+httpx = "^0.24.1"
 h2 = "^4.0.0"
 
 # Optional dependencies
