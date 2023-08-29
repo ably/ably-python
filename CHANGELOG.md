@@ -1,5 +1,17 @@
 # Change Log
 
+## [v2.0.2](https://github.com/ably/ably-python/tree/v2.0.2)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.1...v2.0.2)
+
+**Closed issues:**
+
+- Update httpx dependency to version 0.24.1 or higher [\#523](https://github.com/ably/ably-python/issues/523)
+
+**Merged pull requests:**
+
+- Updated poetry httpx dependency and lock file [\#524](https://github.com/ably/ably-python/pull/524) ([sacOO7](https://github.com/sacOO7))
+
 ## [v2.0.1](https://github.com/ably/ably-python/tree/v2.0.1)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.0...v2.0.1)
