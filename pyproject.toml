@@ -27,7 +27,7 @@ python = "^3.7"
 # Mandatory dependencies
 methoddispatch = "^3.0.2"
 msgpack = "^1.0.0"
-httpx[http2] = "^0.24.1"
+httpx = { version = "^0.24.1", extras = ["http2"] }
 
 # Optional dependencies
 pycrypto = { version = "^2.6.1", optional = true }
