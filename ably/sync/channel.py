@@ -9,9 +9,6 @@ log = logging.getLogger(__name__)
 
 
 class ChannelSync(SingleDispatch, Channel):
-    def __init__(self, ably, name, options):
-        super().__init__(ably, name, options)
-
     @catch_all
     async def history(self, direction=None, limit: int = None, start=None, end=None):
         """Returns the history for this channel"""

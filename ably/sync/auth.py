@@ -15,8 +15,6 @@ log = logging.getLogger(__name__)
 
 
 class AuthSync(Auth):
-    def __init__(self, ably: Union[AblyRest, AblyRealtime], options: Options):
-        super().__init__(ably, options)
 
     async def get_auth_transport_param(self):
         return super().get_auth_transport_param()
