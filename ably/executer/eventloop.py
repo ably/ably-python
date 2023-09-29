@@ -30,7 +30,8 @@ class AblyEventLoop:
             self.thread.start()
 
     def close(self) -> events:
-        # https://stackoverflow.com/questions/46093238/python-asyncio-event-loop-does-not-seem-to-stop-when-stop-method-is-called
-        self.loop.call_soon_threadsafe(self.loop.stop)
-        self.thread.join()
-        self.loop.close()
+        if self.loop is not None and not self.loop.is_closed:
+            # https://stackoverflow.com/questions/46093238/python-asyncio-event-loop-does-not-seem-to-stop-when-stop-method-is-called
+            self.loop.call_soon_threadsafe(self.loop.stop)
+            self.thread.join()
+            self.loop.close()
