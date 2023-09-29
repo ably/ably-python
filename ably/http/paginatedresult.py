@@ -2,6 +2,7 @@ import calendar
 import logging
 from urllib.parse import urlencode
 
+from ably.decorator.sync import optional_sync
 from ably.http.http import Request
 from ably.util import case
 
@@ -65,9 +66,11 @@ class PaginatedResult:
     def is_last(self):
         return not self.has_next()
 
+    @optional_sync
     async def first(self):
         return await self.__get_rel(self.__rel_first) if self.__rel_first else None
 
+    @optional_sync
     async def next(self):
         return await self.__get_rel(self.__rel_next) if self.__rel_next else None
 
@@ -77,6 +80,7 @@ class PaginatedResult:
         return await self.paginated_query_with_request(self.__http, rel_req, self.__response_processor)
 
     @classmethod
+    @optional_sync
     async def paginated_query(cls, http, method='GET', url='/', version=None, body=None,
                               headers=None, response_processor=None,
                               raise_on_error=True):
@@ -86,6 +90,7 @@ class PaginatedResult:
         return await cls.paginated_query_with_request(http, req, response_processor)
 
     @classmethod
+    @optional_sync
     async def paginated_query_with_request(cls, http, request, response_processor,
                                            raise_on_error=True):
         response = await http.make_request(

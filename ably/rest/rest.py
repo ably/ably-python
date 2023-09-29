@@ -2,6 +2,8 @@ import logging
 from typing import Optional
 from urllib.parse import urlencode
 
+from ably.decorator.sync import optional_sync
+from ably.executer.eventloop import AblyEventLoop
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
 from ably.http.paginatedresult import format_params
@@ -78,6 +80,9 @@ class AblyRest:
     async def __aenter__(self):
         return self
 
+    def __enter__(self):
+        return self
+
     @catch_all
     async def stats(self, direction: Optional[str] = None, start=None, end=None, params: Optional[dict] = None,
                     limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
@@ -88,6 +93,7 @@ class AblyRest:
             self.http, url=url, response_processor=stats_response_processor)
 
     @catch_all
+    @optional_sync
     async def time(self, timeout: Optional[float] = None) -> float:
         """Returns the current server time in ms since the unix epoch"""
         r = await self.http.get('/time', skip_auth=True, timeout=timeout)
@@ -119,6 +125,7 @@ class AblyRest:
     def push(self):
         return self.__push
 
+    @optional_sync
     async def request(self, method: str, path: str, version: str, params:
                       Optional[dict] = None, body=None, headers=None):
         if version is None:
@@ -144,5 +151,13 @@ class AblyRest:
     async def __aexit__(self, *excinfo):
         await self.close()
 
+    def __exit__(self, *excinfo):
+        self.close_sync()
+
+    @optional_sync
     async def close(self):
         await self.http.close()
+
+    def close_sync(self):
+        self.close()
+        AblyEventLoop.get_global().close()
