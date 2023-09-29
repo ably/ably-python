@@ -2,8 +2,7 @@ import logging
 from typing import Optional
 from urllib.parse import urlencode
 
-from ably.decorator.sync import optional_sync
-from ably.executer.eventloop import AppEventLoop
+from ably.decorator.sync import optional_sync, close_app_eventloop
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
 from ably.http.paginatedresult import format_params
@@ -152,12 +151,8 @@ class AblyRest:
         await self.close()
 
     def __exit__(self, *excinfo):
-        self.close_sync()
+        self.close()
 
+    @close_app_eventloop
     async def close(self):
         await self.http.close()
-        AppEventLoop.current().close()
-
-    def close_sync(self):
-        self.http.close()
-        AppEventLoop.current().close()

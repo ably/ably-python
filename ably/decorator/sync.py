@@ -37,3 +37,28 @@ def optional_sync(fn):
         return res
 
     return wrapper
+
+
+def close_app_eventloop(fn):
+    import asyncio
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+
+        caller_eventloop = None
+        try:
+            caller_eventloop: events = asyncio.get_running_loop()
+        except Exception:
+            pass
+
+        app_eventloop: events = AppEventLoop.current()
+        if caller_eventloop is not None:
+            app_eventloop.close()
+            return caller_eventloop.create_task(fn(*args, **kwargs))
+        else:
+            future = asyncio.run_coroutine_threadsafe(fn(*args, **kwargs), app_eventloop.loop)
+            result = future.result()
+            app_eventloop.close()
+            return result
+
+    return wrapper
