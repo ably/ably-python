@@ -1,7 +1,7 @@
 import functools
 from asyncio import events
 
-from ably.executer.eventloop import AblyEventLoop
+from ably.executer.eventloop import AppEventLoop
 
 
 def optional_sync(fn):
@@ -19,7 +19,7 @@ def optional_sync(fn):
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        ably_eventloop: events = AblyEventLoop.current().loop
+        ably_eventloop: events = AppEventLoop.current().loop
 
         res = fn(*args, **kwargs)
         if asyncio.iscoroutine(res):

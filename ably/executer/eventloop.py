@@ -3,22 +3,22 @@ import threading
 from asyncio import events
 
 
-class AblyEventLoop:
+class AppEventLoop:
     loop: events = None
     thread: threading = None
-    app: 'AblyEventLoop' = None
+    active: 'AppEventLoop' = None
 
     def __init__(self):
         self.loop = None
         self.thread = None
 
     @staticmethod
-    def current() -> 'AblyEventLoop':
-        if (AblyEventLoop.app is None or
-                AblyEventLoop.app.loop.is_closed()):
-            AblyEventLoop.app = AblyEventLoop()
-            AblyEventLoop.app.__create_if_not_exist()
-        return AblyEventLoop.app
+    def current() -> 'AppEventLoop':
+        if (AppEventLoop.active is None or
+                AppEventLoop.active.loop.is_closed()):
+            AppEventLoop.active = AppEventLoop()
+            AppEventLoop.active.__create_if_not_exist()
+        return AppEventLoop.active
 
     def __create_if_not_exist(self):
         if self.loop is None or self.loop.is_closed():
@@ -31,7 +31,6 @@ class AblyEventLoop:
 
     def close(self) -> events:
         if self.loop is not None and not self.loop.is_closed:
-            # https://stackoverflow.com/questions/46093238/python-asyncio-event-loop-does-not-seem-to-stop-when-stop-method-is-called
             self.loop.call_soon_threadsafe(self.loop.stop)
             self.thread.join()
             self.loop.close()
