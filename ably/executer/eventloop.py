@@ -1,10 +1,11 @@
 import asyncio
 import threading
 from asyncio import events
-from threading import Thread
 
 
 class AblyEventLoop:
+    loop: events = None
+    thread: threading = None
     __global_event_loop: 'AblyEventLoop' = None
 
     def __init__(self):

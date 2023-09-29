@@ -17,7 +17,7 @@ def optional_sync(fn):
         caller_eventloop = None
         try:
             caller_eventloop: events = asyncio.get_running_loop()
-        except:
+        except Exception:
             pass
         ably_eventloop: events = AblyEventLoop.get_global().loop
 
