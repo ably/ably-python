@@ -11,6 +11,7 @@ import httpx
 
 from ably.decorator.sync import optional_sync
 from ably.types.options import Options
+
 if TYPE_CHECKING:
     from ably.rest.rest import AblyRest
     from ably.realtime.realtime import AblyRealtime
@@ -26,7 +27,6 @@ log = logging.getLogger(__name__)
 
 
 class Auth:
-
     class Method:
         BASIC = "BASIC"
         TOKEN = "TOKEN"
@@ -106,7 +106,8 @@ class Auth:
 
         if self.ably._is_realtime:
             realtime_loop = self.ably.connection.connection_manager.options.loop
-            future = asyncio.run_coroutine_threadsafe(self.ably.connection.connection_manager.on_auth_updated(token_details), realtime_loop)
+            future = asyncio.run_coroutine_threadsafe(
+                self.ably.connection.connection_manager.on_auth_updated(token_details), realtime_loop)
             await asyncio.wrap_future(future)
 
         return token_details
@@ -430,6 +431,6 @@ class Auth:
             token_request = response.text
         else:
             msg = 'auth_url responded with unacceptable content-type ' + content_type + \
-                ', should be either text/plain, application/jwt or application/json',
+                  ', should be either text/plain, application/jwt or application/json',
             raise AblyAuthException(msg, 401, 40170)
         return token_request
