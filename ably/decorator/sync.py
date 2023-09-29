@@ -19,24 +19,25 @@ def get_custom_event_loop():
     return _loop
 
 
-def enable_optional_sync(fn):
+def optional_sync(fn):
     '''
-    turn an async function to sync function
+    Enables async function to be used as both sync and async function.
+    Also makes async/sync workflow thread safe.
     '''
     import asyncio
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
-        existing_loop = None
+        caller_eventloop = None
         try:
-            existing_loop = asyncio.get_running_loop()
+            caller_eventloop = asyncio.get_running_loop()
         except:
             pass
-        loop = get_custom_event_loop()
+        ably_eventloop = get_custom_event_loop()
         res = fn(*args, **kwargs)
         if asyncio.iscoroutine(res):
-            future = asyncio.run_coroutine_threadsafe(res, loop)
-            if existing_loop is not None and existing_loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(res, ably_eventloop)
+            if caller_eventloop is not None and caller_eventloop.is_running():
                 return asyncio.wrap_future(future)
             return future.result()
         return res
