@@ -156,8 +156,8 @@ class AblyRest:
 
     async def close(self):
         await self.http.close()
-        AblyEventLoop.get_global().close()
+        AblyEventLoop.current().close()
 
     def close_sync(self):
         self.http.close()
-        AblyEventLoop.get_global().close()
+        AblyEventLoop.current().close()

@@ -19,7 +19,7 @@ def optional_sync(fn):
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        ably_eventloop: events = AblyEventLoop.get_global().loop
+        ably_eventloop: events = AblyEventLoop.current().loop
 
         res = fn(*args, **kwargs)
         if asyncio.iscoroutine(res):
