@@ -23,6 +23,7 @@ def optional_sync(fn):
     '''
     Enables async function to be used as both sync and async function.
     Also makes async/sync workflow thread safe.
+    This decorator should only be used on async methods/coroutines.
     '''
     import asyncio
 
@@ -34,12 +35,9 @@ def optional_sync(fn):
         except:
             pass
         ably_eventloop = get_custom_event_loop()
-        res = fn(*args, **kwargs)
-        if asyncio.iscoroutine(res):
-            future = asyncio.run_coroutine_threadsafe(res, ably_eventloop)
-            if caller_eventloop is not None and caller_eventloop.is_running():
-                return asyncio.wrap_future(future)
-            return future.result()
-        return res
+        future = asyncio.run_coroutine_threadsafe(fn(*args, **kwargs), ably_eventloop)
+        if caller_eventloop is not None and caller_eventloop.is_running():
+            return asyncio.wrap_future(future)
+        return future.result()
 
     return wrapper
