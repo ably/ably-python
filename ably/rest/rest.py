@@ -154,10 +154,10 @@ class AblyRest:
     def __exit__(self, *excinfo):
         self.close_sync()
 
-    @optional_sync
     async def close(self):
         await self.http.close()
+        AblyEventLoop.get_global().close()
 
     def close_sync(self):
-        self.close()
+        self.http.close()
         AblyEventLoop.get_global().close()

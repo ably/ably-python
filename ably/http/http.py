@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 import httpx
 import msgpack
 
+from ably.decorator.sync import optional_sync
 from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
@@ -131,6 +132,7 @@ class Http:
         self.__host_expires = None
         self.__client = httpx.AsyncClient(http2=True)
 
+    @optional_sync
     async def close(self):
         await self.__client.aclose()
 
