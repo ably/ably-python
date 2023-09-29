@@ -1,23 +1,7 @@
-import asyncio
 import functools
-import threading
 from asyncio import events
 
-_loop: events = None
-_thread: threading = None
-
-
-def get_custom_event_loop() -> events:
-    global _loop, _thread
-    if _thread is None:
-        if _loop is None:
-            _loop = asyncio.new_event_loop()
-        if not _loop.is_running():
-            _thread = threading.Thread(
-                target=_loop.run_forever,
-                daemon=True)
-            _thread.start()
-    return _loop
+from ably.executer.eventloop import AblyEventLoop
 
 
 def optional_sync(fn):
@@ -35,7 +19,7 @@ def optional_sync(fn):
             caller_eventloop: events = asyncio.get_running_loop()
         except:
             pass
-        ably_eventloop: events = get_custom_event_loop()
+        ably_eventloop: events = AblyEventLoop.get_global().loop
 
         # Handle calls from ably_eventloop on the same loop, return awaitable
         if caller_eventloop is not None and caller_eventloop == ably_eventloop:
