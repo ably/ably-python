@@ -26,11 +26,12 @@ def optional_sync(fn):
             return ably_eventloop.create_task(fn(*args, **kwargs))
 
         # Post external calls on ably_eventloop, return awaitable on calling eventloop
-        future = asyncio.run_coroutine_threadsafe(fn(*args, **kwargs), ably_eventloop)
-        if caller_eventloop is not None and caller_eventloop.is_running():
-            return asyncio.wrap_future(future)
-
-        # If called from regular function instead of coroutine, block till result is available
-        return future.result()
+        res = fn(*args, **kwargs)
+        if asyncio.iscoroutine(res):
+            future = asyncio.run_coroutine_threadsafe(res, ably_eventloop)
+            if caller_eventloop is not None and caller_eventloop.is_running():
+                return asyncio.wrap_future(future)
+            return future.result()
+        return res
 
     return wrapper
