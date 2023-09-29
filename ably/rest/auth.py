@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import asyncio
 import base64
 from datetime import timedelta
 import logging
@@ -103,7 +105,9 @@ class Auth:
         token_details = await self._ensure_valid_auth_credentials(token_params, auth_options, force)
 
         if self.ably._is_realtime:
-            await self.ably.connection.connection_manager.on_auth_updated(token_details)
+            realtime_loop = self.ably.connection.connection_manager.options.loop
+            future = asyncio.run_coroutine_threadsafe(self.ably.connection.connection_manager.on_auth_updated(token_details), realtime_loop)
+            await asyncio.wrap_future(future)
 
         return token_details
 

@@ -158,6 +158,7 @@ class Http:
         hosts.insert(0, host)
         return hosts
 
+    @optional_sync
     @reauth_if_expired
     async def make_request(self, method, path, version=None, headers=None, body=None,
                            skip_auth=False, timeout=None, raise_on_error=True):
