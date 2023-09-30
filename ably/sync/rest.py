@@ -2,6 +2,9 @@ import logging
 from typing import Optional
 
 from ably.executer.decorator import force_sync, close_app_eventloop
+from ably.sync.auth import AuthSync
+from ably.sync.channel import ChannelsSync
+from ably.types.tokendetails import TokenDetails
 from ably.util.exceptions import catch_all
 from ably.rest.rest import AblyRest
 
@@ -10,6 +13,12 @@ log = logging.getLogger(__name__)
 
 class AblyRestSync(AblyRest):
     """Ably Rest Client"""
+
+    def __init__(self, key: Optional[str] = None, token: Optional[str] = None,
+                 token_details: Optional[TokenDetails] = None, **kwargs):
+        super().__init__(key, token, token_details, kwargs)
+        self.__channels = ChannelsSync(self)
+        self.__auth = AuthSync(self, self.options)
 
     def __enter__(self):
         return self

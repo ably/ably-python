@@ -2,9 +2,11 @@ import logging
 from methoddispatch import SingleDispatch, singledispatch
 
 from ably.executer.decorator import force_sync
+from ably.rest.channel import Channel
+from collections import OrderedDict
+from typing import Iterator
 from ably.types.message import Message
 from ably.util.exceptions import catch_all
-from ably.rest.channel import Channel
 
 log = logging.getLogger(__name__)
 
@@ -56,3 +58,58 @@ class ChannelSync(SingleDispatch, Channel):
         """Retrieves current channel active status with no. of publishers, subscribers, presence_members etc"""
 
         return await super().status()
+
+
+class ChannelsSync:
+    def __init__(self, rest):
+        self.__ably = rest
+        self.__all: dict = OrderedDict()
+
+    def get(self, name, **kwargs):
+        if isinstance(name, bytes):
+            name = name.decode('ascii')
+
+        if name not in self.__all:
+            result = self.__all[name] = ChannelSync(self.__ably, name, kwargs)
+        else:
+            result = self.__all[name]
+            if len(kwargs) != 0:
+                result.options = kwargs
+
+        return result
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __getattr__(self, name):
+        return self.get(name)
+
+    def __contains__(self, item):
+        if isinstance(item, ChannelSync):
+            name = item.name
+        elif isinstance(item, bytes):
+            name = item.decode('ascii')
+        else:
+            name = item
+
+        return name in self.__all
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.__all.values())
+
+    # RSN4
+    def release(self, name: str):
+        """Releases a Channel object, deleting it, and enabling it to be garbage collected.
+        If the channel does not exist, nothing happens.
+
+        It also removes any listeners associated with the channel.
+
+        Parameters
+        ----------
+        name: str
+            Channel name
+        """
+
+        if name not in self.__all:
+            return
+        del self.__all[name]
