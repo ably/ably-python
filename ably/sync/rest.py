@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from ably.decorator.sync import force_sync, close_app_eventloop
+from ably.executer.decorator import force_sync, close_app_eventloop
 from ably.util.exceptions import catch_all
 from ably.rest.rest import AblyRest
 

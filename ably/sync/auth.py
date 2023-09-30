@@ -5,7 +5,7 @@ from typing import Optional
 from ably import Auth
 __all__ = ["AuthSync"]
 
-from ably.decorator.sync import force_sync
+from ably.executer.decorator import force_sync
 
 log = logging.getLogger(__name__)
 

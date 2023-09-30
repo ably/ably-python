@@ -1,7 +1,7 @@
 import logging
 from methoddispatch import SingleDispatch, singledispatch
 
-from ably.decorator.sync import force_sync
+from ably.executer.decorator import force_sync
 from ably.types.message import Message
 from ably.util.exceptions import catch_all
 from ably.rest.channel import Channel
