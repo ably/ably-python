@@ -1,39 +1,35 @@
 import asyncio
 import threading
 from asyncio import events
-from threading import Thread
 
 
-class AblyEventLoop:
-    eventloop: events
-    eventloopThread: Thread
+class AppEventLoop:
+    loop: events
+    thread: threading
+    active: 'AppEventLoop' = None
+
+    def __init__(self):
+        self.loop = None
+        self.thread = None
 
     @staticmethod
-    def new_instance():
-         AblyEventLoop()
+    def current() -> 'AppEventLoop':
+        if (AppEventLoop.active is None or
+                not AppEventLoop.active.loop.is_running()):
+            AppEventLoop.active = AppEventLoop()
+            AppEventLoop.active.__create_if_not_exist()
+        return AppEventLoop.active
 
-    # Create a new loop and start it on a new thread
-    # Start a new thread first and then run loop forever inside it
-    # This will make sure, loop is not running on the external thread.
-    # Inside the newly created thread, we can use asyncio.set_event_loop(loop)
-    def create_if_not_exist(self):
-        if self.eventloop is None:
-            self.eventloop = asyncio.new_event_loop()
-        if not self.eventloop.is_running():
-            self.eventloopThread = threading.Thread(
-                target=self.eventloop.run_forever,
+    def __create_if_not_exist(self):
+        if self.loop is None or self.loop.is_closed():
+            self.loop = asyncio.new_event_loop()
+        if not self.loop.is_running():
+            self.thread = threading.Thread(
+                target=self.loop.run_forever,
                 daemon=True)
-            self.eventloopThread.start()
-    def get(self) -> events:
-        return self.eventloop
+            self.thread.start()
 
-    def stop(self) -> events:
-        self.eventloop.stop()
     def close(self) -> events:
-        self.stop()
-        self.eventloop.close()
-        self.eventloop = None
-        self.eventloopThread = None
-
-    def __int__(self, loop):
-        print("Hello")
+        if self.loop is not None and self.loop.is_running():
+            self.loop.call_soon_threadsafe(self.loop.stop)
+            self.thread.join()
