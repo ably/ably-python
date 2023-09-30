@@ -4,6 +4,7 @@ from typing import Optional
 from ably.executer.decorator import force_sync, close_app_eventloop
 from ably.sync.auth import AuthSync
 from ably.sync.channel import ChannelsSync
+from ably.sync.http import HttpSync
 from ably.types.tokendetails import TokenDetails
 from ably.util.exceptions import catch_all
 from ably.rest.rest import AblyRest
@@ -17,11 +18,26 @@ class AblyRestSync(AblyRest):
     def __init__(self, key: Optional[str] = None, token: Optional[str] = None,
                  token_details: Optional[TokenDetails] = None, **kwargs):
         super().__init__(key, token, token_details, **kwargs)
-        self.__channels = ChannelsSync(self)
+        self.__http = HttpSync(self, self.options)
         self.__auth = AuthSync(self, self.options)
+        self.__http.auth = self.__auth
+        self.__channels = ChannelsSync(self)
 
     def __enter__(self):
         return self
+
+    @property
+    def channels(self):
+        """Returns the channels container object"""
+        return self.__channels
+
+    @property
+    def auth(self):
+        return self.__auth
+
+    @property
+    def http(self):
+        return self.__http
 
     @force_sync
     @catch_all
