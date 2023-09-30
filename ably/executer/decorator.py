@@ -21,13 +21,16 @@ def force_sync(fn):
             pass
         app_loop: events = AppEventLoop.current().loop
 
-        # Handle calls from app eventloop on the same loop, return awaitable
-        if caller_eventloop is not None and caller_eventloop == app_loop:
-            return app_loop.create_task(fn(*args, **kwargs))
+        res = fn(*args, **kwargs)
+        if asyncio.iscoroutine(res):
+            # Handle calls from app eventloop on the same loop, return awaitable
+            if caller_eventloop is not None and caller_eventloop == app_loop:
+                return app_loop.create_task(res)
 
-        # Block the caller till result is returned
-        future = asyncio.run_coroutine_threadsafe(fn(*args, **kwargs), app_loop)
-        return future.result()
+            # Block the caller till result is returned
+            future = asyncio.run_coroutine_threadsafe(res, app_loop)
+            return future.result()
+        return res
 
     return wrapper
 
@@ -48,14 +51,17 @@ def safe_async(fn):
             pass
         app_loop: events = AppEventLoop.current().loop
 
-        # Handle calls from app eventloop on the same loop, return awaitable
-        if caller_eventloop is not None and caller_eventloop == app_loop:
-            return app_loop.create_task(fn(*args, **kwargs))
+        res = fn(*args, **kwargs)
+        if asyncio.iscoroutine(res):
+            # Handle calls from app eventloop on the same loop, return awaitable
+            if caller_eventloop is not None and caller_eventloop == app_loop:
+                return app_loop.create_task(res)
 
-        # Handle calls from external eventloop, post them on app eventloop
-        # Return awaitable back to external_eventloop/caller
-        future = asyncio.run_coroutine_threadsafe(fn(*args, **kwargs), app_loop)
-        return asyncio.wrap_future(future)
+            # Handle calls from external eventloop, post them on app eventloop
+            # Return awaitable back to external_eventloop/caller
+            future = asyncio.run_coroutine_threadsafe(res, app_loop)
+            return asyncio.wrap_future(future)
+        return res
 
     return wrapper
 
