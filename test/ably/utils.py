@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import random
 import string
@@ -87,7 +88,9 @@ def assert_responses_type(protocol):
         @functools.wraps(fn)
         async def test_decorated(self, *args, **kwargs):
             patcher = patch()
-            await fn(self, *args, **kwargs)
+            res = fn(self, *args, **kwargs)
+            if asyncio.iscoroutine(res):
+                await res
             unpatch(patcher)
 
             assert len(responses) >= 1,\
@@ -144,7 +147,9 @@ class VaryByProtocolTestsMetaclass(type):
         async def wrapper(self):
             if hasattr(self, 'per_protocol_setup'):
                 self.per_protocol_setup(ttype == 'bin')
-            await old_func(self)
+            res = old_func(self)
+            if asyncio.iscoroutine(res):
+                await res
         wrapper.__name__ = old_name + '_' + ttype
         return wrapper
 
