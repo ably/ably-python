@@ -1,41 +1,20 @@
 import logging
-from methoddispatch import SingleDispatch, singledispatch
 
 from ably.executer.decorator import force_sync
 from ably.rest.channel import Channel
 from collections import OrderedDict
 from typing import Iterator
-from ably.types.message import Message
 from ably.util.exceptions import catch_all
 
 log = logging.getLogger(__name__)
 
 
-class ChannelSync(SingleDispatch, Channel):
+class ChannelSync(Channel):
     @force_sync
     @catch_all
     async def history(self, direction=None, limit: int = None, start=None, end=None):
         """Returns the history for this channel"""
         return await super().history(direction, limit, start, end)
-
-    @singledispatch
-    def _publish(self, arg, *args, **kwargs):
-        raise TypeError('Unexpected type %s' % type(arg))
-
-    @force_sync
-    @_publish.register(Message)
-    async def publish_message(self, message, params=None, timeout=None):
-        return await super().publish_message(message, params, timeout)
-
-    @force_sync
-    @_publish.register(list)
-    async def publish_messages(self, messages, params=None, timeout=None):
-        return await super().publish_messages(messages, params, timeout)
-
-    @force_sync
-    @_publish.register(str)
-    async def publish_name_data(self, name, data, timeout=None):
-        return await super().publish_name_data(name, data, timeout)
 
     @force_sync
     async def publish(self, *args, **kwargs):

@@ -16,7 +16,7 @@ class AblyRestSync(AblyRest):
 
     def __init__(self, key: Optional[str] = None, token: Optional[str] = None,
                  token_details: Optional[TokenDetails] = None, **kwargs):
-        super().__init__(key, token, token_details, kwargs)
+        super().__init__(key, token, token_details, **kwargs)
         self.__channels = ChannelsSync(self)
         self.__auth = AuthSync(self, self.options)
 
