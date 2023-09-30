@@ -9,7 +9,7 @@ from typing import Optional, TYPE_CHECKING, Union
 import uuid
 import httpx
 
-from ably.decorator.sync import run_safe
+from ably.executer.decorator import run_safe
 from ably.types.options import Options
 
 if TYPE_CHECKING:

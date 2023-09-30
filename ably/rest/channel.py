@@ -9,7 +9,7 @@ from urllib import parse
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
 
-from ably.decorator.sync import run_safe
+from ably.executer.decorator import run_safe
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.channeldetails import ChannelDetails
 from ably.types.message import Message, make_message_response_handler

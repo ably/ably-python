@@ -22,18 +22,18 @@ def run_safe(fn):
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        ably_eventloop: events = AppEventLoop.current().loop
+        app_loop: events = AppEventLoop.current().loop
 
         res = fn(*args, **kwargs)
         if asyncio.iscoroutine(res):
-            # Handle calls from ably_eventloop on the same loop, return awaitable
-            if caller_eventloop is not None and caller_eventloop == ably_eventloop:
-                return ably_eventloop.create_task(res)
+            # Handle calls from app eventloop on the same loop, return awaitable
+            if caller_eventloop is not None and caller_eventloop == app_loop:
+                return app_loop.create_task(res)
 
-            future = asyncio.run_coroutine_threadsafe(res, ably_eventloop)
+            future = asyncio.run_coroutine_threadsafe(res, app_loop)
 
-            # Handle calls from external eventloop, post them on ably_eventloop
-            # Return future back to external_eventloop
+            # Handle calls from external eventloop, post them on app eventloop
+            # Return awaitable back to external_eventloop
             if caller_eventloop is not None and caller_eventloop.is_running():
                 return asyncio.wrap_future(future)
 

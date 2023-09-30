@@ -2,7 +2,7 @@ import calendar
 import logging
 from urllib.parse import urlencode
 
-from ably.decorator.sync import run_safe
+from ably.executer.decorator import run_safe
 from ably.http.http import Request
 from ably.util import case
 

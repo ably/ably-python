@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import httpx
 import msgpack
 
-from ably.decorator.sync import run_safe
+from ably.executer.decorator import run_safe
 from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults

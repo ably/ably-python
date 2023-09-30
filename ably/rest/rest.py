@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from urllib.parse import urlencode
 
-from ably.decorator.sync import run_safe, close_app_eventloop
+from ably.executer.decorator import run_safe, close_app_eventloop
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
 from ably.http.paginatedresult import format_params
