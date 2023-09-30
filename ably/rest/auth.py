@@ -9,7 +9,7 @@ from typing import Optional, TYPE_CHECKING, Union
 import uuid
 import httpx
 
-from ably.decorator.sync import optional_sync
+from ably.decorator.sync import run_safe
 from ably.types.options import Options
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ class Auth:
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    @optional_sync
+    @run_safe
     async def get_auth_transport_param(self):
         auth_credentials = {}
         if self.auth_options.client_id:
@@ -155,11 +155,11 @@ class Auth:
 
         return expires < timestamp + token_details.TOKEN_EXPIRY_BUFFER
 
-    @optional_sync
+    @run_safe
     async def authorize(self, token_params: Optional[dict] = None, auth_options=None):
         return await self.__authorize_when_necessary(token_params, auth_options, force=True)
 
-    @optional_sync
+    @run_safe
     async def request_token(self, token_params: Optional[dict] = None,
                             # auth_options
                             key_name: Optional[str] = None, key_secret: Optional[str] = None, auth_callback=None,
@@ -238,7 +238,7 @@ class Auth:
         log.debug("Token: %s" % str(response_dict.get("token")))
         return TokenDetails.from_dict(response_dict)
 
-    @optional_sync
+    @run_safe
     async def create_token_request(self, token_params: Optional[dict] = None, key_name: Optional[str] = None,
                                    key_secret: Optional[str] = None, query_time=None):
         token_params = token_params or {}
@@ -396,7 +396,7 @@ class Auth:
     def _random_nonce(self):
         return uuid.uuid4().hex[:16]
 
-    @optional_sync
+    @run_safe
     async def token_request_from_auth_url(self, method: str, url: str, token_params,
                                           headers, auth_params):
         body = None

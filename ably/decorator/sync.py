@@ -4,11 +4,14 @@ from asyncio import events
 from ably.executer.eventloop import AppEventLoop
 
 
-def optional_sync(fn):
+def run_safe(fn):
     '''
-    Enables async function to be used as both sync and async function.
+    USAGE :
+    If called from an eventloop or coroutine, returns a future, doesn't block external eventloop.
+    If called from a regular function, returns a blocking result.
     Also makes async/sync workflow thread safe.
     This decorator should only be used on async methods/coroutines.
+    Completely safe to use for existing async users.
     '''
     import asyncio
 
@@ -27,8 +30,10 @@ def optional_sync(fn):
             if caller_eventloop is not None and caller_eventloop == ably_eventloop:
                 return ably_eventloop.create_task(res)
 
-            # Handle calls from external eventloop, post them on ably_eventloop
             future = asyncio.run_coroutine_threadsafe(res, ably_eventloop)
+
+            # Handle calls from external eventloop, post them on ably_eventloop
+            # Return future back to external_eventloop
             if caller_eventloop is not None and caller_eventloop.is_running():
                 return asyncio.wrap_future(future)
 

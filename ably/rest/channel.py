@@ -9,7 +9,7 @@ from urllib import parse
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
 
-from ably.decorator.sync import optional_sync
+from ably.decorator.sync import run_safe
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.channeldetails import ChannelDetails
 from ably.types.message import Message, make_message_response_handler
@@ -30,7 +30,7 @@ class Channel(SingleDispatch):
         self.__presence = Presence(self)
 
     @catch_all
-    @optional_sync
+    @run_safe
     async def history(self, direction=None, limit: int = None, start=None, end=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
@@ -83,12 +83,12 @@ class Channel(SingleDispatch):
         raise TypeError('Unexpected type %s' % type(arg))
 
     @_publish.register(Message)
-    @optional_sync
+    @run_safe
     async def publish_message(self, message, params=None, timeout=None):
         return await self.publish_messages([message], params, timeout=timeout)
 
     @_publish.register(list)
-    @optional_sync
+    @run_safe
     async def publish_messages(self, messages, params=None, timeout=None):
         request_body = self.__publish_request_body(messages)
         if not self.ably.options.use_binary_protocol:
@@ -103,12 +103,12 @@ class Channel(SingleDispatch):
         return await self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @_publish.register(str)
-    @optional_sync
+    @run_safe
     async def publish_name_data(self, name, data, timeout=None):
         messages = [Message(name, data)]
         return await self.publish_messages(messages, timeout=timeout)
 
-    @optional_sync
+    @run_safe
     async def publish(self, *args, **kwargs):
         """Publishes a message on this channel.
 
@@ -137,7 +137,7 @@ class Channel(SingleDispatch):
 
         return await self._publish(*args, **kwargs)
 
-    @optional_sync
+    @run_safe
     async def status(self):
         """Retrieves current channel active status with no. of publishers, subscribers, presence_members etc"""
 

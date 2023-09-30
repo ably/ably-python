@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from urllib.parse import urlencode
 
-from ably.decorator.sync import optional_sync, close_app_eventloop
+from ably.decorator.sync import run_safe, close_app_eventloop
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
 from ably.http.paginatedresult import format_params
@@ -92,7 +92,7 @@ class AblyRest:
             self.http, url=url, response_processor=stats_response_processor)
 
     @catch_all
-    @optional_sync
+    @run_safe
     async def time(self, timeout: Optional[float] = None) -> float:
         """Returns the current server time in ms since the unix epoch"""
         r = await self.http.get('/time', skip_auth=True, timeout=timeout)
@@ -124,7 +124,7 @@ class AblyRest:
     def push(self):
         return self.__push
 
-    @optional_sync
+    @run_safe
     async def request(self, method: str, path: str, version: str, params:
                       Optional[dict] = None, body=None, headers=None):
         if version is None:
