@@ -17,7 +17,7 @@ class AblyRestSync(AblyRest):
     @force_sync
     @catch_all
     async def stats(self, direction: Optional[str] = None, start=None, end=None, params: Optional[dict] = None,
-              limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
+                    limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
         """Returns the stats for this application"""
         return await super().stats(direction, start, end, params, limit, paginated, unit, timeout)
 
@@ -28,8 +28,8 @@ class AblyRestSync(AblyRest):
         return await super().time(timeout)
 
     @force_sync
-    async def request(self, method: str, path: str, version: str, params:
-    Optional[dict] = None, body=None, headers=None):
+    async def request(self, method: str, path: str, version: str, params: Optional[dict] = None,
+                      body=None, headers=None):
         return await super().request(method, path, version, params, body, headers)
 
     def __exit__(self, *excinfo):

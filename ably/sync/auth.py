@@ -33,8 +33,7 @@ class AuthSync(Auth):
     @force_sync
     async def create_token_request(self, token_params: Optional[dict] = None, key_name: Optional[str] = None,
                                    key_secret: Optional[str] = None, query_time=None):
-        return super().create_token_request(token_params, key_name, key_secret, query_time
-                                            )
+        return super().create_token_request(token_params, key_name, key_secret, query_time)
 
     @force_sync
     async def token_request_from_auth_url(self, method: str, url: str, token_params,
