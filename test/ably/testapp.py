@@ -125,10 +125,7 @@ class TestAppSync:
     @staticmethod
     @force_sync
     async def get_ably_rest(**kw):
-        test_vars = await TestApp.get_test_vars()
-        options = TestApp.get_options(test_vars, **kw)
-        options.update(kw)
-        rest = AblyRest(**options)
+        rest = await TestApp.get_ably_rest(**kw)
         rest.sync_enabled = True
         return rest
 
