@@ -54,10 +54,6 @@ class PaginatedResult:
         self.response = response
 
     @property
-    def sync_enabled(self):
-        return self.__http.ably
-
-    @property
     def items(self):
         return self.__items
 
@@ -77,6 +73,10 @@ class PaginatedResult:
     @optional_sync
     async def next(self):
         return await self.__get_rel(self.__rel_next) if self.__rel_next else None
+
+    @property
+    def sync_enabled(self):
+        return self.__http.sync_enabled
 
     async def __get_rel(self, rel_req):
         if rel_req is None:
