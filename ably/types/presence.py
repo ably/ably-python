@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from urllib import parse
 
+from ably.executer.decorator import run_safe
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.mixins import EncodeDataMixin
 
@@ -126,6 +127,7 @@ class Presence:
             path += ('?' + parse.urlencode(qs))
         return path
 
+    @run_safe
     async def get(self, limit=None):
         qs = {}
         if limit:
@@ -138,6 +140,7 @@ class Presence:
         return await PaginatedResult.paginated_query(
             self.__http, url=path, response_processor=presence_handler)
 
+    @run_safe
     async def history(self, limit=None, direction=None, start=None, end=None):
         qs = {}
         if limit:
