@@ -85,7 +85,7 @@ class TestAuth(BaseAsyncTestCase):
         ably.sync_enabled = True
         with mock.patch.object(AsyncClient, 'send') as get_mock:
             try:
-                result = ably.http.get('/time', skip_auth=False)
+                ably.http.get('/time', skip_auth=False)
             except Exception:
                 pass
         request = get_mock.call_args_list[0][0][0]
@@ -345,7 +345,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
 
     @dont_vary_protocol
     @respx.mock
-    def test_with_auth_url_headers_and_params_POST(self):  # noqa: N802
+    def test_with_auth_url_headers_and_params_post(self):
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
         ably = TestAppSync.get_ably_rest(key=None, auth_url=url)
@@ -380,7 +380,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
 
     @dont_vary_protocol
     @respx.mock
-    def test_with_auth_url_headers_and_params_GET(self):  # noqa: N802
+    def test_with_auth_url_headers_and_params_get(self):
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
         ably = TestAppSync.get_ably_rest(
