@@ -9,7 +9,7 @@ from urllib import parse
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
 
-from ably.executer.decorator import run_safe
+from ably.executer.decorator import optional_sync
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.channeldetails import ChannelDetails
 from ably.types.message import Message, make_message_response_handler
@@ -29,7 +29,7 @@ class Channel(SingleDispatch):
         self.options = options
         self.__presence = Presence(self)
 
-    @run_safe
+    @optional_sync
     @catch_all
     async def history(self, direction=None, limit: int = None, start=None, end=None):
         """Returns the history for this channel"""
@@ -105,7 +105,7 @@ class Channel(SingleDispatch):
         messages = [Message(name, data)]
         return await self.publish_messages(messages, timeout=timeout)
 
-    @run_safe
+    @optional_sync
     async def publish(self, *args, **kwargs):
         """Publishes a message on this channel.
 
@@ -134,7 +134,7 @@ class Channel(SingleDispatch):
 
         return await self._publish(*args, **kwargs)
 
-    @run_safe
+    @optional_sync
     async def status(self):
         """Retrieves current channel active status with no. of publishers, subscribers, presence_members etc"""
 
@@ -142,6 +142,10 @@ class Channel(SingleDispatch):
         response = await self.ably.http.get(path)
         obj = response.to_native()
         return ChannelDetails.from_dict(obj)
+
+    @property
+    def sync_enabled(self):
+        return self.ably.sync_enabled
 
     @property
     def ably(self):

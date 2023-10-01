@@ -2,7 +2,7 @@ import json
 import os
 import logging
 
-from ably.executer.decorator import run_safe
+from ably.executer.decorator import optional_sync, force_sync
 from ably.rest.rest import AblyRest
 from ably.types.capability import Capability
 from ably.types.options import Options
@@ -118,19 +118,21 @@ class TestApp:
 class TestAppSync:
 
     @staticmethod
-    @run_safe
+    @force_sync
     async def get_test_vars():
         return await TestApp.get_test_vars()
 
     @staticmethod
-    @run_safe
+    @force_sync
     async def get_ably_rest(**kw):
         test_vars = await TestApp.get_test_vars()
         options = TestApp.get_options(test_vars, **kw)
         options.update(kw)
-        return AblyRest(**options)
+        rest = AblyRest(**options)
+        rest.sync_enabled = True
+        return rest
 
     @staticmethod
-    @run_safe
+    @force_sync
     async def clear_test_vars():
         return await TestApp.clear_test_vars()

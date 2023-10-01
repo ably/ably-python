@@ -83,7 +83,7 @@ class TestAuth(BaseAsyncTestCase):
     # RSA11
     def test_request_basic_auth_header(self):
         ably = AblyRest(key_secret='foo', key_name='bar')
-
+        ably.sync_enabled = True
         with mock.patch.object(AsyncClient, 'send') as get_mock:
             try:
                 result = ably.http.get('/time', skip_auth=False)
@@ -96,7 +96,7 @@ class TestAuth(BaseAsyncTestCase):
     # RSA7e2
     def test_request_basic_auth_header_with_client_id(self):
         ably = AblyRest(key_secret='foo', key_name='bar', client_id='client_id')
-
+        ably.sync_enabled = True
         with mock.patch.object(AsyncClient, 'send') as get_mock:
             try:
                 ably.http.get('/time', skip_auth=False)
@@ -108,7 +108,7 @@ class TestAuth(BaseAsyncTestCase):
 
     def test_request_token_auth_header(self):
         ably = AblyRest(token='not_a_real_token')
-
+        ably.sync_enabled = True
         with mock.patch.object(AsyncClient, 'send') as get_mock:
             try:
                 ably.http.get('/time', skip_auth=False)

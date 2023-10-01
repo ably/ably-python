@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import httpx
 import msgpack
 
-from ably.executer.decorator import run_safe
+from ably.executer.decorator import optional_sync
 from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
@@ -133,7 +133,7 @@ class Http:
         self.__host_expires = None
         self.__client = httpx.AsyncClient(http2=True)
 
-    @run_safe
+    @optional_sync
     async def close(self):
         await self.__client.aclose()
 
@@ -159,7 +159,7 @@ class Http:
         hosts.insert(0, host)
         return hosts
 
-    @run_safe
+    @optional_sync
     @reauth_if_expired
     async def make_request(self, method, path, version=None, headers=None, body=None,
                            skip_auth=False, timeout=None, raise_on_error=True):
@@ -231,35 +231,39 @@ class Http:
                     if retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration:
                         raise e
 
-    @run_safe
+    @optional_sync
     async def delete(self, url, headers=None, skip_auth=False, timeout=None):
         result = await self.make_request('DELETE', url, headers=headers,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
 
-    @run_safe
+    @optional_sync
     async def get(self, url, headers=None, skip_auth=False, timeout=None):
         result = await self.make_request('GET', url, headers=headers,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
 
-    @run_safe
+    @optional_sync
     async def patch(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         result = await self.make_request('PATCH', url, headers=headers, body=body,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
 
-    @run_safe
+    @optional_sync
     async def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         result = await self.make_request('POST', url, headers=headers, body=body,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
 
-    @run_safe
+    @optional_sync
     async def put(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         result = await self.make_request('PUT', url, headers=headers, body=body,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
+
+    @property
+    def sync_enabled(self):
+        return self.__ably.sync_enabled
 
     @property
     def auth(self):

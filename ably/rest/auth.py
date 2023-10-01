@@ -9,7 +9,7 @@ from typing import Optional, TYPE_CHECKING, Union
 import uuid
 import httpx
 
-from ably.executer.decorator import run_safe
+from ably.executer.decorator import optional_sync
 from ably.types.options import Options
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ class Auth:
             raise ValueError("Can't authenticate via token, must provide "
                              "auth_callback, auth_url, key, token or a TokenDetail")
 
-    @run_safe
+    @optional_sync
     async def get_auth_transport_param(self):
         auth_credentials = {}
         if self.auth_options.client_id:
@@ -155,11 +155,11 @@ class Auth:
 
         return expires < timestamp + token_details.TOKEN_EXPIRY_BUFFER
 
-    @run_safe
+    @optional_sync
     async def authorize(self, token_params: Optional[dict] = None, auth_options=None):
         return await self.__authorize_when_necessary(token_params, auth_options, force=True)
 
-    @run_safe
+    @optional_sync
     async def request_token(self, token_params: Optional[dict] = None,
                             # auth_options
                             key_name: Optional[str] = None, key_secret: Optional[str] = None, auth_callback=None,
@@ -243,7 +243,7 @@ class Auth:
         log.debug("Token: %s" % str(response_dict.get("token")))
         return TokenDetails.from_dict(response_dict)
 
-    @run_safe
+    @optional_sync
     async def create_token_request(self, token_params: Optional[dict] = None, key_name: Optional[str] = None,
                                    key_secret: Optional[str] = None, query_time=None):
         token_params = token_params or {}
@@ -307,6 +307,10 @@ class Auth:
             token_req.mac = token_params['mac']
 
         return token_req
+
+    @property
+    def sync_enabled(self):
+        return self.ably.sync_enabled
 
     @property
     def ably(self):
@@ -401,7 +405,7 @@ class Auth:
     def _random_nonce(self):
         return uuid.uuid4().hex[:16]
 
-    @run_safe
+    @optional_sync
     async def token_request_from_auth_url(self, method: str, url: str, token_params,
                                           headers, auth_params):
         body = None

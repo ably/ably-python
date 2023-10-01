@@ -4,14 +4,11 @@ from asyncio import events
 from ably.executer.eventloop import AppEventLoop
 
 
-def run_safe(fn):
+def force_sync(fn):
     '''
-    USAGE :
-    If called from an eventloop or coroutine, returns a future, doesn't block external eventloop.
-    If called from a regular function, returns a blocking result.
-    Also makes async/sync workflow thread safe.
+    Forces async function to be used as sync function.
+    Blocks execution of caller till result is returned.
     This decorator should only be used on async methods/coroutines.
-    Completely safe to use for existing async users.
     '''
     import asyncio
 
@@ -30,14 +27,47 @@ def run_safe(fn):
             if caller_eventloop is not None and caller_eventloop == app_loop:
                 return app_loop.create_task(res)
 
+            # Block the caller till result is returned
             future = asyncio.run_coroutine_threadsafe(res, app_loop)
+            return future.result()
+        return res
 
-            # Handle calls from external eventloop, post them on app eventloop
-            # Return awaitable back to external_eventloop
-            # if caller_eventloop is not None and caller_eventloop.is_running():
-            #     return asyncio.wrap_future(future)
+    return wrapper
 
-            # If called from regular function, return blocking result
+
+def optional_sync(fn):
+    '''
+    Executes async function as a sync function if sync_enabled property on the given instance is true.
+    Blocks execution of caller till result is returned.
+    This decorator should only be used on async methods/coroutines.
+    '''
+    import asyncio
+
+    @functools.wraps(fn)
+    def wrapper(self, *args, **kwargs):
+        if not hasattr(self, 'sync_enabled'):
+            raise Exception("sync_enabled property should exist on instance to enable this feature")
+
+        # Return awaitable like a normal async method if sync is not enabled
+        if not self.sync_enabled:
+            return asyncio.create_task(fn(self, *args, **kwargs))
+
+        # Handle result of the given async method, with blocking behaviour
+        caller_eventloop = None
+        try:
+            caller_eventloop: events = asyncio.get_running_loop()
+        except Exception:
+            pass
+        app_loop: events = AppEventLoop.current().loop
+
+        res = fn(self, *args, **kwargs)
+        if asyncio.iscoroutine(res):
+            # Handle calls from app eventloop on the same loop, return awaitable
+            if caller_eventloop is not None and caller_eventloop == app_loop:
+                return app_loop.create_task(res)
+
+            # Block the caller till result is returned
+            future = asyncio.run_coroutine_threadsafe(res, app_loop)
             return future.result()
         return res
 

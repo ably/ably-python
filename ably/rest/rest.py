@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from urllib.parse import urlencode
 
-from ably.executer.decorator import run_safe, close_app_eventloop
+from ably.executer.decorator import optional_sync, close_app_eventloop
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
 from ably.http.paginatedresult import format_params
@@ -67,7 +67,7 @@ class AblyRest:
             self._is_realtime
         except AttributeError:
             self._is_realtime = False
-
+        self.__sync_enabled = False
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
         self.__http.auth = self.__auth
@@ -82,7 +82,7 @@ class AblyRest:
     def __enter__(self):
         return self
 
-    @run_safe
+    @optional_sync
     @catch_all
     async def stats(self, direction: Optional[str] = None, start=None, end=None, params: Optional[dict] = None,
                     limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
@@ -92,7 +92,7 @@ class AblyRest:
         return await PaginatedResult.paginated_query(
             self.http, url=url, response_processor=stats_response_processor)
 
-    @run_safe
+    @optional_sync
     @catch_all
     async def time(self, timeout: Optional[float] = None) -> float:
         """Returns the current server time in ms since the unix epoch"""
@@ -114,6 +114,14 @@ class AblyRest:
         return self.__auth
 
     @property
+    def sync_enabled(self):
+        return self.__sync_enabled
+
+    @sync_enabled.setter
+    def sync_enabled(self, enable_sync):
+        self.__sync_enabled = enable_sync
+
+    @property
     def http(self):
         return self.__http
 
@@ -125,9 +133,9 @@ class AblyRest:
     def push(self):
         return self.__push
 
-    @run_safe
+    @optional_sync
     async def request(self, method: str, path: str, version: str, params:
-                      Optional[dict] = None, body=None, headers=None):
+    Optional[dict] = None, body=None, headers=None):
         if version is None:
             raise AblyException("No version parameter", 400, 40000)
 
