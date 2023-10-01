@@ -210,7 +210,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
     def test_authorize_adheres_to_request_token(self):
         token_params = {'ttl': 10, 'client_id': 'client_id'}
         auth_params = {'auth_url': 'somewhere.com', 'query_time': True}
-        with mock.patch('ably.rest.auth.Auth.request_token', new_callable=AsyncMock) as request_mock:
+        with mock.patch('ably.sync.auth.AuthSync.request_token', new_callable=AsyncMock) as request_mock:
             self.ably.auth.authorize(token_params, auth_params)
 
         token_called, auth_called = request_mock.call_args
@@ -249,7 +249,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         auth_options = dict(self.ably.auth.auth_options.auth_options)
         auth_options['auth_headers'] = {'a_headers': 'a_value'}
         self.ably.auth.authorize({'ttl': 555}, auth_options)
-        with mock.patch('ably.rest.auth.Auth.request_token',
+        with mock.patch('ably.sync.auth.AuthSync.request_token',
                         wraps=self.ably.auth.request_token) as request_mock:
             self.ably.auth.authorize()
 
@@ -261,7 +261,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         auth_options = dict(self.ably.auth.auth_options.auth_options)
         auth_options['auth_headers'] = None
         self.ably.auth.authorize({}, auth_options)
-        with mock.patch('ably.rest.auth.Auth.request_token',
+        with mock.patch('ably.sync.auth.AuthSync.request_token',
                         wraps=self.ably.auth.request_token) as request_mock:
             self.ably.auth.authorize()
 
@@ -413,7 +413,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
     def test_with_callback(self):
         called_token_params = {'ttl': '3600000'}
 
-        def callback(token_params):
+        async def callback(token_params):
             assert token_params == called_token_params
             return 'token_string'
 
@@ -424,7 +424,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         assert isinstance(token_details, TokenDetails)
         assert 'token_string' == token_details.token
 
-        def callback(token_params):
+        async def callback(token_params):
             assert token_params == called_token_params
             return TokenDetails(token='another_token_string')
 

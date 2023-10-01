@@ -10,7 +10,8 @@ class HttpSync(Http):
     @force_sync
     async def make_request(self, method, path, version=None, headers=None, body=None,
                            skip_auth=False, timeout=None, raise_on_error=True):
-        return await super().make_request(method, path, version, headers, body, skip_auth, timeout, raise_on_error)
+        return await super().make_request(method, path, version=version, headers=headers, body=body,
+                                          skip_auth=skip_auth, timeout=timeout, raise_on_error=raise_on_error)
 
     @force_sync
     async def delete(self, url, headers=None, skip_auth=False, timeout=None):
@@ -27,3 +28,7 @@ class HttpSync(Http):
     @force_sync
     async def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         return await super().post(url, headers, body, skip_auth, timeout)
+
+    @force_sync
+    async def put(self, url, headers=None, body=None, skip_auth=False, timeout=None):
+        return await super().put(url, headers, body, skip_auth, timeout)
