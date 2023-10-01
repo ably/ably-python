@@ -1,4 +1,6 @@
 import logging
+from collections import OrderedDict
+from typing import Iterator
 
 from ably.executer.decorator import force_sync
 from ably.http.paginatedresult import format_params
@@ -17,9 +19,9 @@ class ChannelSync(Channel):
     async def history(self, direction=None, limit: int = None, start=None, end=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
-        path = self.__base_path + 'messages' + params
+        path = self.base_path + 'messages' + params
 
-        message_handler = make_message_response_handler(self.__cipher)
+        message_handler = make_message_response_handler(self.cipher)
         return await PaginatedResultSync.paginated_query(
             self.ably.http, url=path, response_processor=message_handler)
 
@@ -37,7 +39,7 @@ class ChannelSync(Channel):
         `message`, never all three.
         """
         # For backwards compatibility
-        return await super().publish(args, kwargs)
+        return await super().publish(*args, **kwargs)
 
     @force_sync
     async def status(self):
@@ -46,7 +48,11 @@ class ChannelSync(Channel):
         return await super().status()
 
 
-class ChannelsSync(Channels):
+class ChannelsSync:
+    def __init__(self, rest):
+        self.__ably = rest
+        self.__all: dict = OrderedDict()
+
     def get(self, name, **kwargs):
         if isinstance(name, bytes):
             name = name.decode('ascii')
@@ -60,6 +66,12 @@ class ChannelsSync(Channels):
 
         return result
 
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __getattr__(self, name):
+        return self.get(name)
+
     def __contains__(self, item):
         if isinstance(item, ChannelSync):
             name = item.name
@@ -69,3 +81,24 @@ class ChannelsSync(Channels):
             name = item
 
         return name in self.__all
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.__all.values())
+
+        # RSN4
+
+    def release(self, name: str):
+        """Releases a Channel object, deleting it, and enabling it to be garbage collected.
+        If the channel does not exist, nothing happens.
+
+        It also removes any listeners associated with the channel.
+
+        Parameters
+        ----------
+        name: str
+            Channel name
+        """
+
+        if name not in self.__all:
+            return
+        del self.__all[name]
