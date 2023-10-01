@@ -2,6 +2,7 @@ import json
 import os
 import logging
 
+from ably.executer.decorator import run_safe
 from ably.rest.rest import AblyRest
 from ably.types.capability import Capability
 from ably.types.options import Options
@@ -26,7 +27,6 @@ if rest_host and not rest_host.endswith("rest.ably.io"):
     tls = tls and rest_host != "localhost"
     port = 8080
     tls_port = 8081
-
 
 ably = AblyRest(token='not_a_real_token',
                 port=port, tls_port=tls_port, tls=tls,
@@ -65,7 +65,7 @@ class TestApp:
 
             TestApp.__test_vars = test_vars
             log.debug([(app_id, k.get("id", ""), k.get("value", ""))
-                      for k in app_spec.get("keys", [])])
+                       for k in app_spec.get("keys", [])])
 
         return TestApp.__test_vars
 
@@ -113,3 +113,24 @@ class TestApp:
         await ably.http.delete('/apps/' + test_vars['app_id'])
         TestApp.__test_vars = None
         await ably.close()
+
+
+class TestAppSync:
+
+    @staticmethod
+    @run_safe
+    async def get_test_vars():
+        return await TestApp.get_test_vars()
+
+    @staticmethod
+    @run_safe
+    async def get_ably_rest(**kw):
+        test_vars = await TestApp.get_test_vars()
+        options = TestApp.get_options(test_vars, **kw)
+        options.update(kw)
+        return AblyRest(**options)
+
+    @staticmethod
+    @run_safe
+    async def clear_test_vars():
+        return await TestApp.clear_test_vars()
