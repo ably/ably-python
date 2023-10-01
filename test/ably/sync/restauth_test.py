@@ -1,22 +1,21 @@
+import base64
 import logging
 import sys
 import time
 import uuid
-import base64
-
 from urllib.parse import parse_qs
+
 import mock
 import pytest
 import respx
 from httpx import Response, AsyncClient
 
 import ably
+from ably import AblyAuthException
 from ably import AblyRest
 from ably import Auth
-from ably import AblyAuthException
 from ably.types.tokendetails import TokenDetails
-
-from test.ably.testapp import TestApp, TestAppSync
+from test.ably.testapp import TestAppSync
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 if sys.version_info >= (3, 8):
@@ -224,7 +223,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         token = self.ably.auth.authorize()
         token = token.token
         ably = TestAppSync.get_ably_rest(key=None, token=token, tls=True,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                         use_binary_protocol=self.use_binary_protocol)
         ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
         ably.close()
 
@@ -232,13 +231,13 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         token = self.ably.auth.authorize()
         token = token.token
         ably = TestAppSync.get_ably_rest(key=None, token=token, tls=False,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                         use_binary_protocol=self.use_binary_protocol)
         ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
         ably.close()
 
     def test_if_default_client_id_is_used(self):
         ably = TestAppSync.get_ably_rest(client_id='my_client_id',
-                                           use_binary_protocol=self.use_binary_protocol)
+                                         use_binary_protocol=self.use_binary_protocol)
         token = ably.auth.authorize()
         assert token.client_id == 'my_client_id'
         ably.close()
@@ -335,7 +334,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         ably.close()
 
         ably = TestAppSync.get_ably_rest(key=None, token_details=token_details,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                         use_binary_protocol=self.use_binary_protocol)
         channel = self.get_channel_name('test_request_token_with_key')
 
         ably.channels[channel].publish('event', 'foo')
@@ -402,6 +401,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
                 status_code=200,
                 json={'issued': 1, 'token': 'another_token_string'}
             )
+
         auth_route.side_effect = call_back
         token_details = ably.auth.request_token(
             token_params=token_params, auth_url=url, auth_headers=headers,
@@ -442,8 +442,8 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         auth_route = respx.get('http://www.example.com', params={'with': 'query', 'spam': 'eggs'}).mock(
             return_value=Response(status_code=200, content='token_string', headers={"Content-Type": "text/plain"}))
         ably.auth.request_token(auth_url=url,
-                                      auth_headers=headers,
-                                      auth_params={'spam': 'eggs'})
+                                auth_headers=headers,
+                                auth_params={'spam': 'eggs'})
         assert auth_route.called
         ably.close()
 

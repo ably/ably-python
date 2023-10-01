@@ -5,9 +5,8 @@ import respx
 
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.presence import PresenceMessage
-
-from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseAsyncTestCase
 from test.ably.testapp import TestAppSync
+from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseAsyncTestCase
 
 
 class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):

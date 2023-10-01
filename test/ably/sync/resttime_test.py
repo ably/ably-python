@@ -3,7 +3,6 @@ import time
 import pytest
 
 from ably import AblyException
-
 from test.ably.testapp import TestAppSync
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 

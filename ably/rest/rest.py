@@ -134,8 +134,8 @@ class AblyRest:
         return self.__push
 
     @optional_sync
-    async def request(self, method: str, path: str, version: str, params:
-    Optional[dict] = None, body=None, headers=None):
+    async def request(self, method: str, path: str, version: str, params: Optional[dict] = None,
+                      body=None, headers=None):
         if version is None:
             raise AblyException("No version parameter", 400, 40000)
 

@@ -10,14 +10,13 @@ import mock
 import msgpack
 import pytest
 
-from ably import api_version
 from ably import AblyException, IncompatibleClientIdException
+from ably import api_version
 from ably.rest.auth import Auth
 from ably.types.message import Message
 from ably.types.tokendetails import TokenDetails
 from ably.util import case
-
-from test.ably.testapp import TestApp, TestAppSync
+from test.ably.testapp import TestAppSync
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
@@ -298,8 +297,8 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
         new_token = self.ably.auth.authorize(token_params={'client_id': uuid.uuid4().hex})
         new_ably = TestAppSync.get_ably_rest(key=None,
-                                               token=new_token.token,
-                                               use_binary_protocol=self.use_binary_protocol)
+                                             token=new_token.token,
+                                             use_binary_protocol=self.use_binary_protocol)
 
         channel = new_ably.channels[
             self.get_channel_name('persisted:wrong_client_id_implicit_client')]

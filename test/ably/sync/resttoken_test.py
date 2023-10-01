@@ -2,16 +2,15 @@ import datetime
 import json
 import logging
 
-from mock import patch
 import pytest
+from mock import patch
 
 from ably import AblyException
 from ably import AblyRest
 from ably import Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
-
-from test.ably.testapp import TestApp, TestAppSync
+from test.ably.testapp import TestAppSync
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
@@ -123,7 +122,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def test_token_generation_with_local_time(self):
         timestamp = self.ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time, \
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.request_token()
             assert local_time.called
@@ -132,7 +131,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     # RSA10k
     def test_token_generation_with_server_time(self):
         timestamp = self.ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time, \
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.request_token(query_time=True)
             assert local_time.call_count == 1
@@ -185,7 +184,7 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     @dont_vary_protocol
     def test_with_local_time(self):
         timestamp = self.ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time, \
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.create_token_request(
                 key_name=self.key_name, key_secret=self.key_secret, query_time=False)
@@ -196,7 +195,7 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     @dont_vary_protocol
     def test_with_server_time(self):
         timestamp = self.ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time, \
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.create_token_request(
                 key_name=self.key_name, key_secret=self.key_secret, query_time=True)
@@ -216,8 +215,8 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             return token_request
 
         ably = TestAppSync.get_ably_rest(key=None,
-                                           auth_callback=auth_callback,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                         auth_callback=auth_callback,
+                                         use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
         assert isinstance(token, TokenDetails)
@@ -232,8 +231,8 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             return token_request.to_dict()
 
         ably = TestAppSync.get_ably_rest(key=None,
-                                           auth_callback=auth_callback,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                         auth_callback=auth_callback,
+                                         use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
         assert isinstance(token, TokenDetails)
@@ -308,7 +307,7 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             return token_request
 
         ably = TestAppSync.get_ably_rest(key=None, auth_callback=auth_callback,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                         use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
 

@@ -1,12 +1,11 @@
 import base64
 import re
 import time
+from urllib.parse import urljoin
 
 import httpx
 import mock
 import pytest
-from urllib.parse import urljoin
-
 import respx
 from httpx import Response
 

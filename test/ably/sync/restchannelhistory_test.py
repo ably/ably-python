@@ -1,10 +1,10 @@
 import logging
+
 import pytest
 import respx
 
 from ably import AblyException
 from ably.http.paginatedresult import PaginatedResult
-
 from test.ably.testapp import TestAppSync
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
@@ -39,13 +39,13 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
         message_contents = {m.name: m for m in messages}
         assert "This is a string message payload" == message_contents["history0"].data, \
-               "Expect history0 to be expected String)"
+            "Expect history0 to be expected String)"
         assert b"This is a byte[] message payload" == message_contents["history1"].data, \
-               "Expect history1 to be expected byte[]"
+            "Expect history1 to be expected byte[]"
         assert {"test": "This is a JSONObject message payload"} == message_contents["history2"].data, \
-               "Expect history2 to be expected JSONObject"
+            "Expect history2 to be expected JSONObject"
         assert ["This is a JSONArray message payload"] == message_contents["history3"].data, \
-               "Expect history3 to be expected JSONObject"
+            "Expect history3 to be expected JSONObject"
 
         expected_message_history = [
             message_contents['history3'],
@@ -176,7 +176,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards', start=interval_start,
-                                         end=interval_end)
+                                   end=interval_end)
 
         messages = history.items
         assert 20 == len(messages)
@@ -202,7 +202,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards', start=interval_start,
-                                         end=interval_end)
+                                   end=interval_end)
 
         messages = history.items
         assert 20 == len(messages)

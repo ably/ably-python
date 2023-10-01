@@ -2,7 +2,7 @@ import json
 import os
 import logging
 
-from ably.executer.decorator import optional_sync, force_sync
+from ably.executer.decorator import force_sync
 from ably.rest.rest import AblyRest
 from ably.types.capability import Capability
 from ably.types.options import Options

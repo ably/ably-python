@@ -61,18 +61,18 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         assert item['name'] == 'event0'
         assert item['data'] == 'lorem ipsum 0'
 
-        assert result.status_code == 200     # HP4
-        assert result.success is True        # HP5
-        assert result.error_code is None     # HP6
+        assert result.status_code == 200  # HP4
+        assert result.success is True  # HP5
+        assert result.error_code is None  # HP6
         assert result.error_message is None  # HP7
-        assert isinstance(result.headers, list)   # HP7
+        assert isinstance(result.headers, list)  # HP7
 
     @dont_vary_protocol
     def test_not_found(self):
         result = self.ably.request('GET', '/not-found', version=Defaults.protocol_version)
         assert isinstance(result, HttpPaginatedResponse)  # RSC19d
-        assert result.status_code == 404             # HP4
-        assert result.success is False               # HP5
+        assert result.status_code == 404  # HP4
+        assert result.success is False  # HP5
 
     @dont_vary_protocol
     def test_error(self):

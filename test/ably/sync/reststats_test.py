@@ -1,14 +1,13 @@
+import logging
 from datetime import datetime
 from datetime import timedelta
-import logging
 
 import pytest
 
+from ably.http.paginatedresult import PaginatedResult
 from ably.types.stats import Stats
 from ably.util.exceptions import AblyException
-from ably.http.paginatedresult import PaginatedResult
-
-from test.ably.testapp import TestApp, TestAppSync
+from test.ably.testapp import TestAppSync
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
