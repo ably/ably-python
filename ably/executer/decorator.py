@@ -25,7 +25,7 @@ def force_sync(fn):
         if asyncio.iscoroutine(res):
             # Handle calls from app eventloop on the same loop, return awaitable
             if caller_eventloop is not None and caller_eventloop == app_loop:
-                return app_loop.create_task(res)
+                return res
 
             # Block the caller till result is returned
             future = asyncio.run_coroutine_threadsafe(res, app_loop)
@@ -50,7 +50,7 @@ def optional_sync(fn):
 
         # Return awaitable like a normal async method if sync is not enabled
         if not self.sync_enabled:
-            return asyncio.create_task(fn(self, *args, **kwargs))
+            return fn(self, *args, **kwargs)
 
         # Handle result of the given async method, with blocking behaviour
         caller_eventloop = None
@@ -64,7 +64,7 @@ def optional_sync(fn):
         if asyncio.iscoroutine(res):
             # Handle calls from app eventloop on the same loop, return awaitable
             if caller_eventloop is not None and caller_eventloop == app_loop:
-                return app_loop.create_task(res)
+                return res
 
             # Block the caller till result is returned
             future = asyncio.run_coroutine_threadsafe(res, app_loop)
@@ -89,7 +89,7 @@ def close_app_eventloop(fn):
         app_eventloop: events = AppEventLoop.current()
         if caller_eventloop is not None:
             app_eventloop.close()
-            return caller_eventloop.create_task(fn(*args, **kwargs))
+            return fn(*args, **kwargs)
         else:
             future = asyncio.run_coroutine_threadsafe(fn(*args, **kwargs), app_eventloop.loop)
             result = future.result()
