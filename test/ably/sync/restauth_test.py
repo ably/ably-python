@@ -413,7 +413,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
     def test_with_callback(self):
         called_token_params = {'ttl': '3600000'}
 
-        def callback(token_params):
+        async def callback(token_params):
             assert token_params == called_token_params
             return 'token_string'
 
@@ -424,7 +424,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         assert isinstance(token_details, TokenDetails)
         assert 'token_string' == token_details.token
 
-        def callback(token_params):
+        async def callback(token_params):
             assert token_params == called_token_params
             return TokenDetails(token='another_token_string')
 

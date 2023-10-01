@@ -82,6 +82,7 @@ class AblyRest:
     def __enter__(self):
         return self
 
+    @run_safe
     @catch_all
     async def stats(self, direction: Optional[str] = None, start=None, end=None, params: Optional[dict] = None,
                     limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
@@ -91,8 +92,8 @@ class AblyRest:
         return await PaginatedResult.paginated_query(
             self.http, url=url, response_processor=stats_response_processor)
 
-    @catch_all
     @run_safe
+    @catch_all
     async def time(self, timeout: Optional[float] = None) -> float:
         """Returns the current server time in ms since the unix epoch"""
         r = await self.http.get('/time', skip_auth=True, timeout=timeout)

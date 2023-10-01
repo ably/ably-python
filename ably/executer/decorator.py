@@ -34,8 +34,8 @@ def run_safe(fn):
 
             # Handle calls from external eventloop, post them on app eventloop
             # Return awaitable back to external_eventloop
-            if caller_eventloop is not None and caller_eventloop.is_running():
-                return asyncio.wrap_future(future)
+            # if caller_eventloop is not None and caller_eventloop.is_running():
+            #     return asyncio.wrap_future(future)
 
             # If called from regular function, return blocking result
             return future.result()

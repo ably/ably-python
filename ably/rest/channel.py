@@ -29,8 +29,8 @@ class Channel(SingleDispatch):
         self.options = options
         self.__presence = Presence(self)
 
-    @catch_all
     @run_safe
+    @catch_all
     async def history(self, direction=None, limit: int = None, start=None, end=None):
         """Returns the history for this channel"""
         params = format_params({}, direction=direction, start=start, end=end, limit=limit)
@@ -83,12 +83,10 @@ class Channel(SingleDispatch):
         raise TypeError('Unexpected type %s' % type(arg))
 
     @_publish.register(Message)
-    @run_safe
     async def publish_message(self, message, params=None, timeout=None):
         return await self.publish_messages([message], params, timeout=timeout)
 
     @_publish.register(list)
-    @run_safe
     async def publish_messages(self, messages, params=None, timeout=None):
         request_body = self.__publish_request_body(messages)
         if not self.ably.options.use_binary_protocol:
@@ -103,7 +101,6 @@ class Channel(SingleDispatch):
         return await self.ably.http.post(path, body=request_body, timeout=timeout)
 
     @_publish.register(str)
-    @run_safe
     async def publish_name_data(self, name, data, timeout=None):
         messages = [Message(name, data)]
         return await self.publish_messages(messages, timeout=timeout)

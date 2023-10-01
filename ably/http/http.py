@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 
 def reauth_if_expired(func):
+
     @functools.wraps(func)
     async def wrapper(rest, *args, **kwargs):
         if kwargs.get("skip_auth"):
@@ -230,26 +231,31 @@ class Http:
                     if retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration:
                         raise e
 
+    @run_safe
     async def delete(self, url, headers=None, skip_auth=False, timeout=None):
         result = await self.make_request('DELETE', url, headers=headers,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
 
+    @run_safe
     async def get(self, url, headers=None, skip_auth=False, timeout=None):
         result = await self.make_request('GET', url, headers=headers,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
 
+    @run_safe
     async def patch(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         result = await self.make_request('PATCH', url, headers=headers, body=body,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
 
+    @run_safe
     async def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         result = await self.make_request('POST', url, headers=headers, body=body,
                                          skip_auth=skip_auth, timeout=timeout)
         return result
 
+    @run_safe
     async def put(self, url, headers=None, body=None, skip_auth=False, timeout=None):
         result = await self.make_request('PUT', url, headers=headers, body=body,
                                          skip_auth=skip_auth, timeout=timeout)
