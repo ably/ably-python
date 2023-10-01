@@ -20,6 +20,8 @@ from test.ably.utils import BaseAsyncTestCase
 class TestRestHttp(BaseAsyncTestCase):
     def test_max_retry_attempts_and_timeouts_defaults(self):
         ably = AblyRest(token="foo")
+        ably.sync_enabled = True
+
         assert 'http_open_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
         assert 'http_request_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
 
@@ -33,6 +35,8 @@ class TestRestHttp(BaseAsyncTestCase):
 
     def test_cumulative_timeout(self):
         ably = AblyRest(token="foo")
+        ably.sync_enabled = True
+
         assert 'http_max_retry_duration' in ably.http.CONNECTION_RETRY_DEFAULTS
 
         ably.options.http_max_retry_duration = 0.5
@@ -50,6 +54,7 @@ class TestRestHttp(BaseAsyncTestCase):
 
     def test_host_fallback(self):
         ably = AblyRest(token="foo")
+        ably.sync_enabled = True
 
         def make_url(host):
             base_url = "%s://%s:%d" % (ably.http.preferred_scheme,
@@ -82,6 +87,7 @@ class TestRestHttp(BaseAsyncTestCase):
     def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
         ably = AblyRest(token="foo", rest_host=custom_host)
+        ably.sync_enabled = True
 
         mock_route = respx.get("https://example.org").mock(side_effect=httpx.RequestError(''))
 
@@ -132,6 +138,7 @@ class TestRestHttp(BaseAsyncTestCase):
     def test_no_retry_if_not_500_to_599_http_code(self):
         default_host = Options().get_rest_host()
         ably = AblyRest(token="foo")
+        ably.sync_enabled = True
 
         default_url = "%s://%s:%d/" % (
             ably.http.preferred_scheme,
@@ -157,6 +164,7 @@ class TestRestHttp(BaseAsyncTestCase):
         """
 
         ably = AblyRest(token="foo")
+        ably.sync_enabled = True
 
         def raise_ably_exception(*args, **kwargs):
             raise AblyException(message="", status_code=500, code=50000)
@@ -174,6 +182,7 @@ class TestRestHttp(BaseAsyncTestCase):
         ably = AblyRest(
             token="foo", http_request_timeout=30, http_open_timeout=8,
             http_max_retry_count=6, http_max_retry_duration=20)
+        ably.sync_enabled = True
 
         assert ably.http.http_request_timeout == 30
         assert ably.http.http_open_timeout == 8

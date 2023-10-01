@@ -96,6 +96,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         # Timeout
         timeout = 0.000001
         ably = AblyRest(token="foo", http_request_timeout=timeout)
+        ably.sync_enabled = True
         assert ably.http.http_request_timeout == timeout
         with pytest.raises(httpx.ReadTimeout):
             ably.request('GET', '/time', version=Defaults.protocol_version)
@@ -122,6 +123,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
                         port=self.test_vars["port"],
                         tls_port=self.test_vars["tls_port"],
                         tls=self.test_vars["tls"])
+        ably.sync_enabled = True
         with pytest.raises(httpx.ConnectError):
             ably.request('GET', '/time', version=Defaults.protocol_version)
         ably.close()

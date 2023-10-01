@@ -317,6 +317,7 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     @dont_vary_protocol
     def test_hmac(self):
         ably = AblyRest(key_name='a_key_name', key_secret='a_secret')
+        ably.sync_enabled = True
         token_params = {
             'ttl': 1000,
             'nonce': 'abcde100',
