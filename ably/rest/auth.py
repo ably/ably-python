@@ -189,8 +189,13 @@ class Auth:
         log.debug("Token Params: %s" % token_params)
         if auth_callback:
             log.debug("using token auth with authCallback")
+            # handle auth_callback in accordance with async/blocking nature of the implementation
             try:
-                token_request = await auth_callback(token_params)
+                res = auth_callback(token_params)
+                if asyncio.iscoroutine(res):
+                    token_request = await res
+                else:
+                    token_request = res
             except Exception as e:
                 raise AblyException("auth_callback raised an exception", 401, 40170, cause=e)
         elif auth_url:
