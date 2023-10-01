@@ -105,10 +105,7 @@ class Auth:
         token_details = await self._ensure_valid_auth_credentials(token_params, auth_options, force)
 
         if self.ably._is_realtime:
-            realtime_loop = self.ably.connection.connection_manager.options.loop
-            future = asyncio.run_coroutine_threadsafe(
-                self.ably.connection.connection_manager.on_auth_updated(token_details), realtime_loop)
-            await asyncio.wrap_future(future)
+            await self.ably.connection.connection_manager.on_auth_updated(token_details)
 
         return token_details
 
