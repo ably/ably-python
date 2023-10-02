@@ -113,22 +113,29 @@ def close_app_eventloop(fn):
     import asyncio
 
     @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
+    def wrapper(self, *args, **kwargs):
 
+        app_loop = AppEventLoop.get_global()
+        # Handle result of the given async method, with blocking behaviour
         caller_eventloop = None
         try:
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
 
-        app_eventloop: events = AppEventLoop.get_global()
-        if caller_eventloop is not None:
-            app_eventloop.close()
-            return fn(*args, **kwargs)
-        else:
-            future = asyncio.run_coroutine_threadsafe(fn(*args, **kwargs), app_eventloop.loop)
-            result = future.result()
-            app_eventloop.close()
-            return result
+        # Handle calls from app eventloop on the same loop, return awaitable
+        if caller_eventloop is not None and caller_eventloop == app_loop.loop:
+            return fn(self, *args, **kwargs)
+
+        # Return awaitable as is!
+        if not self.sync_enabled:
+            app_loop.close()
+            return fn(self, *args, **kwargs)
+
+        # Block the caller till result is returned
+        future = asyncio.run_coroutine_threadsafe(fn(self, *args, **kwargs), app_loop.loop)
+        result = future.result()
+        app_loop.close()
+        return result
 
     return wrapper
