@@ -131,7 +131,7 @@ class TestRestHttp(BaseAsyncTestCase):
             ably.time()
             assert state['errors'] == 2
 
-        client.aclose()
+        ably.app_loop.run_sync(client.aclose())
         ably.close()
 
     @respx.mock

@@ -30,6 +30,21 @@ class AppEventLoop:
         app_loop.is_active = True
         return app_loop
 
+    def run_sync(self, coro):
+        # todo - can only handle run_sync from different thread than app_loop
+        # caller_eventloop = None
+        # try:
+        #     caller_eventloop: events = asyncio.get_running_loop()
+        # except Exception:
+        #     pass
+        # Handle calls from app eventloop on the same loop, return awaitable
+        # if caller_eventloop is not None and caller_eventloop == self.loop:
+        #     task = self.loop.create_task(coro)
+        #     task.add_done_callback
+
+        future = asyncio.run_coroutine_threadsafe(coro, self.loop)
+        return future.result()
+
     def close(self) -> events:
         if self.loop is not None and self.loop.is_running():
             self.loop.call_soon_threadsafe(self.loop.stop)

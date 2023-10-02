@@ -10,7 +10,7 @@ import mock
 import msgpack
 import pytest
 
-from ably import AblyException, IncompatibleClientIdException
+from ably import AblyException, IncompatibleClientIdException, AblyRest
 from ably import api_version
 from ably.rest.auth import Auth
 from ably.types.message import Message
@@ -522,14 +522,15 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         assert request_body[0]['id'] == 'foobar'
         assert 'id' not in request_body[1]
 
-    def get_ably_rest(self, *args, **kwargs):
+    def get_ably_rest(self, *args, **kwargs) -> AblyRest:
         kwargs['use_binary_protocol'] = self.use_binary_protocol
         return TestAppSync.get_ably_rest(*args, **kwargs)
 
     # RSL1k4
     def test_idempotent_library_generated_retry(self):
         test_vars = TestAppSync.get_test_vars()
-        ably = self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[test_vars["host"]] * 3)
+        ably: AblyRest = self.get_ably_rest(idempotent_rest_publishing=True,
+                                            fallback_hosts=[test_vars["host"]] * 3)
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}
@@ -550,7 +551,8 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         assert state['failures'] == 2
         history = channel.history()
         assert len(history.items) == 1
-        client.aclose()
+
+        ably.app_loop.run_sync(client.aclose())
         ably.close()
 
     # RSL1k5
