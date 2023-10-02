@@ -19,7 +19,7 @@ def force_sync(fn):
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        app_loop: events = AppEventLoop.current().loop
+        app_loop: events = AppEventLoop.get_global().loop
 
         res = fn(*args, **kwargs)
         if asyncio.iscoroutine(res):
@@ -57,7 +57,7 @@ def optional_sync(fn):
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        app_loop: events = AppEventLoop.current().loop
+        app_loop: events = AppEventLoop.get_global().loop
 
         res = fn(self, *args, **kwargs)
         if asyncio.iscoroutine(res):
@@ -91,7 +91,7 @@ def run_safe_async(fn):
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        app_loop: events = AppEventLoop.current().loop
+        app_loop: events = AppEventLoop.get_global().loop
 
         res = fn(*args, **kwargs)
         if asyncio.iscoroutine(res):
@@ -121,7 +121,7 @@ def close_app_eventloop(fn):
         except Exception:
             pass
 
-        app_eventloop: events = AppEventLoop.current()
+        app_eventloop: events = AppEventLoop.get_global()
         if caller_eventloop is not None:
             app_eventloop.close()
             return fn(*args, **kwargs)

@@ -4,32 +4,35 @@ from asyncio import events
 
 
 class AppEventLoop:
+    _global: 'AppEventLoop' = None
+
     loop: events
     thread: threading
-    active: 'AppEventLoop' = None
+    is_active: bool
 
     def __init__(self):
         self.loop = None
         self.thread = None
+        self.is_active = False
 
     @staticmethod
-    def current() -> 'AppEventLoop':
-        if (AppEventLoop.active is None or
-                not AppEventLoop.active.loop.is_running()):
-            AppEventLoop.active = AppEventLoop()
-            AppEventLoop.active.__create_if_not_exist()
-        return AppEventLoop.active
+    def get_global() -> 'AppEventLoop':
+        if AppEventLoop._global is None or not AppEventLoop._global.is_active:
+            AppEventLoop._global = AppEventLoop.create()
+        return AppEventLoop._global
 
-    def __create_if_not_exist(self):
-        if self.loop is None or self.loop.is_closed():
-            self.loop = asyncio.new_event_loop()
-        if not self.loop.is_running():
-            self.thread = threading.Thread(
-                target=self.loop.run_forever,
-                daemon=True)
-            self.thread.start()
+    @staticmethod
+    def create() -> 'AppEventLoop':
+        app_loop = AppEventLoop()
+        app_loop.loop = asyncio.new_event_loop()
+        app_loop.thread = threading.Thread(target=app_loop.loop.run_forever)
+        app_loop.thread.start()
+        app_loop.is_active = True
+        return app_loop
 
     def close(self) -> events:
         if self.loop is not None and self.loop.is_running():
             self.loop.call_soon_threadsafe(self.loop.stop)
+        if self.thread is not None:
             self.thread.join()
+        self.is_active = False

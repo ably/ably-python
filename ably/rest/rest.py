@@ -3,6 +3,7 @@ from typing import Optional
 from urllib.parse import urlencode
 
 from ably.executer.decorator import optional_sync, close_app_eventloop
+from ably.executer.eventloop import AppEventLoop
 from ably.http.http import Http
 from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
 from ably.http.paginatedresult import format_params
@@ -63,6 +64,7 @@ class AblyRest:
         else:
             options = Options(**kwargs)
 
+        self.__loop = options.loop
         try:
             self._is_realtime
         except AttributeError:
@@ -71,7 +73,6 @@ class AblyRest:
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
         self.__http.auth = self.__auth
-
         self.__channels = Channels(self)
         self.__options = options
         self.__push = Push(self)
@@ -117,9 +118,16 @@ class AblyRest:
     def sync_enabled(self):
         return self.__sync_enabled
 
+    @property
+    def app_loop(self):
+        return self.__loop
+
     @sync_enabled.setter
     def sync_enabled(self, enable_sync):
         self.__sync_enabled = enable_sync
+        if enable_sync:
+            if self.__loop is None:
+                self.__loop = AppEventLoop.get_global()
 
     @property
     def http(self):
