@@ -67,7 +67,7 @@ class AblyRest:
         self.__sync_enabled = options.sync_enabled
         if self.__sync_enabled:
             if options.loop is None:
-                self.__app_loop = AppEventLoop.create(True)
+                self.__app_loop = AppEventLoop.create()
             else:
                 self.__app_loop = AppEventLoop(loop=options.loop)
 
