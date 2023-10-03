@@ -78,6 +78,10 @@ class PaginatedResult:
     def sync_enabled(self):
         return self.__http.sync_enabled
 
+    @property
+    def app_loop(self):
+        return self.__http.app_loop
+
     async def __get_rel(self, rel_req):
         if rel_req is None:
             return None

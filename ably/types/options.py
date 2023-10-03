@@ -14,7 +14,8 @@ class Options(AuthOptions):
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
                  fallback_retry_timeout=None, disconnected_retry_timeout=None, idempotent_rest_publishing=None,
                  loop=None, auto_connect=True, suspended_retry_timeout=None, connectivity_check_url=None,
-                 channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False, **kwargs):
+                 channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False, sync_enabled=False,
+                 **kwargs):
 
         super().__init__(**kwargs)
 
@@ -70,6 +71,7 @@ class Options(AuthOptions):
         self.__disconnected_retry_timeout = disconnected_retry_timeout
         self.__channel_retry_timeout = channel_retry_timeout
         self.__idempotent_rest_publishing = idempotent_rest_publishing
+        self.__sync_enabled = sync_enabled
         self.__loop = loop
         self.__auto_connect = auto_connect
         self.__connection_state_ttl = connection_state_ttl
@@ -221,6 +223,10 @@ class Options(AuthOptions):
     @property
     def idempotent_rest_publishing(self):
         return self.__idempotent_rest_publishing
+
+    @property
+    def sync_enabled(self):
+        return self.__sync_enabled
 
     @property
     def loop(self):

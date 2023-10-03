@@ -64,12 +64,18 @@ class AblyRest:
         else:
             options = Options(**kwargs)
 
-        self.__loop = options.loop
+        self.__sync_enabled = options.sync_enabled
+        if self.__sync_enabled:
+            if options.loop is None:
+                self.__app_loop = AppEventLoop.create()
+            else:
+                self.__app_loop = AppEventLoop(loop=options.loop)
+
         try:
             self._is_realtime
         except AttributeError:
             self._is_realtime = False
-        self.__sync_enabled = False
+
         self.__http = Http(self, options)
         self.__auth = Auth(self, options)
         self.__http.auth = self.__auth
@@ -120,14 +126,7 @@ class AblyRest:
 
     @property
     def app_loop(self):
-        return self.__loop
-
-    @sync_enabled.setter
-    def sync_enabled(self, enable_sync):
-        self.__sync_enabled = enable_sync
-        if enable_sync:
-            if self.__loop is None:
-                self.__loop = AppEventLoop.get_global()
+        return self.__app_loop
 
     @property
     def http(self):

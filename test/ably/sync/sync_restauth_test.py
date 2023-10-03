@@ -81,8 +81,7 @@ class TestAuth(BaseAsyncTestCase):
 
     # RSA11
     def test_request_basic_auth_header(self):
-        ably = AblyRest(key_secret='foo', key_name='bar')
-        ably.sync_enabled = True
+        ably = AblyRest(key_secret='foo', key_name='bar', sync_enabled=True)
         with mock.patch.object(AsyncClient, 'send') as get_mock:
             try:
                 ably.http.get('/time', skip_auth=False)
@@ -91,11 +90,11 @@ class TestAuth(BaseAsyncTestCase):
         request = get_mock.call_args_list[0][0][0]
         authorization = request.headers['Authorization']
         assert authorization == 'Basic %s' % base64.b64encode('bar:foo'.encode('ascii')).decode('utf-8')
-
+        ably.close()
     # RSA7e2
+
     def test_request_basic_auth_header_with_client_id(self):
-        ably = AblyRest(key_secret='foo', key_name='bar', client_id='client_id')
-        ably.sync_enabled = True
+        ably = AblyRest(key_secret='foo', key_name='bar', client_id='client_id', sync_enabled=True)
         with mock.patch.object(AsyncClient, 'send') as get_mock:
             try:
                 ably.http.get('/time', skip_auth=False)
@@ -104,10 +103,10 @@ class TestAuth(BaseAsyncTestCase):
         request = get_mock.call_args_list[0][0][0]
         client_id = request.headers['x-ably-clientid']
         assert client_id == base64.b64encode('client_id'.encode('ascii')).decode('utf-8')
+        ably.close()
 
     def test_request_token_auth_header(self):
-        ably = AblyRest(token='not_a_real_token')
-        ably.sync_enabled = True
+        ably = AblyRest(token='not_a_real_token', sync_enabled=True)
         with mock.patch.object(AsyncClient, 'send') as get_mock:
             try:
                 ably.http.get('/time', skip_auth=False)
@@ -116,6 +115,7 @@ class TestAuth(BaseAsyncTestCase):
         request = get_mock.call_args_list[0][0][0]
         authorization = request.headers['Authorization']
         assert authorization == 'Bearer %s' % base64.b64encode('not_a_real_token'.encode('ascii')).decode('utf-8')
+        ably.close()
 
     def test_if_cant_authenticate_via_token(self):
         with pytest.raises(ValueError):

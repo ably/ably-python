@@ -310,6 +310,10 @@ class Auth:
         return self.ably.sync_enabled
 
     @property
+    def app_loop(self):
+        return self.ably.app_loop
+
+    @property
     def ably(self):
         return self.__ably
 

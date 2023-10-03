@@ -57,7 +57,7 @@ def optional_sync(fn):
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        app_loop: events = AppEventLoop.get_global().loop
+        app_loop: events = self.app_loop.loop
 
         res = fn(self, *args, **kwargs)
         if asyncio.iscoroutine(res):
@@ -85,15 +85,15 @@ def run_safe_async(fn):
     import asyncio
 
     @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
+    def wrapper(self, *args, **kwargs):
         caller_eventloop = None
         try:
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        app_loop: events = AppEventLoop.get_global().loop
+        app_loop: events = self.app_loop.loop
 
-        res = fn(*args, **kwargs)
+        res = fn(self, *args, **kwargs)
         if asyncio.iscoroutine(res):
             # Handle calls from app eventloop on the same loop, return awaitable
             if caller_eventloop is not None and caller_eventloop == app_loop:
@@ -115,19 +115,8 @@ def close_app_eventloop(fn):
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
 
-        app_loop = AppEventLoop.get_global()
-        # Handle result of the given async method, with blocking behaviour
-        caller_eventloop = None
-        try:
-            caller_eventloop: events = asyncio.get_running_loop()
-        except Exception:
-            pass
+        app_loop: events = self.app_loop
 
-        # Handle calls from app eventloop on the same loop, return awaitable
-        if caller_eventloop is not None and caller_eventloop == app_loop.loop:
-            return fn(self, *args, **kwargs)
-
-        # Return awaitable as is!
         if not self.sync_enabled:
             app_loop.close()
             return fn(self, *args, **kwargs)

@@ -173,6 +173,10 @@ class Presence:
     def sync_enabled(self):
         return self.__http.sync_enabled
 
+    @property
+    def app_loop(self):
+        return self.__http.app_loop
+
 
 def make_presence_response_handler(cipher):
     def encrypted_presence_response_handler(response):

@@ -266,6 +266,10 @@ class Http:
         return self.__ably.sync_enabled
 
     @property
+    def app_loop(self):
+        return self.__ably.app_loop
+
+    @property
     def auth(self):
         return self.__auth
 
