@@ -114,14 +114,11 @@ def close_app_eventloop(fn):
 
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
-
-        app_loop: events = self.app_loop
-
+        # todo - this decorator will change if eventloop is also active for async operations
         if not self.sync_enabled:
-            app_loop.close()
             return fn(self, *args, **kwargs)
 
-        # Block the caller till result is returned
+        app_loop: events = self.app_loop
         future = asyncio.run_coroutine_threadsafe(fn(self, *args, **kwargs), app_loop.loop)
         result = future.result()
         app_loop.close()

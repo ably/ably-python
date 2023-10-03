@@ -10,7 +10,7 @@ class AppEventLoop:
     __thread: threading
     __is_active: bool
 
-    def __init__(self, loop=None, thread=None):
+    def __init__(self, loop, thread=None):
         if not loop.is_running:
             raise Exception("Provided eventloop must be in running state")
         self.__loop = loop
