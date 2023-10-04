@@ -65,17 +65,16 @@ class Rule:
             with open(outfilepath, "wb") as f:
                 f.write(result.encode(encoding))
 
-    def _unasync_tokens(self, tokens):
-        skip_next = False
-        for i, token in enumerate(tokens):
-            if skip_next:
-                skip_next = False
-                continue
+    def _unasync_tokens(self, tokens: list):
+        new_tokens = []
+        token_counter = 0
+        while token_counter < len(tokens):
+            token = tokens[token_counter]
 
             if token.src in ["async", "await"]:
                 # When removing async or await, we want to skip the following whitespace
                 # so that `print(await stuff)` becomes `print(stuff)` and not `print( stuff)`
-                skip_next = True
+                token_counter = token_counter + 1
             else:
                 if token.name == "NAME":
                     token = token._replace(src=self._unasync_name(token.src))
@@ -89,7 +88,34 @@ class Rule:
                         src=left_quote + self._unasync_name(name) + right_quote
                     )
 
-                yield token
+                new_tokens.append(token)
+            token_counter = token_counter + 1
+
+        return new_tokens
+
+        # for i, token in enumerate(tokens):
+        #     if skip_next:
+        #         skip_next = False
+        #         continue
+        #
+        #     if token.src in ["async", "await"]:
+        #         # When removing async or await, we want to skip the following whitespace
+        #         # so that `print(await stuff)` becomes `print(stuff)` and not `print( stuff)`
+        #         skip_next = True
+        #     else:
+        #         if token.name == "NAME":
+        #             token = token._replace(src=self._unasync_name(token.src))
+        #         elif token.name == "STRING":
+        #             left_quote, name, right_quote = (
+        #                 token.src[0],
+        #                 token.src[1:-1],
+        #                 token.src[-1],
+        #             )
+        #             token = token._replace(
+        #                 src=left_quote + self._unasync_name(name) + right_quote
+        #             )
+        #
+        #         yield token
 
     def _unasync_name(self, name):
         if name in self.token_replacements:
