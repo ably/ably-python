@@ -37,7 +37,7 @@ class AppEventLoop:
         return self.__loop
 
     def run_sync(self, coro):
-        return LoopHelper.force_sync(self.loop, coro)
+        return LoopHelper.run_safe_sync(self.loop, coro)
 
     def run_async(self, coro):
         return LoopHelper.run_safe_async(self.loop, coro)

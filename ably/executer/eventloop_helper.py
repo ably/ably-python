@@ -13,7 +13,7 @@ class LoopHelper:
 
     #
     @staticmethod
-    def force_sync(loop: events, coro):
+    def run_safe_sync(loop: events, coro):
         # Handle result of the given async method, with blocking behaviour
         caller_eventloop = None
         try:
