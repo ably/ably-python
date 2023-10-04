@@ -62,6 +62,7 @@ def optional_sync(fn):
         res = fn(self, *args, **kwargs)
         if asyncio.iscoroutine(res):
             # Handle calls from app eventloop on the same loop, return awaitable
+            # Can't wait/force block same thread/eventloop, eventloop will be blocked
             if caller_eventloop is not None and caller_eventloop == app_loop:
                 return res
 
@@ -102,7 +103,7 @@ def run_safe_async(fn):
             # Handle calls from external eventloop, post them on app eventloop
             # Return awaitable back to external_eventloop
             future = asyncio.run_coroutine_threadsafe(res, app_loop)
-            return asyncio.wrap_future(future)
+            return asyncio.wrap_future(future, loop=caller_eventloop)
 
         return res
 

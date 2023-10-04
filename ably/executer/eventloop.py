@@ -2,6 +2,8 @@ import asyncio
 import threading
 from asyncio import events
 
+from ably.executer.eventloop_helper import LoopHelper
+
 
 class AppEventLoop:
     _global: 'AppEventLoop' = None
@@ -18,43 +20,27 @@ class AppEventLoop:
         self.__is_active = True
 
     @staticmethod
-    def get_global() -> 'AppEventLoop':
-        if AppEventLoop._global is None or not AppEventLoop._global.__is_active:
-            AppEventLoop._global = AppEventLoop.create()
-        return AppEventLoop._global
+    def get_global(cls) -> 'AppEventLoop':
+        if cls._global is None or not cls._global.__is_active:
+            cls._global = cls.create(False)
+        return cls._global
 
     @staticmethod
-    def create() -> 'AppEventLoop':
+    def create(cls, background=True) -> 'AppEventLoop':
         loop = asyncio.new_event_loop()
-        thread = threading.Thread(target=loop.run_forever, daemon=True)
+        thread = threading.Thread(target=loop.run_forever, daemon=background)
         thread.start()
-        return AppEventLoop(loop, thread)
+        return cls(loop, thread)
 
     @property
     def loop(self):
         return self.__loop
 
-    def run(self, coro, callback):
-        self.__loop.call_soon()
-
     def run_sync(self, coro):
-        # todo - can only handle run_sync from different thread than app_loop
-        # caller_eventloop = None
-        # try:
-        #     caller_eventloop: events = asyncio.get_running_loop()
-        # except Exception:
-        #     pass
-        # Handle calls from app eventloop on the same loop, return awaitable
-        # if caller_eventloop is not None and caller_eventloop == self.loop:
-        #     task = self.loop.create_task(coro)
-        #     task.add_done_callback
-
-        future = asyncio.run_coroutine_threadsafe(coro, self.__loop)
-        return future.result()
+        return LoopHelper.force_sync(self.loop, coro)
 
     def run_async(self, coro):
-        future = asyncio.run_coroutine_threadsafe(coro, self.__loop)
-        return asyncio.wrap_future(future)
+        return LoopHelper.run_safe_async(self.loop, coro)
 
     def close(self) -> events:
         if self.__thread is not None:
