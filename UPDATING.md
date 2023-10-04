@@ -88,7 +88,7 @@ Because of this breaking change, every call that interacts with the Ably REST AP
 
 Important Update - 
 - If you want to keep using old synchronous style API, make sure to set `sync_enabled` param while passing options to `AblyRest` client.
-- This is applicable only for Ably REST async APIs.
+- This is applicable only for Ably REST APIs.
 
 ```python
 from ably import AblyRest
@@ -101,6 +101,8 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+- `AblyRest` instance in `sync` mode is completely thread-safe, uses `internal eventloop` to handle requests.
+- If you are using this feature in multi-threaded environments like WSGI server application, make sure to use shared `AblyRest` instance/ injected singleton for better performance.
 
 #### Publishing Messages
 
