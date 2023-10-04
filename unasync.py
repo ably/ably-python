@@ -22,6 +22,10 @@ _ASYNC_TO_SYNC = {
     "StopAsyncIteration": "StopIteration",
 }
 
+_IMPORTS_REPLACE = {
+
+}
+
 
 class Rule:
     """A single set of rules for 'unasync'ing file(s)"""
@@ -72,23 +76,26 @@ class Rule:
             token = tokens[token_counter]
 
             if token.src in ["async", "await"]:
-                # When removing async or await, we want to skip the following whitespace
-                # so that `print(await stuff)` becomes `print(stuff)` and not `print( stuff)`
-                token_counter = token_counter + 1
-            else:
-                if token.name == "NAME":
-                    token = token._replace(src=self._unasync_name(token.src))
-                elif token.name == "STRING":
-                    left_quote, name, right_quote = (
-                        token.src[0],
-                        token.src[1:-1],
-                        token.src[-1],
-                    )
-                    token = token._replace(
-                        src=left_quote + self._unasync_name(name) + right_quote
-                    )
+                token_counter = token_counter + 1  # When removing async or await, we want to skip the following whitespace
+                continue
+            elif token.name == "NAME":
+                if token.src == "from":
+                    if tokens[token_counter + 1].src == " ":
+                        token_counter = self._replace_import(tokens, token_counter, new_tokens)
+                        continue
+                    else:
+                        token = token._replace(src=self._unasync_name(token.src))
+            elif token.name == "STRING":
+                left_quote, name, right_quote = (
+                    token.src[0],
+                    token.src[1:-1],
+                    token.src[-1],
+                )
+                token = token._replace(
+                    src=left_quote + self._unasync_name(name) + right_quote
+                )
 
-                new_tokens.append(token)
+            new_tokens.append(token)
             token_counter = token_counter + 1
 
         return new_tokens
@@ -117,6 +124,26 @@ class Rule:
         #
         #         yield token
 
+    def _replace_import(self, tokens, token_counter, new_tokens: list):
+        new_tokens.append(tokens[token_counter])
+        new_tokens.append(tokens[token_counter + 1])
+
+        full_lib_name = ''
+        lib_name_counter = token_counter + 2
+        while True:
+            if tokens[lib_name_counter].src == " ":
+                break
+            full_lib_name = full_lib_name + tokens[lib_name_counter].src
+            lib_name_counter = lib_name_counter + 1
+
+        if full_lib_name in _IMPORTS_REPLACE:
+            for lib_name_token in _IMPORTS_REPLACE[full_lib_name].split("."):
+                new_tokens.append(tokenize_rt.Token("NAME", lib_name_token))
+                new_tokens.append(tokenize_rt.Token("OP", "."))
+        new_tokens.pop()
+
+        return lib_name_counter
+
     def _unasync_name(self, name):
         if name in self.token_replacements:
             return self.token_replacements[name]
@@ -141,15 +168,15 @@ def unasync_files(fpath_list, rules):
             found_rule._unasync_file(f)
 
 
+_IMPORTS_REPLACE["ably.http.paginatedresult"] = "ably.nako.paginatedresult"
 Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
-
-_ASYNC_TO_SYNC["http"] = "ably.sync.http.paginatedresult"
 
 src_dir_path = os.path.join(os.getcwd(), "ably", "rest")
 dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "rest")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
 os.makedirs(dest_dir_path, exist_ok=True)
+
 
 def find_files(dir_path, file_name_regex) -> list[str]:
     return glob.glob(os.path.join(dir_path, "*" + file_name_regex))
@@ -164,7 +191,6 @@ src_dir_path = os.path.join(os.getcwd(), "ably", "http")
 dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "http")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
-
 src_files = find_files(src_dir_path, ".py")
 
 unasync_files(src_files, (_DEFAULT_RULE,))
@@ -175,11 +201,9 @@ src_dir_path = os.path.join(os.getcwd(), "ably", "types")
 dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "types")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
-
 src_files = find_files(src_dir_path, "presence.py")
 
 unasync_files(src_files, (_DEFAULT_RULE,))
-
 
 # class _build_py(orig.build_py):
 #     """
