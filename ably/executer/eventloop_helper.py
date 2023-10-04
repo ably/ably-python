@@ -4,17 +4,17 @@ from concurrent.futures import Future
 
 
 class LoopHelper:
-    @classmethod
-    def run(cls, loop: events, coro, callback):
+    @staticmethod
+    def run(loop: events, coro, callback):
         raise "not implemented"
 
-    @classmethod
-    def run_safe(cls, loop: events, coro, callback):
+    @staticmethod
+    def run_safe(loop: events, coro, callback):
         raise "not implemented"
 
     #
-    @classmethod
-    def force_sync(cls, loop: events, coro):
+    @staticmethod
+    def force_sync(loop: events, coro):
         future: Future
         caller_eventloop = None
         try:
@@ -28,8 +28,8 @@ class LoopHelper:
         future = asyncio.run_coroutine_threadsafe(coro, loop)
         return future.result()
 
-    @classmethod
-    def run_safe_async(cls, loop: events, coro):
+    @staticmethod
+    def run_safe_async(loop: events, coro):
         caller_eventloop = None
         try:
             caller_eventloop: events = asyncio.get_running_loop()
@@ -45,8 +45,8 @@ class LoopHelper:
     #     # Run in the default loop's executor
     #     return await loop.run_in_executor(None, blocking_fn, blocking_fn_args)
 
-    @classmethod
+    @staticmethod
     # Run blocking function in default threadpool executor.
-    async def run_blocking_fn_async(cls, loop: events, blocking_fn, blocking_fn_args):
+    async def run_blocking_fn_async(loop: events, blocking_fn, blocking_fn_args):
         # Run in the default loop's executor
         return await loop.run_in_executor(None, blocking_fn, blocking_fn_args)

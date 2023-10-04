@@ -19,13 +19,13 @@ class AppEventLoop:
         self.__thread = thread
         self.__is_active = True
 
-    @staticmethod
+    @classmethod
     def get_global(cls) -> 'AppEventLoop':
         if cls._global is None or not cls._global.__is_active:
             cls._global = cls.create(False)
         return cls._global
 
-    @staticmethod
+    @classmethod
     def create(cls, background=True) -> 'AppEventLoop':
         loop = asyncio.new_event_loop()
         thread = threading.Thread(target=loop.run_forever, daemon=background)
