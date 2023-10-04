@@ -87,15 +87,14 @@ The 1.2.0 version introduces a breaking change, which changes the way of interac
 Because of this breaking change, every call that interacts with the Ably REST API must be refactored to this asynchronous way.
 
 Important Update - 
-- If you want to keep using old synchronous style API, make sure to set `sync_enabled` property of `AblyRest` client.
-- This is applicable for all new Ably REST async APIs.
+- If you want to keep using old synchronous style API, make sure to set `sync_enabled` param while passing options to `AblyRest` client.
+- This is applicable only for Ably REST async APIs.
 
 ```python
 from ably import AblyRest
 
 def main():
-    ably = AblyRest('api:key')
-    ably.sync_enabled = True
+    ably = AblyRest('api:key', sync_enabled=True)
     channel = ably.channels.get("channel_name")
     channel.publish('event', 'message')
 
