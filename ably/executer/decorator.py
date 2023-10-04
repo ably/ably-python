@@ -10,9 +10,6 @@ def optional_sync(fn):
 
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
-        if not hasattr(self, 'sync_enabled'):
-            raise Exception("sync_enabled property should exist on instance to enable this feature")
-
         # Return awaitable as is!
         if not self.sync_enabled:
             return fn(self, *args, **kwargs)
