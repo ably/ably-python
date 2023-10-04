@@ -136,12 +136,16 @@ class Rule:
             full_lib_name = full_lib_name + tokens[lib_name_counter].src
             lib_name_counter = lib_name_counter + 1
 
-        if full_lib_name in _IMPORTS_REPLACE:
-            for lib_name_token in _IMPORTS_REPLACE[full_lib_name].split("."):
-                new_tokens.append(tokenize_rt.Token("NAME", lib_name_token))
-                new_tokens.append(tokenize_rt.Token("OP", "."))
-        new_tokens.pop()
-
+        for key, value in _IMPORTS_REPLACE.items():
+            if key in full_lib_name:
+                updated_lib_name = full_lib_name.replace(key, value)
+                for lib_name_part in updated_lib_name.split("."):
+                    new_tokens.append(tokenize_rt.Token("NAME", lib_name_part))
+                    new_tokens.append(tokenize_rt.Token("OP", "."))
+                if full_lib_name == key:
+                    new_tokens.pop()
+            else:
+                lib_name_counter = token_counter + 2
         return lib_name_counter
 
     def _unasync_name(self, name):
@@ -168,7 +172,7 @@ def unasync_files(fpath_list, rules):
             found_rule._unasync_file(f)
 
 
-_IMPORTS_REPLACE["ably.http.paginatedresult"] = "ably.nako.paginatedresult"
+_IMPORTS_REPLACE["ably.http.paginatedresult"] = "ably.dong.paginatedresult"
 Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
 
 src_dir_path = os.path.join(os.getcwd(), "ably", "rest")
