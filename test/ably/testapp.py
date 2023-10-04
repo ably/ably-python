@@ -2,12 +2,12 @@ import json
 import os
 import logging
 
-from ably.executer.decorator import force_sync
 from ably.rest.rest import AblyRest
 from ably.types.capability import Capability
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
 from ably.realtime.realtime import AblyRealtime
+from test.ably.decorator import force_sync
 
 log = logging.getLogger(__name__)
 
