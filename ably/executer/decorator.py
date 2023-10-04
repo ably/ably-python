@@ -7,7 +7,6 @@ def optional_sync(fn):
     Executes async function as a sync function if sync_enabled property on the given instance is true.
     This decorator should only be used on async methods/coroutines.
     '''
-    import asyncio
 
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
@@ -18,25 +17,7 @@ def optional_sync(fn):
         if not self.sync_enabled:
             return fn(self, *args, **kwargs)
 
-        # Handle result of the given async method, with blocking behaviour
-        caller_eventloop = None
-        try:
-            caller_eventloop: events = asyncio.get_running_loop()
-        except Exception:
-            pass
-        app_loop: events = self.app_loop.loop
-
-        res = fn(self, *args, **kwargs)
-        if asyncio.iscoroutine(res):
-            # Handle calls from app eventloop on the same loop, return awaitable
-            # Can't wait/force block same thread/eventloop, eventloop will be blocked
-            if caller_eventloop is not None and caller_eventloop == app_loop:
-                return res
-
-            # Block the caller till result is returned
-            future = asyncio.run_coroutine_threadsafe(res, app_loop)
-            return future.result()
-        return res
+        return self.app_loop.run_sync(fn(self, *args, **kwargs))
 
     return wrapper
 
@@ -50,35 +31,15 @@ def run_safe_async(fn):
     More information - https://github.com/ably/ably-python/issues/534
     This decorator should only be used on async methods/coroutines.
     '''
-    import asyncio
 
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
-        caller_eventloop = None
-        try:
-            caller_eventloop: events = asyncio.get_running_loop()
-        except Exception:
-            pass
-        app_loop: events = self.app_loop.loop
-
-        res = fn(self, *args, **kwargs)
-        if asyncio.iscoroutine(res):
-            # Handle calls from app eventloop on the same loop, return awaitable
-            if caller_eventloop is not None and caller_eventloop == app_loop:
-                return res
-
-            # Handle calls from external eventloop, post them on app eventloop
-            # Return awaitable back to external_eventloop
-            future = asyncio.run_coroutine_threadsafe(res, app_loop)
-            return asyncio.wrap_future(future, loop=caller_eventloop)
-
-        return res
+        return self.app_loop.run_async(fn(self, *args, **kwargs))
 
     return wrapper
 
 
 def close_app_eventloop(fn):
-    import asyncio
 
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
@@ -87,8 +48,7 @@ def close_app_eventloop(fn):
             return fn(self, *args, **kwargs)
 
         app_loop: events = self.app_loop
-        future = asyncio.run_coroutine_threadsafe(fn(self, *args, **kwargs), app_loop.loop)
-        result = future.result()
+        result = app_loop.run_sync(fn(self, *args, **kwargs))
         app_loop.close()
         return result
 

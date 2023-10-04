@@ -22,7 +22,7 @@ class AppEventLoop:
     @classmethod
     def get_global(cls) -> 'AppEventLoop':
         if cls._global is None or not cls._global.__is_active:
-            cls._global = cls.create(False)
+            cls._global = cls.create()
         return cls._global
 
     @classmethod

@@ -1,6 +1,5 @@
 import asyncio
 from asyncio import events
-from concurrent.futures import Future
 
 
 class LoopHelper:
@@ -15,18 +14,24 @@ class LoopHelper:
     #
     @staticmethod
     def force_sync(loop: events, coro):
-        future: Future
+        # Handle result of the given async method, with blocking behaviour
         caller_eventloop = None
         try:
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        # Handle calls from app eventloop on the same loop, return awaitable
-        if caller_eventloop is not None and caller_eventloop == loop:
-            raise "can't wait/force sync on the same loop, eventloop will be blocked"
 
-        future = asyncio.run_coroutine_threadsafe(coro, loop)
-        return future.result()
+        if asyncio.iscoroutine(coro):
+            # Handle calls from app eventloop on the same loop, return awaitable
+            # Can't wait on calling thread/eventloop, it will be blocked,
+            # In blocking state, it can't execute coroutine at the same time.
+            if caller_eventloop is not None and caller_eventloop == loop:
+                return coro
+
+            # Block the caller till result is returned
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
+            return future.result()
+        return coro
 
     @staticmethod
     def run_safe_async(loop: events, coro):
@@ -35,11 +40,18 @@ class LoopHelper:
             caller_eventloop: events = asyncio.get_running_loop()
         except Exception:
             pass
-        if caller_eventloop is not None and caller_eventloop == loop:
-            return coro
 
-        future = asyncio.run_coroutine_threadsafe(coro, loop)
-        return asyncio.wrap_future(future, loop=caller_eventloop)
+        if asyncio.iscoroutine(coro):
+            # Handle calls from app eventloop on the same loop, return awaitable
+            if caller_eventloop is not None and caller_eventloop == loop:
+                return coro
+
+            # Handle calls from external eventloop, post them on app eventloop
+            # Return awaitable back to external_eventloop
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
+            return asyncio.wrap_future(future, loop=caller_eventloop)
+
+        return coro
 
     # async def force_regular_fn_async(loop: events, regular_fn, regular_fn_args):
     #     # Run in the default loop's executor
