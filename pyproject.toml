@@ -50,6 +50,7 @@ respx = "^0.20.0"
 importlib-metadata = "^4.12"
 pytest-timeout = "^2.1.0"
 async-case = { version = "^10.1.0", python = "~3.7" }
+tokenize_rt = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
