@@ -224,6 +224,8 @@ _IMPORTS_REPLACE["test.ably"] = "test.ably.sync"
 _STRING_REPLACE['/../assets/testAppSpec.json'] = '/../../assets/testAppSpec.json'
 _STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.Auth.request_token'
 _STRING_REPLACE['ably.rest.auth.TokenRequest'] = 'ably.sync.rest.auth.TokenRequest'
+_STRING_REPLACE['ably.rest.rest.Http.post'] = 'ably.sync.rest.rest.Http.post'
+_STRING_REPLACE['httpx.AsyncClient.send'] = 'httpx.Client.send'
 
 Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
 
