@@ -71,7 +71,8 @@ class Rule:
             tokens = tokenize_rt.src_to_tokens(f.read())
             tokens = self._unasync_tokens(tokens)
             result = tokenize_rt.tokens_to_src(tokens)
-            new_file_path = os.path.join(os.path.dirname(filepath), self.ouput_file_prefix + os.path.basename(filepath))
+            new_file_path = os.path.join(os.path.dirname(filepath),
+                                         self.ouput_file_prefix + os.path.basename(filepath))
             outfilepath = new_file_path.replace(self.fromdir, self.todir)
             os.makedirs(os.path.dirname(outfilepath), exist_ok=True)
             with open(outfilepath, "wb") as f:
