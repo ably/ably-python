@@ -78,7 +78,8 @@ class Rule:
             token = tokens[token_counter]
 
             if token.src in ["async", "await"]:
-                token_counter = token_counter + 2  # When removing async or await, we want to skip the following whitespace
+                # When removing async or await, we want to skip the following whitespace
+                token_counter = token_counter + 2
                 continue
             elif token.name == "NAME":
                 if token.src == "from":

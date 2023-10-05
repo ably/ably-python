@@ -23,7 +23,8 @@ _ASYNC_TO_SYNC = {
     "AsyncClient": "Client",
     "aclose": "close",
     "asyncSetUp": "setUp",
-    "asyncTearDown": "tearDown"
+    "asyncTearDown": "tearDown",
+    "AsyncMock": "Mock"
 }
 
 _IMPORTS_REPLACE = {
@@ -31,7 +32,6 @@ _IMPORTS_REPLACE = {
 }
 
 _STRING_REPLACE = {
-    '/../assets/testAppSpec.json': '/../../assets/testAppSpec.json'
 }
 
 
@@ -85,7 +85,8 @@ class Rule:
             if token.src == "'/../assets/testAppSpec.json'":
                 print("hi")
             if token.src in ["async", "await"]:
-                token_counter = token_counter + 2  # When removing async or await, we want to skip the following whitespace
+                # When removing async or await, we want to skip the following whitespace
+                token_counter = token_counter + 2
                 continue
             elif token.name == "NAME":
                 if token.src == "from":
@@ -180,10 +181,12 @@ def unasync_files(fpath_list, rules):
             found_rule._unasync_file(f)
 
 
-_IMPORTS_REPLACE["ably.http"] = "ably.sync.http"
-_IMPORTS_REPLACE["ably.rest"] = "ably.sync.rest"
-_IMPORTS_REPLACE["test.ably.testapp"] = "test.ably.sync.testapp"
-_IMPORTS_REPLACE["test.ably.utils"] = "test.ably.sync.utils"
+_IMPORTS_REPLACE["ably"] = "ably.sync"
+_IMPORTS_REPLACE["test.ably"] = "test.ably.sync"
+
+_STRING_REPLACE['/../assets/testAppSpec.json'] = '/../../assets/testAppSpec.json'
+_STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.Auth.request_token'
+_STRING_REPLACE['ably.rest.auth.TokenRequest'] = 'ably.sync.rest.auth.TokenRequest'
 
 Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
 
@@ -206,57 +209,7 @@ src_dir_path = os.path.join(os.getcwd(), "test", "ably")
 dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
-src_files = find_files(src_dir_path, "testapp.py")
+src_files = [os.path.join(os.getcwd(), "test", "ably", "testapp.py"),
+             os.path.join(os.getcwd(), "test", "ably", "utils.py")]
 
 unasync_files(src_files, (_DEFAULT_RULE,))
-
-src_dir_path = os.path.join(os.getcwd(), "test", "ably")
-dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync")
-_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
-
-src_files = find_files(src_dir_path, "utils.py")
-
-unasync_files(src_files, (_DEFAULT_RULE,))
-
-# class _build_py(orig.build_py):
-#     """
-#     Subclass build_py from setuptools to modify its behavior.
-#
-#     Convert files in _async dir from being asynchronous to synchronous
-#     and saves them in _sync dir.
-#     """
-#
-#     UNASYNC_RULES = (_DEFAULT_RULE,)
-#
-#     def run(self):
-#         rules = self.UNASYNC_RULES
-#
-#         self._updated_files = []
-#
-#         # Base class code
-#         if self.py_modules:
-#             self.build_modules()
-#         if self.packages:
-#             self.build_packages()
-#             self.build_package_data()
-#
-#         # Our modification!
-#         unasync_files(self._updated_files, rules)
-#
-#         # Remaining base class code
-#         self.byte_compile(self.get_outputs(include_bytecode=0))
-#
-#     def build_module(self, module, module_file, package):
-#         outfile, copied = super().build_module(module, module_file, package)
-#         if copied:
-#             self._updated_files.append(outfile)
-#         return outfile, copied
-#
-#
-# def cmdclass_build_py(rules=(_DEFAULT_RULE,)):
-#     """Creates a 'build_py' class for use within 'cmdclass={"build_py": ...}'"""
-#
-#     class _custom_build_py(_build_py):
-#         UNASYNC_RULES = rules
-#
-#     return _custom_build_py
