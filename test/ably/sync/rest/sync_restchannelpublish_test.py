@@ -18,7 +18,7 @@ from ably.sync.types.tokendetails import TokenDetails
 from ably.sync.util import case
 
 from test.ably.sync.testapp import TestApp
-from test.ably.sync.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from test.ably.sync.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, get_submodule_dir
 
 log = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
         expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
 
-        with mock.patch('ably.rest.rest.Http.post',
+        with mock.patch('ably.sync.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish(messages=expected_messages)
         assert post_mock.call_count == 1
@@ -185,7 +185,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = self.ably.channels[
             self.get_channel_name('persisted:null_name_and_data_keys_arent_sent_channel')]
 
-        with mock.patch('ably.rest.rest.Http.post',
+        with mock.patch('ably.sync.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish(name=None, data=None)
 
@@ -245,7 +245,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = self.ably_with_client_id.channels[
             self.get_channel_name('persisted:no_client_id_identified_client')]
 
-        with mock.patch('ably.rest.rest.Http.post',
+        with mock.patch('ably.sync.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish(name='publish', data='test')
 
@@ -385,8 +385,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             'binary': bytearray,
         }
 
-        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        path = os.path.join(root_dir, 'submodules', 'test-resources', 'messages-encoding.json')
+        path = os.path.join(get_submodule_dir(__file__), 'test-resources', 'messages-encoding.json')
         with open(path) as f:
             data = json.load(f)
             for input_msg in data['messages']:
@@ -545,7 +544,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
             return x
 
         messages = [Message('name1', 'data1')]
-        with mock.patch('httpx.AsyncClient.send', side_effect=side_effect, autospec=True):
+        with mock.patch('httpx.Client.send', side_effect=side_effect, autospec=True):
             channel.publish(messages=messages)
 
         assert state['failures'] == 2

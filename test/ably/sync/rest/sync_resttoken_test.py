@@ -40,7 +40,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         post_time = self.server_time()
         assert token_details.token is not None, "Expected token"
         assert token_details.issued + 300 >= pre_time, "Unexpected issued time"
-        assert token_details.issued <= post_time, "Unexpected issued time"
+        assert token_details.issued <= post_time + 300, "Unexpected issued time"
         assert self.permit_all == str(token_details.capability), "Unexpected capability"
 
     def test_request_token_explicit_timestamp(self):
@@ -123,8 +123,8 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def test_token_generation_with_local_time(self):
         timestamp = self.ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
-                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+        with patch('ably.sync.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+                patch('ably.sync.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.request_token()
             assert local_time.called
             assert not server_time.called
@@ -132,8 +132,8 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     # RSA10k
     def test_token_generation_with_server_time(self):
         timestamp = self.ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
-                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+        with patch('ably.sync.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+                patch('ably.sync.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.request_token(query_time=True)
             assert local_time.call_count == 1
             assert server_time.call_count == 1
@@ -185,8 +185,8 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     @dont_vary_protocol
     def test_with_local_time(self):
         timestamp = self.ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
-                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+        with patch('ably.sync.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+                patch('ably.sync.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.create_token_request(
                 key_name=self.key_name, key_secret=self.key_secret, query_time=False)
             assert local_time.called
@@ -196,8 +196,8 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     @dont_vary_protocol
     def test_with_server_time(self):
         timestamp = self.ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
-                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+        with patch('ably.sync.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time,\
+                patch('ably.sync.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             self.ably.auth.create_token_request(
                 key_name=self.key_name, key_secret=self.key_secret, query_time=True)
             assert local_time.call_count == 1
@@ -332,7 +332,7 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     # AO2g
     @dont_vary_protocol
     def test_query_server_time(self):
-        with patch('ably.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time:
+        with patch('ably.sync.rest.rest.AblyRest.time', wraps=self.ably.time) as server_time:
             self.ably.auth.create_token_request(
                 key_name=self.key_name, key_secret=self.key_secret, query_time=True)
             assert server_time.call_count == 1

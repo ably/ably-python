@@ -24,7 +24,7 @@ class TestRestHttp(BaseAsyncTestCase):
         assert 'http_open_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
         assert 'http_request_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
 
-        with mock.patch('httpx.AsyncClient.send', side_effect=httpx.RequestError('')) as send_mock:
+        with mock.patch('httpx.Client.send', side_effect=httpx.RequestError('')) as send_mock:
             with pytest.raises(httpx.RequestError):
                 ably.http.make_request('GET', '/', version=Defaults.protocol_version, skip_auth=True)
 
@@ -42,7 +42,7 @@ class TestRestHttp(BaseAsyncTestCase):
             time.sleep(0.51)
             raise httpx.TimeoutException('timeout')
 
-        with mock.patch('httpx.AsyncClient.send', side_effect=sleep_and_raise) as send_mock:
+        with mock.patch('httpx.Client.send', side_effect=sleep_and_raise) as send_mock:
             with pytest.raises(httpx.TimeoutException):
                 ably.http.make_request('GET', '/', skip_auth=True)
 
@@ -59,7 +59,7 @@ class TestRestHttp(BaseAsyncTestCase):
             return urljoin(base_url, '/')
 
         with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
-            with mock.patch('httpx.AsyncClient.send', side_effect=httpx.RequestError('')) as send_mock:
+            with mock.patch('httpx.Client.send', side_effect=httpx.RequestError('')) as send_mock:
                 with pytest.raises(httpx.RequestError):
                     ably.http.make_request('GET', '/', skip_auth=True)
 
@@ -110,7 +110,7 @@ class TestRestHttp(BaseAsyncTestCase):
                 raise RuntimeError
             return send(args[1])
 
-        with mock.patch('httpx.AsyncClient.send', side_effect=side_effect, autospec=True):
+        with mock.patch('httpx.Client.send', side_effect=side_effect, autospec=True):
             # The main host is called and there's an error
             ably.time()
             assert state['errors'] == 1
@@ -163,7 +163,7 @@ class TestRestHttp(BaseAsyncTestCase):
             raise AblyException(message="", status_code=500, code=50000)
 
         with mock.patch('httpx.Request', wraps=httpx.Request):
-            with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
+            with mock.patch('ably.sync.util.exceptions.AblyException.raise_for_response',
                             side_effect=raise_ably_exception) as send_mock:
                 with pytest.raises(AblyException):
                     ably.http.make_request('GET', '/', skip_auth=True)

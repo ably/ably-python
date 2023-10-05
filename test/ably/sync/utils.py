@@ -1,8 +1,10 @@
 import functools
+import os
 import random
 import string
 import unittest
 import sys
+
 if sys.version_info >= (3, 8):
     from unittest import IsolatedAsyncioTestCase
 else:
@@ -90,8 +92,8 @@ def assert_responses_type(protocol):
             fn(self, *args, **kwargs)
             unpatch(patcher)
 
-            assert len(responses) >= 1,\
-                   "If your test doesn't make any requests, use the @dont_vary_protocol decorator"
+            assert len(responses) >= 1, \
+                "If your test doesn't make any requests, use the @dont_vary_protocol decorator"
 
             for response in responses:
                 # In HTTP/2 some header fields are optional in case of 204 status code
@@ -107,6 +109,7 @@ def assert_responses_type(protocol):
                         msgpack.unpackb(response.content)
 
         return test_decorated
+
     return test_decorator
 
 
@@ -122,11 +125,11 @@ class VaryByProtocolTestsMetaclass(type):
           is called
         * exclude tests with the @dont_vary_protocol decorator
     """
+
     def __new__(cls, clsname, bases, dct):
         for key, value in tuple(dct.items()):
             if key.startswith('test') and not getattr(value, 'dont_vary_protocol',
                                                       False):
-
                 wrapper_bin = cls.wrap_as('bin', key, value)
                 wrapper_text = cls.wrap_as('text', key, value)
 
@@ -145,6 +148,7 @@ class VaryByProtocolTestsMetaclass(type):
             if hasattr(self, 'per_protocol_setup'):
                 self.per_protocol_setup(ttype == 'bin')
             old_func(self)
+
         wrapper.__name__ = old_name + '_' + ttype
         return wrapper
 
@@ -166,3 +170,11 @@ def new_dict(src, **kw):
 
 def get_random_key(d):
     return random.choice(list(d))
+
+
+def get_submodule_dir(filepath):
+    root_dir = os.path.dirname(filepath)
+    while True:
+        if os.path.exists(os.path.join(root_dir, 'submodules')):
+            return os.path.join(root_dir, 'submodules')
+        root_dir = os.path.dirname(root_dir)

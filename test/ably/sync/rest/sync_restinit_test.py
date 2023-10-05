@@ -168,8 +168,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
                                      use_binary_protocol=self.use_binary_protocol)
 
         timestamp = ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\
-                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+        with patch('ably.sync.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\
+                patch('ably.sync.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             ably.auth.request_token()
             assert local_time.call_count == 1
             assert server_time.call_count == 1
