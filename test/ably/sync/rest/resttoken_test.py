@@ -216,8 +216,8 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             return token_request
 
         ably = TestApp.get_ably_rest(key=None,
-                                           auth_callback=auth_callback,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                     auth_callback=auth_callback,
+                                     use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
         assert isinstance(token, TokenDetails)
@@ -232,8 +232,8 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             return token_request.to_dict()
 
         ably = TestApp.get_ably_rest(key=None,
-                                           auth_callback=auth_callback,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                     auth_callback=auth_callback,
+                                     use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
         assert isinstance(token, TokenDetails)
@@ -308,7 +308,7 @@ class TestCreateTokenRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             return token_request
 
         ably = TestApp.get_ably_rest(key=None, auth_callback=auth_callback,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                     use_binary_protocol=self.use_binary_protocol)
 
         token = ably.auth.authorize()
 

@@ -165,7 +165,7 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     # RSA10k
     def test_query_time_param(self):
         ably = TestApp.get_ably_rest(query_time=True,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                     use_binary_protocol=self.use_binary_protocol)
 
         timestamp = ably.auth._timestamp
         with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\

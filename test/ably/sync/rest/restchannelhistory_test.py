@@ -176,7 +176,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='forwards', start=interval_start,
-                                         end=interval_end)
+                                   end=interval_end)
 
         messages = history.items
         assert 20 == len(messages)
@@ -202,7 +202,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             history0.publish('history%d' % i, str(i))
 
         history = history0.history(direction='backwards', start=interval_start,
-                                         end=interval_end)
+                                   end=interval_end)
 
         messages = history.items
         assert 20 == len(messages)

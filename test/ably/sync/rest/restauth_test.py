@@ -224,7 +224,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         token = self.ably.auth.authorize()
         token = token.token
         ably = TestApp.get_ably_rest(key=None, token=token, tls=True,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                     use_binary_protocol=self.use_binary_protocol)
         ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
         ably.close()
 
@@ -232,13 +232,13 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         token = self.ably.auth.authorize()
         token = token.token
         ably = TestApp.get_ably_rest(key=None, token=token, tls=False,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                     use_binary_protocol=self.use_binary_protocol)
         ably.channels.test_auth_with_token_str.publish('event', 'foo_bar')
         ably.close()
 
     def test_if_default_client_id_is_used(self):
         ably = TestApp.get_ably_rest(client_id='my_client_id',
-                                           use_binary_protocol=self.use_binary_protocol)
+                                     use_binary_protocol=self.use_binary_protocol)
         token = ably.auth.authorize()
         assert token.client_id == 'my_client_id'
         ably.close()
@@ -335,7 +335,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         ably.close()
 
         ably = TestApp.get_ably_rest(key=None, token_details=token_details,
-                                           use_binary_protocol=self.use_binary_protocol)
+                                     use_binary_protocol=self.use_binary_protocol)
         channel = self.get_channel_name('test_request_token_with_key')
 
         ably.channels[channel].publish('event', 'foo')

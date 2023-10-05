@@ -298,8 +298,8 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
         new_token = self.ably.auth.authorize(token_params={'client_id': uuid.uuid4().hex})
         new_ably = TestApp.get_ably_rest(key=None,
-                                               token=new_token.token,
-                                               use_binary_protocol=self.use_binary_protocol)
+                                         token=new_token.token,
+                                         use_binary_protocol=self.use_binary_protocol)
 
         channel = new_ably.channels[
             self.get_channel_name('persisted:wrong_client_id_implicit_client')]
