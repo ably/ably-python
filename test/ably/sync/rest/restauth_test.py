@@ -346,7 +346,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
 
     @dont_vary_protocol
     @respx.mock
-    def test_with_auth_url_headers_and_params_POST(self):  # noqa: N802
+    def test_with_auth_url_headers_and_params_http_post(self):  # noqa: N802
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
         ably = TestApp.get_ably_rest(key=None, auth_url=url)
@@ -381,7 +381,7 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
 
     @dont_vary_protocol
     @respx.mock
-    def test_with_auth_url_headers_and_params_GET(self):  # noqa: N802
+    def test_with_auth_url_headers_and_params_http_get(self):  # noqa: N802
         url = 'http://www.example.com'
         headers = {'foo': 'bar'}
         ably = TestApp.get_ably_rest(
