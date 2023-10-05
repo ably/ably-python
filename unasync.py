@@ -29,6 +29,10 @@ _IMPORTS_REPLACE = {
 }
 
 
+_STRING_REPLACE = {
+}
+
+
 class Rule:
     """A single set of rules for 'unasync'ing file(s)"""
 
@@ -80,6 +84,7 @@ class Rule:
             token = tokens[token_counter]
 
             if async_await_block_started:
+                # Fix indentation issues for async/await fn definition/call
                 if token.src == '\n':
                     new_tokens.append(token)
                     token_counter = token_counter + 1
@@ -106,6 +111,7 @@ class Rule:
                     async_await_offset = token.utf8_byte_offset
                     async_await_block_started = True
                 continue
+
             elif token.name == "NAME":
                 if token.src == "from":
                     if tokens[token_counter + 1].src == " ":
@@ -114,43 +120,15 @@ class Rule:
                 else:
                     token = token._replace(src=self._unasync_name(token.src))
             elif token.name == "STRING":
-                left_quote, name, right_quote = (
-                    token.src[0],
-                    token.src[1:-1],
-                    token.src[-1],
-                )
-                token = token._replace(
-                    src=left_quote + self._unasync_name(name) + right_quote
-                )
+                src_token = token.src.replace("'", "")
+                if _STRING_REPLACE.get(src_token) is not None:
+                    new_token = f"'{_STRING_REPLACE[src_token]}'"
+                    token = token._replace(src=new_token)
 
             new_tokens.append(token)
             token_counter = token_counter + 1
 
         return new_tokens
-
-        # for i, token in enumerate(tokens):
-        #     if skip_next:
-        #         skip_next = False
-        #         continue
-        #
-        #     if token.src in ["async", "await"]:
-        #         # When removing async or await, we want to skip the following whitespace
-        #         # so that `print(await stuff)` becomes `print(stuff)` and not `print( stuff)`
-        #         skip_next = True
-        #     else:
-        #         if token.name == "NAME":
-        #             token = token._replace(src=self._unasync_name(token.src))
-        #         elif token.name == "STRING":
-        #             left_quote, name, right_quote = (
-        #                 token.src[0],
-        #                 token.src[1:-1],
-        #                 token.src[-1],
-        #             )
-        #             token = token._replace(
-        #                 src=left_quote + self._unasync_name(name) + right_quote
-        #             )
-        #
-        #         yield token
 
     def _replace_import(self, tokens, token_counter, new_tokens: list):
         new_tokens.append(tokens[token_counter])
@@ -182,9 +160,6 @@ class Rule:
     def _unasync_name(self, name):
         if name in self.token_replacements:
             return self.token_replacements[name]
-        # Convert classes prefixed with 'Async' into 'Sync'
-        # elif len(name) > 5 and name.startswith("Async") and name[5].isupper():
-        #     return "Sync" + name[5:]
         return name
 
 
@@ -207,6 +182,8 @@ _IMPORTS_REPLACE["ably"] = "ably.sync"
 
 Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
 
+# Source files ==========================================
+
 src_dir_path = os.path.join(os.getcwd(), "ably")
 dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
@@ -222,3 +199,45 @@ relevant_src_files = (set(find_files(src_dir_path, "*.py")) -
                       set(find_files(dest_dir_path, "*.py")))
 
 unasync_files(list(relevant_src_files), (_DEFAULT_RULE,))
+
+# Test files ==============================================
+
+
+_ASYNC_TO_SYNC["AsyncClient"] = "Client"
+_ASYNC_TO_SYNC["aclose"] = "close"
+_ASYNC_TO_SYNC["asyncSetUp"] = "setUp"
+_ASYNC_TO_SYNC["asyncTearDown"] = "tearDown"
+_ASYNC_TO_SYNC["AsyncMock"] = "Mock"
+
+_IMPORTS_REPLACE["ably"] = "ably.sync"
+_IMPORTS_REPLACE["test.ably"] = "test.ably.sync"
+
+_STRING_REPLACE['/../assets/testAppSpec.json'] = '/../../assets/testAppSpec.json'
+_STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.Auth.request_token'
+_STRING_REPLACE['ably.rest.auth.TokenRequest'] = 'ably.sync.rest.auth.TokenRequest'
+
+Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
+
+src_dir_path = os.path.join(os.getcwd(), "test", "ably", "rest")
+dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync", "rest")
+_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
+
+os.makedirs(dest_dir_path, exist_ok=True)
+
+
+def find_files(dir_path, file_name_regex) -> list[str]:
+    return glob.glob(os.path.join(dir_path, file_name_regex), recursive=True)
+
+
+src_files = find_files(src_dir_path, "*.py")
+unasync_files(src_files, (_DEFAULT_RULE,))
+
+# round 2
+src_dir_path = os.path.join(os.getcwd(), "test", "ably")
+dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync")
+_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
+
+src_files = [os.path.join(os.getcwd(), "test", "ably", "testapp.py"),
+             os.path.join(os.getcwd(), "test", "ably", "utils.py")]
+
+unasync_files(src_files, (_DEFAULT_RULE,))
