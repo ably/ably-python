@@ -74,12 +74,37 @@ class Rule:
     def _unasync_tokens(self, tokens: list):
         new_tokens = []
         token_counter = 0
+        async_await_block_started = False
+        async_await_offset = 0
         while token_counter < len(tokens):
             token = tokens[token_counter]
+
+            if async_await_block_started:
+                if token.src == '\n':
+                    new_tokens.append(token)
+                    token_counter = token_counter + 1
+                    next_newline_token = tokens[token_counter]
+                    if len(next_newline_token.src) >= 6 and tokens[token_counter+1].utf8_byte_offset > async_await_offset:
+                        new_tab_indentation = next_newline_token.src[:-6]  # remove last 6 white spaces
+                        next_newline_token = next_newline_token._replace(src=new_tab_indentation)
+                        new_tokens.append(next_newline_token)
+                    else:
+                        new_tokens.append(next_newline_token)
+                    token_counter = token_counter + 1
+                    continue
+
+            if token.src == ')':
+                async_await_block_started = False
+                async_await_offset = 0
 
             if token.src in ["async", "await"]:
                 # When removing async or await, we want to skip the following whitespace
                 token_counter = token_counter + 2
+                if (tokens[token_counter].src == 'def' or tokens[token_counter + 1].src == '(' or
+                     tokens[token_counter + 2].src == '(' or tokens[token_counter + 3].src == "("):
+                    # Fix indentation issues for async/await fn definition/call
+                    async_await_offset = token.utf8_byte_offset
+                    async_await_block_started = True
                 continue
             elif token.name == "NAME":
                 if token.src == "from":
