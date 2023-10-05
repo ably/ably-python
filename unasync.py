@@ -177,85 +177,22 @@ def unasync_files(fpath_list, rules):
             found_rule._unasync_file(f)
 
 
-_IMPORTS_REPLACE["ably.http"] = "ably.sync.http"
-_IMPORTS_REPLACE["ably.rest"] = "ably.sync.rest"
-# _IMPORTS_REPLACE["ably.types"] = "ably.types.sync"
+_IMPORTS_REPLACE["ably"] = "ably.sync"
 
 Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
 
-src_dir_path = os.path.join(os.getcwd(), "ably", "rest")
-dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "rest")
+src_dir_path = os.path.join(os.getcwd(), "ably")
+dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
 os.makedirs(dest_dir_path, exist_ok=True)
 
 
 def find_files(dir_path, file_name_regex) -> list[str]:
-    return glob.glob(os.path.join(dir_path, file_name_regex))
+    return glob.glob(os.path.join(dir_path, "**", file_name_regex), recursive=True)
 
 
-src_files = find_files(src_dir_path, "*.py")
+relevant_src_files = (set(find_files(src_dir_path, "*.py")) -
+                      set(find_files(dest_dir_path, "*.py")))
 
-unasync_files(src_files, (_DEFAULT_RULE,))
-
-# round 2
-src_dir_path = os.path.join(os.getcwd(), "ably", "http")
-dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "http")
-_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
-
-src_files = find_files(src_dir_path, "*.py")
-
-unasync_files(src_files, (_DEFAULT_RULE,))
-
-# round 3
-
-src_dir_path = os.path.join(os.getcwd(), "ably", "types")
-dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "types")
-_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
-
-src_files = find_files(src_dir_path, "presence.py")
-
-unasync_files(src_files, (_DEFAULT_RULE,))
-
-# class _build_py(orig.build_py):
-#     """
-#     Subclass build_py from setuptools to modify its behavior.
-#
-#     Convert files in _async dir from being asynchronous to synchronous
-#     and saves them in _sync dir.
-#     """
-#
-#     UNASYNC_RULES = (_DEFAULT_RULE,)
-#
-#     def run(self):
-#         rules = self.UNASYNC_RULES
-#
-#         self._updated_files = []
-#
-#         # Base class code
-#         if self.py_modules:
-#             self.build_modules()
-#         if self.packages:
-#             self.build_packages()
-#             self.build_package_data()
-#
-#         # Our modification!
-#         unasync_files(self._updated_files, rules)
-#
-#         # Remaining base class code
-#         self.byte_compile(self.get_outputs(include_bytecode=0))
-#
-#     def build_module(self, module, module_file, package):
-#         outfile, copied = super().build_module(module, module_file, package)
-#         if copied:
-#             self._updated_files.append(outfile)
-#         return outfile, copied
-#
-#
-# def cmdclass_build_py(rules=(_DEFAULT_RULE,)):
-#     """Creates a 'build_py' class for use within 'cmdclass={"build_py": ...}'"""
-#
-#     class _custom_build_py(_build_py):
-#         UNASYNC_RULES = rules
-#
-#     return _custom_build_py
+unasync_files(list(relevant_src_files), (_DEFAULT_RULE,))
