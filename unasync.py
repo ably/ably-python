@@ -89,7 +89,8 @@ class Rule:
                     new_tokens.append(token)
                     token_counter = token_counter + 1
                     next_newline_token = tokens[token_counter]
-                    if len(next_newline_token.src) >= 6 and tokens[token_counter+1].utf8_byte_offset >= async_await_offset + 6:
+                    if (len(next_newline_token.src) >= 6 and
+                            tokens[token_counter + 1].utf8_byte_offset >= async_await_offset + 6):
                         new_tab_indentation = next_newline_token.src[:-6]  # remove last 6 white spaces
                         next_newline_token = next_newline_token._replace(src=new_tab_indentation)
                         new_tokens.append(next_newline_token)
