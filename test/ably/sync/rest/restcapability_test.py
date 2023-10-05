@@ -21,8 +21,7 @@ class TestRestCapability(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetacla
 
     def test_blanket_intersection_with_key(self):
         key = self.test_vars['keys'][1]
-        token_details = self.ably.auth.request_token(key_name=key['key_name'],
-                                                           key_secret=key['key_secret'])
+        token_details = self.ably.auth.request_token(key_name=key['key_name'], key_secret=key['key_secret'])
         expected_capability = Capability(key["capability"])
         assert token_details.token is not None, "Expected token"
         assert expected_capability == token_details.capability, "Unexpected capability."
