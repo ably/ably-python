@@ -36,9 +36,10 @@ _STRING_REPLACE = {
 class Rule:
     """A single set of rules for 'unasync'ing file(s)"""
 
-    def __init__(self, fromdir, todir, additional_replacements=None):
+    def __init__(self, fromdir, todir, output_file_prefix="", additional_replacements=None):
         self.fromdir = fromdir.replace("/", os.sep)
         self.todir = todir.replace("/", os.sep)
+        self.ouput_file_prefix = output_file_prefix
 
         # Add any additional user-defined token replacements to our list.
         self.token_replacements = _ASYNC_TO_SYNC.copy()
@@ -70,7 +71,8 @@ class Rule:
             tokens = tokenize_rt.src_to_tokens(f.read())
             tokens = self._unasync_tokens(tokens)
             result = tokenize_rt.tokens_to_src(tokens)
-            outfilepath = filepath.replace(self.fromdir, self.todir)
+            new_file_path = os.path.join(os.path.dirname(filepath), self.ouput_file_prefix + os.path.basename(filepath))
+            outfilepath = new_file_path.replace(self.fromdir, self.todir)
             os.makedirs(os.path.dirname(outfilepath), exist_ok=True)
             with open(outfilepath, "wb") as f:
                 f.write(result.encode(encoding))
@@ -226,7 +228,7 @@ Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line
 
 src_dir_path = os.path.join(os.getcwd(), "test", "ably", "rest")
 dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync", "rest")
-_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
+_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path, output_file_prefix="sync_")
 
 os.makedirs(dest_dir_path, exist_ok=True)
 
