@@ -21,11 +21,17 @@ _ASYNC_TO_SYNC = {
     # code in Python 3.7+
     "StopAsyncIteration": "StopIteration",
     "AsyncClient": "Client",
-    "aclose": "close"
+    "aclose": "close",
+    "asyncSetUp": "setUp",
+    "asyncTearDown": "tearDown"
 }
 
 _IMPORTS_REPLACE = {
 
+}
+
+_STRING_REPLACE = {
+    '/../assets/testAppSpec.json': '/../../assets/testAppSpec.json'
 }
 
 
@@ -76,7 +82,8 @@ class Rule:
         token_counter = 0
         while token_counter < len(tokens):
             token = tokens[token_counter]
-
+            if token.src == "'/../assets/testAppSpec.json'":
+                print("hi")
             if token.src in ["async", "await"]:
                 token_counter = token_counter + 2  # When removing async or await, we want to skip the following whitespace
                 continue
@@ -88,14 +95,10 @@ class Rule:
                 else:
                     token = token._replace(src=self._unasync_name(token.src))
             elif token.name == "STRING":
-                left_quote, name, right_quote = (
-                    token.src[0],
-                    token.src[1:-1],
-                    token.src[-1],
-                )
-                token = token._replace(
-                    src=left_quote + self._unasync_name(name) + right_quote
-                )
+                srcToken = token.src.replace("'", "")
+                if _STRING_REPLACE.get(srcToken) != None:
+                    resulting_token = f"'{_STRING_REPLACE[srcToken]}'"
+                    token = token._replace(src=resulting_token)
 
             new_tokens.append(token)
             token_counter = token_counter + 1
@@ -179,41 +182,39 @@ def unasync_files(fpath_list, rules):
 
 _IMPORTS_REPLACE["ably.http"] = "ably.sync.http"
 _IMPORTS_REPLACE["ably.rest"] = "ably.sync.rest"
-# _IMPORTS_REPLACE["ably.types"] = "ably.types.sync"
+_IMPORTS_REPLACE["test.ably.testapp"] = "test.ably.sync.testapp"
+_IMPORTS_REPLACE["test.ably.utils"] = "test.ably.sync.utils"
 
 Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
 
-src_dir_path = os.path.join(os.getcwd(), "ably", "rest")
-dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "rest")
+src_dir_path = os.path.join(os.getcwd(), "test", "ably", "rest")
+dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync", "rest")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
 os.makedirs(dest_dir_path, exist_ok=True)
 
 
 def find_files(dir_path, file_name_regex) -> list[str]:
-    return glob.glob(os.path.join(dir_path, file_name_regex))
+    return glob.glob(os.path.join(dir_path, file_name_regex), recursive=True)
 
 
 src_files = find_files(src_dir_path, "*.py")
-
 unasync_files(src_files, (_DEFAULT_RULE,))
 
 # round 2
-src_dir_path = os.path.join(os.getcwd(), "ably", "http")
-dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "http")
+src_dir_path = os.path.join(os.getcwd(), "test", "ably")
+dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
-src_files = find_files(src_dir_path, "*.py")
+src_files = find_files(src_dir_path, "testapp.py")
 
 unasync_files(src_files, (_DEFAULT_RULE,))
 
-# round 3
-
-src_dir_path = os.path.join(os.getcwd(), "ably", "types")
-dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "types")
+src_dir_path = os.path.join(os.getcwd(), "test", "ably")
+dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
-src_files = find_files(src_dir_path, "presence.py")
+src_files = find_files(src_dir_path, "utils.py")
 
 unasync_files(src_files, (_DEFAULT_RULE,))
 
