@@ -82,8 +82,6 @@ class Rule:
         token_counter = 0
         while token_counter < len(tokens):
             token = tokens[token_counter]
-            if token.src == "'/../assets/testAppSpec.json'":
-                print("hi")
             if token.src in ["async", "await"]:
                 # When removing async or await, we want to skip the following whitespace
                 token_counter = token_counter + 2
@@ -96,10 +94,10 @@ class Rule:
                 else:
                     token = token._replace(src=self._unasync_name(token.src))
             elif token.name == "STRING":
-                srcToken = token.src.replace("'", "")
-                if _STRING_REPLACE.get(srcToken) != None:
-                    resulting_token = f"'{_STRING_REPLACE[srcToken]}'"
-                    token = token._replace(src=resulting_token)
+                src_token = token.src.replace("'", "")
+                if _STRING_REPLACE.get(src_token) is not None:
+                    new_token = f"'{_STRING_REPLACE[src_token]}'"
+                    token = token._replace(src=new_token)
 
             new_tokens.append(token)
             token_counter = token_counter + 1
