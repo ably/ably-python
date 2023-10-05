@@ -442,8 +442,8 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
         auth_route = respx.get('http://www.example.com', params={'with': 'query', 'spam': 'eggs'}).mock(
             return_value=Response(status_code=200, content='token_string', headers={"Content-Type": "text/plain"}))
         ably.auth.request_token(auth_url=url,
-                                      auth_headers=headers,
-                                      auth_params={'spam': 'eggs'})
+                                auth_headers=headers,
+                                auth_params={'spam': 'eggs'})
         assert auth_route.called
         ably.close()
 

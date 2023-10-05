@@ -89,7 +89,7 @@ class Rule:
                     new_tokens.append(token)
                     token_counter = token_counter + 1
                     next_newline_token = tokens[token_counter]
-                    if len(next_newline_token.src) >= 6 and tokens[token_counter+1].utf8_byte_offset > async_await_offset:
+                    if len(next_newline_token.src) >= 6 and tokens[token_counter+1].utf8_byte_offset >= async_await_offset + 6:
                         new_tab_indentation = next_newline_token.src[:-6]  # remove last 6 white spaces
                         next_newline_token = next_newline_token._replace(src=new_tab_indentation)
                         new_tokens.append(next_newline_token)
@@ -105,8 +105,13 @@ class Rule:
             if token.src in ["async", "await"]:
                 # When removing async or await, we want to skip the following whitespace
                 token_counter = token_counter + 2
-                if (tokens[token_counter].src == 'def' or tokens[token_counter + 1].src == '(' or
-                     tokens[token_counter + 2].src == '(' or tokens[token_counter + 3].src == "("):
+                is_async_start = tokens[token_counter].src == 'def'
+                is_await_start = False
+                for i in range(token_counter, token_counter + 6):
+                    if tokens[i].src == '(':
+                        is_await_start = True
+                        break
+                if is_async_start or is_await_start:
                     # Fix indentation issues for async/await fn definition/call
                     async_await_offset = token.utf8_byte_offset
                     async_await_block_started = True
