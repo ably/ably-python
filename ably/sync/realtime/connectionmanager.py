@@ -130,7 +130,7 @@ class ConnectionManager(EventEmitter):
             self.__ping_id = get_random_id()
             ping_start_time = datetime.now().timestamp()
             self.send_protocol_message({"action": ProtocolMessageAction.HEARTBEAT,
-                                              "id": self.__ping_id})
+                                        "id": self.__ping_id})
         else:
             raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
         try:

@@ -80,7 +80,7 @@ class AblyRest:
 
     @catch_all
     def stats(self, direction: Optional[str] = None, start=None, end=None, params: Optional[dict] = None,
-                    limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
+              limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
         """Returns the stats for this application"""
         formatted_params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
         url = '/stats' + formatted_params
@@ -120,7 +120,7 @@ class AblyRest:
         return self.__push
 
     def request(self, method: str, path: str, version: str, params:
-                      Optional[dict] = None, body=None, headers=None):
+                Optional[dict] = None, body=None, headers=None):
         if version is None:
             raise AblyException("No version parameter", 400, 40000)
 

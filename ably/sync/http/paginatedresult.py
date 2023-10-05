@@ -78,8 +78,8 @@ class PaginatedResult:
 
     @classmethod
     def paginated_query(cls, http, method='GET', url='/', version=None, body=None,
-                              headers=None, response_processor=None,
-                              raise_on_error=True):
+                        headers=None, response_processor=None,
+                        raise_on_error=True):
         headers = headers or {}
         req = Request(method, url, version=version, body=body, headers=headers, skip_auth=False,
                       raise_on_error=raise_on_error)
@@ -87,7 +87,7 @@ class PaginatedResult:
 
     @classmethod
     def paginated_query_with_request(cls, http, request, response_processor,
-                                           raise_on_error=True):
+                                     raise_on_error=True):
         response = http.make_request(
             request.method, request.url, version=request.version,
             headers=request.headers, body=request.body,

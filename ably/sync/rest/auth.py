@@ -152,11 +152,11 @@ class Auth:
         return self.__authorize_when_necessary(token_params, auth_options, force=True)
 
     def request_token(self, token_params: Optional[dict] = None,
-                            # auth_options
-                            key_name: Optional[str] = None, key_secret: Optional[str] = None, auth_callback=None,
-                            auth_url: Optional[str] = None, auth_method: Optional[str] = None,
-                            auth_headers: Optional[dict] = None, auth_params: Optional[dict] = None,
-                            query_time=None):
+                      # auth_options
+                      key_name: Optional[str] = None, key_secret: Optional[str] = None, auth_callback=None,
+                      auth_url: Optional[str] = None, auth_method: Optional[str] = None,
+                      auth_headers: Optional[dict] = None, auth_params: Optional[dict] = None,
+                      query_time=None):
         token_params = token_params or {}
         token_params = dict(self.auth_options.default_token_params,
                             **token_params)
@@ -230,7 +230,7 @@ class Auth:
         return TokenDetails.from_dict(response_dict)
 
     def create_token_request(self, token_params: Optional[dict] = None, key_name: Optional[str] = None,
-                                   key_secret: Optional[str] = None, query_time=None):
+                             key_secret: Optional[str] = None, query_time=None):
         token_params = token_params or {}
         token_request = {}
 
@@ -387,7 +387,7 @@ class Auth:
         return uuid.uuid4().hex[:16]
 
     def token_request_from_auth_url(self, method: str, url: str, token_params,
-                                          headers, auth_params):
+                                    headers, auth_params):
         body = None
         params = None
         if method == 'GET':
