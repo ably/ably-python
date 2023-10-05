@@ -1,6 +1,5 @@
 """Top-level package for unasync."""
 
-import collections
 import glob
 import os
 import tokenize as std_tokenize
@@ -187,30 +186,25 @@ def unasync_files(fpath_list, rules):
             found_rule._unasync_file(f)
 
 
-_IMPORTS_REPLACE["ably"] = "ably.sync"
-
-Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
-
-# Source files ==========================================
-
-src_dir_path = os.path.join(os.getcwd(), "ably")
-dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
-_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
-
-os.makedirs(dest_dir_path, exist_ok=True)
-
-
 def find_files(dir_path, file_name_regex) -> list[str]:
     return glob.glob(os.path.join(dir_path, "**", file_name_regex), recursive=True)
 
 
+# Source files ==========================================
+
+
+_IMPORTS_REPLACE["ably"] = "ably.sync"
+
+src_dir_path = os.path.join(os.getcwd(), "ably")
+dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
+
 relevant_src_files = (set(find_files(src_dir_path, "*.py")) -
                       set(find_files(dest_dir_path, "*.py")))
 
-unasync_files(list(relevant_src_files), (_DEFAULT_RULE,))
+unasync_files(list(relevant_src_files), [Rule(fromdir=src_dir_path, todir=dest_dir_path)])
+
 
 # Test files ==============================================
-
 
 _ASYNC_TO_SYNC["AsyncClient"] = "Client"
 _ASYNC_TO_SYNC["aclose"] = "close"
@@ -231,22 +225,17 @@ _STRING_REPLACE['ably.util.exceptions.AblyException.raise_for_response'] = \
 _STRING_REPLACE['ably.rest.rest.AblyRest.time'] = 'ably.sync.rest.rest.AblyRest.time'
 _STRING_REPLACE['ably.rest.auth.Auth._timestamp'] = 'ably.sync.rest.auth.Auth._timestamp'
 
-
-src_dir_path = os.path.join(os.getcwd(), "test", "ably", "rest")
-dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync", "rest")
-_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path, output_file_prefix="sync_")
-
-os.makedirs(dest_dir_path, exist_ok=True)
-
-src_files = find_files(src_dir_path, "*.py")
-unasync_files(src_files, (_DEFAULT_RULE,))
-
-# round 2
+# round 1
 src_dir_path = os.path.join(os.getcwd(), "test", "ably")
 dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync")
-_DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
-
 src_files = [os.path.join(os.getcwd(), "test", "ably", "testapp.py"),
              os.path.join(os.getcwd(), "test", "ably", "utils.py")]
 
-unasync_files(src_files, (_DEFAULT_RULE,))
+unasync_files(src_files, [Rule(fromdir=src_dir_path, todir=dest_dir_path)])
+
+# round 2
+src_dir_path = os.path.join(os.getcwd(), "test", "ably", "rest")
+dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync", "rest")
+src_files = find_files(src_dir_path, "*.py")
+
+unasync_files(src_files, [Rule(fromdir=src_dir_path, todir=dest_dir_path, output_file_prefix="sync_")])
