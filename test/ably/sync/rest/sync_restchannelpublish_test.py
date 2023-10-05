@@ -16,9 +16,10 @@ from ably.sync.rest.auth import Auth
 from ably.sync.types.message import Message
 from ably.sync.types.tokendetails import TokenDetails
 from ably.sync.util import case
+from test.ably.sync import utils
 
 from test.ably.sync.testapp import TestApp
-from test.ably.sync.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, get_submodule_dir
+from test.ably.sync.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
 
 log = logging.getLogger(__name__)
 
@@ -385,7 +386,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             'binary': bytearray,
         }
 
-        path = os.path.join(get_submodule_dir(__file__), 'test-resources', 'messages-encoding.json')
+        path = os.path.join(utils.get_submodule_dir(__file__), 'test-resources', 'messages-encoding.json')
         with open(path) as f:
             data = json.load(f)
             for input_msg in data['messages']:
