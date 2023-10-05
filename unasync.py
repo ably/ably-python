@@ -226,19 +226,17 @@ _STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.Auth
 _STRING_REPLACE['ably.rest.auth.TokenRequest'] = 'ably.sync.rest.auth.TokenRequest'
 _STRING_REPLACE['ably.rest.rest.Http.post'] = 'ably.sync.rest.rest.Http.post'
 _STRING_REPLACE['httpx.AsyncClient.send'] = 'httpx.Client.send'
+_STRING_REPLACE['ably.util.exceptions.AblyException.raise_for_response'] = \
+    'ably.sync.util.exceptions.AblyException.raise_for_response'
+_STRING_REPLACE['ably.rest.rest.AblyRest.time'] = 'ably.sync.rest.rest.AblyRest.time'
+_STRING_REPLACE['ably.rest.auth.Auth._timestamp'] = 'ably.sync.rest.auth.Auth._timestamp'
 
-Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
 
 src_dir_path = os.path.join(os.getcwd(), "test", "ably", "rest")
 dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync", "rest")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path, output_file_prefix="sync_")
 
 os.makedirs(dest_dir_path, exist_ok=True)
-
-
-def find_files(dir_path, file_name_regex) -> list[str]:
-    return glob.glob(os.path.join(dir_path, file_name_regex), recursive=True)
-
 
 src_files = find_files(src_dir_path, "*.py")
 unasync_files(src_files, (_DEFAULT_RULE,))

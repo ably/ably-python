@@ -385,7 +385,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             'binary': bytearray,
         }
 
-        path = os.path.join(get_submodule_dir(__file__), 'submodules', 'test-resources', 'messages-encoding.json')
+        path = os.path.join(get_submodule_dir(__file__), 'test-resources', 'messages-encoding.json')
         with open(path) as f:
             data = json.load(f)
             for input_msg in data['messages']:
