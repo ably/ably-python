@@ -20,6 +20,8 @@ _ASYNC_TO_SYNC = {
     # is 'raise StopAsyncIteration' -> 'return' since we want to use unasynced
     # code in Python 3.7+
     "StopAsyncIteration": "StopIteration",
+    "AsyncClient": "Client",
+    "aclose": "close"
 }
 
 _IMPORTS_REPLACE = {
@@ -76,15 +78,15 @@ class Rule:
             token = tokens[token_counter]
 
             if token.src in ["async", "await"]:
-                token_counter = token_counter + 1  # When removing async or await, we want to skip the following whitespace
+                token_counter = token_counter + 2  # When removing async or await, we want to skip the following whitespace
                 continue
             elif token.name == "NAME":
                 if token.src == "from":
                     if tokens[token_counter + 1].src == " ":
                         token_counter = self._replace_import(tokens, token_counter, new_tokens)
                         continue
-                    else:
-                        token = token._replace(src=self._unasync_name(token.src))
+                else:
+                    token = token._replace(src=self._unasync_name(token.src))
             elif token.name == "STRING":
                 left_quote, name, right_quote = (
                     token.src[0],
@@ -130,6 +132,9 @@ class Rule:
 
         full_lib_name = ''
         lib_name_counter = token_counter + 2
+        if len(_IMPORTS_REPLACE.keys()) == 0:
+            return lib_name_counter
+
         while True:
             if tokens[lib_name_counter].src == " ":
                 break
@@ -142,18 +147,18 @@ class Rule:
                 for lib_name_part in updated_lib_name.split("."):
                     new_tokens.append(tokenize_rt.Token("NAME", lib_name_part))
                     new_tokens.append(tokenize_rt.Token("OP", "."))
-                if full_lib_name == key:
-                    new_tokens.pop()
-            else:
-                lib_name_counter = token_counter + 2
+                new_tokens.pop()
+                return lib_name_counter
+
+        lib_name_counter = token_counter + 2
         return lib_name_counter
 
     def _unasync_name(self, name):
         if name in self.token_replacements:
             return self.token_replacements[name]
         # Convert classes prefixed with 'Async' into 'Sync'
-        elif len(name) > 5 and name.startswith("Async") and name[5].isupper():
-            return "Sync" + name[5:]
+        # elif len(name) > 5 and name.startswith("Async") and name[5].isupper():
+        #     return "Sync" + name[5:]
         return name
 
 
@@ -172,7 +177,10 @@ def unasync_files(fpath_list, rules):
             found_rule._unasync_file(f)
 
 
-_IMPORTS_REPLACE["ably.http.paginatedresult"] = "ably.dong.paginatedresult"
+_IMPORTS_REPLACE["ably.http"] = "ably.sync.http"
+_IMPORTS_REPLACE["ably.rest"] = "ably.sync.rest"
+# _IMPORTS_REPLACE["ably.types"] = "ably.types.sync"
+
 Token = collections.namedtuple("Token", ["type", "string", "start", "end", "line"])
 
 src_dir_path = os.path.join(os.getcwd(), "ably", "rest")
@@ -183,10 +191,10 @@ os.makedirs(dest_dir_path, exist_ok=True)
 
 
 def find_files(dir_path, file_name_regex) -> list[str]:
-    return glob.glob(os.path.join(dir_path, "*" + file_name_regex))
+    return glob.glob(os.path.join(dir_path, file_name_regex))
 
 
-src_files = find_files(src_dir_path, ".py")
+src_files = find_files(src_dir_path, "*.py")
 
 unasync_files(src_files, (_DEFAULT_RULE,))
 
@@ -195,7 +203,7 @@ src_dir_path = os.path.join(os.getcwd(), "ably", "http")
 dest_dir_path = os.path.join(os.getcwd(), "ably", "sync", "http")
 _DEFAULT_RULE = Rule(fromdir=src_dir_path, todir=dest_dir_path)
 
-src_files = find_files(src_dir_path, ".py")
+src_files = find_files(src_dir_path, "*.py")
 
 unasync_files(src_files, (_DEFAULT_RULE,))
 
