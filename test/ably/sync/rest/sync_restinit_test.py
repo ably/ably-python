@@ -86,7 +86,7 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         # both, as per #TO3k2
         with pytest.raises(ValueError):
             ably = AblyRestSync(token='foo', rest_host="some.other.host",
-                            environment="some.other.environment")
+                                environment="some.other.environment")
 
     # RSC15
     @dont_vary_protocol

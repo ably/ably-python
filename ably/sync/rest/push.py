@@ -142,7 +142,7 @@ class PushChannelSubscriptions:
         """
         path = '/push/channelSubscriptions' + format_params(params)
         return PaginatedResultSync.paginated_query(self.ably.http, url=path,
-                                               response_processor=channel_subscriptions_response_processor)
+                                                   response_processor=channel_subscriptions_response_processor)
 
     def list_channels(self, **params):
         """Returns a PaginatedResult object with the list of
@@ -153,7 +153,7 @@ class PushChannelSubscriptions:
         """
         path = '/push/channels' + format_params(params)
         return PaginatedResultSync.paginated_query(self.ably.http, url=path,
-                                               response_processor=channels_response_processor)
+                                                   response_processor=channels_response_processor)
 
     def save(self, subscription: dict):
         """Creates or updates the subscription. Returns a

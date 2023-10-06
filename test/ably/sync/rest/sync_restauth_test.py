@@ -160,7 +160,7 @@ class TestAuth(BaseAsyncTestCase):
 
     def test_with_default_token_params(self):
         ably = AblyRestSync(key=self.test_vars["keys"][0]["key_str"],
-                        default_token_params={'ttl': 12345})
+                            default_token_params={'ttl': 12345})
         assert ably.auth.auth_options.default_token_params == {'ttl': 12345}
 
 

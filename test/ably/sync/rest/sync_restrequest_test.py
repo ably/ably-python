@@ -118,10 +118,10 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
         # Bad host, no Fallback
         ably = AblyRestSync(key=self.test_vars["keys"][0]["key_str"],
-                        rest_host='some.other.host',
-                        port=self.test_vars["port"],
-                        tls_port=self.test_vars["tls_port"],
-                        tls=self.test_vars["tls"])
+                            rest_host='some.other.host',
+                            port=self.test_vars["port"],
+                            tls_port=self.test_vars["tls_port"],
+                            tls=self.test_vars["tls"])
         with pytest.raises(httpx.ConnectError):
             ably.request('GET', '/time', version=Defaults.protocol_version)
         ably.close()

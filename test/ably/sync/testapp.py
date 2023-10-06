@@ -29,9 +29,9 @@ if rest_host and not rest_host.endswith("rest.ably.io"):
 
 
 ably = AblyRestSync(token='not_a_real_token',
-                port=port, tls_port=tls_port, tls=tls,
-                environment=environment,
-                use_binary_protocol=False)
+                    port=port, tls_port=tls_port, tls=tls,
+                    environment=environment,
+                    use_binary_protocol=False)
 
 
 class TestApp:
