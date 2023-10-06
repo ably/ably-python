@@ -218,7 +218,7 @@ def unasync_files(fpath_list, rules):
             found_rule._unasync_file(f)
 
 
-def find_files(dir_path, file_name_regex) -> list[str]:
+def find_files(dir_path, file_name_regex):
     return glob.glob(os.path.join(dir_path, "**", file_name_regex), recursive=True)
 
 
