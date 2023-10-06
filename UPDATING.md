@@ -72,6 +72,7 @@ These include:
 
  - Deprecation of support for Python versions 3.4, 3.5 and 3.6
  - New, asynchronous API
+ - Deprecated synchronous API
 
 ### Deprecation of Python 3.4, 3.5 and 3.6
 
@@ -84,6 +85,26 @@ To see which versions of Python we test the SDK against, please look at our
 
 The 1.2.0 version introduces a breaking change, which changes the way of interacting with the SDK from synchronous to asynchronous, using [the `asyncio` foundational library](https://docs.python.org/3.7/library/asyncio.html) to provide support for `async`/`await` syntax.
 Because of this breaking change, every call that interacts with the Ably REST API must be refactored to this asynchronous way.
+
+Important Update:
+- If you want to keep using old synchronous style API, import `AblyRestSync` client instead.
+- This is applicable only for Ably REST APIs.
+
+```python
+from ably.sync import AblyRestSync
+
+def main():
+    ably = AblyRestSync('api:key', sync_enabled=True)
+    channel = ably.channels.get("channel_name")
+    channel.publish('event', 'message')
+
+if __name__ == "__main__":
+    main()
+```
+- To use old `AblyRest` class, but with `sync` style API. Import it as,
+```python
+from ably.sync import AblyRestSync as AblyRest
+```
 
 #### Publishing Messages
 
