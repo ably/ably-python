@@ -1,12 +1,10 @@
-"""Top-level package for unasync."""
-
 import glob
 import os
 import tokenize as std_tokenize
 
 import tokenize_rt
 
-_ASYNC_TO_SYNC = {
+_TOKEN_REPLACE = {
     "__aenter__": "__enter__",
     "__aexit__": "__exit__",
     "__aiter__": "__iter__",
@@ -15,20 +13,16 @@ _ASYNC_TO_SYNC = {
     "AsyncIterable": "Iterable",
     "AsyncIterator": "Iterator",
     "AsyncGenerator": "Generator",
-    # TODO StopIteration is still accepted in Python 2, but the right change
-    # is 'raise StopAsyncIteration' -> 'return' since we want to use unasynced
-    # code in Python 3.7+
     "StopAsyncIteration": "StopIteration",
-    "AsyncClient": "Client",
-    "aclose": "close"
 }
 
 _IMPORTS_REPLACE = {
-
 }
 
-
 _STRING_REPLACE = {
+}
+
+_CLASS_RENAME = {
 }
 
 
@@ -41,7 +35,7 @@ class Rule:
         self.ouput_file_prefix = output_file_prefix
 
         # Add any additional user-defined token replacements to our list.
-        self.token_replacements = _ASYNC_TO_SYNC.copy()
+        self.token_replacements = _TOKEN_REPLACE.copy()
         for key, val in (additional_replacements or {}).items():
             self.token_replacements[key] = val
 
@@ -132,6 +126,11 @@ class Rule:
                 if _STRING_REPLACE.get(src_token) is not None:
                     new_token = f"'{_STRING_REPLACE[src_token]}'"
                     token = token._replace(src=new_token)
+                else:
+                    src_token = token.src.replace("\"", "")
+                    if _STRING_REPLACE.get(src_token) is not None:
+                        new_token = f"\"{_STRING_REPLACE[src_token]}\""
+                        token = token._replace(src=new_token)
 
             new_tokens.append(token)
             token_counter = token_counter + 1
@@ -157,6 +156,7 @@ class Rule:
             if key in full_lib_name:
                 updated_lib_name = full_lib_name.replace(key, value)
                 for lib_name_part in updated_lib_name.split("."):
+                    lib_name_part = self._unasync_name(lib_name_part)
                     new_tokens.append(tokenize_rt.Token("NAME", lib_name_part))
                     new_tokens.append(tokenize_rt.Token("OP", "."))
                 new_tokens.pop()
@@ -168,6 +168,8 @@ class Rule:
     def _unasync_name(self, name):
         if name in self.token_replacements:
             return self.token_replacements[name]
+        if name in _CLASS_RENAME:
+            return _CLASS_RENAME[name]
         return name
 
 
@@ -192,8 +194,22 @@ def find_files(dir_path, file_name_regex) -> list[str]:
 
 # Source files ==========================================
 
+_TOKEN_REPLACE["AsyncClient"] = "Client"
+_TOKEN_REPLACE["aclose"] = "close"
 
 _IMPORTS_REPLACE["ably"] = "ably.sync"
+
+_CLASS_RENAME["AblyRest"] = "AblyRestSync"
+_CLASS_RENAME["Push"] = "PushSync"
+_CLASS_RENAME["PushAdmin"] = "PushAdminSync"
+_CLASS_RENAME["Channel"] = "ChannelSync"
+_CLASS_RENAME["Channels"] = "ChannelsSync"
+_CLASS_RENAME["Auth"] = "AuthSync"
+_CLASS_RENAME["Http"] = "HttpSync"
+_CLASS_RENAME["PaginatedResult"] = "PaginatedResultSync"
+_CLASS_RENAME["HttpPaginatedResponse"] = "HttpPaginatedResponseSync"
+
+_STRING_REPLACE["Auth"] = "AuthSync"
 
 src_dir_path = os.path.join(os.getcwd(), "ably")
 dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
@@ -203,27 +219,27 @@ relevant_src_files = (set(find_files(src_dir_path, "*.py")) -
 
 unasync_files(list(relevant_src_files), [Rule(fromdir=src_dir_path, todir=dest_dir_path)])
 
-
 # Test files ==============================================
 
-_ASYNC_TO_SYNC["AsyncClient"] = "Client"
-_ASYNC_TO_SYNC["aclose"] = "close"
-_ASYNC_TO_SYNC["asyncSetUp"] = "setUp"
-_ASYNC_TO_SYNC["asyncTearDown"] = "tearDown"
-_ASYNC_TO_SYNC["AsyncMock"] = "Mock"
+_TOKEN_REPLACE["asyncSetUp"] = "setUp"
+_TOKEN_REPLACE["asyncTearDown"] = "tearDown"
+_TOKEN_REPLACE["AsyncMock"] = "Mock"
 
-_IMPORTS_REPLACE["ably"] = "ably.sync"
+_TOKEN_REPLACE["_Channel__publish_request_body"] = "_ChannelSync__publish_request_body"
+_TOKEN_REPLACE["_Http__client"] = "_HttpSync__client"
+
 _IMPORTS_REPLACE["test.ably"] = "test.ably.sync"
 
 _STRING_REPLACE['/../assets/testAppSpec.json'] = '/../../assets/testAppSpec.json'
-_STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.Auth.request_token'
+_STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.AuthSync.request_token'
 _STRING_REPLACE['ably.rest.auth.TokenRequest'] = 'ably.sync.rest.auth.TokenRequest'
-_STRING_REPLACE['ably.rest.rest.Http.post'] = 'ably.sync.rest.rest.Http.post'
+_STRING_REPLACE['ably.rest.rest.Http.post'] = 'ably.sync.rest.rest.HttpSync.post'
 _STRING_REPLACE['httpx.AsyncClient.send'] = 'httpx.Client.send'
 _STRING_REPLACE['ably.util.exceptions.AblyException.raise_for_response'] = \
     'ably.sync.util.exceptions.AblyException.raise_for_response'
-_STRING_REPLACE['ably.rest.rest.AblyRest.time'] = 'ably.sync.rest.rest.AblyRest.time'
-_STRING_REPLACE['ably.rest.auth.Auth._timestamp'] = 'ably.sync.rest.auth.Auth._timestamp'
+_STRING_REPLACE['ably.rest.rest.AblyRest.time'] = 'ably.sync.rest.rest.AblyRestSync.time'
+_STRING_REPLACE['ably.rest.auth.Auth._timestamp'] = 'ably.sync.rest.auth.AuthSync._timestamp'
+
 
 # round 1
 src_dir_path = os.path.join(os.getcwd(), "test", "ably")
