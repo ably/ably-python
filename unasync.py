@@ -75,7 +75,7 @@ class Rule:
         new_tokens = []
         token_counter = 0
         async_await_block_started = False
-        async_await_char_diff = -6 # (len("async") or len("await") is 6)
+        async_await_char_diff = -6  # (len("async") or len("await") is 6)
         async_await_offset = 0
 
         renamed_class_call_started = False
@@ -102,7 +102,7 @@ class Rule:
 
                     if (async_await_block_started and len(next_newline_token.src) >= 6 and
                             tokens[token_counter + 1].utf8_byte_offset >= async_await_offset + 6):
-                            new_tab_src = new_tab_src[:async_await_char_diff]  # remove last 6 white spaces
+                        new_tab_src = new_tab_src[:async_await_char_diff]  # remove last 6 white spaces
 
                     next_newline_token = next_newline_token._replace(src=new_tab_src)
                     new_tokens.append(next_newline_token)
