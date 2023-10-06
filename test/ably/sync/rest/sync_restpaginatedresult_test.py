@@ -1,7 +1,7 @@
 import respx
 from httpx import Response
 
-from ably.sync.http.paginatedresult import PaginatedResult
+from ably.sync.http.paginatedresult import PaginatedResultSync
 
 from test.ably.sync.testapp import TestApp
 from test.ably.sync.utils import BaseAsyncTestCase
@@ -53,11 +53,11 @@ class TestPaginatedResult(BaseAsyncTestCase):
         # start intercepting requests
         self.mocked_api.start()
 
-        self.paginated_result = PaginatedResult.paginated_query(
+        self.paginated_result = PaginatedResultSync.paginated_query(
             self.ably.http,
             url='http://rest.ably.io/channels/channel_name/ch1',
             response_processor=lambda response: response.to_native())
-        self.paginated_result_with_headers = PaginatedResult.paginated_query(
+        self.paginated_result_with_headers = PaginatedResultSync.paginated_query(
             self.ably.http,
             url='http://rest.ably.io/channels/channel_name/ch2',
             response_processor=lambda response: response.to_native())

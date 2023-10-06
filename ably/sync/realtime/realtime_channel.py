@@ -4,7 +4,7 @@ import logging
 from typing import Optional, TYPE_CHECKING
 from ably.sync.realtime.connection import ConnectionState
 from ably.sync.transport.websockettransport import ProtocolMessageAction
-from ably.sync.rest.channel import Channel, Channels as RestChannels
+from ably.sync.rest.channel import ChannelSync, ChannelsSync as RestChannels
 from ably.sync.types.channelstate import ChannelState, ChannelStateChange
 from ably.sync.types.flags import Flag, has_flag
 from ably.sync.types.message import Message
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class RealtimeChannel(EventEmitter, Channel):
+class RealtimeChannel(EventEmitter, ChannelSync):
     """
     Ably Realtime Channel
 
@@ -59,7 +59,7 @@ class RealtimeChannel(EventEmitter, Channel):
         # will be disrupted if the user called .off() to remove all listeners
         self.__internal_state_emitter = EventEmitter()
 
-        Channel.__init__(self, realtime, name, {})
+        ChannelSync.__init__(self, realtime, name, {})
 
     # RTL4
     def attach(self) -> None:
@@ -454,7 +454,7 @@ class RealtimeChannel(EventEmitter, Channel):
         return self.__error_reason
 
 
-class Channels(RestChannels):
+class ChannelsSync(RestChannels):
     """Creates and destroys RealtimeChannel objects.
 
     Methods

@@ -2,8 +2,8 @@ import httpx
 import pytest
 import respx
 
-from ably.sync import AblyRest
-from ably.sync.http.paginatedresult import HttpPaginatedResponse
+from ably.sync import AblyRestSync
+from ably.sync.http.paginatedresult import HttpPaginatedResponseSync
 from ably.sync.transport.defaults import Defaults
 from test.ably.sync.testapp import TestApp
 from test.ably.sync.utils import BaseAsyncTestCase
@@ -35,7 +35,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         body = {'name': 'test-post', 'data': 'lorem ipsum'}
         result = self.ably.request('POST', self.path, body=body, version=Defaults.protocol_version)
 
-        assert isinstance(result, HttpPaginatedResponse)  # RSC19d
+        assert isinstance(result, HttpPaginatedResponseSync)  # RSC19d
         # HP3
         assert type(result.items) is list
         assert len(result.items) == 1
@@ -46,11 +46,11 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         params = {'limit': 10, 'direction': 'forwards'}
         result = self.ably.request('GET', self.path, params=params, version=Defaults.protocol_version)
 
-        assert isinstance(result, HttpPaginatedResponse)  # RSC19d
+        assert isinstance(result, HttpPaginatedResponseSync)  # RSC19d
 
         # HP2
-        assert isinstance(result.next(), HttpPaginatedResponse)
-        assert isinstance(result.first(), HttpPaginatedResponse)
+        assert isinstance(result.next(), HttpPaginatedResponseSync)
+        assert isinstance(result.first(), HttpPaginatedResponseSync)
 
         # HP3
         assert isinstance(result.items, list)
@@ -70,7 +70,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     @dont_vary_protocol
     def test_not_found(self):
         result = self.ably.request('GET', '/not-found', version=Defaults.protocol_version)
-        assert isinstance(result, HttpPaginatedResponse)  # RSC19d
+        assert isinstance(result, HttpPaginatedResponseSync)  # RSC19d
         assert result.status_code == 404             # HP4
         assert result.success is False               # HP5
 
@@ -78,7 +78,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     def test_error(self):
         params = {'limit': 'abc'}
         result = self.ably.request('GET', self.path, params=params, version=Defaults.protocol_version)
-        assert isinstance(result, HttpPaginatedResponse)  # RSC19d
+        assert isinstance(result, HttpPaginatedResponseSync)  # RSC19d
         assert result.status_code == 400  # HP4
         assert not result.success
         assert result.error_code
@@ -95,7 +95,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     def test_timeout(self):
         # Timeout
         timeout = 0.000001
-        ably = AblyRest(token="foo", http_request_timeout=timeout)
+        ably = AblyRestSync(token="foo", http_request_timeout=timeout)
         assert ably.http.http_request_timeout == timeout
         with pytest.raises(httpx.ReadTimeout):
             ably.request('GET', '/time', version=Defaults.protocol_version)
@@ -117,7 +117,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         ably.close()
 
         # Bad host, no Fallback
-        ably = AblyRest(key=self.test_vars["keys"][0]["key_str"],
+        ably = AblyRestSync(key=self.test_vars["keys"][0]["key_str"],
                         rest_host='some.other.host',
                         port=self.test_vars["port"],
                         tls_port=self.test_vars["tls_port"],

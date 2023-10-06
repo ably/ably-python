@@ -7,7 +7,7 @@ import pytest
 
 from ably.sync import AblyException, AblyAuthException
 from ably.sync import DeviceDetails, PushChannelSubscription
-from ably.sync.http.paginatedresult import PaginatedResult
+from ably.sync.http.paginatedresult import PaginatedResultSync
 
 from test.ably.sync.testapp import TestApp
 from test.ably.sync.utils import VaryByProtocolTestsMetaclass, BaseAsyncTestCase
@@ -166,7 +166,7 @@ class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         list_devices = self.ably.push.admin.device_registrations.list
 
         list_response = list_devices()
-        assert type(list_response) is PaginatedResult
+        assert type(list_response) is PaginatedResultSync
         assert type(list_response.items) is list
         assert type(list_response.items[0]) is DeviceDetails
 
@@ -267,7 +267,7 @@ class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
         list_response = list_(channel=channel)
 
-        assert type(list_response) is PaginatedResult
+        assert type(list_response) is PaginatedResultSync
         assert type(list_response.items) is list
         assert type(list_response.items[0]) is PushChannelSubscription
 
@@ -297,7 +297,7 @@ class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         list_ = self.ably.push.admin.channel_subscriptions.list_channels
 
         list_response = list_()
-        assert type(list_response) is PaginatedResult
+        assert type(list_response) is PaginatedResultSync
         assert type(list_response.items) is list
         assert type(list_response.items[0]) is str
 

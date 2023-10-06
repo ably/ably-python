@@ -1,15 +1,15 @@
 import logging
 import asyncio
 from typing import Optional
-from ably.sync.realtime.realtime_channel import Channels
+from ably.sync.realtime.realtime_channel import ChannelsSync
 from ably.sync.realtime.connection import Connection, ConnectionState
-from ably.sync.rest.rest import AblyRest
+from ably.sync.rest.rest import AblyRestSync
 
 
 log = logging.getLogger(__name__)
 
 
-class AblyRealtime(AblyRest):
+class AblyRealtime(AblyRestSync):
     """
     Ably Realtime Client
 
@@ -98,7 +98,7 @@ class AblyRealtime(AblyRest):
 
         self.key = key
         self.__connection = Connection(self)
-        self.__channels = Channels(self)
+        self.__channels = ChannelsSync(self)
 
         # RTN3
         if self.options.auto_connect:
@@ -135,6 +135,6 @@ class AblyRealtime(AblyRest):
 
     # RTC3, RTS1
     @property
-    def channels(self) -> Channels:
+    def channels(self) -> ChannelsSync:
         """Returns the realtime channel object"""
         return self.__channels

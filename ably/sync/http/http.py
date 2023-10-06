@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import httpx
 import msgpack
 
-from ably.sync.rest.auth import Auth
+from ably.sync.rest.auth import AuthSync
 from ably.sync.http.httputils import HttpUtils
 from ably.sync.transport.defaults import Defaults
 from ably.sync.util.exceptions import AblyException
@@ -114,7 +114,7 @@ class Response:
         return getattr(self.__response, attr)
 
 
-class Http:
+class HttpSync:
     CONNECTION_RETRY_DEFAULTS = {
         'http_open_timeout': 4,
         'http_request_timeout': 10,
@@ -171,7 +171,7 @@ class Http:
         params = HttpUtils.get_query_params(self.options)
 
         if not skip_auth:
-            if self.auth.auth_mechanism == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
+            if self.auth.auth_mechanism == AuthSync.Method.BASIC and self.preferred_scheme.lower() == 'http':
                 raise AblyException(
                     "Cannot use Basic Auth over non-TLS connections",
                     401,

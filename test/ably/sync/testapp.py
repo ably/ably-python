@@ -2,7 +2,7 @@ import json
 import os
 import logging
 
-from ably.sync.rest.rest import AblyRest
+from ably.sync.rest.rest import AblyRestSync
 from ably.sync.types.capability import Capability
 from ably.sync.types.options import Options
 from ably.sync.util.exceptions import AblyException
@@ -28,7 +28,7 @@ if rest_host and not rest_host.endswith("rest.ably.io"):
     tls_port = 8081
 
 
-ably = AblyRest(token='not_a_real_token',
+ably = AblyRestSync(token='not_a_real_token',
                 port=port, tls_port=tls_port, tls=tls,
                 environment=environment,
                 use_binary_protocol=False)
@@ -74,7 +74,7 @@ class TestApp:
         test_vars = TestApp.get_test_vars()
         options = TestApp.get_options(test_vars, **kw)
         options.update(kw)
-        return AblyRest(**options)
+        return AblyRestSync(**options)
 
     @staticmethod
     def get_ably_realtime(**kw):

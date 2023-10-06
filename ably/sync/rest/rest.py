@@ -2,12 +2,12 @@ import logging
 from typing import Optional
 from urllib.parse import urlencode
 
-from ably.sync.http.http import Http
-from ably.sync.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
+from ably.sync.http.http import HttpSync
+from ably.sync.http.paginatedresult import PaginatedResultSync, HttpPaginatedResponseSync
 from ably.sync.http.paginatedresult import format_params
-from ably.sync.rest.auth import Auth
-from ably.sync.rest.channel import Channels
-from ably.sync.rest.push import Push
+from ably.sync.rest.auth import AuthSync
+from ably.sync.rest.channel import ChannelsSync
+from ably.sync.rest.push import PushSync
 from ably.sync.util.exceptions import AblyException, catch_all
 from ably.sync.types.options import Options
 from ably.sync.types.stats import stats_response_processor
@@ -16,7 +16,7 @@ from ably.sync.types.tokendetails import TokenDetails
 log = logging.getLogger(__name__)
 
 
-class AblyRest:
+class AblyRestSync:
     """Ably Rest Client"""
 
     def __init__(self, key: Optional[str] = None, token: Optional[str] = None,
@@ -67,13 +67,13 @@ class AblyRest:
         except AttributeError:
             self._is_realtime = False
 
-        self.__http = Http(self, options)
-        self.__auth = Auth(self, options)
+        self.__http = HttpSync(self, options)
+        self.__auth = AuthSync(self, options)
         self.__http.auth = self.__auth
 
-        self.__channels = Channels(self)
+        self.__channels = ChannelsSync(self)
         self.__options = options
-        self.__push = Push(self)
+        self.__push = PushSync(self)
 
     def __enter__(self):
         return self
@@ -84,7 +84,7 @@ class AblyRest:
         """Returns the stats for this application"""
         formatted_params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
         url = '/stats' + formatted_params
-        return PaginatedResult.paginated_query(
+        return PaginatedResultSync.paginated_query(
             self.http, url=url, response_processor=stats_response_processor)
 
     @catch_all
@@ -136,7 +136,7 @@ class AblyRest:
                 items = [items]
             return items
 
-        return HttpPaginatedResponse.paginated_query(
+        return HttpPaginatedResponseSync.paginated_query(
             self.http, method, url, version=version, body=body, headers=headers,
             response_processor=response_processor,
             raise_on_error=False)

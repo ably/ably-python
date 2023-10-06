@@ -12,7 +12,7 @@ import pytest
 
 from ably.sync import api_version
 from ably.sync import AblyException, IncompatibleClientIdException
-from ably.sync.rest.auth import Auth
+from ably.sync.rest.auth import AuthSync
 from ably.sync.types.message import Message
 from ably.sync.types.tokendetails import TokenDetails
 from ably.sync.util import case
@@ -105,7 +105,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
         expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
 
-        with mock.patch('ably.sync.rest.rest.Http.post',
+        with mock.patch('ably.sync.rest.rest.HttpSync.post',
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish(messages=expected_messages)
         assert post_mock.call_count == 1
@@ -186,7 +186,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = self.ably.channels[
             self.get_channel_name('persisted:null_name_and_data_keys_arent_sent_channel')]
 
-        with mock.patch('ably.sync.rest.rest.Http.post',
+        with mock.patch('ably.sync.rest.rest.HttpSync.post',
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish(name=None, data=None)
 
@@ -238,7 +238,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         # defined after publish
         assert isinstance(self.ably_with_client_id.auth.token_details, TokenDetails)
         assert self.ably_with_client_id.auth.token_details.client_id == self.client_id
-        assert self.ably_with_client_id.auth.auth_mechanism == Auth.Method.TOKEN
+        assert self.ably_with_client_id.auth.auth_mechanism == AuthSync.Method.TOKEN
         history = channel.history()
         assert history.items[0].client_id == self.client_id
 
@@ -246,7 +246,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = self.ably_with_client_id.channels[
             self.get_channel_name('persisted:no_client_id_identified_client')]
 
-        with mock.patch('ably.sync.rest.rest.Http.post',
+        with mock.patch('ably.sync.rest.rest.HttpSync.post',
                         wraps=channel.ably.http.post) as post_mock:
             channel.publish(name='publish', data='test')
 
@@ -486,7 +486,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
             'id': 'foobar',
         }
         message = Message(**data)
-        request_body = channel._Channel__publish_request_body(messages=[message])
+        request_body = channel._ChannelSync__publish_request_body(messages=[message])
         input_keys = set(case.snake_to_camel(x) for x in data.keys())
         assert input_keys - set(request_body) == set()
 
@@ -496,7 +496,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         channel = self.ably_idempotent.channels[self.get_channel_name()]
 
         message = Message('name', 'data')
-        request_body = channel._Channel__publish_request_body(messages=[message])
+        request_body = channel._ChannelSync__publish_request_body(messages=[message])
         base_id, serial = request_body['id'].split(':')
         assert len(base64.b64decode(base_id)) >= 9
         assert serial == '0'
@@ -507,7 +507,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         channel = self.ably_idempotent.channels[self.get_channel_name()]
 
         message = Message('name', 'data', id='foobar')
-        request_body = channel._Channel__publish_request_body(messages=[message])
+        request_body = channel._ChannelSync__publish_request_body(messages=[message])
         assert request_body['id'] == 'foobar'
 
     # RSL1k3
@@ -519,7 +519,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
             Message('name', 'data', id='foobar'),
             Message('name', 'data'),
         ]
-        request_body = channel._Channel__publish_request_body(messages=messages)
+        request_body = channel._ChannelSync__publish_request_body(messages=messages)
         assert request_body[0]['id'] == 'foobar'
         assert 'id' not in request_body[1]
 

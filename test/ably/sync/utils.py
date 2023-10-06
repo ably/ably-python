@@ -15,7 +15,7 @@ import mock
 import respx
 from httpx import Response
 
-from ably.sync.http.http import Http
+from ably.sync.http.http import HttpSync
 
 
 class BaseTestCase(unittest.TestCase):
@@ -71,14 +71,14 @@ def assert_responses_type(protocol):
     responses = []
 
     def patch():
-        original = Http.make_request
+        original = HttpSync.make_request
 
         def fake_make_request(self, *args, **kwargs):
             response = original(self, *args, **kwargs)
             responses.append(response)
             return response
 
-        patcher = mock.patch.object(Http, 'make_request', fake_make_request)
+        patcher = mock.patch.object(HttpSync, 'make_request', fake_make_request)
         patcher.start()
         return patcher
 

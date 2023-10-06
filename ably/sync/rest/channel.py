@@ -9,7 +9,7 @@ from urllib import parse
 from methoddispatch import SingleDispatch, singledispatch
 import msgpack
 
-from ably.sync.http.paginatedresult import PaginatedResult, format_params
+from ably.sync.http.paginatedresult import PaginatedResultSync, format_params
 from ably.sync.types.channeldetails import ChannelDetails
 from ably.sync.types.message import Message, make_message_response_handler
 from ably.sync.types.presence import Presence
@@ -19,7 +19,7 @@ from ably.sync.util.exceptions import catch_all, IncompatibleClientIdException
 log = logging.getLogger(__name__)
 
 
-class Channel(SingleDispatch):
+class ChannelSync(SingleDispatch):
     def __init__(self, ably, name, options):
         self.__ably = ably
         self.__name = name
@@ -35,7 +35,7 @@ class Channel(SingleDispatch):
         path = self.__base_path + 'messages' + params
 
         message_handler = make_message_response_handler(self.__cipher)
-        return PaginatedResult.paginated_query(
+        return PaginatedResultSync.paginated_query(
             self.ably.http, url=path, response_processor=message_handler)
 
     def __publish_request_body(self, messages):
@@ -174,7 +174,7 @@ class Channel(SingleDispatch):
             self.__cipher = cipher
 
 
-class Channels:
+class ChannelsSync:
     def __init__(self, rest):
         self.__ably = rest
         self.__all: dict = OrderedDict()
@@ -184,7 +184,7 @@ class Channels:
             name = name.decode('ascii')
 
         if name not in self.__all:
-            result = self.__all[name] = Channel(self.__ably, name, kwargs)
+            result = self.__all[name] = ChannelSync(self.__ably, name, kwargs)
         else:
             result = self.__all[name]
             if len(kwargs) != 0:
@@ -199,7 +199,7 @@ class Channels:
         return self.get(name)
 
     def __contains__(self, item):
-        if isinstance(item, Channel):
+        if isinstance(item, ChannelSync):
             name = item.name
         elif isinstance(item, bytes):
             name = item.decode('ascii')

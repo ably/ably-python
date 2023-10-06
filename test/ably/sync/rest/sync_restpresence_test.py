@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 import respx
 
-from ably.sync.http.paginatedresult import PaginatedResult
+from ably.sync.http.paginatedresult import PaginatedResultSync
 from ably.sync.types.presence import PresenceMessage
 
 from test.ably.sync.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseAsyncTestCase
@@ -27,7 +27,7 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def test_channel_presence_get(self):
         presence_page = self.channel.presence.get()
-        assert isinstance(presence_page, PaginatedResult)
+        assert isinstance(presence_page, PaginatedResultSync)
         assert len(presence_page.items) == 6
         member = presence_page.items[0]
         assert isinstance(member, PresenceMessage)
@@ -40,7 +40,7 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     def test_channel_presence_history(self):
         presence_history = self.channel.presence.history()
-        assert isinstance(presence_history, PaginatedResult)
+        assert isinstance(presence_history, PaginatedResultSync)
         assert len(presence_history.items) == 6
         member = presence_history.items[0]
         assert isinstance(member, PresenceMessage)

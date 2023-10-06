@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from urllib import parse
 
-from ably.sync.http.paginatedresult import PaginatedResult
+from ably.sync.http.paginatedresult import PaginatedResultSync
 from ably.sync.types.mixins import EncodeDataMixin
 
 
@@ -135,7 +135,7 @@ class Presence:
         path = self._path_with_qs(self.__base_path + 'presence', qs)
 
         presence_handler = make_presence_response_handler(self.__cipher)
-        return PaginatedResult.paginated_query(
+        return PaginatedResultSync.paginated_query(
             self.__http, url=path, response_processor=presence_handler)
 
     def history(self, limit=None, direction=None, start=None, end=None):
@@ -163,7 +163,7 @@ class Presence:
         path = self._path_with_qs(self.__base_path + 'presence/history', qs)
 
         presence_handler = make_presence_response_handler(self.__cipher)
-        return PaginatedResult.paginated_query(
+        return PaginatedResultSync.paginated_query(
             self.__http, url=path, response_processor=presence_handler)
 
 

@@ -11,8 +11,8 @@ import respx
 from httpx import Response, Client
 
 import ably
-from ably.sync import AblyRest
-from ably.sync import Auth
+from ably.sync import AblyRestSync
+from ably.sync import AuthSync
 from ably.sync import AblyAuthException
 from ably.sync.types.tokendetails import TokenDetails
 
@@ -33,21 +33,21 @@ class TestAuth(BaseAsyncTestCase):
         self.test_vars = TestApp.get_test_vars()
 
     def test_auth_init_key_only(self):
-        ably = AblyRest(key=self.test_vars["keys"][0]["key_str"])
-        assert Auth.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        ably = AblyRestSync(key=self.test_vars["keys"][0]["key_str"])
+        assert AuthSync.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
         assert ably.auth.auth_options.key_name == self.test_vars["keys"][0]['key_name']
         assert ably.auth.auth_options.key_secret == self.test_vars["keys"][0]['key_secret']
 
     def test_auth_init_token_only(self):
-        ably = AblyRest(token="this_is_not_really_a_token")
+        ably = AblyRestSync(token="this_is_not_really_a_token")
 
-        assert Auth.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        assert AuthSync.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
 
     def test_auth_token_details(self):
         td = TokenDetails()
-        ably = AblyRest(token_details=td)
+        ably = AblyRestSync(token_details=td)
 
-        assert Auth.Method.TOKEN == ably.auth.auth_mechanism
+        assert AuthSync.Method.TOKEN == ably.auth.auth_mechanism
         assert ably.auth.token_details is td
 
     def test_auth_init_with_token_callback(self):
@@ -68,21 +68,21 @@ class TestAuth(BaseAsyncTestCase):
             pass
 
         assert callback_called, "Token callback not called"
-        assert Auth.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        assert AuthSync.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
 
     def test_auth_init_with_key_and_client_id(self):
-        ably = AblyRest(key=self.test_vars["keys"][0]["key_str"], client_id='testClientId')
+        ably = AblyRestSync(key=self.test_vars["keys"][0]["key_str"], client_id='testClientId')
 
-        assert Auth.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        assert AuthSync.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
         assert ably.auth.client_id == 'testClientId'
 
     def test_auth_init_with_token(self):
         ably = TestApp.get_ably_rest(key=None, token="this_is_not_really_a_token")
-        assert Auth.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        assert AuthSync.Method.TOKEN == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
 
     # RSA11
     def test_request_basic_auth_header(self):
-        ably = AblyRest(key_secret='foo', key_name='bar')
+        ably = AblyRestSync(key_secret='foo', key_name='bar')
 
         with mock.patch.object(Client, 'send') as get_mock:
             try:
@@ -95,7 +95,7 @@ class TestAuth(BaseAsyncTestCase):
 
     # RSA7e2
     def test_request_basic_auth_header_with_client_id(self):
-        ably = AblyRest(key_secret='foo', key_name='bar', client_id='client_id')
+        ably = AblyRestSync(key_secret='foo', key_name='bar', client_id='client_id')
 
         with mock.patch.object(Client, 'send') as get_mock:
             try:
@@ -107,7 +107,7 @@ class TestAuth(BaseAsyncTestCase):
         assert client_id == base64.b64encode('client_id'.encode('ascii')).decode('utf-8')
 
     def test_request_token_auth_header(self):
-        ably = AblyRest(token='not_a_real_token')
+        ably = AblyRestSync(token='not_a_real_token')
 
         with mock.patch.object(Client, 'send') as get_mock:
             try:
@@ -120,46 +120,46 @@ class TestAuth(BaseAsyncTestCase):
 
     def test_if_cant_authenticate_via_token(self):
         with pytest.raises(ValueError):
-            AblyRest(use_token_auth=True)
+            AblyRestSync(use_token_auth=True)
 
     def test_use_auth_token(self):
-        ably = AblyRest(use_token_auth=True, key=self.test_vars["keys"][0]["key_str"])
-        assert ably.auth.auth_mechanism == Auth.Method.TOKEN
+        ably = AblyRestSync(use_token_auth=True, key=self.test_vars["keys"][0]["key_str"])
+        assert ably.auth.auth_mechanism == AuthSync.Method.TOKEN
 
     def test_with_client_id(self):
-        ably = AblyRest(use_token_auth=True, client_id='client_id', key=self.test_vars["keys"][0]["key_str"])
-        assert ably.auth.auth_mechanism == Auth.Method.TOKEN
+        ably = AblyRestSync(use_token_auth=True, client_id='client_id', key=self.test_vars["keys"][0]["key_str"])
+        assert ably.auth.auth_mechanism == AuthSync.Method.TOKEN
 
     def test_with_auth_url(self):
-        ably = AblyRest(auth_url='auth_url')
-        assert ably.auth.auth_mechanism == Auth.Method.TOKEN
+        ably = AblyRestSync(auth_url='auth_url')
+        assert ably.auth.auth_mechanism == AuthSync.Method.TOKEN
 
     def test_with_auth_callback(self):
-        ably = AblyRest(auth_callback=lambda x: x)
-        assert ably.auth.auth_mechanism == Auth.Method.TOKEN
+        ably = AblyRestSync(auth_callback=lambda x: x)
+        assert ably.auth.auth_mechanism == AuthSync.Method.TOKEN
 
     def test_with_token(self):
-        ably = AblyRest(token='a token')
-        assert ably.auth.auth_mechanism == Auth.Method.TOKEN
+        ably = AblyRestSync(token='a token')
+        assert ably.auth.auth_mechanism == AuthSync.Method.TOKEN
 
     def test_default_ttl_is_1hour(self):
         one_hour_in_ms = 60 * 60 * 1000
         assert TokenDetails.DEFAULTS['ttl'] == one_hour_in_ms
 
     def test_with_auth_method(self):
-        ably = AblyRest(token='a token', auth_method='POST')
+        ably = AblyRestSync(token='a token', auth_method='POST')
         assert ably.auth.auth_options.auth_method == 'POST'
 
     def test_with_auth_headers(self):
-        ably = AblyRest(token='a token', auth_headers={'h1': 'v1'})
+        ably = AblyRestSync(token='a token', auth_headers={'h1': 'v1'})
         assert ably.auth.auth_options.auth_headers == {'h1': 'v1'}
 
     def test_with_auth_params(self):
-        ably = AblyRest(token='a token', auth_params={'p': 'v'})
+        ably = AblyRestSync(token='a token', auth_params={'p': 'v'})
         assert ably.auth.auth_options.auth_params == {'p': 'v'}
 
     def test_with_default_token_params(self):
-        ably = AblyRest(key=self.test_vars["keys"][0]["key_str"],
+        ably = AblyRestSync(key=self.test_vars["keys"][0]["key_str"],
                         default_token_params={'ttl': 12345})
         assert ably.auth.auth_options.default_token_params == {'ttl': 12345}
 
@@ -178,11 +178,11 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         self.use_binary_protocol = use_binary_protocol
 
     def test_if_authorize_changes_auth_mechanism_to_token(self):
-        assert Auth.Method.BASIC == self.ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        assert AuthSync.Method.BASIC == self.ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
 
         self.ably.auth.authorize()
 
-        assert Auth.Method.TOKEN == self.ably.auth.auth_mechanism, "Authorize should change the Auth method"
+        assert AuthSync.Method.TOKEN == self.ably.auth.auth_mechanism, "Authorize should change the Auth method"
 
     # RSA10a
     @dont_vary_protocol
@@ -210,7 +210,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
     def test_authorize_adheres_to_request_token(self):
         token_params = {'ttl': 10, 'client_id': 'client_id'}
         auth_params = {'auth_url': 'somewhere.com', 'query_time': True}
-        with mock.patch('ably.sync.rest.auth.Auth.request_token', new_callable=Mock) as request_mock:
+        with mock.patch('ably.sync.rest.auth.AuthSync.request_token', new_callable=Mock) as request_mock:
             self.ably.auth.authorize(token_params, auth_params)
 
         token_called, auth_called = request_mock.call_args
@@ -249,7 +249,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         auth_options = dict(self.ably.auth.auth_options.auth_options)
         auth_options['auth_headers'] = {'a_headers': 'a_value'}
         self.ably.auth.authorize({'ttl': 555}, auth_options)
-        with mock.patch('ably.sync.rest.auth.Auth.request_token',
+        with mock.patch('ably.sync.rest.auth.AuthSync.request_token',
                         wraps=self.ably.auth.request_token) as request_mock:
             self.ably.auth.authorize()
 
@@ -261,7 +261,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         auth_options = dict(self.ably.auth.auth_options.auth_options)
         auth_options['auth_headers'] = None
         self.ably.auth.authorize({}, auth_options)
-        with mock.patch('ably.sync.rest.auth.Auth.request_token',
+        with mock.patch('ably.sync.rest.auth.AuthSync.request_token',
                         wraps=self.ably.auth.request_token) as request_mock:
             self.ably.auth.authorize()
 

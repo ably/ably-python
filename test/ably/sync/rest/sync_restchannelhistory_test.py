@@ -3,7 +3,7 @@ import pytest
 import respx
 
 from ably.sync import AblyException
-from ably.sync.http.paginatedresult import PaginatedResult
+from ably.sync.http.paginatedresult import PaginatedResultSync
 
 from test.ably.sync.testapp import TestApp
 from test.ably.sync.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
@@ -32,7 +32,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history0.publish('history3', ['This is a JSONArray message payload'])
 
         history = history0.history()
-        assert isinstance(history, PaginatedResult)
+        assert isinstance(history, PaginatedResultSync)
         messages = history.items
         assert messages is not None, "Expected non-None messages"
         assert 4 == len(messages), "Expected 4 messages"

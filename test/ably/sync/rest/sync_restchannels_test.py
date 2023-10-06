@@ -3,7 +3,7 @@ from collections.abc import Iterable
 import pytest
 
 from ably.sync import AblyException
-from ably.sync.rest.channel import Channel, Channels, Presence
+from ably.sync.rest.channel import ChannelSync, ChannelsSync, Presence
 from ably.sync.util.crypto import generate_random_key
 
 from test.ably.sync.testapp import TestApp
@@ -22,18 +22,18 @@ class TestChannels(BaseAsyncTestCase):
 
     def test_rest_channels_attr(self):
         assert hasattr(self.ably, 'channels')
-        assert isinstance(self.ably.channels, Channels)
+        assert isinstance(self.ably.channels, ChannelsSync)
 
     def test_channels_get_returns_new_or_existing(self):
         channel = self.ably.channels.get('new_channel')
-        assert isinstance(channel, Channel)
+        assert isinstance(channel, ChannelSync)
         channel_same = self.ably.channels.get('new_channel')
         assert channel is channel_same
 
     def test_channels_get_returns_new_with_options(self):
         key = generate_random_key()
         channel = self.ably.channels.get('new_channel', cipher={'key': key})
-        assert isinstance(channel, Channel)
+        assert isinstance(channel, ChannelSync)
         assert channel.cipher.secret_key is key
 
     def test_channels_get_updates_existing_with_options(self):
@@ -67,7 +67,7 @@ class TestChannels(BaseAsyncTestCase):
 
         assert isinstance(self.ably.channels, Iterable)
         for name, channel in zip(channel_names, self.ably.channels):
-            assert isinstance(channel, Channel)
+            assert isinstance(channel, ChannelSync)
             assert name == channel.name
 
     # RSN4a, RSN4b

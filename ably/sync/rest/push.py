@@ -1,22 +1,22 @@
 from typing import Optional
-from ably.sync.http.paginatedresult import PaginatedResult, format_params
+from ably.sync.http.paginatedresult import PaginatedResultSync, format_params
 from ably.sync.types.device import DeviceDetails, device_details_response_processor
 from ably.sync.types.channelsubscription import PushChannelSubscription, channel_subscriptions_response_processor
 from ably.sync.types.channelsubscription import channels_response_processor
 
 
-class Push:
+class PushSync:
 
     def __init__(self, ably):
         self.__ably = ably
-        self.__admin = PushAdmin(ably)
+        self.__admin = PushAdminSync(ably)
 
     @property
     def admin(self):
         return self.__admin
 
 
-class PushAdmin:
+class PushAdminSync:
 
     def __init__(self, ably):
         self.__ably = ably
@@ -88,7 +88,7 @@ class PushDeviceRegistrations:
         - `**params`: the parameters used to filter the list
         """
         path = '/push/deviceRegistrations' + format_params(params)
-        return PaginatedResult.paginated_query(
+        return PaginatedResultSync.paginated_query(
             self.ably.http, url=path,
             response_processor=device_details_response_processor)
 
@@ -141,7 +141,7 @@ class PushChannelSubscriptions:
         - `**params`: the parameters used to filter the list
         """
         path = '/push/channelSubscriptions' + format_params(params)
-        return PaginatedResult.paginated_query(self.ably.http, url=path,
+        return PaginatedResultSync.paginated_query(self.ably.http, url=path,
                                                response_processor=channel_subscriptions_response_processor)
 
     def list_channels(self, **params):
@@ -152,7 +152,7 @@ class PushChannelSubscriptions:
         - `**params`: the parameters used to filter the list
         """
         path = '/push/channels' + format_params(params)
-        return PaginatedResult.paginated_query(self.ably.http, url=path,
+        return PaginatedResultSync.paginated_query(self.ably.http, url=path,
                                                response_processor=channels_response_processor)
 
     def save(self, subscription: dict):

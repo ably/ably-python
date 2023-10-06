@@ -10,7 +10,7 @@ from urllib.parse import urljoin
 import respx
 from httpx import Response
 
-from ably.sync import AblyRest
+from ably.sync import AblyRestSync
 from ably.sync.transport.defaults import Defaults
 from ably.sync.types.options import Options
 from ably.sync.util.exceptions import AblyException
@@ -20,7 +20,7 @@ from test.ably.sync.utils import BaseAsyncTestCase
 
 class TestRestHttp(BaseAsyncTestCase):
     def test_max_retry_attempts_and_timeouts_defaults(self):
-        ably = AblyRest(token="foo")
+        ably = AblyRestSync(token="foo")
         assert 'http_open_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
         assert 'http_request_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
 
@@ -33,7 +33,7 @@ class TestRestHttp(BaseAsyncTestCase):
         ably.close()
 
     def test_cumulative_timeout(self):
-        ably = AblyRest(token="foo")
+        ably = AblyRestSync(token="foo")
         assert 'http_max_retry_duration' in ably.http.CONNECTION_RETRY_DEFAULTS
 
         ably.options.http_max_retry_duration = 0.5
@@ -50,7 +50,7 @@ class TestRestHttp(BaseAsyncTestCase):
         ably.close()
 
     def test_host_fallback(self):
-        ably = AblyRest(token="foo")
+        ably = AblyRestSync(token="foo")
 
         def make_url(host):
             base_url = "%s://%s:%d" % (ably.http.preferred_scheme,
@@ -82,7 +82,7 @@ class TestRestHttp(BaseAsyncTestCase):
     @respx.mock
     def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
-        ably = AblyRest(token="foo", rest_host=custom_host)
+        ably = AblyRestSync(token="foo", rest_host=custom_host)
 
         mock_route = respx.get("https://example.org").mock(side_effect=httpx.RequestError(''))
 
@@ -132,7 +132,7 @@ class TestRestHttp(BaseAsyncTestCase):
     @respx.mock
     def test_no_retry_if_not_500_to_599_http_code(self):
         default_host = Options().get_rest_host()
-        ably = AblyRest(token="foo")
+        ably = AblyRestSync(token="foo")
 
         default_url = "%s://%s:%d/" % (
             ably.http.preferred_scheme,
@@ -157,7 +157,7 @@ class TestRestHttp(BaseAsyncTestCase):
         https://github.com/ably/ably-python/issues/160
         """
 
-        ably = AblyRest(token="foo")
+        ably = AblyRestSync(token="foo")
 
         def raise_ably_exception(*args, **kwargs):
             raise AblyException(message="", status_code=500, code=50000)
@@ -172,7 +172,7 @@ class TestRestHttp(BaseAsyncTestCase):
         ably.close()
 
     def test_custom_http_timeouts(self):
-        ably = AblyRest(
+        ably = AblyRestSync(
             token="foo", http_request_timeout=30, http_open_timeout=8,
             http_max_retry_count=6, http_max_retry_duration=20)
 

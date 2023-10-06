@@ -6,7 +6,7 @@ import pytest
 
 from ably.sync.types.stats import Stats
 from ably.sync.util.exceptions import AblyException
-from ably.sync.http.paginatedresult import PaginatedResult
+from ably.sync.http.paginatedresult import PaginatedResultSync
 
 from test.ably.sync.testapp import TestApp
 from test.ably.sync.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
@@ -179,7 +179,7 @@ class TestRestAppStats(TestRestAppStatsSetup, BaseAsyncTestCase,
 
     def test_paginated_response(self):
         stats_pages = self.ably.stats(**self.get_params())
-        assert isinstance(stats_pages, PaginatedResult)
+        assert isinstance(stats_pages, PaginatedResultSync)
         assert isinstance(stats_pages.items[0], Stats)
 
     def test_units(self):

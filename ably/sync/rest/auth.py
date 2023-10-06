@@ -9,7 +9,7 @@ import httpx
 
 from ably.sync.types.options import Options
 if TYPE_CHECKING:
-    from ably.sync.rest.rest import AblyRest
+    from ably.sync.rest.rest import AblyRestSync
     from ably.sync.realtime.realtime import AblyRealtime
 
 from ably.sync.types.capability import Capability
@@ -17,18 +17,18 @@ from ably.sync.types.tokendetails import TokenDetails
 from ably.sync.types.tokenrequest import TokenRequest
 from ably.sync.util.exceptions import AblyAuthException, AblyException, IncompatibleClientIdException
 
-__all__ = ["Auth"]
+__all__ = ["AuthSync"]
 
 log = logging.getLogger(__name__)
 
 
-class Auth:
+class AuthSync:
 
     class Method:
         BASIC = "BASIC"
         TOKEN = "TOKEN"
 
-    def __init__(self, ably: Union[AblyRest, AblyRealtime], options: Options):
+    def __init__(self, ably: Union[AblyRestSync, AblyRealtime], options: Options):
         self.__ably = ably
         self.__auth_options = options
 
@@ -52,7 +52,7 @@ class Auth:
             # We have the key, no need to authenticate the client
             # default to using basic auth
             log.debug("anonymous, using basic auth")
-            self.__auth_mechanism = Auth.Method.BASIC
+            self.__auth_mechanism = AuthSync.Method.BASIC
             basic_key = "%s:%s" % (options.key_name, options.key_secret)
             basic_key = base64.b64encode(basic_key.encode('utf-8'))
             self.__basic_credentials = basic_key.decode('ascii')
@@ -61,7 +61,7 @@ class Auth:
             raise ValueError('If use_token_auth is False you must provide a key')
 
         # Using token auth
-        self.__auth_mechanism = Auth.Method.TOKEN
+        self.__auth_mechanism = AuthSync.Method.TOKEN
 
         if options.token_details:
             self.__token_details = options.token_details
@@ -88,11 +88,11 @@ class Auth:
         auth_credentials = {}
         if self.auth_options.client_id:
             auth_credentials["client_id"] = self.auth_options.client_id
-        if self.__auth_mechanism == Auth.Method.BASIC:
+        if self.__auth_mechanism == AuthSync.Method.BASIC:
             key_name = self.__auth_options.key_name
             key_secret = self.__auth_options.key_secret
             auth_credentials["key"] = f"{key_name}:{key_secret}"
-        elif self.__auth_mechanism == Auth.Method.TOKEN:
+        elif self.__auth_mechanism == AuthSync.Method.TOKEN:
             token_details = self._ensure_valid_auth_credentials()
             auth_credentials["accessToken"] = token_details.token
         return auth_credentials
@@ -106,7 +106,7 @@ class Auth:
         return token_details
 
     def _ensure_valid_auth_credentials(self, token_params=None, auth_options=None, force=False):
-        self.__auth_mechanism = Auth.Method.TOKEN
+        self.__auth_mechanism = AuthSync.Method.TOKEN
         if token_params is None:
             token_params = dict(self.auth_options.default_token_params)
         else:
@@ -363,7 +363,7 @@ class Auth:
             return original_client_id == assumed_client_id
 
     def _get_auth_headers(self):
-        if self.__auth_mechanism == Auth.Method.BASIC:
+        if self.__auth_mechanism == AuthSync.Method.BASIC:
             # RSA7e2
             if self.client_id:
                 return {

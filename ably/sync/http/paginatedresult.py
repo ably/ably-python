@@ -41,7 +41,7 @@ def format_params(params=None, direction=None, start=None, end=None, limit=None,
     return '?' + urlencode(params) if params else ''
 
 
-class PaginatedResult:
+class PaginatedResultSync:
     def __init__(self, http, items, content_type, rel_first, rel_next,
                  response_processor, response):
         self.__http = http
@@ -111,7 +111,7 @@ class PaginatedResult:
                    next_rel_request, response_processor, response)
 
 
-class HttpPaginatedResponse(PaginatedResult):
+class HttpPaginatedResponseSync(PaginatedResultSync):
     @property
     def status_code(self):
         return self.response.status_code
