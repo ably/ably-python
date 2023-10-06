@@ -75,29 +75,45 @@ class Rule:
         new_tokens = []
         token_counter = 0
         async_await_block_started = False
+        async_await_char_diff = -6 # (len("async") or len("await") is 6)
         async_await_offset = 0
+
+        renamed_class_call_started = False
+        renamed_class_char_diff = 0
+        renamed_class_offset = 0
+
         while token_counter < len(tokens):
             token = tokens[token_counter]
 
-            if async_await_block_started:
+            if async_await_block_started or renamed_class_call_started:
                 # Fix indentation issues for async/await fn definition/call
                 if token.src == '\n':
                     new_tokens.append(token)
                     token_counter = token_counter + 1
                     next_newline_token = tokens[token_counter]
-                    if (len(next_newline_token.src) >= 6 and
+                    new_tab_src = next_newline_token.src
+
+                    if (renamed_class_call_started and
+                            tokens[token_counter + 1].utf8_byte_offset >= renamed_class_offset):
+                        if renamed_class_char_diff < 0:
+                            new_tab_src = new_tab_src[:renamed_class_char_diff]
+                        else:
+                            new_tab_src = new_tab_src + renamed_class_char_diff * " "
+
+                    if (async_await_block_started and len(next_newline_token.src) >= 6 and
                             tokens[token_counter + 1].utf8_byte_offset >= async_await_offset + 6):
-                        new_tab_indentation = next_newline_token.src[:-6]  # remove last 6 white spaces
-                        next_newline_token = next_newline_token._replace(src=new_tab_indentation)
-                        new_tokens.append(next_newline_token)
-                    else:
-                        new_tokens.append(next_newline_token)
+                            new_tab_src = new_tab_src[:async_await_char_diff]  # remove last 6 white spaces
+
+                    next_newline_token = next_newline_token._replace(src=new_tab_src)
+                    new_tokens.append(next_newline_token)
                     token_counter = token_counter + 1
                     continue
 
             if token.src == ')':
                 async_await_block_started = False
                 async_await_offset = 0
+                renamed_class_call_started = False
+                renamed_class_char_diff = 0
 
             if token.src in ["async", "await"]:
                 # When removing async or await, we want to skip the following whitespace
@@ -120,7 +136,18 @@ class Rule:
                         token_counter = self._replace_import(tokens, token_counter, new_tokens)
                         continue
                 else:
-                    token = token._replace(src=self._unasync_name(token.src))
+                    token_new_src = self._unasync_name(token.src)
+                    if token.src == token_new_src:
+                        token_new_src = self._class_rename(token.src)
+                        if token.src != token_new_src:
+                            renamed_class_offset = token.utf8_byte_offset
+                            renamed_class_char_diff = len(token_new_src) - len(token.src)
+                            for i in range(token_counter, token_counter + 6):
+                                if tokens[i].src == '(':
+                                    renamed_class_call_started = True
+                                    break
+
+                    token = token._replace(src=token_new_src)
             elif token.name == "STRING":
                 src_token = token.src.replace("'", "")
                 if _STRING_REPLACE.get(src_token) is not None:
@@ -156,7 +183,7 @@ class Rule:
             if key in full_lib_name:
                 updated_lib_name = full_lib_name.replace(key, value)
                 for lib_name_part in updated_lib_name.split("."):
-                    lib_name_part = self._unasync_name(lib_name_part)
+                    lib_name_part = self._class_rename(lib_name_part)
                     new_tokens.append(tokenize_rt.Token("NAME", lib_name_part))
                     new_tokens.append(tokenize_rt.Token("OP", "."))
                 new_tokens.pop()
@@ -165,11 +192,14 @@ class Rule:
         lib_name_counter = token_counter + 2
         return lib_name_counter
 
+    def _class_rename(self, name):
+        if name in _CLASS_RENAME:
+            return _CLASS_RENAME[name]
+        return name
+
     def _unasync_name(self, name):
         if name in self.token_replacements:
             return self.token_replacements[name]
-        if name in _CLASS_RENAME:
-            return _CLASS_RENAME[name]
         return name
 
 
