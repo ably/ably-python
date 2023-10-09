@@ -222,72 +222,73 @@ def find_files(dir_path, file_name_regex):
     return glob.glob(os.path.join(dir_path, "**", file_name_regex), recursive=True)
 
 
-# Source files ==========================================
+def run():
+    # Source files ==========================================
 
-_TOKEN_REPLACE["AsyncClient"] = "Client"
-_TOKEN_REPLACE["aclose"] = "close"
+    _TOKEN_REPLACE["AsyncClient"] = "Client"
+    _TOKEN_REPLACE["aclose"] = "close"
 
-_IMPORTS_REPLACE["ably"] = "ably.sync"
+    _IMPORTS_REPLACE["ably"] = "ably.sync"
 
-rename_classes = [
-  "AblyRest",
-  "Push",
-  "PushAdmin",
-  "Channel",
-  "Channels",
-  "Auth",
-  "Http",
-  "PaginatedResult",
-  "HttpPaginatedResponse"
-]
+    rename_classes = [
+      "AblyRest",
+      "Push",
+      "PushAdmin",
+      "Channel",
+      "Channels",
+      "Auth",
+      "Http",
+      "PaginatedResult",
+      "HttpPaginatedResponse"
+    ]
 
-# here...
-for class_name in rename_classes:
-  _CLASS_RENAME[class_name] = f"{class_name}Sync"
+    # here...
+    for class_name in rename_classes:
+      _CLASS_RENAME[class_name] = f"{class_name}Sync"
 
-_STRING_REPLACE["Auth"] = "AuthSync"
+    _STRING_REPLACE["Auth"] = "AuthSync"
 
-src_dir_path = os.path.join(os.getcwd(), "ably")
-dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
+    src_dir_path = os.path.join(os.getcwd(), "ably")
+    dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
 
-relevant_src_files = (set(find_files(src_dir_path, "*.py")) -
-                      set(find_files(dest_dir_path, "*.py")))
+    relevant_src_files = (set(find_files(src_dir_path, "*.py")) -
+                          set(find_files(dest_dir_path, "*.py")))
 
-unasync_files(list(relevant_src_files), [Rule(fromdir=src_dir_path, todir=dest_dir_path)])
+    unasync_files(list(relevant_src_files), [Rule(fromdir=src_dir_path, todir=dest_dir_path)])
 
-# Test files ==============================================
+    # Test files ==============================================
 
-_TOKEN_REPLACE["asyncSetUp"] = "setUp"
-_TOKEN_REPLACE["asyncTearDown"] = "tearDown"
-_TOKEN_REPLACE["AsyncMock"] = "Mock"
+    _TOKEN_REPLACE["asyncSetUp"] = "setUp"
+    _TOKEN_REPLACE["asyncTearDown"] = "tearDown"
+    _TOKEN_REPLACE["AsyncMock"] = "Mock"
 
-_TOKEN_REPLACE["_Channel__publish_request_body"] = "_ChannelSync__publish_request_body"
-_TOKEN_REPLACE["_Http__client"] = "_HttpSync__client"
+    _TOKEN_REPLACE["_Channel__publish_request_body"] = "_ChannelSync__publish_request_body"
+    _TOKEN_REPLACE["_Http__client"] = "_HttpSync__client"
 
-_IMPORTS_REPLACE["test.ably"] = "test.ably.sync"
+    _IMPORTS_REPLACE["test.ably"] = "test.ably.sync"
 
-_STRING_REPLACE['/../assets/testAppSpec.json'] = '/../../assets/testAppSpec.json'
-_STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.AuthSync.request_token'
-_STRING_REPLACE['ably.rest.auth.TokenRequest'] = 'ably.sync.rest.auth.TokenRequest'
-_STRING_REPLACE['ably.rest.rest.Http.post'] = 'ably.sync.rest.rest.HttpSync.post'
-_STRING_REPLACE['httpx.AsyncClient.send'] = 'httpx.Client.send'
-_STRING_REPLACE['ably.util.exceptions.AblyException.raise_for_response'] = \
-    'ably.sync.util.exceptions.AblyException.raise_for_response'
-_STRING_REPLACE['ably.rest.rest.AblyRest.time'] = 'ably.sync.rest.rest.AblyRestSync.time'
-_STRING_REPLACE['ably.rest.auth.Auth._timestamp'] = 'ably.sync.rest.auth.AuthSync._timestamp'
+    _STRING_REPLACE['/../assets/testAppSpec.json'] = '/../../assets/testAppSpec.json'
+    _STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.AuthSync.request_token'
+    _STRING_REPLACE['ably.rest.auth.TokenRequest'] = 'ably.sync.rest.auth.TokenRequest'
+    _STRING_REPLACE['ably.rest.rest.Http.post'] = 'ably.sync.rest.rest.HttpSync.post'
+    _STRING_REPLACE['httpx.AsyncClient.send'] = 'httpx.Client.send'
+    _STRING_REPLACE['ably.util.exceptions.AblyException.raise_for_response'] = \
+        'ably.sync.util.exceptions.AblyException.raise_for_response'
+    _STRING_REPLACE['ably.rest.rest.AblyRest.time'] = 'ably.sync.rest.rest.AblyRestSync.time'
+    _STRING_REPLACE['ably.rest.auth.Auth._timestamp'] = 'ably.sync.rest.auth.AuthSync._timestamp'
 
 
-# round 1
-src_dir_path = os.path.join(os.getcwd(), "test", "ably")
-dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync")
-src_files = [os.path.join(os.getcwd(), "test", "ably", "testapp.py"),
-             os.path.join(os.getcwd(), "test", "ably", "utils.py")]
+    # round 1
+    src_dir_path = os.path.join(os.getcwd(), "test", "ably")
+    dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync")
+    src_files = [os.path.join(os.getcwd(), "test", "ably", "testapp.py"),
+                 os.path.join(os.getcwd(), "test", "ably", "utils.py")]
 
-unasync_files(src_files, [Rule(fromdir=src_dir_path, todir=dest_dir_path)])
+    unasync_files(src_files, [Rule(fromdir=src_dir_path, todir=dest_dir_path)])
 
-# round 2
-src_dir_path = os.path.join(os.getcwd(), "test", "ably", "rest")
-dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync", "rest")
-src_files = find_files(src_dir_path, "*.py")
+    # round 2
+    src_dir_path = os.path.join(os.getcwd(), "test", "ably", "rest")
+    dest_dir_path = os.path.join(os.getcwd(), "test", "ably", "sync", "rest")
+    src_files = find_files(src_dir_path, "*.py")
 
-unasync_files(src_files, [Rule(fromdir=src_dir_path, todir=dest_dir_path, output_file_prefix="sync_")])
+    unasync_files(src_files, [Rule(fromdir=src_dir_path, todir=dest_dir_path, output_file_prefix="sync_")])

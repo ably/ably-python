@@ -36,6 +36,6 @@ jobs:
     - name: Lint with flake8
       run: poetry run flake8
     - name: Generate rest sync code and tests
-      run: poetry run python unasync.py
+      run: poetry run unasync
     - name: Test with pytest
       run: poetry run pytest

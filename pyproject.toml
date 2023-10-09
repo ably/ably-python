@@ -58,3 +58,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 timeout = 30
+
+[tool.poetry.scripts]
+unasync = 'ably.scripts.unasync:run'
