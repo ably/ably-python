@@ -229,15 +229,21 @@ _TOKEN_REPLACE["aclose"] = "close"
 
 _IMPORTS_REPLACE["ably"] = "ably.sync"
 
-_CLASS_RENAME["AblyRest"] = "AblyRestSync"
-_CLASS_RENAME["Push"] = "PushSync"
-_CLASS_RENAME["PushAdmin"] = "PushAdminSync"
-_CLASS_RENAME["Channel"] = "ChannelSync"
-_CLASS_RENAME["Channels"] = "ChannelsSync"
-_CLASS_RENAME["Auth"] = "AuthSync"
-_CLASS_RENAME["Http"] = "HttpSync"
-_CLASS_RENAME["PaginatedResult"] = "PaginatedResultSync"
-_CLASS_RENAME["HttpPaginatedResponse"] = "HttpPaginatedResponseSync"
+rename_classes = [
+  "AblyRest",
+  "Push",
+  "PushAdmin",
+  "Channel",
+  "Channels",
+  "Auth",
+  "Http",
+  "PaginatedResult",
+  "HttpPaginatedResponse"
+]
+
+# here...
+for class_name in rename_classes:
+  _CLASS_RENAME[class_name] = f"{class_name}Sync"
 
 _STRING_REPLACE["Auth"] = "AuthSync"
 
