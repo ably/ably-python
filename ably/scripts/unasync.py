@@ -231,20 +231,20 @@ def run():
     _IMPORTS_REPLACE["ably"] = "ably.sync"
 
     rename_classes = [
-      "AblyRest",
-      "Push",
-      "PushAdmin",
-      "Channel",
-      "Channels",
-      "Auth",
-      "Http",
-      "PaginatedResult",
-      "HttpPaginatedResponse"
+        "AblyRest",
+        "Push",
+        "PushAdmin",
+        "Channel",
+        "Channels",
+        "Auth",
+        "Http",
+        "PaginatedResult",
+        "HttpPaginatedResponse"
     ]
 
     # here...
     for class_name in rename_classes:
-      _CLASS_RENAME[class_name] = f"{class_name}Sync"
+        _CLASS_RENAME[class_name] = f"{class_name}Sync"
 
     _STRING_REPLACE["Auth"] = "AuthSync"
 
@@ -276,7 +276,6 @@ def run():
         'ably.sync.util.exceptions.AblyException.raise_for_response'
     _STRING_REPLACE['ably.rest.rest.AblyRest.time'] = 'ably.sync.rest.rest.AblyRestSync.time'
     _STRING_REPLACE['ably.rest.auth.Auth._timestamp'] = 'ably.sync.rest.auth.AuthSync._timestamp'
-
 
     # round 1
     src_dir_path = os.path.join(os.getcwd(), "test", "ably")
