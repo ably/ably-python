@@ -20,6 +20,9 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+include = [
+  'ably/**/*.py'
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
