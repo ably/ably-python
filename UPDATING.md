@@ -101,10 +101,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-- To use old `AblyRest` class, but with `sync` style API. Import it as,
-```python
-from ably.sync import AblyRestSync as AblyRest
-```
 
 #### Publishing Messages
 
