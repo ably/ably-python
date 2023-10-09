@@ -4,6 +4,18 @@ import tokenize as std_tokenize
 
 import tokenize_rt
 
+rename_classes = [
+    "AblyRest",
+    "Push",
+    "PushAdmin",
+    "Channel",
+    "Channels",
+    "Auth",
+    "Http",
+    "PaginatedResult",
+    "HttpPaginatedResponse"
+]
+
 _TOKEN_REPLACE = {
     "__aenter__": "__enter__",
     "__aexit__": "__exit__",
@@ -229,18 +241,6 @@ def run():
     _TOKEN_REPLACE["aclose"] = "close"
 
     _IMPORTS_REPLACE["ably"] = "ably.sync"
-
-    rename_classes = [
-        "AblyRest",
-        "Push",
-        "PushAdmin",
-        "Channel",
-        "Channels",
-        "Auth",
-        "Http",
-        "PaginatedResult",
-        "HttpPaginatedResponse"
-    ]
 
     # here...
     for class_name in rename_classes:
