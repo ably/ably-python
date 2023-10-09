@@ -86,9 +86,8 @@ To see which versions of Python we test the SDK against, please look at our
 The 1.2.0 version introduces a breaking change, which changes the way of interacting with the SDK from synchronous to asynchronous, using [the `asyncio` foundational library](https://docs.python.org/3.7/library/asyncio.html) to provide support for `async`/`await` syntax.
 Because of this breaking change, every call that interacts with the Ably REST API must be refactored to this asynchronous way.
 
-Important Update:
-- If you want to keep using old synchronous style API, import `AblyRestSync` client instead.
-- This is applicable only for Ably REST APIs.
+For backwards compatibility, in ably-python 2.0.2 we have added a backwards compatible REST client so that you can still use the synchronous version of the REST interface if you are migrating forwards from version 1.1.
+In order to use the synchronous variant, you can import the `AblyRestSync` constructor from `ably.sync`:
 
 ```python
 from ably.sync import AblyRestSync
