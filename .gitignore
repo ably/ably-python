@@ -55,3 +55,4 @@ ably/types/options.py.orig
 test/ably/restsetup.py.orig
 
 .idea/**/*
+**/ably/sync/***
