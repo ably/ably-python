@@ -94,7 +94,7 @@ Important Update:
 from ably.sync import AblyRestSync
 
 def main():
-    ably = AblyRestSync('api:key', sync_enabled=True)
+    ably = AblyRestSync('api:key')
     channel = ably.channels.get("channel_name")
     channel.publish('event', 'message')
 
