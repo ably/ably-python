@@ -55,7 +55,7 @@ class WebSocketTransport(EventEmitter):
     def connect(self):
         headers = HttpUtils.default_headers()
         query_params = urllib.parse.urlencode(self.params)
-        ws_url = (f'wss://{self.host}?{query_params}')
+        ws_url = f'wss://{self.host}?{query_params}'
         log.info(f'connect(): attempting to connect to {ws_url}')
         self.ws_connect_task = asyncio.create_task(self.ws_connect(ws_url, headers))
         self.ws_connect_task.add_done_callback(self.on_ws_connect_done)
@@ -67,9 +67,7 @@ class WebSocketTransport(EventEmitter):
             exception = e
         if exception is None or isinstance(exception, ConnectionClosedOK):
             return
-        log.info(
-            f'WebSocketTransport.on_ws_connect_done(): exception = {exception}'
-        )
+        log.info(f'WebSocketTransport.on_ws_connect_done(): exception = {exception}')
 
     async def ws_connect(self, ws_url, headers):
         try:
@@ -122,8 +120,10 @@ class WebSocketTransport(EventEmitter):
             try:
                 await self.connection_manager.ably.auth.authorize()
             except Exception as exc:
-                log.exception(f"WebSocketTransport.on_protocol_message(): An exception \
-                                occurred during reauth: {exc}")
+                log.exception(
+                    f'WebSocketTransport.on_protocol_message(): An exception \
+                                occurred during reauth: {exc}'
+                )
         elif action == ProtocolMessageAction.CLOSED:
             if self.ws_connect_task:
                 self.ws_connect_task.cancel()
@@ -138,7 +138,7 @@ class WebSocketTransport(EventEmitter):
         elif action in (
             ProtocolMessageAction.ATTACHED,
             ProtocolMessageAction.DETACHED,
-            ProtocolMessageAction.MESSAGE
+            ProtocolMessageAction.MESSAGE,
         ):
             self.connection_manager.on_channel_message(msg)
 
@@ -159,7 +159,7 @@ class WebSocketTransport(EventEmitter):
         except Exception as e:
             exception = e
         if exception is not None:
-            log.exception(f"WebSocketTransport.on_protocol_message_handled(): uncaught exception: {exception}")
+            log.exception(f'WebSocketTransport.on_protocol_message_handled(): uncaught exception: {exception}')
 
     def on_read_loop_done(self, task: asyncio.Task):
         try:
@@ -201,7 +201,7 @@ class WebSocketTransport(EventEmitter):
         self.idle_timer = None
         since_last = unix_time_ms() - self.last_activity
         time_remaining = self.max_idle_interval - since_last
-        msg = f"No activity seen from realtime in {since_last} ms; assuming connection has dropped"
+        msg = f'No activity seen from realtime in {since_last} ms; assuming connection has dropped'
         if time_remaining <= 0:
             log.error(msg)
             await self.disconnect(AblyException(msg, 408, 80003))

@@ -9,22 +9,22 @@ from test.ably.utils import BaseAsyncTestCase
 class TestRealtimeInit(BaseAsyncTestCase):
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
-        self.valid_key_format = "api:key"
+        self.valid_key_format = 'api:key'
 
     async def test_init_with_valid_key(self):
-        ably = await TestApp.get_ably_realtime(key=self.test_vars["keys"][0]["key_str"], auto_connect=False)
-        assert Auth.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
-        assert ably.auth.auth_options.key_name == self.test_vars["keys"][0]['key_name']
-        assert ably.auth.auth_options.key_secret == self.test_vars["keys"][0]['key_secret']
+        ably = await TestApp.get_ably_realtime(key=self.test_vars['keys'][0]['key_str'], auto_connect=False)
+        assert Auth.Method.BASIC == ably.auth.auth_mechanism, 'Unexpected Auth method mismatch'
+        assert ably.auth.auth_options.key_name == self.test_vars['keys'][0]['key_name']
+        assert ably.auth.auth_options.key_secret == self.test_vars['keys'][0]['key_secret']
 
     async def test_init_with_incorrect_key(self):
         with pytest.raises(AblyAuthException):
-            await TestApp.get_ably_realtime(key="some invalid key", auto_connect=False)
+            await TestApp.get_ably_realtime(key='some invalid key', auto_connect=False)
 
     async def test_init_with_valid_key_format(self):
-        key = self.valid_key_format.split(":")
+        key = self.valid_key_format.split(':')
         ably = await TestApp.get_ably_realtime(key=self.valid_key_format, auto_connect=False)
-        assert Auth.Method.BASIC == ably.auth.auth_mechanism, "Unexpected Auth method mismatch"
+        assert Auth.Method.BASIC == ably.auth.auth_mechanism, 'Unexpected Auth method mismatch'
         assert ably.auth.auth_options.key_name == key[0]
         assert ably.auth.auth_options.key_secret == key[1]
 

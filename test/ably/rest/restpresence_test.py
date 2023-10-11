@@ -11,7 +11,6 @@ from test.ably.testapp import TestApp
 
 
 class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
-
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
         self.ably = await TestApp.get_ably_rest()
@@ -54,12 +53,12 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     async def test_presence_get_encoded(self):
         presence_history = await self.channel.presence.history()
-        assert presence_history.items[-1].data == "true"
-        assert presence_history.items[-2].data == "24"
-        assert presence_history.items[-3].data == "This is a string clientData payload"
+        assert presence_history.items[-1].data == 'true'
+        assert presence_history.items[-2].data == '24'
+        assert presence_history.items[-3].data == 'This is a string clientData payload'
         # this one doesn't have encoding field
         assert presence_history.items[-4].data == '{ "test": "This is a JSONObject clientData payload"}'
-        assert presence_history.items[-5].data == {"example": {"json": "Object"}}
+        assert presence_history.items[-5].data == {'example': {'json': 'Object'}}
 
     async def test_timestamp_is_datetime(self):
         presence_page = await self.channel.presence.get()
@@ -70,13 +69,10 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         presence_page = await self.channel.presence.get()
         member = presence_page.items[0]
 
-        assert member.member_key == "%s:%s" % (member.connection_id, member.client_id)
+        assert member.member_key == '%s:%s' % (member.connection_id, member.client_id)
 
     def presence_mock_url(self):
-        kwargs = {
-            'scheme': 'https' if self.test_vars['tls'] else 'http',
-            'host': self.test_vars['host']
-        }
+        kwargs = {'scheme': 'https' if self.test_vars['tls'] else 'http', 'host': self.test_vars['host']}
         port = self.test_vars['tls_port'] if self.test_vars.get('tls') else kwargs['port']
         if port == 80:
             kwargs['port_sufix'] = ''
@@ -86,10 +82,7 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         return url.format(**kwargs)
 
     def history_mock_url(self):
-        kwargs = {
-            'scheme': 'https' if self.test_vars['tls'] else 'http',
-            'host': self.test_vars['host']
-        }
+        kwargs = {'scheme': 'https' if self.test_vars['tls'] else 'http', 'host': self.test_vars['host']}
         port = self.test_vars['tls_port'] if self.test_vars.get('tls') else kwargs['port']
         if port == 80:
             kwargs['port_sufix'] = ''
@@ -188,7 +181,6 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
 
 class TestPresenceCrypt(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
-
     async def asyncSetUp(self):
         self.ably = await TestApp.get_ably_rest()
         key = b'0123456789abcdef'

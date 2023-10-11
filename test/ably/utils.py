@@ -3,6 +3,7 @@ import random
 import string
 import unittest
 import sys
+
 if sys.version_info >= (3, 8):
     from unittest import IsolatedAsyncioTestCase
 else:
@@ -17,12 +18,9 @@ from ably.http.http import Http
 
 
 class BaseTestCase(unittest.TestCase):
-
     def respx_add_empty_msg_pack(self, url, method='GET'):
         respx.route(method=method, url=url).return_value = Response(
-            status_code=200,
-            headers={'content-type': 'application/x-msgpack'},
-            content=msgpack.packb({})
+            status_code=200, headers={'content-type': 'application/x-msgpack'}, content=msgpack.packb({})
         )
 
     @classmethod
@@ -36,12 +34,9 @@ class BaseTestCase(unittest.TestCase):
 
 
 class BaseAsyncTestCase(IsolatedAsyncioTestCase):
-
     def respx_add_empty_msg_pack(self, url, method='GET'):
         respx.route(method=method, url=url).return_value = Response(
-            status_code=200,
-            headers={'content-type': 'application/x-msgpack'},
-            content=msgpack.packb({})
+            status_code=200, headers={'content-type': 'application/x-msgpack'}, content=msgpack.packb({})
         )
 
     @classmethod
@@ -90,8 +85,9 @@ def assert_responses_type(protocol):
             await fn(self, *args, **kwargs)
             unpatch(patcher)
 
-            assert len(responses) >= 1,\
-                   "If your test doesn't make any requests, use the @dont_vary_protocol decorator"
+            assert (
+                len(responses) >= 1
+            ), "If your test doesn't make any requests, use the @dont_vary_protocol decorator"
 
             for response in responses:
                 # In HTTP/2 some header fields are optional in case of 204 status code
@@ -107,6 +103,7 @@ def assert_responses_type(protocol):
                         msgpack.unpackb(response.content)
 
         return test_decorated
+
     return test_decorator
 
 
@@ -122,10 +119,10 @@ class VaryByProtocolTestsMetaclass(type):
           is called
         * exclude tests with the @dont_vary_protocol decorator
     """
+
     def __new__(cls, clsname, bases, dct):
         for key, value in tuple(dct.items()):
-            if key.startswith('test') and not getattr(value, 'dont_vary_protocol',
-                                                      False):
+            if key.startswith('test') and not getattr(value, 'dont_vary_protocol', False):
 
                 wrapper_bin = cls.wrap_as('bin', key, value)
                 wrapper_text = cls.wrap_as('text', key, value)
@@ -145,6 +142,7 @@ class VaryByProtocolTestsMetaclass(type):
             if hasattr(self, 'per_protocol_setup'):
                 self.per_protocol_setup(ttype == 'bin')
             await old_func(self)
+
         wrapper.__name__ = old_name + '_' + ttype
         return wrapper
 

@@ -86,12 +86,10 @@ class RealtimeChannel(EventEmitter, Channel):
         if self.__realtime.connection.state not in [
             ConnectionState.CONNECTING,
             ConnectionState.CONNECTED,
-            ConnectionState.DISCONNECTED
+            ConnectionState.DISCONNECTED,
         ]:
             raise AblyException(
-                message=f"Unable to attach; channel state = {self.state}",
-                code=90001,
-                status_code=400
+                message=f'Unable to attach; channel state = {self.state}', code=90001, status_code=400
             )
 
         if self.state != ChannelState.ATTACHING:
@@ -103,18 +101,18 @@ class RealtimeChannel(EventEmitter, Channel):
             raise state_change.reason
 
     def _attach_impl(self):
-        log.debug("RealtimeChannel.attach_impl(): sending ATTACH protocol message")
+        log.debug('RealtimeChannel.attach_impl(): sending ATTACH protocol message')
 
         # RTL4c
         attach_msg = {
-            "action": ProtocolMessageAction.ATTACH,
-            "channel": self.name,
+            'action': ProtocolMessageAction.ATTACH,
+            'channel': self.name,
         }
 
         if self.__attach_resume:
-            attach_msg["flags"] = Flag.ATTACH_RESUME
+            attach_msg['flags'] = Flag.ATTACH_RESUME
         if self.__channel_serial:
-            attach_msg["channelSerial"] = self.__channel_serial
+            attach_msg['channelSerial'] = self.__channel_serial
 
         self._send_message(attach_msg)
 
@@ -137,9 +135,7 @@ class RealtimeChannel(EventEmitter, Channel):
         # RTL5g, RTL5b - raise exception if state invalid
         if self.__realtime.connection.state in [ConnectionState.CLOSING, ConnectionState.FAILED]:
             raise AblyException(
-                message=f"Unable to detach; channel state = {self.state}",
-                code=90001,
-                status_code=400
+                message=f'Unable to detach; channel state = {self.state}', code=90001, status_code=400
             )
 
         # RTL5a - if channel already detached do nothing
@@ -150,7 +146,7 @@ class RealtimeChannel(EventEmitter, Channel):
             self._notify_state(ChannelState.DETACHED)
             return
         elif self.state == ChannelState.FAILED:
-            raise AblyException("Unable to detach; channel state = failed", 90001, 400)
+            raise AblyException('Unable to detach; channel state = failed', 90001, 400)
         else:
             self._request_state(ChannelState.DETACHING)
 
@@ -164,17 +160,17 @@ class RealtimeChannel(EventEmitter, Channel):
         if new_state == ChannelState.DETACHED:
             return
         elif new_state == ChannelState.ATTACHING:
-            raise AblyException("Detach request superseded by a subsequent attach request", 90000, 409)
+            raise AblyException('Detach request superseded by a subsequent attach request', 90000, 409)
         else:
             raise state_change.reason
 
     def _detach_impl(self) -> None:
-        log.debug("RealtimeChannel.detach_impl(): sending DETACH protocol message")
+        log.debug('RealtimeChannel.detach_impl(): sending DETACH protocol message')
 
         # RTL5d
         detach_msg = {
-            "action": ProtocolMessageAction.DETACH,
-            "channel": self.__name,
+            'action': ProtocolMessageAction.DETACH,
+            'channel': self.__name,
         }
 
         self._send_message(detach_msg)
@@ -212,9 +208,9 @@ class RealtimeChannel(EventEmitter, Channel):
         if isinstance(args[0], str):
             event = args[0]
             if not args[1]:
-                raise ValueError("channel.subscribe called without listener")
+                raise ValueError('channel.subscribe called without listener')
             if not is_callable_or_coroutine(args[1]):
-                raise ValueError("subscribe listener must be function or coroutine function")
+                raise ValueError('subscribe listener must be function or coroutine function')
             listener = args[1]
         elif is_callable_or_coroutine(args[0]):
             listener = args[0]
@@ -266,9 +262,9 @@ class RealtimeChannel(EventEmitter, Channel):
         elif isinstance(args[0], str):
             event = args[0]
             if not args[1]:
-                raise ValueError("channel.unsubscribe called without listener")
+                raise ValueError('channel.unsubscribe called without listener')
             if not is_callable_or_coroutine(args[1]):
-                raise ValueError("unsubscribe listener must be a function or coroutine function")
+                raise ValueError('unsubscribe listener must be a function or coroutine function')
             listener = args[1]
         elif is_callable_or_coroutine(args[0]):
             listener = args[0]
@@ -299,7 +295,7 @@ class RealtimeChannel(EventEmitter, Channel):
 
         if action == ProtocolMessageAction.ATTACHED:
             flags = proto_msg.get('flags')
-            error = proto_msg.get("error")
+            error = proto_msg.get('error')
             exception = None
             resumed = False
 
@@ -313,11 +309,11 @@ class RealtimeChannel(EventEmitter, Channel):
             if self.state == ChannelState.ATTACHED:
                 if not resumed:
                     state_change = ChannelStateChange(self.state, ChannelState.ATTACHED, resumed, exception)
-                    self._emit("update", state_change)
+                    self._emit('update', state_change)
             elif self.state == ChannelState.ATTACHING:
                 self._notify_state(ChannelState.ATTACHED, resumed=resumed)
             else:
-                log.warn("RealtimeChannel._on_message(): ATTACHED received while not attaching")
+                log.warn('RealtimeChannel._on_message(): ATTACHED received while not attaching')
         elif action == ProtocolMessageAction.DETACHED:
             if self.state == ChannelState.DETACHING:
                 self._notify_state(ChannelState.DETACHED)
@@ -338,8 +334,9 @@ class RealtimeChannel(EventEmitter, Channel):
         self._notify_state(state)
         self._check_pending_state()
 
-    def _notify_state(self, state: ChannelState, reason: Optional[AblyException] = None,
-                      resumed: bool = False) -> None:
+    def _notify_state(
+        self, state: ChannelState, reason: Optional[AblyException] = None, resumed: bool = False
+    ) -> None:
         log.debug(f'RealtimeChannel._notify_state(): state = {state}')
 
         self.__clear_state_timer()
@@ -381,7 +378,7 @@ class RealtimeChannel(EventEmitter, Channel):
         connection_state = self.__realtime.connection.connection_manager.state
 
         if connection_state is not ConnectionState.CONNECTED:
-            log.debug(f"RealtimeChannel._check_pending_state(): connection state = {connection_state}")
+            log.debug(f'RealtimeChannel._check_pending_state(): connection state = {connection_state}')
             return
 
         if self.state == ChannelState.ATTACHING:
@@ -393,6 +390,7 @@ class RealtimeChannel(EventEmitter, Channel):
 
     def __start_state_timer(self) -> None:
         if not self.__state_timer:
+
             def on_timeout() -> None:
                 log.debug('RealtimeChannel.start_state_timer(): timer expired')
                 self.__state_timer = None
@@ -408,9 +406,10 @@ class RealtimeChannel(EventEmitter, Channel):
     def __timeout_pending_state(self) -> None:
         if self.state == ChannelState.ATTACHING:
             self._notify_state(
-                ChannelState.SUSPENDED, reason=AblyException("Channel attach timed out", 408, 90007))
+                ChannelState.SUSPENDED, reason=AblyException('Channel attach timed out', 408, 90007)
+            )
         elif self.state == ChannelState.DETACHING:
-            self._notify_state(ChannelState.ATTACHED, reason=AblyException("Channel detach timed out", 408, 90007))
+            self._notify_state(ChannelState.ATTACHED, reason=AblyException('Channel detach timed out', 408, 90007))
         else:
             self._check_pending_state()
 
@@ -428,7 +427,7 @@ class RealtimeChannel(EventEmitter, Channel):
     def __on_retry_timer_expire(self) -> None:
         if self.state == ChannelState.SUSPENDED and self.ably.connection.state == ConnectionState.CONNECTED:
             self.__retry_timer = None
-            log.info("RealtimeChannel retry timer expired, attempting a new attach")
+            log.info('RealtimeChannel retry timer expired, attempting a new attach')
             self._request_state(ChannelState.ATTACHING)
 
     # RTL23
@@ -502,16 +501,14 @@ class Channels(RestChannels):
         channel_name = msg.get('channel')
         if not channel_name:
             log.error(
-                'Channels.on_channel_message()',
-                f'received event without channel, action = {msg.get("action")}'
+                'Channels.on_channel_message()', f'received event without channel, action = {msg.get("action")}'
             )
             return
 
         channel = self.__all[channel_name]
         if not channel:
             log.warning(
-                'Channels.on_channel_message()',
-                f'receieved event for non-existent channel: {channel_name}'
+                'Channels.on_channel_message()', f'receieved event for non-existent channel: {channel_name}'
             )
             return
 

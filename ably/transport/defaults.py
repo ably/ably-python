@@ -1,16 +1,16 @@
 class Defaults:
-    protocol_version = "2"
+    protocol_version = '2'
     fallback_hosts = [
-        "a.ably-realtime.com",
-        "b.ably-realtime.com",
-        "c.ably-realtime.com",
-        "d.ably-realtime.com",
-        "e.ably-realtime.com",
+        'a.ably-realtime.com',
+        'b.ably-realtime.com',
+        'c.ably-realtime.com',
+        'd.ably-realtime.com',
+        'e.ably-realtime.com',
     ]
 
-    rest_host = "rest.ably.io"
-    realtime_host = "realtime.ably.io"  # RTN2
-    connectivity_check_url = "https://internet-up.ably-realtime.com/is-the-internet-up.txt"
+    rest_host = 'rest.ably.io'
+    realtime_host = 'realtime.ably.io'  # RTN2
+    connectivity_check_url = 'https://internet-up.ably-realtime.com/is-the-internet-up.txt'
     environment = 'production'
 
     port = 80
@@ -48,16 +48,16 @@ class Defaults:
     @staticmethod
     def get_scheme(options):
         if options.tls:
-            return "https"
+            return 'https'
         else:
-            return "http"
+            return 'http'
 
     @staticmethod
     def get_environment_fallback_hosts(environment):
         return [
-            environment + "-a-fallback.ably-realtime.com",
-            environment + "-b-fallback.ably-realtime.com",
-            environment + "-c-fallback.ably-realtime.com",
-            environment + "-d-fallback.ably-realtime.com",
-            environment + "-e-fallback.ably-realtime.com",
+            environment + '-a-fallback.ably-realtime.com',
+            environment + '-b-fallback.ably-realtime.com',
+            environment + '-c-fallback.ably-realtime.com',
+            environment + '-d-fallback.ably-realtime.com',
+            environment + '-e-fallback.ably-realtime.com',
         ]

@@ -12,7 +12,7 @@ from ably.util.exceptions import AblyException
 class TestRealtimeChannel(BaseAsyncTestCase):
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
-        self.valid_key_format = "api:key"
+        self.valid_key_format = 'api:key'
 
     async def test_channels_get(self):
         ably = await TestApp.get_ably_realtime()
@@ -27,7 +27,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         ably.channels.release('my_channel')
 
         for _ in ably.channels:
-            raise AssertionError("Expected no channels to exist")
+            raise AssertionError('Expected no channels to exist')
 
         await ably.close()
 
@@ -257,6 +257,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
             if msg.get('action') == ProtocolMessageAction.ATTACH:
                 return
             await original_send_protocol_message(msg)
+
         ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
 
         channel = ably.channels.get('channel_name')
@@ -275,6 +276,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
             if msg.get('action') == ProtocolMessageAction.DETACH:
                 return
             await original_send_protocol_message(msg)
+
         ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
 
         channel = ably.channels.get('channel_name')
@@ -332,8 +334,8 @@ class TestRealtimeChannel(BaseAsyncTestCase):
 
         # Simulate an unexpected DETACHED message from ably
         message = {
-            "action": ProtocolMessageAction.DETACHED,
-            "channel": channel_name,
+            'action': ProtocolMessageAction.DETACHED,
+            'channel': channel_name,
         }
         assert ably.connection.connection_manager.transport
         await ably.connection.connection_manager.transport.on_protocol_message(message)
@@ -362,6 +364,7 @@ class TestRealtimeChannel(BaseAsyncTestCase):
                 call_count += 1
                 return
             await original_send_protocol_message(msg)
+
         ably.connection.connection_manager.send_protocol_message = new_send_protocol_message
 
         with pytest.raises(AblyException):
@@ -394,12 +397,12 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         status_code = 123
 
         msg = {
-            "action": ProtocolMessageAction.ERROR,
-            "channel": channel_name,
-            "error": {
-                "message": "test error",
-                "code": code,
-                "statusCode": status_code,
+            'action': ProtocolMessageAction.ERROR,
+            'channel': channel_name,
+            'error': {
+                'message': 'test error',
+                'code': code,
+                'statusCode': status_code,
             },
         }
 
@@ -422,12 +425,12 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         status_code = 123
 
         msg = {
-            "action": ProtocolMessageAction.ERROR,
-            "channel": channel_name,
-            "error": {
-                "message": "test error",
-                "code": code,
-                "statusCode": status_code,
+            'action': ProtocolMessageAction.ERROR,
+            'channel': channel_name,
+            'error': {
+                'message': 'test error',
+                'code': code,
+                'statusCode': status_code,
             },
         }
 
@@ -449,12 +452,12 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         status_code = 123
 
         msg = {
-            "action": ProtocolMessageAction.ERROR,
-            "channel": channel_name,
-            "error": {
-                "message": "test error",
-                "code": code,
-                "statusCode": status_code,
+            'action': ProtocolMessageAction.ERROR,
+            'channel': channel_name,
+            'error': {
+                'message': 'test error',
+                'code': code,
+                'statusCode': status_code,
             },
         }
 

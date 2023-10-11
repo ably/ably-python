@@ -12,7 +12,6 @@ log = logging.getLogger(__name__)
 
 
 class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
-
     async def asyncSetUp(self):
         self.ably = await TestApp.get_ably_rest(fallback_hosts=[])
         self.test_vars = await TestApp.get_test_vars()
@@ -34,18 +33,22 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history = await history0.history()
         assert isinstance(history, PaginatedResult)
         messages = history.items
-        assert messages is not None, "Expected non-None messages"
-        assert 4 == len(messages), "Expected 4 messages"
+        assert messages is not None, 'Expected non-None messages'
+        assert 4 == len(messages), 'Expected 4 messages'
 
         message_contents = {m.name: m for m in messages}
-        assert "This is a string message payload" == message_contents["history0"].data, \
-               "Expect history0 to be expected String)"
-        assert b"This is a byte[] message payload" == message_contents["history1"].data, \
-               "Expect history1 to be expected byte[]"
-        assert {"test": "This is a JSONObject message payload"} == message_contents["history2"].data, \
-               "Expect history2 to be expected JSONObject"
-        assert ["This is a JSONArray message payload"] == message_contents["history3"].data, \
-               "Expect history3 to be expected JSONObject"
+        assert (
+            'This is a string message payload' == message_contents['history0'].data
+        ), 'Expect history0 to be expected String)'
+        assert (
+            b'This is a byte[] message payload' == message_contents['history1'].data
+        ), 'Expect history1 to be expected byte[]'
+        assert {'test': 'This is a JSONObject message payload'} == message_contents[
+            'history2'
+        ].data, 'Expect history2 to be expected JSONObject'
+        assert ['This is a JSONArray message payload'] == message_contents[
+            'history3'
+        ].data, 'Expect history3 to be expected JSONObject'
 
         expected_message_history = [
             message_contents['history3'],
@@ -53,7 +56,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             message_contents['history1'],
             message_contents['history0'],
         ]
-        assert expected_message_history == messages, "Expect messages in reverse order"
+        assert expected_message_history == messages, 'Expect messages in reverse order'
 
     async def test_channel_history_multi_50_forwards(self):
         history0 = self.get_channel('persisted:channelhistory_multi_50_f')
@@ -64,7 +67,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history = await history0.history(direction='forwards')
         assert history is not None
         messages = history.items
-        assert len(messages) == 50, "Expected 50 messages"
+        assert len(messages) == 50, 'Expected 50 messages'
 
         message_contents = {m.name: m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(50)]
@@ -79,7 +82,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history = await history0.history(direction='backwards')
         assert history is not None
         messages = history.items
-        assert 50 == len(messages), "Expected 50 messages"
+        assert 50 == len(messages), 'Expected 50 messages'
 
         message_contents = {m.name: m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(49, -1, -1)]
@@ -89,7 +92,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         kwargs = {
             'scheme': 'https' if self.test_vars['tls'] else 'http',
             'host': self.test_vars['host'],
-            'channel_name': channel_name
+            'channel_name': channel_name,
         }
         port = self.test_vars['tls_port'] if self.test_vars.get('tls') else kwargs['port']
         if port == 80:
@@ -138,7 +141,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history = await history0.history(direction='forwards', limit=25)
         assert history is not None
         messages = history.items
-        assert len(messages) == 25, "Expected 25 messages"
+        assert len(messages) == 25, 'Expected 25 messages'
 
         message_contents = {m.name: m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(25)]
@@ -153,7 +156,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history = await history0.history(direction='backwards', limit=25)
         assert history is not None
         messages = history.items
-        assert len(messages) == 25, "Expected 25 messages"
+        assert len(messages) == 25, 'Expected 25 messages'
 
         message_contents = {m.name: m for m in messages}
         expected_messages = [message_contents['history%d' % i] for i in range(49, 24, -1)]
@@ -175,8 +178,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         for i in range(40, 60):
             await history0.publish('history%d' % i, str(i))
 
-        history = await history0.history(direction='forwards', start=interval_start,
-                                         end=interval_end)
+        history = await history0.history(direction='forwards', start=interval_start, end=interval_end)
 
         messages = history.items
         assert 20 == len(messages)
@@ -201,8 +203,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         for i in range(40, 60):
             await history0.publish('history%d' % i, str(i))
 
-        history = await history0.history(direction='backwards', start=interval_start,
-                                         end=interval_end)
+        history = await history0.history(direction='backwards', start=interval_start, end=interval_end)
 
         messages = history.items
         assert 20 == len(messages)

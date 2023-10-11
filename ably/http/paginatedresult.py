@@ -32,7 +32,7 @@ def format_params(params=None, direction=None, start=None, end=None, limit=None,
         params['end'] = format_time_param(end)
     if limit:
         if limit > 1000:
-            raise ValueError("The maximum allowed limit is 1000")
+            raise ValueError('The maximum allowed limit is 1000')
         params['limit'] = '%d' % limit
 
     if 'start' in params and 'end' in params and params['start'] > params['end']:
@@ -42,8 +42,7 @@ def format_params(params=None, direction=None, start=None, end=None, limit=None,
 
 
 class PaginatedResult:
-    def __init__(self, http, items, content_type, rel_first, rel_next,
-                 response_processor, response):
+    def __init__(self, http, items, content_type, rel_first, rel_next, response_processor, response):
         self.__http = http
         self.__items = items
         self.__content_type = content_type
@@ -77,21 +76,40 @@ class PaginatedResult:
         return await self.paginated_query_with_request(self.__http, rel_req, self.__response_processor)
 
     @classmethod
-    async def paginated_query(cls, http, method='GET', url='/', version=None, body=None,
-                              headers=None, response_processor=None,
-                              raise_on_error=True):
+    async def paginated_query(
+        cls,
+        http,
+        method='GET',
+        url='/',
+        version=None,
+        body=None,
+        headers=None,
+        response_processor=None,
+        raise_on_error=True,
+    ):
         headers = headers or {}
-        req = Request(method, url, version=version, body=body, headers=headers, skip_auth=False,
-                      raise_on_error=raise_on_error)
+        req = Request(
+            method,
+            url,
+            version=version,
+            body=body,
+            headers=headers,
+            skip_auth=False,
+            raise_on_error=raise_on_error,
+        )
         return await cls.paginated_query_with_request(http, req, response_processor)
 
     @classmethod
-    async def paginated_query_with_request(cls, http, request, response_processor,
-                                           raise_on_error=True):
+    async def paginated_query_with_request(cls, http, request, response_processor, raise_on_error=True):
         response = await http.make_request(
-            request.method, request.url, version=request.version,
-            headers=request.headers, body=request.body,
-            skip_auth=request.skip_auth, raise_on_error=request.raise_on_error)
+            request.method,
+            request.url,
+            version=request.version,
+            headers=request.headers,
+            body=request.body,
+            skip_auth=request.skip_auth,
+            raise_on_error=request.raise_on_error,
+        )
 
         items = response_processor(response)
 
@@ -107,8 +125,7 @@ class PaginatedResult:
         else:
             next_rel_request = None
 
-        return cls(http, items, content_type, first_rel_request,
-                   next_rel_request, response_processor, response)
+        return cls(http, items, content_type, first_rel_request, next_rel_request, response_processor, response)
 
 
 class HttpPaginatedResponse(PaginatedResult):

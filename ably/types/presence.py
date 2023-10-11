@@ -25,18 +25,18 @@ class PresenceAction:
 
 
 class PresenceMessage(EncodeDataMixin):
-
-    def __init__(self,
-                 id=None,  # TP3a
-                 action=None,  # TP3b
-                 client_id=None,  # TP3c
-                 connection_id=None,  # TP3d
-                 data=None,  # TP3e
-                 encoding=None,  # TP3f
-                 timestamp=None,  # TP3g
-                 member_key=None,  # TP3h (for RT only)
-                 extras=None,  # TP3i (functionality not specified)
-                 ):
+    def __init__(
+        self,
+        id=None,  # TP3a
+        action=None,  # TP3b
+        client_id=None,  # TP3c
+        connection_id=None,  # TP3d
+        data=None,  # TP3e
+        encoding=None,  # TP3f
+        timestamp=None,  # TP3g
+        member_key=None,  # TP3h (for RT only)
+        extras=None,  # TP3i (functionality not specified)
+    ):
 
         self.__id = id
         self.__action = action
@@ -79,7 +79,7 @@ class PresenceMessage(EncodeDataMixin):
     @property
     def member_key(self):
         if self.connection_id and self.client_id:
-            return "%s:%s" % (self.connection_id, self.client_id)
+            return '%s:%s' % (self.connection_id, self.client_id)
 
     @property
     def extras(self):
@@ -123,26 +123,25 @@ class Presence:
     def _path_with_qs(self, rel_path, qs=None):
         path = rel_path
         if qs:
-            path += ('?' + parse.urlencode(qs))
+            path += '?' + parse.urlencode(qs)
         return path
 
     async def get(self, limit=None):
         qs = {}
         if limit:
             if limit > 1000:
-                raise ValueError("The maximum allowed limit is 1000")
+                raise ValueError('The maximum allowed limit is 1000')
             qs['limit'] = limit
         path = self._path_with_qs(self.__base_path + 'presence', qs)
 
         presence_handler = make_presence_response_handler(self.__cipher)
-        return await PaginatedResult.paginated_query(
-            self.__http, url=path, response_processor=presence_handler)
+        return await PaginatedResult.paginated_query(self.__http, url=path, response_processor=presence_handler)
 
     async def history(self, limit=None, direction=None, start=None, end=None):
         qs = {}
         if limit:
             if limit > 1000:
-                raise ValueError("The maximum allowed limit is 1000")
+                raise ValueError('The maximum allowed limit is 1000')
             qs['limit'] = limit
         if direction:
             qs['direction'] = direction
@@ -163,12 +162,12 @@ class Presence:
         path = self._path_with_qs(self.__base_path + 'presence/history', qs)
 
         presence_handler = make_presence_response_handler(self.__cipher)
-        return await PaginatedResult.paginated_query(
-            self.__http, url=path, response_processor=presence_handler)
+        return await PaginatedResult.paginated_query(self.__http, url=path, response_processor=presence_handler)
 
 
 def make_presence_response_handler(cipher):
     def encrypted_presence_response_handler(response):
         messages = response.to_native()
         return PresenceMessage.from_encoded_array(messages, cipher=cipher)
+
     return encrypted_presence_response_handler

@@ -12,7 +12,6 @@ from test.ably.utils import BaseAsyncTestCase
 
 # makes no request, no need to use different protocols
 class TestChannels(BaseAsyncTestCase):
-
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
         self.ably = await TestApp.get_ably_rest()
@@ -82,8 +81,8 @@ class TestChannels(BaseAsyncTestCase):
         assert isinstance(channel.presence, Presence)
 
     async def test_without_permissions(self):
-        key = self.test_vars["keys"][2]
-        ably = await TestApp.get_ably_rest(key=key["key_str"])
+        key = self.test_vars['keys'][2]
+        ably = await TestApp.get_ably_rest(key=key['key_str'])
         with pytest.raises(AblyException) as excinfo:
             await ably.channels['test_publish_without_permission'].publish('foo', 'woop')
 

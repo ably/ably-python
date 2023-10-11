@@ -23,7 +23,7 @@ async def send_and_await(rest_channel, realtime_channel):
 class TestRealtimeResume(BaseAsyncTestCase):
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
-        self.valid_key_format = "api:key"
+        self.valid_key_format = 'api:key'
 
     # RTN15c6 - valid resume response
     async def test_connection_resume(self):
@@ -37,7 +37,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
         new_connection_id = ably.connection.connection_manager.connection_id
-        assert ably.connection.connection_manager.transport.params["resume"] == connection_key
+        assert ably.connection.connection_manager.transport.params['resume'] == connection_key
         assert prev_connection_id == new_connection_id
 
         await ably.close()
@@ -47,7 +47,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         ably = await TestApp.get_ably_realtime()
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
-        ably.auth.auth_options.key_name = "wrong-key"
+        ably.auth.auth_options.key_name = 'wrong-key'
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
 
@@ -178,22 +178,18 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await channel.attach()
         error_code = 123
         error_status_code = 456
-        error_message = "some error"
+        error_message = 'some error'
         message = {
-            "action": ProtocolMessageAction.ATTACHED,
-            "channel": name,
-            "error": {
-                "code": error_code,
-                "statusCode": error_status_code,
-                "message": error_message
-            }
+            'action': ProtocolMessageAction.ATTACHED,
+            'channel': name,
+            'error': {'code': error_code, 'statusCode': error_status_code, 'message': error_message},
         }
         future = asyncio.Future()
 
         def on_update(state_change):
             future.set_result(state_change)
 
-        channel.once("update", on_update)
+        channel.once('update', on_update)
         await realtime.connection.connection_manager.transport.on_protocol_message(message)
 
         state_change = await future

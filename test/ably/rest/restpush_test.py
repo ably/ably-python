@@ -18,7 +18,6 @@ DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad
 
 
 class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
-
     async def asyncSetUp(self):
         self.ably = await TestApp.get_ably_rest()
 

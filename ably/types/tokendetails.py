@@ -12,8 +12,7 @@ class TokenDetails:
     # new requests 9000ms before it expires
     TOKEN_EXPIRY_BUFFER = 15 * 1000
 
-    def __init__(self, token=None, expires=None, issued=0,
-                 capability=None, client_id=None):
+    def __init__(self, token=None, expires=None, issued=0, capability=None, client_id=None):
         if expires is None:
             self.__expires = time.time() * 1000 + TokenDetails.DEFAULTS['ttl']
         else:
@@ -60,14 +59,10 @@ class TokenDetails:
 
     @staticmethod
     def from_dict(obj):
-        kwargs = {
-            'token': obj.get("token"),
-            'capability': obj.get("capability"),
-            'client_id': obj.get("clientId")
-        }
-        expires = obj.get("expires")
+        kwargs = {'token': obj.get('token'), 'capability': obj.get('capability'), 'client_id': obj.get('clientId')}
+        expires = obj.get('expires')
         kwargs['expires'] = expires if expires is None else int(expires)
-        issued = obj.get("issued")
+        issued = obj.get('issued')
         kwargs['issued'] = issued if issued is None else int(issued)
 
         return TokenDetails(**kwargs)
@@ -89,9 +84,11 @@ class TokenDetails:
 
     def __eq__(self, other):
         if isinstance(other, TokenDetails):
-            return (self.expires == other.expires
-                    and self.token == other.token
-                    and self.issued == other.issued
-                    and self.capability == other.capability
-                    and self.client_id == other.client_id)
+            return (
+                self.expires == other.expires
+                and self.token == other.token
+                and self.issued == other.issued
+                and self.capability == other.capability
+                and self.client_id == other.client_id
+            )
         return NotImplemented

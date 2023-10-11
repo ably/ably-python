@@ -12,23 +12,22 @@ from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, Ba
 
 
 class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
-
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
 
     @dont_vary_protocol
     def test_key_only(self):
-        ably = AblyRest(key=self.test_vars["keys"][0]["key_str"])
-        assert ably.options.key_name == self.test_vars["keys"][0]["key_name"], "Key name does not match"
-        assert ably.options.key_secret == self.test_vars["keys"][0]["key_secret"], "Key secret does not match"
+        ably = AblyRest(key=self.test_vars['keys'][0]['key_str'])
+        assert ably.options.key_name == self.test_vars['keys'][0]['key_name'], 'Key name does not match'
+        assert ably.options.key_secret == self.test_vars['keys'][0]['key_secret'], 'Key secret does not match'
 
     def per_protocol_setup(self, use_binary_protocol):
         self.use_binary_protocol = use_binary_protocol
 
     @dont_vary_protocol
     def test_with_token(self):
-        ably = AblyRest(token="foo")
-        assert ably.options.auth_token == "foo", "Token not set at options"
+        ably = AblyRest(token='foo')
+        assert ably.options.auth_token == 'foo', 'Token not set at options'
 
     @dont_vary_protocol
     def test_with_token_details(self):
@@ -39,28 +38,29 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_with_options_token_callback(self):
         def token_callback(**params):
-            return "this_is_not_really_a_token_request"
+            return 'this_is_not_really_a_token_request'
+
         AblyRest(auth_callback=token_callback)
 
     @dont_vary_protocol
     def test_ambiguous_key_raises_value_error(self):
-        with pytest.raises(ValueError, match="mutually exclusive"):
-            AblyRest(key=self.test_vars["keys"][0]["key_str"], key_name='x')
-        with pytest.raises(ValueError, match="mutually exclusive"):
-            AblyRest(key=self.test_vars["keys"][0]["key_str"], key_secret='x')
+        with pytest.raises(ValueError, match='mutually exclusive'):
+            AblyRest(key=self.test_vars['keys'][0]['key_str'], key_name='x')
+        with pytest.raises(ValueError, match='mutually exclusive'):
+            AblyRest(key=self.test_vars['keys'][0]['key_str'], key_secret='x')
 
     @dont_vary_protocol
     def test_with_key_name_or_secret_only(self):
-        with pytest.raises(ValueError, match="key is missing"):
+        with pytest.raises(ValueError, match='key is missing'):
             AblyRest(key_name='x')
-        with pytest.raises(ValueError, match="key is missing"):
+        with pytest.raises(ValueError, match='key is missing'):
             AblyRest(key_secret='x')
 
     @dont_vary_protocol
     def test_with_key_name_and_secret(self):
-        ably = AblyRest(key_name="foo", key_secret="bar")
-        assert ably.options.key_name == "foo", "Key name does not match"
-        assert ably.options.key_secret == "bar", "Key secret does not match"
+        ably = AblyRest(key_name='foo', key_secret='bar')
+        assert ably.options.key_name == 'foo', 'Key name does not match'
+        assert ably.options.key_secret == 'bar', 'Key secret does not match'
 
     @dont_vary_protocol
     def test_with_options_auth_url(self):
@@ -70,23 +70,22 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_rest_host_and_environment(self):
         # rest host
-        ably = AblyRest(token='foo', rest_host="some.other.host")
-        assert "some.other.host" == ably.options.rest_host, "Unexpected host mismatch"
+        ably = AblyRest(token='foo', rest_host='some.other.host')
+        assert 'some.other.host' == ably.options.rest_host, 'Unexpected host mismatch'
 
         # environment: production
-        ably = AblyRest(token='foo', environment="production")
+        ably = AblyRest(token='foo', environment='production')
         host = ably.options.get_rest_host()
-        assert "rest.ably.io" == host, "Unexpected host mismatch %s" % host
+        assert 'rest.ably.io' == host, 'Unexpected host mismatch %s' % host
 
         # environment: other
-        ably = AblyRest(token='foo', environment="sandbox")
+        ably = AblyRest(token='foo', environment='sandbox')
         host = ably.options.get_rest_host()
-        assert "sandbox-rest.ably.io" == host, "Unexpected host mismatch %s" % host
+        assert 'sandbox-rest.ably.io' == host, 'Unexpected host mismatch %s' % host
 
         # both, as per #TO3k2
         with pytest.raises(ValueError):
-            ably = AblyRest(token='foo', rest_host="some.other.host",
-                            environment="some.other.environment")
+            ably = AblyRest(token='foo', rest_host='some.other.host', environment='some.other.environment')
 
     # RSC15
     @dont_vary_protocol
@@ -105,7 +104,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         # Specify environment (RSC15g2)
         ably = AblyRest(token='foo', environment='sandbox', http_max_retry_count=10)
         assert sorted(Defaults.get_environment_fallback_hosts('sandbox')) == sorted(
-            ably.options.get_fallback_rest_hosts())
+            ably.options.get_fallback_rest_hosts()
+        )
 
         # Fallback hosts and environment not specified (RSC15g3)
         ably = AblyRest(token='foo', http_max_retry_count=10)
@@ -119,38 +119,41 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @dont_vary_protocol
     def test_specified_realtime_host(self):
-        ably = AblyRest(token='foo', realtime_host="some.other.host")
-        assert "some.other.host" == ably.options.realtime_host, "Unexpected host mismatch"
+        ably = AblyRest(token='foo', realtime_host='some.other.host')
+        assert 'some.other.host' == ably.options.realtime_host, 'Unexpected host mismatch'
 
     @dont_vary_protocol
     def test_specified_port(self):
         ably = AblyRest(token='foo', port=9998, tls_port=9999)
-        assert 9999 == Defaults.get_port(ably.options),\
-               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+        assert 9999 == Defaults.get_port(ably.options), (
+            'Unexpected port mismatch. Expected: 9999. Actual: %d' % ably.options.tls_port
+        )
 
     @dont_vary_protocol
     def test_specified_non_tls_port(self):
         ably = AblyRest(token='foo', port=9998, tls=False)
-        assert 9998 == Defaults.get_port(ably.options),\
-               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+        assert 9998 == Defaults.get_port(ably.options), (
+            'Unexpected port mismatch. Expected: 9999. Actual: %d' % ably.options.tls_port
+        )
 
     @dont_vary_protocol
     def test_specified_tls_port(self):
         ably = AblyRest(token='foo', tls_port=9999, tls=True)
-        assert 9999 == Defaults.get_port(ably.options),\
-               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+        assert 9999 == Defaults.get_port(ably.options), (
+            'Unexpected port mismatch. Expected: 9999. Actual: %d' % ably.options.tls_port
+        )
 
     @dont_vary_protocol
     def test_tls_defaults_to_true(self):
         ably = AblyRest(token='foo')
-        assert ably.options.tls, "Expected encryption to default to true"
-        assert Defaults.tls_port == Defaults.get_port(ably.options), "Unexpected port mismatch"
+        assert ably.options.tls, 'Expected encryption to default to true'
+        assert Defaults.tls_port == Defaults.get_port(ably.options), 'Unexpected port mismatch'
 
     @dont_vary_protocol
     def test_tls_can_be_disabled(self):
         ably = AblyRest(token='foo', tls=False)
-        assert not ably.options.tls, "Expected encryption to be False"
-        assert Defaults.port == Defaults.get_port(ably.options), "Unexpected port mismatch"
+        assert not ably.options.tls, 'Expected encryption to be False'
+        assert Defaults.port == Defaults.get_port(ably.options), 'Unexpected port mismatch'
 
     @dont_vary_protocol
     def test_with_no_params(self):
@@ -164,12 +167,12 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     # RSA10k
     async def test_query_time_param(self):
-        ably = await TestApp.get_ably_rest(query_time=True,
-                                           use_binary_protocol=self.use_binary_protocol)
+        ably = await TestApp.get_ably_rest(query_time=True, use_binary_protocol=self.use_binary_protocol)
 
         timestamp = ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\
-                patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
+        with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time, patch(
+            'ably.rest.auth.Auth._timestamp', wraps=timestamp
+        ) as local_time:
             await ably.auth.request_token()
             assert local_time.call_count == 1
             assert server_time.call_count == 1
@@ -218,8 +221,12 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_accepts_custom_http_timeouts(self):
         ably = AblyRest(
-            token="foo", http_request_timeout=30, http_open_timeout=8,
-            http_max_retry_count=6, http_max_retry_duration=20)
+            token='foo',
+            http_request_timeout=30,
+            http_open_timeout=8,
+            http_max_retry_count=6,
+            http_max_retry_duration=20,
+        )
 
         assert ably.options.http_request_timeout == 30
         assert ably.options.http_open_timeout == 8
