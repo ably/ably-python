@@ -37,12 +37,10 @@ class AblyException(Exception):
         try:
             json_response = response.json()
         except Exception:
-            log.debug("Response not json: %d %s",
-                      response.status_code,
-                      response.text)
-            raise AblyException(message=response.text,
-                                status_code=response.status_code,
-                                code=response.status_code * 100)
+            log.debug('Response not json: %d %s', response.status_code, response.text)
+            raise AblyException(
+                message=response.text, status_code=response.status_code, code=response.status_code * 100
+            )
 
         if json_response and 'error' in json_response:
             error = json_response['error']
@@ -53,19 +51,17 @@ class AblyException(Exception):
                     code=int(error['code']),
                 )
             except KeyError:
-                msg = "Unexpected exception decoding server response: %s"
+                msg = 'Unexpected exception decoding server response: %s'
                 msg = msg % response.text
                 raise AblyException(message=msg, status_code=500, code=50000)
 
-        raise AblyException(message="",
-                            status_code=response.status_code,
-                            code=response.status_code * 100)
+        raise AblyException(message='', status_code=response.status_code, code=response.status_code * 100)
 
     @staticmethod
     def from_exception(e):
         if isinstance(e, AblyException):
             return e
-        return AblyException("Unexpected exception: %s" % e, 500, 50000)
+        return AblyException('Unexpected exception: %s' % e, 500, 50000)
 
     @staticmethod
     def from_dict(value: dict):

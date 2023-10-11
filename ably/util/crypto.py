@@ -44,8 +44,7 @@ class CipherParams:
 
 class CbcChannelCipher:
     def __init__(self, cipher_params):
-        self.__secret_key = (cipher_params.secret_key or
-                             self.__random(cipher_params.key_length / 8))
+        self.__secret_key = cipher_params.secret_key or self.__random(cipher_params.key_length / 8)
         if isinstance(self.__secret_key, str):
             self.__secret_key = self.__secret_key.encode()
         self.__iv = cipher_params.iv or self.__random(16)
@@ -94,14 +93,14 @@ class CbcChannelCipher:
             plaintext = bytes(plaintext)
         padded_plaintext = self.__pad(plaintext)
         encrypted = self.__iv + self.__encryptor.encrypt(padded_plaintext)
-        self.__iv = encrypted[-self.__block_size:]
+        self.__iv = encrypted[-self.__block_size :]
         return encrypted
 
     def decrypt(self, ciphertext):
         if isinstance(ciphertext, bytearray):
             ciphertext = bytes(ciphertext)
-        iv = ciphertext[:self.__block_size]
-        ciphertext = ciphertext[self.__block_size:]
+        iv = ciphertext[: self.__block_size]
+        ciphertext = ciphertext[self.__block_size :]
         decryptor = AES.new(self.__secret_key, AES.MODE_CBC, iv)
         decrypted = decryptor.decrypt(ciphertext)
         return bytearray(self.__unpad(decrypted))
@@ -116,8 +115,7 @@ class CbcChannelCipher:
 
     @property
     def cipher_type(self):
-        return ("%s-%s-%s" % (self.__algorithm, self.__key_length,
-                self.__mode)).lower()
+        return ('%s-%s-%s' % (self.__algorithm, self.__key_length, self.__mode)).lower()
 
 
 class CipherData(TypedBuffer):
@@ -143,7 +141,7 @@ def generate_random_key(length=DEFAULT_KEYLENGTH):
 
 def get_default_params(params=None):
     if type(params) in [str, bytes]:
-        raise ValueError("Calling get_default_params with a key directly is deprecated, it expects a params dict")
+        raise ValueError('Calling get_default_params with a key directly is deprecated, it expects a params dict')
 
     key = params.get('key')
     algorithm = params.get('algorithm') or 'AES'
@@ -151,7 +149,7 @@ def get_default_params(params=None):
     mode = params.get('mode') or 'CBC'
 
     if not key:
-        raise ValueError("Crypto.get_default_params: a key is required")
+        raise ValueError('Crypto.get_default_params: a key is required')
 
     if type(key) == str:
         key = base64.b64decode(key)
@@ -176,4 +174,5 @@ def validate_cipher_params(cipher_params):
             return
         raise ValueError(
             'Unsupported key length %s for aes-cbc encryption. Encryption key must be 128 or 256 bits'
-            ' (16 or 32 ASCII characters)' % key_length)
+            ' (16 or 32 ASCII characters)' % key_length
+        )

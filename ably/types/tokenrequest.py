@@ -5,9 +5,9 @@ import json
 
 
 class TokenRequest:
-
-    def __init__(self, key_name=None, client_id=None, nonce=None, mac=None,
-                 capability=None, ttl=None, timestamp=None):
+    def __init__(
+        self, key_name=None, client_id=None, nonce=None, mac=None, capability=None, ttl=None, timestamp=None
+    ):
         self.__key_name = key_name
         self.__client_id = client_id
         self.__nonce = nonce
@@ -17,15 +17,20 @@ class TokenRequest:
         self.__timestamp = timestamp
 
     def sign_request(self, key_secret):
-        sign_text = "\n".join([str(x) for x in [
-            self.key_name or "",
-            self.ttl or "",
-            self.capability or "",
-            self.client_id or "",
-            "%d" % (self.timestamp or 0),
-            self.nonce or "",
-            "",  # to get the trailing new line
-        ]])
+        sign_text = '\n'.join(
+            [
+                str(x)
+                for x in [
+                    self.key_name or '',
+                    self.ttl or '',
+                    self.capability or '',
+                    self.client_id or '',
+                    '%d' % (self.timestamp or 0),
+                    self.nonce or '',
+                    '',  # to get the trailing new line
+                ]
+            ]
+        )
         try:
             key_secret = key_secret.encode('utf8')
         except AttributeError:
@@ -45,7 +50,7 @@ class TokenRequest:
             'nonce': self.nonce,
             'capability': self.capability,
             'timestamp': self.timestamp,
-            'mac': self.mac
+            'mac': self.mac,
         }
 
     @staticmethod
@@ -65,13 +70,15 @@ class TokenRequest:
 
     def __eq__(self, other):
         if isinstance(other, TokenRequest):
-            return (self.key_name == other.key_name
-                    and self.client_id == other.client_id
-                    and self.nonce == other.nonce
-                    and self.mac == other.mac
-                    and self.capability == other.capability
-                    and self.ttl == other.ttl
-                    and self.timestamp == other.timestamp)
+            return (
+                self.key_name == other.key_name
+                and self.client_id == other.client_id
+                and self.nonce == other.nonce
+                and self.mac == other.mac
+                and self.capability == other.capability
+                and self.ttl == other.ttl
+                and self.timestamp == other.timestamp
+            )
         return NotImplemented
 
     @property

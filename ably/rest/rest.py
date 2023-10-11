@@ -19,8 +19,13 @@ log = logging.getLogger(__name__)
 class AblyRest:
     """Ably Rest Client"""
 
-    def __init__(self, key: Optional[str] = None, token: Optional[str] = None,
-                 token_details: Optional[TokenDetails] = None, **kwargs):
+    def __init__(
+        self,
+        key: Optional[str] = None,
+        token: Optional[str] = None,
+        token_details: Optional[TokenDetails] = None,
+        **kwargs
+    ):
         """Create an AblyRest instance.
 
         :Parameters:
@@ -45,20 +50,26 @@ class AblyRest:
           - `keep_alive`: use persistent connections. Defaults to True
         """
         if key is not None and ('key_name' in kwargs or 'key_secret' in kwargs):
-            raise ValueError("key and key_name or key_secret are mutually exclusive. "
-                             "Provider either a key or key_name & key_secret")
+            raise ValueError(
+                'key and key_name or key_secret are mutually exclusive. '
+                'Provider either a key or key_name & key_secret'
+            )
         if key is not None:
             options = Options(key=key, **kwargs)
         elif token is not None:
             options = Options(auth_token=token, **kwargs)
         elif token_details is not None:
             if not isinstance(token_details, TokenDetails):
-                raise ValueError("token_details must be an instance of TokenDetails")
+                raise ValueError('token_details must be an instance of TokenDetails')
             options = Options(token_details=token_details, **kwargs)
-        elif not ('auth_callback' in kwargs or 'auth_url' in kwargs or
-                  # and don't have both key_name and key_secret
-                  ('key_name' in kwargs and 'key_secret' in kwargs)):
-            raise ValueError("key is missing. Either an API key, token, or token auth method must be provided")
+        elif not (
+            'auth_callback' in kwargs
+            or 'auth_url' in kwargs
+            or
+            # and don't have both key_name and key_secret
+            ('key_name' in kwargs and 'key_secret' in kwargs)
+        ):
+            raise ValueError('key is missing. Either an API key, token, or token auth method must be provided')
         else:
             options = Options(**kwargs)
 
@@ -79,13 +90,23 @@ class AblyRest:
         return self
 
     @catch_all
-    async def stats(self, direction: Optional[str] = None, start=None, end=None, params: Optional[dict] = None,
-                    limit: Optional[int] = None, paginated=None, unit=None, timeout=None):
+    async def stats(
+        self,
+        direction: Optional[str] = None,
+        start=None,
+        end=None,
+        params: Optional[dict] = None,
+        limit: Optional[int] = None,
+        paginated=None,
+        unit=None,
+        timeout=None,
+    ):
         """Returns the stats for this application"""
         formatted_params = format_params(params, direction=direction, start=start, end=end, limit=limit, unit=unit)
         url = '/stats' + formatted_params
         return await PaginatedResult.paginated_query(
-            self.http, url=url, response_processor=stats_response_processor)
+            self.http, url=url, response_processor=stats_response_processor
+        )
 
     @catch_all
     async def time(self, timeout: Optional[float] = None) -> float:
@@ -119,10 +140,11 @@ class AblyRest:
     def push(self):
         return self.__push
 
-    async def request(self, method: str, path: str, version: str, params:
-                      Optional[dict] = None, body=None, headers=None):
+    async def request(
+        self, method: str, path: str, version: str, params: Optional[dict] = None, body=None, headers=None
+    ):
         if version is None:
-            raise AblyException("No version parameter", 400, 40000)
+            raise AblyException('No version parameter', 400, 40000)
 
         url = path
         if params:
@@ -137,9 +159,15 @@ class AblyRest:
             return items
 
         return await HttpPaginatedResponse.paginated_query(
-            self.http, method, url, version=version, body=body, headers=headers,
+            self.http,
+            method,
+            url,
+            version=version,
+            body=body,
+            headers=headers,
             response_processor=response_processor,
-            raise_on_error=False)
+            raise_on_error=False,
+        )
 
     async def __aexit__(self, *excinfo):
         await self.close()

@@ -6,7 +6,6 @@ from ably.types.channelsubscription import channels_response_processor
 
 
 class Push:
-
     def __init__(self, ably):
         self.__ably = ably
         self.__admin = PushAdmin(ably)
@@ -17,7 +16,6 @@ class Push:
 
 
 class PushAdmin:
-
     def __init__(self, ably):
         self.__ably = ably
         self.__device_registrations = PushDeviceRegistrations(ably)
@@ -60,7 +58,6 @@ class PushAdmin:
 
 
 class PushDeviceRegistrations:
-
     def __init__(self, ably):
         self.__ably = ably
 
@@ -89,8 +86,8 @@ class PushDeviceRegistrations:
         """
         path = '/push/deviceRegistrations' + format_params(params)
         return await PaginatedResult.paginated_query(
-            self.ably.http, url=path,
-            response_processor=device_details_response_processor)
+            self.ably.http, url=path, response_processor=device_details_response_processor
+        )
 
     async def save(self, device: dict):
         """Creates or updates the device. Returns a DeviceDetails object.
@@ -125,7 +122,6 @@ class PushDeviceRegistrations:
 
 
 class PushChannelSubscriptions:
-
     def __init__(self, ably):
         self.__ably = ably
 
@@ -141,8 +137,9 @@ class PushChannelSubscriptions:
         - `**params`: the parameters used to filter the list
         """
         path = '/push/channelSubscriptions' + format_params(params)
-        return await PaginatedResult.paginated_query(self.ably.http, url=path,
-                                                     response_processor=channel_subscriptions_response_processor)
+        return await PaginatedResult.paginated_query(
+            self.ably.http, url=path, response_processor=channel_subscriptions_response_processor
+        )
 
     async def list_channels(self, **params):
         """Returns a PaginatedResult object with the list of
@@ -152,8 +149,9 @@ class PushChannelSubscriptions:
         - `**params`: the parameters used to filter the list
         """
         path = '/push/channels' + format_params(params)
-        return await PaginatedResult.paginated_query(self.ably.http, url=path,
-                                                     response_processor=channels_response_processor)
+        return await PaginatedResult.paginated_query(
+            self.ably.http, url=path, response_processor=channels_response_processor
+        )
 
     async def save(self, subscription: dict):
         """Creates or updates the subscription. Returns a

@@ -6,28 +6,28 @@ import ably
 
 
 class HttpUtils:
-    default_format = "json"
+    default_format = 'json'
 
     mime_types = {
-        "json": "application/json",
-        "xml": "application/xml",
-        "html": "text/html",
-        "binary": "application/x-msgpack",
+        'json': 'application/json',
+        'xml': 'application/xml',
+        'html': 'text/html',
+        'binary': 'application/x-msgpack',
     }
 
     @staticmethod
     def default_get_headers(binary=False, version=None):
         headers = HttpUtils.default_headers(version=version)
         if binary:
-            headers["Accept"] = HttpUtils.mime_types['binary']
+            headers['Accept'] = HttpUtils.mime_types['binary']
         else:
-            headers["Accept"] = HttpUtils.mime_types['json']
+            headers['Accept'] = HttpUtils.mime_types['json']
         return headers
 
     @staticmethod
     def default_post_headers(binary=False, version=None):
         headers = HttpUtils.default_get_headers(binary=binary, version=version)
-        headers["Content-Type"] = headers["Accept"]
+        headers['Content-Type'] = headers['Accept']
         return headers
 
     @staticmethod
@@ -41,8 +41,8 @@ class HttpUtils:
         if version is None:
             version = ably.api_version
         return {
-            "X-Ably-Version": version,
-            "Ably-Agent": 'ably-python/%s python/%s' % (ably.lib_version, platform.python_version())
+            'X-Ably-Version': version,
+            'Ably-Agent': 'ably-python/%s python/%s' % (ably.lib_version, platform.python_version()),
         }
 
     @staticmethod

@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 def reauth_if_expired(func):
     @functools.wraps(func)
     async def wrapper(rest, *args, **kwargs):
-        if kwargs.get("skip_auth"):
+        if kwargs.get('skip_auth'):
             return await func(rest, *args, **kwargs)
 
         # RSA4b1 Detect expired token to avoid round-trip request
@@ -44,8 +44,9 @@ def reauth_if_expired(func):
 
 
 class Request:
-    def __init__(self, method='GET', url='/', version=None, headers=None, body=None,
-                 skip_auth=False, raise_on_error=True):
+    def __init__(
+        self, method='GET', url='/', version=None, headers=None, body=None, skip_auth=False, raise_on_error=True
+    ):
         self.__method = method
         self.__headers = headers or {}
         self.__body = body
@@ -56,8 +57,9 @@ class Request:
 
     def with_relative_url(self, relative_url):
         url = urljoin(self.url, relative_url)
-        return Request(self.method, url, self.version, self.headers, self.body,
-                       self.skip_auth, self.raise_on_error)
+        return Request(
+            self.method, url, self.version, self.headers, self.body, self.skip_auth, self.raise_on_error
+        )
 
     @property
     def method(self):
@@ -104,7 +106,7 @@ class Response:
             elif content_type.startswith('application/json'):
                 return self.__response.json()
 
-        raise ValueError("Unsupported content type")
+        raise ValueError('Unsupported content type')
 
     @property
     def response(self):
@@ -157,8 +159,17 @@ class Http:
         return hosts
 
     @reauth_if_expired
-    async def make_request(self, method, path, version=None, headers=None, body=None,
-                           skip_auth=False, timeout=None, raise_on_error=True):
+    async def make_request(
+        self,
+        method,
+        path,
+        version=None,
+        headers=None,
+        body=None,
+        skip_auth=False,
+        timeout=None,
+        raise_on_error=True,
+    ):
 
         if body is not None and type(body) not in (bytes, str):
             body = self.dump_body(body)
@@ -172,10 +183,7 @@ class Http:
 
         if not skip_auth:
             if self.auth.auth_mechanism == Auth.Method.BASIC and self.preferred_scheme.lower() == 'http':
-                raise AblyException(
-                    "Cannot use Basic Auth over non-TLS connections",
-                    401,
-                    40103)
+                raise AblyException('Cannot use Basic Auth over non-TLS connections', 401, 40103)
             auth_headers = await self.auth._get_auth_headers()
             all_headers.update(auth_headers)
         if headers:
@@ -187,9 +195,7 @@ class Http:
 
         hosts = self.get_rest_hosts()
         for retry_count, host in enumerate(hosts):
-            base_url = "%s://%s:%d" % (self.preferred_scheme,
-                                       host,
-                                       self.preferred_port)
+            base_url = '%s://%s:%d' % (self.preferred_scheme, host, self.preferred_port)
             url = urljoin(base_url, path)
 
             request = self.__client.build_request(
@@ -228,28 +234,29 @@ class Http:
                         raise e
 
     async def delete(self, url, headers=None, skip_auth=False, timeout=None):
-        result = await self.make_request('DELETE', url, headers=headers,
-                                         skip_auth=skip_auth, timeout=timeout)
+        result = await self.make_request('DELETE', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
         return result
 
     async def get(self, url, headers=None, skip_auth=False, timeout=None):
-        result = await self.make_request('GET', url, headers=headers,
-                                         skip_auth=skip_auth, timeout=timeout)
+        result = await self.make_request('GET', url, headers=headers, skip_auth=skip_auth, timeout=timeout)
         return result
 
     async def patch(self, url, headers=None, body=None, skip_auth=False, timeout=None):
-        result = await self.make_request('PATCH', url, headers=headers, body=body,
-                                         skip_auth=skip_auth, timeout=timeout)
+        result = await self.make_request(
+            'PATCH', url, headers=headers, body=body, skip_auth=skip_auth, timeout=timeout
+        )
         return result
 
     async def post(self, url, headers=None, body=None, skip_auth=False, timeout=None):
-        result = await self.make_request('POST', url, headers=headers, body=body,
-                                         skip_auth=skip_auth, timeout=timeout)
+        result = await self.make_request(
+            'POST', url, headers=headers, body=body, skip_auth=skip_auth, timeout=timeout
+        )
         return result
 
     async def put(self, url, headers=None, body=None, skip_auth=False, timeout=None):
-        result = await self.make_request('PUT', url, headers=headers, body=body,
-                                         skip_auth=skip_auth, timeout=timeout)
+        result = await self.make_request(
+            'PUT', url, headers=headers, body=body, skip_auth=skip_auth, timeout=timeout
+        )
         return result
 
     @property

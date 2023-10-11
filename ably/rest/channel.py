@@ -35,8 +35,7 @@ class Channel(SingleDispatch):
         path = self.__base_path + 'messages' + params
 
         message_handler = make_message_response_handler(self.__cipher)
-        return await PaginatedResult.paginated_query(
-            self.ably.http, url=path, response_processor=message_handler)
+        return await PaginatedResult.paginated_query(self.ably.http, url=path, response_processor=message_handler)
 
     def __publish_request_body(self, messages):
         """
@@ -54,13 +53,15 @@ class Channel(SingleDispatch):
         for m in messages:
             if m.client_id == '*':
                 raise IncompatibleClientIdException(
-                    'Wildcard client_id is reserved and cannot be used when publishing messages',
-                    400, 40012)
+                    'Wildcard client_id is reserved and cannot be used when publishing messages', 400, 40012
+                )
             elif m.client_id is not None and not self.ably.auth.can_assume_client_id(m.client_id):
                 raise IncompatibleClientIdException(
-                    'Cannot publish with client_id \'{}\' as it is incompatible with the '
-                    'current configured client_id \'{}\''.format(m.client_id, self.ably.auth.client_id),
-                    400, 40012)
+                    "Cannot publish with client_id '{}' as it is incompatible with the "
+                    "current configured client_id '{}'".format(m.client_id, self.ably.auth.client_id),
+                    400,
+                    40012,
+                )
 
             if self.cipher:
                 m.encrypt(self.__cipher)
@@ -68,8 +69,8 @@ class Channel(SingleDispatch):
             request_body_list.append(m)
 
         request_body = [
-            message.as_dict(binary=self.ably.options.use_binary_protocol)
-            for message in request_body_list]
+            message.as_dict(binary=self.ably.options.use_binary_protocol) for message in request_body_list
+        ]
 
         if len(request_body) == 1:
             request_body = request_body[0]

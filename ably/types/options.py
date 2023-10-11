@@ -8,13 +8,36 @@ log = logging.getLogger(__name__)
 
 
 class Options(AuthOptions):
-    def __init__(self, client_id=None, log_level=0, tls=True, rest_host=None, realtime_host=None, port=0,
-                 tls_port=0, use_binary_protocol=True, queue_messages=False, recover=False, environment=None,
-                 http_open_timeout=None, http_request_timeout=None, realtime_request_timeout=None,
-                 http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
-                 fallback_retry_timeout=None, disconnected_retry_timeout=None, idempotent_rest_publishing=None,
-                 loop=None, auto_connect=True, suspended_retry_timeout=None, connectivity_check_url=None,
-                 channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False, **kwargs):
+    def __init__(
+        self,
+        client_id=None,
+        log_level=0,
+        tls=True,
+        rest_host=None,
+        realtime_host=None,
+        port=0,
+        tls_port=0,
+        use_binary_protocol=True,
+        queue_messages=False,
+        recover=False,
+        environment=None,
+        http_open_timeout=None,
+        http_request_timeout=None,
+        realtime_request_timeout=None,
+        http_max_retry_count=None,
+        http_max_retry_duration=None,
+        fallback_hosts=None,
+        fallback_retry_timeout=None,
+        disconnected_retry_timeout=None,
+        idempotent_rest_publishing=None,
+        loop=None,
+        auto_connect=True,
+        suspended_retry_timeout=None,
+        connectivity_check_url=None,
+        channel_retry_timeout=Defaults.channel_retry_timeout,
+        add_request_ids=False,
+        **kwargs,
+    ):
 
         super().__init__(**kwargs)
 
@@ -44,6 +67,7 @@ class Options(AuthOptions):
 
         if idempotent_rest_publishing is None:
             from ably import api_version
+
             idempotent_rest_publishing = api_version >= '1.2'
 
         if environment is None:
@@ -304,7 +328,7 @@ class Options(AuthOptions):
         if self.realtime_host is not None:
             host = self.realtime_host
             return [host]
-        elif self.environment != "production":
+        elif self.environment != 'production':
             host = f'{self.environment}-{Defaults.realtime_host}'
         else:
             host = Defaults.realtime_host

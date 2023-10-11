@@ -9,7 +9,6 @@ log = logging.getLogger(__name__)
 
 
 class EncodeDataMixin:
-
     def __init__(self, encoding):
         self.encoding = encoding
 
@@ -52,8 +51,9 @@ class EncodeDataMixin:
                 data = bytearray(base64.b64decode(data.encode('utf-8')))
             elif encoding.startswith('%s+' % CipherData.ENCODING_ID):
                 if not cipher:
-                    log.error('Message cannot be decrypted as the channel is '
-                              'not set up for encryption & decryption')
+                    log.error(
+                        'Message cannot be decrypted as the channel is ' 'not set up for encryption & decryption'
+                    )
                     encoding_list.append(encoding)
                     break
                 data = cipher.decrypt(data)
@@ -62,8 +62,7 @@ class EncodeDataMixin:
             elif encoding == 'utf-8':
                 pass
             else:
-                log.error('Message cannot be decoded. '
-                          "Unsupported encoding type: '%s'" % encoding)
+                log.error('Message cannot be decoded. ' "Unsupported encoding type: '%s'" % encoding)
                 encoding_list.append(encoding)
                 break
 

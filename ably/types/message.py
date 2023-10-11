@@ -18,22 +18,22 @@ def to_text(value):
     elif isinstance(value, bytes):
         return value.decode()
     else:
-        raise TypeError("expected string or bytes, not %s" % type(value))
+        raise TypeError('expected string or bytes, not %s' % type(value))
 
 
 class Message(EncodeDataMixin):
-
-    def __init__(self,
-                 name=None,  # TM2g
-                 data=None,  # TM2d
-                 client_id=None,  # TM2b
-                 id=None,  # TM2a
-                 connection_id=None,  # TM2c
-                 connection_key=None,  # TM2h
-                 encoding='',  # TM2e
-                 timestamp=None,  # TM2f
-                 extras=None,  # TM2i
-                 ):
+    def __init__(
+        self,
+        name=None,  # TM2g
+        data=None,  # TM2d
+        client_id=None,  # TM2b
+        id=None,  # TM2a
+        connection_id=None,  # TM2c
+        connection_key=None,  # TM2h
+        encoding='',  # TM2e
+        timestamp=None,  # TM2f
+        extras=None,  # TM2i
+    ):
 
         super().__init__(encoding)
 
@@ -48,10 +48,12 @@ class Message(EncodeDataMixin):
 
     def __eq__(self, other):
         if isinstance(other, Message):
-            return (self.name == other.name
-                    and self.data == other.data
-                    and self.client_id == other.client_id
-                    and self.timestamp == other.timestamp)
+            return (
+                self.name == other.name
+                and self.data == other.data
+                and self.client_id == other.client_id
+                and self.timestamp == other.timestamp
+            )
         return NotImplemented
 
     def __ne__(self, other):
@@ -112,8 +114,7 @@ class Message(EncodeDataMixin):
         if typed_data.buffer is None:
             return True
         encrypted_data = channel_cipher.encrypt(typed_data.buffer)
-        self.__data = CipherData(encrypted_data, typed_data.type,
-                                 cipher_type=channel_cipher.cipher_type)
+        self.__data = CipherData(encrypted_data, typed_data.type, cipher_type=channel_cipher.cipher_type)
 
     @staticmethod
     def decrypt_data(channel_cipher, data):
@@ -155,7 +156,7 @@ class Message(EncodeDataMixin):
             data = bytes(data)
 
         if not (isinstance(data, (bytes, str, list, dict, bytearray)) or data is None):
-            raise AblyException("Invalid data payload", 400, 40011)
+            raise AblyException('Invalid data payload', 400, 40011)
 
         request_body = {
             'name': self.name,
@@ -197,16 +198,16 @@ class Message(EncodeDataMixin):
             client_id=client_id,
             timestamp=timestamp,
             extras=extras,
-            **decoded_data
+            **decoded_data,
         )
 
     @staticmethod
     def __update_empty_fields(proto_msg: dict, msg: dict, msg_index: int):
-        if msg.get("id") is None or msg.get("id") == '':
+        if msg.get('id') is None or msg.get('id') == '':
             msg['id'] = f"{proto_msg.get('id')}:{msg_index}"
-        if msg.get("connectionId") is None or msg.get("connectionId") == '':
+        if msg.get('connectionId') is None or msg.get('connectionId') == '':
             msg['connectionId'] = proto_msg.get('connectionId')
-        if msg.get("timestamp") is None or msg.get("timestamp") == 0:
+        if msg.get('timestamp') is None or msg.get('timestamp') == 0:
             msg['timestamp'] = proto_msg.get('timestamp')
 
     @staticmethod
@@ -230,4 +231,5 @@ def make_message_response_handler(cipher):
     def encrypted_message_response_handler(response):
         messages = response.to_native()
         return Message.from_encoded_array(messages, cipher=cipher)
+
     return encrypted_message_response_handler

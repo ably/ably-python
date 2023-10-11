@@ -66,15 +66,18 @@ class EventEmitter:
             emitter = self.__named_event_emitter
             # self.__named_event_emitter.add_listener(args[0], args[1])
         else:
-            raise ValueError("EventEmitter.on(): invalid args")
+            raise ValueError('EventEmitter.on(): invalid args')
 
         if asyncio.iscoroutinefunction(listener):
+
             async def wrapped_listener(*args, **kwargs):
                 try:
                     await listener(*args, **kwargs)
                 except Exception as err:
                     log.exception(f'EventEmitter.emit(): uncaught listener exception: {err}')
+
         else:
+
             def wrapped_listener(*args, **kwargs):
                 try:
                     listener(*args, **kwargs)
@@ -111,15 +114,18 @@ class EventEmitter:
             emitter = self.__named_event_emitter
             # self.__named_event_emitter.add_listener(args[0], args[1])
         else:
-            raise ValueError("EventEmitter.on(): invalid args")
+            raise ValueError('EventEmitter.on(): invalid args')
 
         if asyncio.iscoroutinefunction(listener):
+
             async def wrapped_listener(*args, **kwargs):
                 try:
                     await listener(*args, **kwargs)
                 except Exception as err:
                     log.exception(f'EventEmitter.emit(): uncaught listener exception: {err}')
+
         else:
+
             def wrapped_listener(*args, **kwargs):
                 try:
                     listener(*args, **kwargs)
@@ -155,7 +161,7 @@ class EventEmitter:
             listener = args[1]
             emitter = self.__named_event_emitter
         else:
-            raise ValueError("EventEmitter.once(): invalid args")
+            raise ValueError('EventEmitter.once(): invalid args')
 
         wrapped_listener = self.__wrapped_listeners.get(listener)
 

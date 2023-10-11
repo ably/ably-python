@@ -7,10 +7,20 @@ DeviceFormFactor = {'phone', 'tablet', 'desktop', 'tv', 'watch', 'car', 'embedde
 
 
 class DeviceDetails:
-
-    def __init__(self, id, client_id=None, form_factor=None, metadata=None,
-                 platform=None, push=None, update_token=None, app_id=None,
-                 device_identity_token=None, modified=None, device_secret=None):
+    def __init__(
+        self,
+        id,
+        client_id=None,
+        form_factor=None,
+        metadata=None,
+        platform=None,
+        push=None,
+        update_token=None,
+        app_id=None,
+        device_identity_token=None,
+        modified=None,
+        device_secret=None,
+    ):
 
         if push:
             recipient = push.get('recipient')
@@ -82,8 +92,19 @@ class DeviceDetails:
         return self.__device_secret
 
     def as_dict(self):
-        keys = ['id', 'client_id', 'form_factor', 'metadata', 'platform',
-                'push', 'update_token', 'app_id', 'device_identity_token', 'modified', 'device_secret']
+        keys = [
+            'id',
+            'client_id',
+            'form_factor',
+            'metadata',
+            'platform',
+            'push',
+            'update_token',
+            'app_id',
+            'device_identity_token',
+            'modified',
+            'device_secret',
+        ]
 
         obj = {}
         for key in keys:

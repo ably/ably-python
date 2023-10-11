@@ -26,7 +26,6 @@ log = logging.getLogger(__name__)
 # Ignore library warning regarding client_id
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
-
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
         self.ably = await TestApp.get_ably_rest()
@@ -43,47 +42,49 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         self.use_binary_protocol = use_binary_protocol
 
     async def test_publish_various_datatypes_text(self):
-        publish0 = self.ably.channels[
-            self.get_channel_name('persisted:publish0')]
+        publish0 = self.ably.channels[self.get_channel_name('persisted:publish0')]
 
-        await publish0.publish("publish0", "This is a string message payload")
-        await publish0.publish("publish1", b"This is a byte[] message payload")
-        await publish0.publish("publish2", {"test": "This is a JSONObject message payload"})
-        await publish0.publish("publish3", ["This is a JSONArray message payload"])
+        await publish0.publish('publish0', 'This is a string message payload')
+        await publish0.publish('publish1', b'This is a byte[] message payload')
+        await publish0.publish('publish2', {'test': 'This is a JSONObject message payload'})
+        await publish0.publish('publish3', ['This is a JSONArray message payload'])
 
         # Get the history for this channel
         history = await publish0.history()
         messages = history.items
-        assert messages is not None, "Expected non-None messages"
-        assert len(messages) == 4, "Expected 4 messages"
+        assert messages is not None, 'Expected non-None messages'
+        assert len(messages) == 4, 'Expected 4 messages'
 
         message_contents = dict((m.name, m.data) for m in messages)
-        log.debug("message_contents: %s" % str(message_contents))
+        log.debug('message_contents: %s' % str(message_contents))
 
-        assert message_contents["publish0"] == "This is a string message payload", \
-            "Expect publish0 to be expected String)"
+        assert (
+            message_contents['publish0'] == 'This is a string message payload'
+        ), 'Expect publish0 to be expected String)'
 
-        assert message_contents["publish1"] == b"This is a byte[] message payload", \
-            "Expect publish1 to be expected byte[]. Actual: %s" % str(message_contents['publish1'])
+        assert (
+            message_contents['publish1'] == b'This is a byte[] message payload'
+        ), 'Expect publish1 to be expected byte[]. Actual: %s' % str(message_contents['publish1'])
 
-        assert message_contents["publish2"] == {"test": "This is a JSONObject message payload"}, \
-            "Expect publish2 to be expected JSONObject"
+        assert message_contents['publish2'] == {
+            'test': 'This is a JSONObject message payload'
+        }, 'Expect publish2 to be expected JSONObject'
 
-        assert message_contents["publish3"] == ["This is a JSONArray message payload"], \
-            "Expect publish3 to be expected JSONObject"
+        assert message_contents['publish3'] == [
+            'This is a JSONArray message payload'
+        ], 'Expect publish3 to be expected JSONObject'
 
     @dont_vary_protocol
     async def test_unsupported_payload_must_raise_exception(self):
-        channel = self.ably.channels["persisted:publish0"]
+        channel = self.ably.channels['persisted:publish0']
         for data in [1, 1.1, True]:
             with pytest.raises(AblyException):
                 await channel.publish('event', data)
 
     async def test_publish_message_list(self):
-        channel = self.ably.channels[
-            self.get_channel_name('persisted:message_list_channel')]
+        channel = self.ably.channels[self.get_channel_name('persisted:message_list_channel')]
 
-        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
+        expected_messages = [Message('name-{}'.format(i), str(i)) for i in range(3)]
 
         await channel.publish(messages=expected_messages)
 
@@ -91,21 +92,19 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history = await channel.history()
         messages = history.items
 
-        assert messages is not None, "Expected non-None messages"
-        assert len(messages) == len(expected_messages), "Expected 3 messages"
+        assert messages is not None, 'Expected non-None messages'
+        assert len(messages) == len(expected_messages), 'Expected 3 messages'
 
         for m, expected_m in zip(messages, reversed(expected_messages)):
             assert m.name == expected_m.name
             assert m.data == expected_m.data
 
     async def test_message_list_generate_one_request(self):
-        channel = self.ably.channels[
-            self.get_channel_name('persisted:message_list_channel_one_request')]
+        channel = self.ably.channels[self.get_channel_name('persisted:message_list_channel_one_request')]
 
-        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
+        expected_messages = [Message('name-{}'.format(i), str(i)) for i in range(3)]
 
-        with mock.patch('ably.rest.rest.Http.post',
-                        wraps=channel.ably.http.post) as post_mock:
+        with mock.patch('ably.rest.rest.Http.post', wraps=channel.ably.http.post) as post_mock:
             await channel.publish(messages=expected_messages)
         assert post_mock.call_count == 1
 
@@ -120,52 +119,48 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
     async def test_publish_error(self):
         ably = await TestApp.get_ably_rest(use_binary_protocol=self.use_binary_protocol)
-        await ably.auth.authorize(
-            token_params={'capability': {"only_subscribe": ["subscribe"]}})
+        await ably.auth.authorize(token_params={'capability': {'only_subscribe': ['subscribe']}})
 
         with pytest.raises(AblyException) as excinfo:
-            await ably.channels["only_subscribe"].publish()
+            await ably.channels['only_subscribe'].publish()
 
         assert 401 == excinfo.value.status_code
         assert 40160 == excinfo.value.code
         await ably.close()
 
     async def test_publish_message_null_name(self):
-        channel = self.ably.channels[
-            self.get_channel_name('persisted:message_null_name_channel')]
+        channel = self.ably.channels[self.get_channel_name('persisted:message_null_name_channel')]
 
-        data = "String message"
+        data = 'String message'
         await channel.publish(name=None, data=data)
 
         # Get the history for this channel
         history = await channel.history()
         messages = history.items
 
-        assert messages is not None, "Expected non-None messages"
-        assert len(messages) == 1, "Expected 1 message"
+        assert messages is not None, 'Expected non-None messages'
+        assert len(messages) == 1, 'Expected 1 message'
         assert messages[0].name is None
         assert messages[0].data == data
 
     async def test_publish_message_null_data(self):
-        channel = self.ably.channels[
-            self.get_channel_name('persisted:message_null_data_channel')]
+        channel = self.ably.channels[self.get_channel_name('persisted:message_null_data_channel')]
 
-        name = "Test name"
+        name = 'Test name'
         await channel.publish(name=name, data=None)
 
         # Get the history for this channel
         history = await channel.history()
         messages = history.items
 
-        assert messages is not None, "Expected non-None messages"
-        assert len(messages) == 1, "Expected 1 message"
+        assert messages is not None, 'Expected non-None messages'
+        assert len(messages) == 1, 'Expected 1 message'
 
         assert messages[0].name == name
         assert messages[0].data is None
 
     async def test_publish_message_null_name_and_data(self):
-        channel = self.ably.channels[
-            self.get_channel_name('persisted:null_name_and_data_channel')]
+        channel = self.ably.channels[self.get_channel_name('persisted:null_name_and_data_channel')]
 
         await channel.publish(name=None, data=None)
         await channel.publish()
@@ -174,26 +169,24 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history = await channel.history()
         messages = history.items
 
-        assert messages is not None, "Expected non-None messages"
-        assert len(messages) == 2, "Expected 2 messages"
+        assert messages is not None, 'Expected non-None messages'
+        assert len(messages) == 2, 'Expected 2 messages'
 
         for m in messages:
             assert m.name is None
             assert m.data is None
 
     async def test_publish_message_null_name_and_data_keys_arent_sent(self):
-        channel = self.ably.channels[
-            self.get_channel_name('persisted:null_name_and_data_keys_arent_sent_channel')]
+        channel = self.ably.channels[self.get_channel_name('persisted:null_name_and_data_keys_arent_sent_channel')]
 
-        with mock.patch('ably.rest.rest.Http.post',
-                        wraps=channel.ably.http.post) as post_mock:
+        with mock.patch('ably.rest.rest.Http.post', wraps=channel.ably.http.post) as post_mock:
             await channel.publish(name=None, data=None)
 
             history = await channel.history()
             messages = history.items
 
-            assert messages is not None, "Expected non-None messages"
-            assert len(messages) == 1, "Expected 1 message"
+            assert messages is not None, 'Expected non-None messages'
+            assert len(messages) == 1, 'Expected 1 message'
 
             assert post_mock.call_count == 1
 
@@ -206,12 +199,9 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             assert 'data' not in posted_body
 
     async def test_message_attr(self):
-        publish0 = self.ably.channels[
-            self.get_channel_name('persisted:publish_message_attr')]
+        publish0 = self.ably.channels[self.get_channel_name('persisted:publish_message_attr')]
 
-        messages = [Message('publish',
-                            {"test": "This is a JSONObject message payload"},
-                            client_id='client_id')]
+        messages = [Message('publish', {'test': 'This is a JSONObject message payload'}, client_id='client_id')]
         await publish0.publish(messages=messages)
 
         # Get the history for this channel
@@ -230,8 +220,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert self.ably_with_client_id.auth.token_details is None
 
         # created after message publish and will have client_id
-        channel = self.ably_with_client_id.channels[
-            self.get_channel_name('persisted:restricted_to_client_id')]
+        channel = self.ably_with_client_id.channels[self.get_channel_name('persisted:restricted_to_client_id')]
         await channel.publish(name='publish', data='test')
 
         # defined after publish
@@ -243,26 +232,24 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
     async def test_publish_message_without_client_id_on_identified_client(self):
         channel = self.ably_with_client_id.channels[
-            self.get_channel_name('persisted:no_client_id_identified_client')]
+            self.get_channel_name('persisted:no_client_id_identified_client')
+        ]
 
-        with mock.patch('ably.rest.rest.Http.post',
-                        wraps=channel.ably.http.post) as post_mock:
+        with mock.patch('ably.rest.rest.Http.post', wraps=channel.ably.http.post) as post_mock:
             await channel.publish(name='publish', data='test')
 
             history = await channel.history()
             messages = history.items
 
-            assert messages is not None, "Expected non-None messages"
-            assert len(messages) == 1, "Expected 1 message"
+            assert messages is not None, 'Expected non-None messages'
+            assert len(messages) == 1, 'Expected 1 message'
 
             assert post_mock.call_count == 2
 
             if self.use_binary_protocol:
-                posted_body = msgpack.unpackb(
-                    post_mock.mock_calls[0][2]['body'])
+                posted_body = msgpack.unpackb(post_mock.mock_calls[0][2]['body'])
             else:
-                posted_body = json.loads(
-                    post_mock.mock_calls[0][2]['body'])
+                posted_body = json.loads(post_mock.mock_calls[0][2]['body'])
 
             assert 'client_id' not in posted_body
 
@@ -270,23 +257,24 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             history = await channel.history()
             messages = history.items
 
-            assert messages is not None, "Expected non-None messages"
-            assert len(messages) == 1, "Expected 1 message"
+            assert messages is not None, 'Expected non-None messages'
+            assert len(messages) == 1, 'Expected 1 message'
 
             assert messages[0].client_id == self.ably_with_client_id.client_id
 
     async def test_publish_message_with_client_id_on_identified_client(self):
         # works if same
         channel = self.ably_with_client_id.channels[
-            self.get_channel_name('persisted:with_client_id_identified_client')]
+            self.get_channel_name('persisted:with_client_id_identified_client')
+        ]
         message = Message(name='publish', data='test', client_id=self.ably_with_client_id.client_id)
         await channel.publish(message)
 
         history = await channel.history()
         messages = history.items
 
-        assert messages is not None, "Expected non-None messages"
-        assert len(messages) == 1, "Expected 1 message"
+        assert messages is not None, 'Expected non-None messages'
+        assert len(messages) == 1, 'Expected 1 message'
 
         assert messages[0].client_id == self.ably_with_client_id.client_id
 
@@ -297,12 +285,11 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
     async def test_publish_message_with_wrong_client_id_on_implicit_identified_client(self):
         new_token = await self.ably.auth.authorize(token_params={'client_id': uuid.uuid4().hex})
-        new_ably = await TestApp.get_ably_rest(key=None,
-                                               token=new_token.token,
-                                               use_binary_protocol=self.use_binary_protocol)
+        new_ably = await TestApp.get_ably_rest(
+            key=None, token=new_token.token, use_binary_protocol=self.use_binary_protocol
+        )
 
-        channel = new_ably.channels[
-            self.get_channel_name('persisted:wrong_client_id_implicit_client')]
+        channel = new_ably.channels[self.get_channel_name('persisted:wrong_client_id_implicit_client')]
 
         message = Message(name='publish', data='test', client_id='invalid')
         with pytest.raises(AblyException) as excinfo:
@@ -316,13 +303,11 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     async def test_wildcard_client_id_can_publish_as_others(self):
         wildcard_token_details = await self.ably.auth.request_token({'client_id': '*'})
         wildcard_ably = await TestApp.get_ably_rest(
-            key=None,
-            token_details=wildcard_token_details,
-            use_binary_protocol=self.use_binary_protocol)
+            key=None, token_details=wildcard_token_details, use_binary_protocol=self.use_binary_protocol
+        )
 
         assert wildcard_ably.auth.client_id == '*'
-        channel = wildcard_ably.channels[
-            self.get_channel_name('persisted:wildcard_client_id')]
+        channel = wildcard_ably.channels[self.get_channel_name('persisted:wildcard_client_id')]
         await channel.publish(name='publish1', data='no client_id')
         some_client_id = uuid.uuid4().hex
         message = Message(name='publish2', data='some client_id', client_id=some_client_id)
@@ -331,8 +316,8 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history = await channel.history()
         messages = history.items
 
-        assert messages is not None, "Expected non-None messages"
-        assert len(messages) == 2, "Expected 2 messages"
+        assert messages is not None, 'Expected non-None messages'
+        assert len(messages) == 2, 'Expected 2 messages'
 
         assert messages[0].client_id == some_client_id
         assert messages[1].client_id is None
@@ -342,7 +327,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
     # TM2h
     @dont_vary_protocol
     async def test_invalid_connection_key(self):
-        channel = self.ably.channels["persisted:invalid_connection_key"]
+        channel = self.ably.channels['persisted:invalid_connection_key']
         message = Message(data='payload', connection_key='should.be.wrong')
         with pytest.raises(AblyException) as excinfo:
             await channel.publish(messages=[message])
@@ -352,11 +337,10 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
     # TM2i, RSL6a2, RSL1h
     async def test_publish_extras(self):
-        channel = self.ably.channels[
-            self.get_channel_name('canpublish:extras_channel')]
+        channel = self.ably.channels[self.get_channel_name('canpublish:extras_channel')]
         extras = {
             'push': {
-                'notification': {"title": "Testing"},
+                'notification': {'title': 'Testing'},
             }
         }
         message = Message(name='test-name', data='test-data', extras=extras)
@@ -374,7 +358,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         name = self.get_channel_name('persisted:interoperability_channel')
         channel = self.ably.channels[name]
 
-        url = 'https://%s/channels/%s/messages' % (self.test_vars["host"], name)
+        url = 'https://%s/channels/%s/messages' % (self.test_vars['host'], name)
         key = self.test_vars['keys'][0]
         auth = (key['key_name'], key['key_secret'])
 
@@ -442,7 +426,6 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
 
 class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
-
     async def asyncSetUp(self):
         self.ably = await TestApp.get_ably_rest()
         self.ably_idempotent = await TestApp.get_ably_rest(idempotent_rest_publishing=True)
@@ -530,7 +513,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
     # RSL1k4
     async def test_idempotent_library_generated_retry(self):
         test_vars = await TestApp.get_test_vars()
-        ably = await self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[test_vars["host"]] * 3)
+        ably = await self.get_ably_rest(idempotent_rest_publishing=True, fallback_hosts=[test_vars['host']] * 3)
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}

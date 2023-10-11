@@ -53,8 +53,9 @@ class ConnectionManager(EventEmitter):
     def check_connection(self) -> bool:
         try:
             response = httpx.get(self.options.connectivity_check_url)
-            return 200 <= response.status_code < 300 and \
-                (self.options.connectivity_check_url != Defaults.connectivity_check_url or "yes" in response.text)
+            return 200 <= response.status_code < 300 and (
+                self.options.connectivity_check_url != Defaults.connectivity_check_url or 'yes' in response.text
+            )
         except httpx.HTTPError:
             return False
 
@@ -64,9 +65,9 @@ class ConnectionManager(EventEmitter):
     async def __get_transport_params(self) -> dict:
         protocol_version = Defaults.protocol_version
         params = await self.ably.auth.get_auth_transport_param()
-        params["v"] = protocol_version
+        params['v'] = protocol_version
         if self.connection_details:
-            params["resume"] = self.connection_details.connection_key
+            params['resume'] = self.connection_details.connection_key
         return params
 
     async def close_impl(self) -> None:
@@ -97,11 +98,11 @@ class ConnectionManager(EventEmitter):
                 await self.transport.send(protocol_message)
             else:
                 log.exception(
-                    "ConnectionManager.send_protocol_message(): can not send message with no active transport"
+                    'ConnectionManager.send_protocol_message(): can not send message with no active transport'
                 )
             return
 
-        raise AblyException(f"ConnectionManager.send_protocol_message(): called in {self.state}", 500, 50000)
+        raise AblyException(f'ConnectionManager.send_protocol_message(): called in {self.state}', 500, 50000)
 
     def send_queued_messages(self) -> None:
         log.info(f'ConnectionManager.send_queued_messages(): sending {self.queued_messages.qsize()} message(s)')
@@ -110,40 +111,40 @@ class ConnectionManager(EventEmitter):
 
     def fail_queued_messages(self, err) -> None:
         log.info(
-            f"ConnectionManager.fail_queued_messages(): discarding {self.queued_messages.qsize()} messages;" +
-            f" reason = {err}"
+            f'ConnectionManager.fail_queued_messages(): discarding {self.queued_messages.qsize()} messages;'
+            + f' reason = {err}'
         )
         while not self.queued_messages.empty():
             msg = self.queued_messages.get()
-            log.exception(f"ConnectionManager.fail_queued_messages(): Failed to send protocol message: {msg}")
+            log.exception(f'ConnectionManager.fail_queued_messages(): Failed to send protocol message: {msg}')
 
     async def ping(self) -> float:
         if self.__ping_future:
             try:
                 response = await self.__ping_future
             except asyncio.CancelledError:
-                raise AblyException("Ping request cancelled due to request timeout", 504, 50003)
+                raise AblyException('Ping request cancelled due to request timeout', 504, 50003)
             return response
 
         self.__ping_future = asyncio.Future()
         if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
             self.__ping_id = get_random_id()
             ping_start_time = datetime.now().timestamp()
-            await self.send_protocol_message({"action": ProtocolMessageAction.HEARTBEAT,
-                                              "id": self.__ping_id})
+            await self.send_protocol_message({'action': ProtocolMessageAction.HEARTBEAT, 'id': self.__ping_id})
         else:
-            raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
+            raise AblyException('Cannot send ping request. Calling ping in invalid state', 40000, 400)
         try:
             await asyncio.wait_for(self.__ping_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
-            raise AblyException("Timeout waiting for ping response", 504, 50003)
+            raise AblyException('Timeout waiting for ping response', 504, 50003)
 
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
 
-    def on_connected(self, connection_details: ConnectionDetails, connection_id: str,
-                     reason: Optional[AblyException] = None) -> None:
+    def on_connected(
+        self, connection_details: ConnectionDetails, connection_id: str, reason: Optional[AblyException] = None
+    ) -> None:
         self.__fail_state = ConnectionState.DISCONNECTED
 
         self.__connection_details = connection_details
@@ -157,8 +158,9 @@ class ConnectionManager(EventEmitter):
                 return
 
         if self.__state == ConnectionState.CONNECTED:
-            state_change = ConnectionStateChange(ConnectionState.CONNECTED, ConnectionState.CONNECTED,
-                                                 ConnectionEvent.UPDATE)
+            state_change = ConnectionStateChange(
+                ConnectionState.CONNECTED, ConnectionState.CONNECTED, ConnectionEvent.UPDATE
+            )
             self._emit(ConnectionEvent.UPDATE, state_change)
         else:
             self.notify_state(ConnectionState.CONNECTED, reason=reason)
@@ -179,13 +181,13 @@ class ConnectionManager(EventEmitter):
                         self.notify_state(self.__fail_state, reason=e)
                     return
                 else:
-                    log.info("No fallback host to try for disconnected protocol message")
+                    log.info('No fallback host to try for disconnected protocol message')
             elif is_token_error(exception):
                 await self.on_token_error(exception)
             else:
                 self.notify_state(ConnectionState.DISCONNECTED, exception)
         else:
-            log.warn("DISCONNECTED message received without error")
+            log.warn('DISCONNECTED message received without error')
 
     async def on_token_error(self, exception: AblyException) -> None:
         if self.__error_reason is None or not is_token_error(self.__error_reason):
@@ -200,7 +202,7 @@ class ConnectionManager(EventEmitter):
         self.notify_state(self.__fail_state, exception)
 
     async def on_error(self, msg: dict, exception: AblyException) -> None:
-        if msg.get("channel") is not None:  # RTN15i
+        if msg.get('channel') is not None:  # RTN15i
             self.on_channel_message(msg)
             return
         if self.transport:
@@ -211,7 +213,7 @@ class ConnectionManager(EventEmitter):
             self.enact_state_change(ConnectionState.FAILED, exception)
 
     def on_error_from_authorize(self, exception: AblyException) -> None:
-        log.info("ConnectionManager.on_error_from_authorize(): err = %s", exception)
+        log.info('ConnectionManager.on_error_from_authorize(): err = %s', exception)
         # RSA4a
         if exception.code == 40171:
             self.notify_state(ConnectionState.FAILED, exception)
@@ -257,8 +259,10 @@ class ConnectionManager(EventEmitter):
         if state == ConnectionState.CLOSING and self.__state == ConnectionState.CLOSED:
             return
 
-        if state == ConnectionState.CONNECTING and self.__state in (ConnectionState.CLOSED,
-                                                                    ConnectionState.FAILED):
+        if state == ConnectionState.CONNECTING and self.__state in (
+            ConnectionState.CLOSED,
+            ConnectionState.FAILED,
+        ):
             self.ably.channels._initialize_channels()
 
         if not force:
@@ -282,7 +286,7 @@ class ConnectionManager(EventEmitter):
                     await self.try_host(host)
                     return
                 else:
-                    message = "Unable to connect, network unreachable"
+                    message = 'Unable to connect, network unreachable'
                     log.exception(message)
                     exception = AblyException(message, status_code=404, code=80003)
                     self.notify_state(self.__fail_state, exception)
@@ -290,7 +294,7 @@ class ConnectionManager(EventEmitter):
             except Exception as exc:
                 exception = exc
                 log.exception(f'Connection to {host} failed, reason={exception}')
-        log.exception("No more fallback hosts to try")
+        log.exception('No more fallback hosts to try')
         return exception
 
     async def connect_base(self) -> None:
@@ -302,7 +306,7 @@ class ConnectionManager(EventEmitter):
         except Exception as exception:
             log.exception(f'Connection to {primary_host} failed, reason={exception}')
             if len(fallback_hosts) > 0:
-                log.info("Attempting connection to fallback host(s)")
+                log.info('Attempting connection to fallback host(s)')
                 resp = await self.connect_with_fallback_hosts(fallback_hosts)
                 if not resp:
                     return
@@ -343,11 +347,16 @@ class ConnectionManager(EventEmitter):
         except asyncio.CancelledError:
             return
 
-    def notify_state(self, state: ConnectionState, reason: Optional[AblyException] = None,
-                     retry_immediately: Optional[bool] = None) -> None:
+    def notify_state(
+        self,
+        state: ConnectionState,
+        reason: Optional[AblyException] = None,
+        retry_immediately: Optional[bool] = None,
+    ) -> None:
         # RTN15a
         retry_immediately = (retry_immediately is not False) and (
-            state == ConnectionState.DISCONNECTED and self.__state == ConnectionState.CONNECTED)
+            state == ConnectionState.DISCONNECTED and self.__state == ConnectionState.CONNECTED
+        )
 
         log.debug(
             f'ConnectionManager.notify_state(): new state: {state}'
@@ -400,8 +409,7 @@ class ConnectionManager(EventEmitter):
                 self.transition_timer = None
                 log.info(f'ConnectionManager {state} timer expired, notifying new state: {fail_state}')
                 self.notify_state(
-                    fail_state,
-                    AblyException("Connection cancelled due to request timeout", 504, 50003)
+                    fail_state, AblyException('Connection cancelled due to request timeout', 504, 50003)
                 )
 
         log.debug(f'ConnectionManager.start_transition_timer(): setting timer for {timeout}ms')
@@ -424,8 +432,7 @@ class ConnectionManager(EventEmitter):
                 self.suspend_timer = None
                 log.info('ConnectionManager suspend timer expired, requesting new state: suspended')
                 self.notify_state(
-                    ConnectionState.SUSPENDED,
-                    AblyException("Connection to server unavailable", 400, 80002)
+                    ConnectionState.SUSPENDED, AblyException('Connection to server unavailable', 400, 80002)
                 )
                 self.__fail_state = ConnectionState.SUSPENDED
                 self.__connection_details = None
@@ -466,14 +473,9 @@ class ConnectionManager(EventEmitter):
             self.disconnect_transport_task = asyncio.create_task(self.transport.dispose())
 
     async def on_auth_updated(self, token_details: TokenDetails):
-        log.info(f"ConnectionManager.on_auth_updated(): state = {self.state}")
+        log.info(f'ConnectionManager.on_auth_updated(): state = {self.state}')
         if self.state == ConnectionState.CONNECTED:
-            auth_message = {
-                "action": ProtocolMessageAction.AUTH,
-                "auth": {
-                    "accessToken": token_details.token
-                }
-            }
+            auth_message = {'action': ProtocolMessageAction.AUTH, 'auth': {'accessToken': token_details.token}}
             await self.send_protocol_message(auth_message)
 
             state_change = await self.once_async()
@@ -495,9 +497,9 @@ class ConnectionManager(EventEmitter):
                     self.off('connectionstate', on_state_change)
                     future.set_result(token_details)
                 if state_change.current in (
-                        ConnectionState.CLOSED,
-                        ConnectionState.FAILED,
-                        ConnectionState.SUSPENDED
+                    ConnectionState.CLOSED,
+                    ConnectionState.FAILED,
+                    ConnectionState.SUSPENDED,
                 ):
                     self.off('connectionstate', on_state_change)
                     future.set_exception(state_change.reason or self.get_state_error())

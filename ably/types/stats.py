@@ -5,7 +5,6 @@ log = logging.getLogger(__name__)
 
 
 class Stats:
-
     def __init__(self, entries=None, unit=None, interval_id=None, in_progress=None, app_id=None, schema=None):
         self.interval_id = interval_id or ''
         self.entries = entries
@@ -20,12 +19,12 @@ class Stats:
         stats_dict = stats_dict or {}
 
         kwargs = {
-            "entries": stats_dict.get("entries"),
-            "unit": stats_dict.get("unit"),
-            "interval_id": stats_dict.get("intervalId"),
-            "in_progress": stats_dict.get("inProgress"),
-            "app_id": stats_dict.get("appId"),
-            "schema": stats_dict.get("schema"),
+            'entries': stats_dict.get('entries'),
+            'unit': stats_dict.get('unit'),
+            'interval_id': stats_dict.get('intervalId'),
+            'in_progress': stats_dict.get('inProgress'),
+            'app_id': stats_dict.get('appId'),
+            'schema': stats_dict.get('schema'),
         }
 
         return cls(**kwargs)
@@ -59,7 +58,7 @@ def granularity_from_interval_id(interval_id):
             return key
         except ValueError:
             pass
-    raise ValueError("Unsupported intervalId")
+    raise ValueError('Unsupported intervalId')
 
 
 def interval_from_interval_id(interval_id):

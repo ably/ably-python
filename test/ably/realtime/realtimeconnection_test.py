@@ -11,7 +11,7 @@ from ably.transport.defaults import Defaults
 class TestRealtimeConnection(BaseAsyncTestCase):
     async def asyncSetUp(self):
         self.test_vars = await TestApp.get_test_vars()
-        self.valid_key_format = "api:key"
+        self.valid_key_format = 'api:key'
 
     async def test_connection_state(self):
         ably = await TestApp.get_ably_realtime(auto_connect=False)
@@ -173,18 +173,20 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_connectivity_check_non_default(self):
         ably = await TestApp.get_ably_realtime(
-            connectivity_check_url="https://echo.ably.io/respondWith?status=200", auto_connect=False)
+            connectivity_check_url='https://echo.ably.io/respondWith?status=200', auto_connect=False
+        )
         # A non-default URL should return True with a HTTP OK despite not returning "Yes" in the body
         assert ably.connection.connection_manager.check_connection() is True
 
     async def test_connectivity_check_bad_status(self):
         ably = await TestApp.get_ably_realtime(
-            connectivity_check_url="https://echo.ably.io/respondWith?status=400", auto_connect=False)
+            connectivity_check_url='https://echo.ably.io/respondWith?status=400', auto_connect=False
+        )
         # Should return False when the URL returns a non-2xx response code
         assert ably.connection.connection_manager.check_connection() is False
 
     async def test_unroutable_host(self):
-        ably = await TestApp.get_ably_realtime(realtime_host="10.255.255.1", realtime_request_timeout=3000)
+        ably = await TestApp.get_ably_realtime(realtime_host='10.255.255.1', realtime_request_timeout=3000)
         state_change = await ably.connection.once_async()
         assert state_change.reason
         assert state_change.reason.code == 50003
@@ -194,7 +196,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_invalid_host(self):
-        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost")
+        ably = await TestApp.get_ably_realtime(realtime_host='iamnotahost')
         state_change = await ably.connection.once_async()
         assert state_change.reason
         assert state_change.reason.code == 40000
@@ -230,7 +232,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         ably.connection.on(ConnectionEvent.UPDATE, on_update)
 
         async def on_transport_pending(transport):
-            await transport.on_protocol_message({'action': 4, "connectionDetails": {"connectionStateTtl": 200}})
+            await transport.on_protocol_message({'action': 4, 'connectionDetails': {'connectionStateTtl': 200}})
 
         ably.connection.connection_manager.on('transport.pending', on_transport_pending)
 
@@ -248,8 +250,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
             original_on_protocol_message = transport.on_protocol_message
 
             async def on_protocol_message(msg):
-                if msg["action"] == ProtocolMessageAction.CONNECTED:
-                    msg["connectionDetails"]["maxIdleInterval"] = 100
+                if msg['action'] == ProtocolMessageAction.CONNECTED:
+                    msg['connectionDetails']['maxIdleInterval'] = 100
 
                 await original_on_protocol_message(msg)
 
@@ -269,10 +271,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
     # RTN15a
     async def test_retry_immediately_upon_unexpected_disconnection(self):
         # Set timeouts to 500s so that if the client uses retry delay the test will fail with a timeout
-        ably = await TestApp.get_ably_realtime(
-            disconnected_retry_timeout=500_000,
-            suspended_retry_timeout=500_000
-        )
+        ably = await TestApp.get_ably_realtime(disconnected_retry_timeout=500_000, suspended_retry_timeout=500_000)
 
         # Wait for the client to connect
         await ably.connection.once_async(ConnectionState.CONNECTED)
@@ -292,12 +291,12 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         await ably.connection.connection_manager.once_async('transport.pending')
         assert ably.connection.connection_manager.transport
-        ably.connection.connection_manager.transport._emit('failed', AblyException("test exception", 502, 50200))
+        ably.connection.connection_manager.transport._emit('failed', AblyException('test exception', 502, 50200))
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
 
-        assert ably.connection.connection_manager.transport.host != self.test_vars["realtime_host"]
-        assert ably.options.fallback_realtime_host != self.test_vars["realtime_host"]
+        assert ably.connection.connection_manager.transport.host != self.test_vars['realtime_host']
+        assert ably.options.fallback_realtime_host != self.test_vars['realtime_host']
         await ably.close()
 
     async def test_fallback_host_no_connection(self):
@@ -311,14 +310,14 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         ably.connection.connection_manager.check_connection = check_connection
 
-        asyncio.create_task(ably.connection.connection_manager.transport.on_protocol_message({
-            "action": ProtocolMessageAction.DISCONNECTED,
-            "error": {
-                "statusCode": 502,
-                "code": 50200,
-                "message": "test exception"
-            }
-        }))
+        asyncio.create_task(
+            ably.connection.connection_manager.transport.on_protocol_message(
+                {
+                    'action': ProtocolMessageAction.DISCONNECTED,
+                    'error': {'statusCode': 502, 'code': 50200, 'message': 'test exception'},
+                }
+            )
+        )
 
         await ably.connection.once_async(ConnectionState.DISCONNECTED)
 
@@ -330,19 +329,19 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         await ably.connection.connection_manager.once_async('transport.pending')
         assert ably.connection.connection_manager.transport
-        asyncio.create_task(ably.connection.connection_manager.transport.on_protocol_message({
-            "action": ProtocolMessageAction.DISCONNECTED,
-            "error": {
-                "statusCode": 502,
-                "code": 50200,
-                "message": "test exception"
-            }
-        }))
+        asyncio.create_task(
+            ably.connection.connection_manager.transport.on_protocol_message(
+                {
+                    'action': ProtocolMessageAction.DISCONNECTED,
+                    'error': {'statusCode': 502, 'code': 50200, 'message': 'test exception'},
+                }
+            )
+        )
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
 
-        assert ably.connection.connection_manager.transport.host != self.test_vars["realtime_host"]
-        assert ably.options.fallback_realtime_host != self.test_vars["realtime_host"]
+        assert ably.connection.connection_manager.transport.host != self.test_vars['realtime_host']
+        assert ably.options.fallback_realtime_host != self.test_vars['realtime_host']
         await ably.close()
 
     #  RTN2d
@@ -354,7 +353,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         realtime = await TestApp.get_ably_realtime(token_details=token_details)
 
         await realtime.connection.once_async(ConnectionState.CONNECTED)
-        assert realtime.connection.connection_manager.transport.params.get("client_id") is None
+        assert realtime.connection.connection_manager.transport.params.get('client_id') is None
         assert realtime.auth.client_id is None
 
         await realtime.close()
@@ -366,7 +365,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         ably = await TestApp.get_ably_realtime(client_id=client_id)
 
         await ably.connection.once_async(ConnectionState.CONNECTED)
-        assert ably.connection.connection_manager.transport.params["client_id"] == client_id
+        assert ably.connection.connection_manager.transport.params['client_id'] == client_id
         assert ably.auth.client_id == client_id
 
         await ably.close()
@@ -381,8 +380,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
             original_on_protocol_message = transport.on_protocol_message
 
             async def on_protocol_message(msg):
-                if msg["action"] == ProtocolMessageAction.CONNECTED:
-                    msg["connectionDetails"]["maxIdleInterval"] = 1000
+                if msg['action'] == ProtocolMessageAction.CONNECTED:
+                    msg['connectionDetails']['maxIdleInterval'] = 1000
 
                 await original_on_protocol_message(msg)
 
