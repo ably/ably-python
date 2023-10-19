@@ -4,6 +4,10 @@
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.1...v2.0.2)
 
+**Implemented enhancements:**
+
+- Add synchronous AblyRest client (for more info see the [docs]()) [\#537](https://github.com/ably/ably-python/issues/537)
+
 **Closed issues:**
 
 - Update httpx dependency to version 0.24.1 or higher [\#523](https://github.com/ably/ably-python/issues/523)
@@ -11,6 +15,8 @@
 **Merged pull requests:**
 
 - Updated poetry httpx dependency and lock file [\#524](https://github.com/ably/ably-python/pull/524) ([sacOO7](https://github.com/sacOO7))
+- Remove unused dependency: h2 [\#526](https://github.com/ably/ably-python/pull/526) ([gdrosos](https://github.com/gdrosos))
+- Add sync support using unasync [\#537](https://github.com/ably/ably-python/pull/526) ([sacOO7](https://github.com/sacOO7))
 
 ## [v2.0.1](https://github.com/ably/ably-python/tree/v2.0.1)
 
