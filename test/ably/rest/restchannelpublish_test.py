@@ -16,6 +16,7 @@ from ably.rest.auth import Auth
 from ably.types.message import Message
 from ably.types.tokendetails import TokenDetails
 from ably.util import case
+from test.ably import utils
 
 from test.ably.testapp import TestApp
 from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
@@ -385,8 +386,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             'binary': bytearray,
         }
 
-        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        path = os.path.join(root_dir, 'submodules', 'test-resources', 'messages-encoding.json')
+        path = os.path.join(utils.get_submodule_dir(__file__), 'test-resources', 'messages-encoding.json')
         with open(path) as f:
             data = json.load(f)
             for input_msg in data['messages']:

@@ -20,6 +20,9 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+include = [
+  'ably/**/*.py'
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -50,6 +53,7 @@ respx = "^0.20.0"
 importlib-metadata = "^4.12"
 pytest-timeout = "^2.1.0"
 async-case = { version = "^10.1.0", python = "~3.7" }
+tokenize_rt = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -57,3 +61,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 timeout = 30
+
+[tool.poetry.scripts]
+unasync = 'ably.scripts.unasync:run'

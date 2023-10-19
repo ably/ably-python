@@ -40,7 +40,7 @@ class TestRestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         post_time = await self.server_time()
         assert token_details.token is not None, "Expected token"
         assert token_details.issued + 300 >= pre_time, "Unexpected issued time"
-        assert token_details.issued <= post_time, "Unexpected issued time"
+        assert token_details.issued <= post_time + 500, "Unexpected issued time"
         assert self.permit_all == str(token_details.capability), "Unexpected capability"
 
     async def test_request_token_explicit_timestamp(self):

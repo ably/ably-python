@@ -11,6 +11,7 @@ from ably.util.crypto import CipherParams, get_cipher, generate_random_key, get_
 
 from Crypto import Random
 
+from test.ably import utils
 from test.ably.testapp import TestApp
 from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase, BaseAsyncTestCase
 
@@ -204,7 +205,7 @@ class AbstractTestCryptoWithFixture:
 
     @classmethod
     def setUpClass(cls):
-        resources_path = os.path.dirname(__file__) + '/../../../submodules/test-resources/%s' % cls.fixture_file
+        resources_path = os.path.join(utils.get_submodule_dir(__file__), 'test-resources', cls.fixture_file)
         with open(resources_path, 'r') as f:
             cls.fixture = json.loads(f.read())
             cls.params = {

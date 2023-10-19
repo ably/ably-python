@@ -56,6 +56,9 @@ introduced by version 1.2.0.
 
 ### Using the Rest API
 
+> [!NOTE]  
+> Please note that since version 2.0.2 we also provide a synchronous variant of the REST interface which is can be accessed as `from ably.sync import AblyRestSync`.
+
 All examples assume a client and/or channel has been created in one of the following ways:
 
 With closing the client manually:
