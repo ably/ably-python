@@ -291,3 +291,9 @@ def run():
     src_files = find_files(src_dir_path, "*.py")
 
     unasync_files(src_files, [Rule(fromdir=src_dir_path, todir=dest_dir_path, output_file_prefix="sync_")])
+
+    # do simple codegen using find and replace
+
+    src_dir_path = os.path.join(os.getcwd(), "ably", "sync")
+    find_files(src_dir_path, "*.py")
+    print(src_dir_path)
