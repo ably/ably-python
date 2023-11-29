@@ -102,6 +102,16 @@ logger.addHandler(logging.StreamHandler())
 await channel.publish('event', 'message')
 ```
 
+### Publishing a message to a channel including metadata
+
+```python
+from ably.types.message import Message
+messageObject = Message(name="messagename",
+                        data="payload",
+                        extras={"headers": {"metadataKey": "metadataValue"}})
+await channel.publish(messageObject)
+```
+
 ### Querying the History
 
 ```python
