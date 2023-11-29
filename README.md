@@ -102,6 +102,16 @@ logger.addHandler(logging.StreamHandler())
 await channel.publish('event', 'message')
 ```
 
+If you need to add metadata when publishing a message, you can use the `Message` constructor to create a message with custom fields:
+```python
+from ably.types.message import Message
+
+message_object = Message(name="message_name",
+                         data="payload",
+                         extras={"headers": {"metadata_key": "metadata_value"}})
+await channel.publish(message_object)
+```
+
 ### Querying the History
 
 ```python
