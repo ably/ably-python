@@ -617,21 +617,6 @@ toml = "*"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
-name = "pytest-flake8"
-version = "1.1.0"
-description = "pytest plugin to check FLAKE8 requirements"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pytest-flake8-1.1.0.tar.gz", hash = "sha256:358d449ca06b80dbadcb43506cd3e38685d273b4968ac825da871bd4cc436202"},
-    {file = "pytest_flake8-1.1.0-py2.py3-none-any.whl", hash = "sha256:f1b19dad0b9f0aa651d391c9527ebc20ac1a0f847aa78581094c747462bfa182"},
-]
-
-[package.dependencies]
-flake8 = ">=3.5"
-pytest = ">=3.5"
-
-[[package]]
 name = "pytest-forked"
 version = "1.6.0"
 description = "run tests in isolated forked subprocesses"
@@ -860,4 +845,4 @@ oldcrypto = ["pycrypto"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "207a060df86b2749ce6d2be6c2deb6cc8dc7b7059e6880b6291c5b9521da50eb"
+content-hash = "058129839de26ceede1860ad9d8c522ad575b000959d8587eea387eadff3976a"
