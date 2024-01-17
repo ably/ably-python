@@ -33,7 +33,6 @@ jobs:
     - name: Install dependencies
       run: poetry install -E crypto
     - name: Lint with flake8
-      if: ${{ matrix.python-version != '3.12' }}
       run: poetry run flake8
     - name: Generate rest sync code and tests
       run: poetry run unasync
