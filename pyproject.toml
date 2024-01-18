@@ -18,6 +18,8 @@ classifiers = [
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 include = [
@@ -36,7 +38,10 @@ httpx = { version = "^0.24.1", extras = ["http2"] }
 pycrypto = { version = "^2.6.1", optional = true }
 pycryptodome = { version = "*", optional = true }
 websockets = "^10.3"
-pyee = "^9.0.4"
+pyee = [
+  { version = "^9.0.4", python = "~3.7" },
+  { version = "^11.1.0", python = "^3.8" }
+]
 
 [tool.poetry.extras]
 oldcrypto = ["pycrypto"]
@@ -47,7 +52,7 @@ pytest = "^7.1"
 mock = "^4.0.3"
 pep8-naming = "^0.4.1"
 pytest-cov = "^2.4"
-pytest-flake8 = "^1.1"
+flake8="^3.9.2"
 pytest-xdist = "^1.15"
 respx = "^0.20.0"
 importlib-metadata = "^4.12"
