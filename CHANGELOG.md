@@ -1,5 +1,18 @@
 # Change Log
 
+## [v2.0.3](https://github.com/ably/ably-python/tree/v2.0.3)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.2...v2.0.3)
+
+**Closed issues:**
+
+- Support for python 3.12 [\#546](https://github.com/ably/ably-python/issues/546)
+
+**Merged pull requests:**
+
+- Support latest python versions [\#547](https://github.com/ably/ably-python/pull/547) ([sacOO7](https://github.com/sacOO7))
+- Update README.md to add in 'publish message to channel including metadata' [\#545](https://github.com/ably/ably-python/pull/545) ([cameron-michie](https://github.com/cameron-michie))
+
 ## [v2.0.2](https://github.com/ably/ably-python/tree/v2.0.2)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.1...v2.0.2)
