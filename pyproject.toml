@@ -53,8 +53,8 @@ mock = "^4.0.3"
 pep8-naming = "^0.4.1"
 pytest-cov = "^2.4"
 flake8=[
-  { version = "3.9.2", python = ">=3.7, <3.12" },
-  { version = "7.0.0", python = "3.12" }
+  { version = "3.9.2", python = "~3.7" },
+  { version = "7.0.0", python = "^3.8" }
 ]
 pytest-xdist = "^1.15"
 respx = "^0.20.0"
