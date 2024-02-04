@@ -36,7 +36,8 @@ httpx = [
   { version = "^0.24.1", python = "~3.7" },
   { version = "^0.25.0", python = "^3.8" },
 ]
-#h2 = "^4.1.0"
+h2 = "^4.1.0" # required for httx package, HTTP2 communication
+
 # Optional dependencies
 pycrypto = { version = "^2.6.1", optional = true }
 pycryptodome = { version = "*", optional = true }
@@ -45,15 +46,10 @@ pyee = [
   { version = "^9.0.4", python = "~3.7" },
   { version = "^11.1.0", python = "^3.8" }
 ]
-#h2 = [
-#  { version = "^3.1.0", python = "~3.7" },
-#  { version = "^4.1.0", python = "^3.8" }
-#]
 
 [tool.poetry.extras]
 oldcrypto = ["pycrypto"]
 crypto = ["pycryptodome"]
-#http2 = ["h2"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
