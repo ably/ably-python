@@ -4,10 +4,6 @@
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.3...v2.0.4)
 
-**Closed issues:**
-
-- Loosen httpx version requirements? [\#551](https://github.com/ably/ably-python/issues/551)
-
 **Merged pull requests:**
 
 - Upgrade httpx version [\#552](https://github.com/ably/ably-python/pull/552) ([sacOO7](https://github.com/sacOO7))
