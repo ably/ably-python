@@ -1,5 +1,13 @@
 # Change Log
 
+## [v2.0.4](https://github.com/ably/ably-python/tree/v2.0.4)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.3...v2.0.4)
+
+**Merged pull requests:**
+
+- Upgrade httpx version [\#552](https://github.com/ably/ably-python/pull/552) ([sacOO7](https://github.com/sacOO7))
+
 ## [v2.0.3](https://github.com/ably/ably-python/tree/v2.0.3)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.2...v2.0.3)
