@@ -1,5 +1,18 @@
 # Change Log
 
+## [v2.0.5](https://github.com/ably/ably-python/tree/v2.0.5)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.4...v2.0.5)
+
+**Closed issues:**
+
+- Question: Bump websockets version [\#556](https://github.com/ably/ably-python/issues/556)
+- "RuntimeError: no running event loop" exception when connecting to Realtime [\#555](https://github.com/ably/ably-python/issues/555)
+
+**Merged pull requests:**
+
+- Bumped up websocket lib [\#557](https://github.com/ably/ably-python/pull/557) ([sacOO7](https://github.com/sacOO7))
+
 ## [v2.0.4](https://github.com/ably/ably-python/tree/v2.0.4)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.3...v2.0.4)
