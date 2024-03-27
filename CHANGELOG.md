@@ -1,5 +1,17 @@
 # Change Log
 
+## [v2.0.6](https://github.com/ably/ably-python/tree/v2.0.6)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.5...v2.0.6)
+
+**Closed issues:**
+
+- Support httpx 0.26, 0.27 and so on [\#560](https://github.com/ably/ably-python/issues/560)
+
+**Merged pull requests:**
+
+- Fix dependencies [\#559](https://github.com/ably/ably-python/pull/559) ([sacOO7](https://github.com/sacOO7))
+
 ## [v2.0.5](https://github.com/ably/ably-python/tree/v2.0.5)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.4...v2.0.5)
