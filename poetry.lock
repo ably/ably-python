@@ -245,6 +245,7 @@ files = [
 
 [package.dependencies]
 certifi = "*"
+h2 = {version = ">=3,<5", optional = true, markers = "extra == \"http2\""}
 httpcore = ">=0.15.0,<0.18.0"
 idna = "*"
 sniffio = "*"
@@ -533,20 +534,34 @@ files = [
 
 [[package]]
 name = "pyee"
-version = "10.0.2"
-description = "A rough port of Node.js's EventEmitter to Python with a few tricks of its own"
+version = "9.1.1"
+description = "A port of node.js's EventEmitter to python."
 optional = false
 python-versions = "*"
 files = [
-    {file = "pyee-10.0.2-py3-none-any.whl", hash = "sha256:798f8f70255b137da500e18274612ef256aa179b9352a67940dab59910167ddf"},
-    {file = "pyee-10.0.2.tar.gz", hash = "sha256:266e0389ac212e364bca1dc5e7cd92ddf8d3a06259cbfc2687aa54c7f1a0da94"},
+    {file = "pyee-9.1.1-py2.py3-none-any.whl", hash = "sha256:f4a9853503d2f5a69d4350b54ba70841ebc535c53ebfaaa40c0fb47e63e78b3e"},
+    {file = "pyee-9.1.1.tar.gz", hash = "sha256:a1ebcd38d92e7d780635ab3442c0f6ce49840d9bfe0b0549921a6188860af0db"},
+]
+
+[package.dependencies]
+typing-extensions = "*"
+
+[[package]]
+name = "pyee"
+version = "11.1.0"
+description = "A rough port of Node.js's EventEmitter to Python with a few tricks of its own"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyee-11.1.0-py3-none-any.whl", hash = "sha256:5d346a7d0f861a4b2e6c47960295bd895f816725b27d656181947346be98d7c1"},
+    {file = "pyee-11.1.0.tar.gz", hash = "sha256:b53af98f6990c810edd9b56b87791021a8f54fd13db4edd1142438d44ba2263f"},
 ]
 
 [package.dependencies]
 typing-extensions = "*"
 
 [package.extras]
-dev = ["black", "flake8", "flake8-black", "isort", "jupyter-console", "mkdocs", "mkdocs-include-markdown-plugin", "mkdocstrings[python]", "pytest", "pytest-asyncio", "pytest-trio", "toml", "tox", "trio", "trio", "trio-typing", "twine", "twisted", "validate-pyproject[all]"]
+dev = ["black", "build", "flake8", "flake8-black", "isort", "jupyter-console", "mkdocs", "mkdocs-include-markdown-plugin", "mkdocstrings[python]", "pytest", "pytest-asyncio", "pytest-trio", "sphinx", "toml", "tox", "trio", "trio", "trio-typing", "twine", "twisted", "validate-pyproject[all]"]
 
 [[package]]
 name = "pyflakes"
@@ -831,4 +846,4 @@ oldcrypto = ["pycrypto"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "355ed5057624b3c2a2e5113a3a95adf60ed78001a494c671f285545ab9bdf042"
+content-hash = "dfad94ad219701118ce3e0962e8764bea48783a9245e6b00dd123476a363f249"
