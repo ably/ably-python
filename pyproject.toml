@@ -32,7 +32,7 @@ python = "^3.7"
 # Mandatory dependencies
 methoddispatch = "^3.0.2"
 msgpack = "^1.0.0"
-httpx = { version = ">= 0.24.1, < 1.0", extras = ["http2"] }
+httpx = { version = "< 1.0, >= 0.24.1", extras = ["http2"] }
 websockets = ">= 10.0, < 13.0"
 pyee = [
   { version = "^9.0.4", python = "~3.7" },
