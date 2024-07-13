@@ -47,7 +47,7 @@ cd ably-python
 python setup.py install
 ```
 
-## Upgrad / Migration Guide
+## Upgrade / Migration Guide
 
 Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new APIs when migrating from older versions.
 
