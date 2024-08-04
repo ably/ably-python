@@ -79,9 +79,9 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert "rest.ably.io" == host, "Unexpected host mismatch %s" % host
 
         # environment: other
-        ably = AblyRest(token='foo', environment="sandbox")
+        ably = AblyRest(token='foo', environment="lmars-dev")
         host = ably.options.get_rest_host()
-        assert "sandbox-rest.ably.io" == host, "Unexpected host mismatch %s" % host
+        assert "lmars-dev-rest.ably.io" == host, "Unexpected host mismatch %s" % host
 
         # both, as per #TO3k2
         with pytest.raises(ValueError):
@@ -103,8 +103,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
             assert sorted(aux) == sorted(ably.options.get_fallback_rest_hosts())
 
         # Specify environment (RSC15g2)
-        ably = AblyRest(token='foo', environment='sandbox', http_max_retry_count=10)
-        assert sorted(Defaults.get_environment_fallback_hosts('sandbox')) == sorted(
+        ably = AblyRest(token='foo', environment='lmars-dev', http_max_retry_count=10)
+        assert sorted(Defaults.get_environment_fallback_hosts('lmars-dev')) == sorted(
             ably.options.get_fallback_rest_hosts())
 
         # Fallback hosts and environment not specified (RSC15g3)
