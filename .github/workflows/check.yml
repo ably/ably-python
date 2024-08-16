@@ -5,6 +5,7 @@
 #   https://docs.github.com/en/actions/guides/building-and-testing-python#starting-with-the-python-workflow-template
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
