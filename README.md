@@ -47,10 +47,9 @@ cd ably-python
 python setup.py install
 ```
 
-## Breaking API Changes in Version 1.2.0
+## Upgrade / Migration Guide
 
-Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new API
-introduced by version 1.2.0.
+Please see our [Upgrade / Migration Guide](UPDATING.md) for notes on changes you need to make to your code to update it to use the new APIs when migrating from older versions.
 
 ## Usage
 
