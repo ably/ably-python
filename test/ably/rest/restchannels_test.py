@@ -87,5 +87,5 @@ class TestChannels(BaseAsyncTestCase):
         with pytest.raises(AblyException) as excinfo:
             await ably.channels['test_publish_without_permission'].publish('foo', 'woop')
 
-        assert 'not permitted' in excinfo.value.message
+        assert 40160 == excinfo.value.code
         await ably.close()
