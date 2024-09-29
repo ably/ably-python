@@ -1,5 +1,6 @@
 import functools
 import logging
+import msgpack
 
 
 log = logging.getLogger(__name__)
@@ -35,17 +36,17 @@ class AblyException(Exception):
             return
 
         try:
-            json_response = response.json()
+            decoded_response = AblyException.decode_error_response(response)
         except Exception:
-            log.debug("Response not json: %d %s",
+            log.debug("Response not json or msgpack: %d %s",
                       response.status_code,
                       response.text)
             raise AblyException(message=response.text,
                                 status_code=response.status_code,
                                 code=response.status_code * 100)
 
-        if json_response and 'error' in json_response:
-            error = json_response['error']
+        if decoded_response and 'error' in decoded_response:
+            error = decoded_response['error']
             try:
                 raise AblyException(
                     message=error['message'],
@@ -60,6 +61,17 @@ class AblyException(Exception):
         raise AblyException(message="",
                             status_code=response.status_code,
                             code=response.status_code * 100)
+
+    @staticmethod
+    def decode_error_response(response):
+        content_type = response.headers.get('content-type')
+        if isinstance(content_type, str):
+            if content_type.startswith('application/x-msgpack'):
+                return msgpack.unpackb(response.content)
+            elif content_type.startswith('application/json'):
+                return response.json()
+
+        raise ValueError("Unsupported content type")
 
     @staticmethod
     def from_exception(e):
