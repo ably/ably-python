@@ -1,5 +1,13 @@
 # Change Log
 
+## [v2.0.7](https://github.com/ably/ably-python/tree/v2.0.7)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.6...v2.0.7)
+
+**Fixed bugs:**
+
+- Decoding issue for 40010 Error \(Invalid Channel Name\) [\#569](https://github.com/ably/ably-python/issues/569)
+
 ## [v2.0.6](https://github.com/ably/ably-python/tree/v2.0.6)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.5...v2.0.6)
