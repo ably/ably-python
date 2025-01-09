@@ -146,7 +146,8 @@ class Http:
         if host is None:
             return hosts
 
-        if time.time() > self.__host_expires:
+        # unstore saved fallback host after fallbackRetryTimeout (RSC15f)
+        if self.__host_expires is not None and time.time() > self.__host_expires:
             self.__host = None
             self.__host_expires = None
             return hosts
