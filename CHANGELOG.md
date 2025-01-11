@@ -1,5 +1,13 @@
 # Change Log
 
+## [v2.0.8](https://github.com/ably/ably-python/tree/v2.0.8)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.7...v2.0.8)
+
+**Fixed bugs:**
+
+- Fix `TypeError: '>' not supported between instances of 'float' and 'NoneType'` in http [\#573](https://github.com/ably/ably-python/pull/573)
+
 ## [v2.0.7](https://github.com/ably/ably-python/tree/v2.0.7)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.6...v2.0.7)
