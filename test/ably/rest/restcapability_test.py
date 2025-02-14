@@ -240,3 +240,17 @@ class TestRestCapability(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetacla
         the_exception = excinfo.value
         assert 400 == the_exception.status_code
         assert 40000 == the_exception.code
+
+    @dont_vary_protocol
+    def test_capability_from_string(self):
+        capability_from_str = Capability('{"cansubscribe":["subscribe"]}')
+        capability_from_str_single_quote = Capability('{\'cansubscribe\':[\'subscribe\']}')
+
+        capability_from_dict = Capability({
+            "cansubscribe": ["subscribe"]
+        })
+
+        assert capability_from_str == capability_from_dict, "Unexpected Capability constructed from string"
+        assert (
+            capability_from_str_single_quote == capability_from_dict
+        ), "Unexpected Capability constructed from string"

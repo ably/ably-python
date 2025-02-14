@@ -1,4 +1,5 @@
 from collections.abc import MutableMapping
+from typing import Optional, Union
 import json
 import logging
 
@@ -7,11 +8,19 @@ log = logging.getLogger(__name__)
 
 
 class Capability(MutableMapping):
-    def __init__(self, obj=None):
-        if obj is None:
-            obj = {}
-        self.__dict = dict(obj)
-        for k, v in obj.items():
+    def __init__(self, capability: Optional[Union[dict, str]] = None):
+        # RSA9f: provided capability can be a JSON string
+        if capability and isinstance(capability, str):
+            try:
+                capability = json.loads(capability)
+            except json.JSONDecodeError:
+                capability = json.loads(capability.replace("'", '"'))
+
+        if capability is None:
+            capability = {}
+
+        self.__dict = dict(capability)
+        for k, v in capability.items():
             self[k] = v
 
     def __eq__(self, other):
