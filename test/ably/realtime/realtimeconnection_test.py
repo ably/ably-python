@@ -34,11 +34,11 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         state_change = await ably.connection.once_async()
         assert ably.connection.state == ConnectionState.FAILED
         assert state_change.reason
-        assert state_change.reason.code == 40005
-        assert state_change.reason.status_code == 400
+        assert state_change.reason.code == 40101
+        assert state_change.reason.status_code == 401
         assert ably.connection.error_reason
-        assert ably.connection.error_reason.code == 40005
-        assert ably.connection.error_reason.status_code == 400
+        assert ably.connection.error_reason.code == 40101
+        assert ably.connection.error_reason.status_code == 401
         await ably.close()
 
     async def test_connection_ping_connected(self):

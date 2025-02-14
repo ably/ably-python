@@ -52,8 +52,8 @@ class TestRealtimeResume(BaseAsyncTestCase):
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
 
         state_change = await ably.connection.once_async(ConnectionState.FAILED)
-        assert state_change.reason.code == 40005
-        assert state_change.reason.status_code == 400
+        assert state_change.reason.code == 40101
+        assert state_change.reason.status_code == 401
         await ably.close()
 
     # RTN15c7 - invalid resume response
