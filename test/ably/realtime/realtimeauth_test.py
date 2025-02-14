@@ -45,8 +45,8 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         ably = await TestApp.get_ably_realtime(key=api_key)
         state_change = await ably.connection.once_async(ConnectionState.FAILED)
         assert ably.connection.error_reason == state_change.reason
-        assert state_change.reason.code == 40005
-        assert state_change.reason.status_code == 400
+        assert state_change.reason.code == 40101
+        assert state_change.reason.status_code == 401
         await ably.close()
 
     async def test_auth_with_token_string(self):
@@ -63,8 +63,8 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         invalid_token = "Sdnurv_some_invalid_token_nkds9r7"
         ably = await TestApp.get_ably_realtime(token=invalid_token)
         state_change = await ably.connection.once_async(ConnectionState.FAILED)
-        assert state_change.reason.code == 40005
-        assert state_change.reason.status_code == 400
+        assert state_change.reason.code == 40101
+        assert state_change.reason.status_code == 401
         await ably.close()
 
     async def test_auth_with_token_details(self):
@@ -81,8 +81,8 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         invalid_token_details = TokenDetails(token="invalid-token")
         ably = await TestApp.get_ably_realtime(token_details=invalid_token_details)
         state_change = await ably.connection.once_async(ConnectionState.FAILED)
-        assert state_change.reason.code == 40005
-        assert state_change.reason.status_code == 400
+        assert state_change.reason.code == 40101
+        assert state_change.reason.status_code == 401
         await ably.close()
 
     async def test_auth_with_auth_callback_with_token_request(self):
@@ -133,8 +133,8 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         ably = await TestApp.get_ably_realtime(auth_callback=callback)
         state_change = await ably.connection.once_async(ConnectionState.FAILED)
-        assert state_change.reason.code == 40005
-        assert state_change.reason.status_code == 400
+        assert state_change.reason.code == 40101
+        assert state_change.reason.status_code == 401
         await ably.close()
 
     async def test_auth_with_auth_url_json(self):
