@@ -20,13 +20,7 @@ class TokenDetails:
             self.__expires = expires
         self.__token = token
         self.__issued = issued
-        if capability and isinstance(capability, str):
-            try:
-                self.__capability = Capability(json.loads(capability))
-            except json.JSONDecodeError:
-                self.__capability = Capability(json.loads(capability.replace("'", '"')))
-        else:
-            self.__capability = Capability(capability or {})
+        self.__capability = Capability(capability or {})
         self.__client_id = client_id
 
     @property

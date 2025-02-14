@@ -229,7 +229,7 @@ class Auth:
         log.debug("Token: %s" % str(response_dict.get("token")))
         return TokenDetails.from_dict(response_dict)
 
-    async def create_token_request(self, token_params: Optional[dict] = None, key_name: Optional[str] = None,
+    async def create_token_request(self, token_params: Optional[dict | str] = None, key_name: Optional[str] = None,
                                    key_secret: Optional[str] = None, query_time=None):
         token_params = token_params or {}
         token_request = {}
