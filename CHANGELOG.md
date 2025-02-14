@@ -1,5 +1,16 @@
 # Change Log
 
+## [v2.0.9](https://github.com/ably/ably-python/tree/v2.0.9)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.8...v2.0.9)
+
+**Fixed bugs:**
+
+- Fix the inability to pass a JSON string value for a `capability` parameter when creating a token [\#579](https://github.com/ably/ably-python/issues/579)
+
+**Closed issues:**
+- Support `pyee` 12 [\#580](https://github.com/ably/ably-python/issues/580)
+
 ## [v2.0.8](https://github.com/ably/ably-python/tree/v2.0.8)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.7...v2.0.8)
