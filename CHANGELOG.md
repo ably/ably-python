@@ -1,5 +1,9 @@
 # Change Log
 
+## [v2.0.10](https://github.com/ably/ably-python/tree/v2.0.10)
+
+Fixed sync version of the library
+
 ## [v2.0.9](https://github.com/ably/ably-python/tree/v2.0.9)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.8...v2.0.9)
