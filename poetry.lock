@@ -993,4 +993,4 @@ oldcrypto = ["pycrypto"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "0250b0787ead6a60f6c1fac2f8de97b4fb5cccdc1d80efd6f967c13f2c1ca22d"
+content-hash = "950ac9a8368940a6adc2bd976fff4f6d5222b978618c543e30decdf1008cf20d"
