@@ -1,5 +1,12 @@
 # Change Log
 
+## [v2.0.11](https://github.com/ably/ably-python/tree/v2.0.11)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.10...v2.0.11)
+
+**Closed issues:**
+- Support `websockets` version 13 [\#591](https://github.com/ably/ably-python/issues/591)
+
 ## [v2.0.10](https://github.com/ably/ably-python/tree/v2.0.10)
 
 Fixed sync version of the library
