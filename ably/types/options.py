@@ -19,6 +19,10 @@ class Options(AuthOptions):
 
         super().__init__(**kwargs)
 
+        if endpoint is not None:
+            if environment is not None or rest_host is not None or realtime_host is not None:
+                raise ValueError('endpoint is incompatible with any of environment, rest_host or realtime_host')
+
         # TODO check these defaults
         if fallback_retry_timeout is None:
             fallback_retry_timeout = Defaults.fallback_retry_timeout
@@ -43,15 +47,9 @@ class Options(AuthOptions):
         if environment is not None and realtime_host is not None:
             raise ValueError('specify realtime_host or environment, not both')
 
-        if environment is not None and endpoint is not None:
-            raise ValueError('specify endpoint or environment, not both')
-
         if idempotent_rest_publishing is None:
             from ably import api_version
             idempotent_rest_publishing = api_version >= '1.2'
-
-        if environment == "production":
-            endpoint = Defaults.endpoint
 
         if environment is not None and endpoint is None:
             endpoint = environment
@@ -287,7 +285,7 @@ class Options(AuthOptions):
         # Fallback hosts
         fallback_hosts = self.fallback_hosts
         if fallback_hosts is None:
-            if self.rest_host:
+            if self.rest_host is not None:
                 fallback_hosts = []
             else:
                 fallback_hosts = Defaults.get_fallback_hosts(self.endpoint)
