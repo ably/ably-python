@@ -73,8 +73,8 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         ably = AblyRest(token='foo', rest_host="some.other.host")
         assert "some.other.host" == ably.options.rest_host, "Unexpected host mismatch"
 
-        # environment: production
-        ably = AblyRest(token='foo', environment="production")
+        # environment: main
+        ably = AblyRest(token='foo', environment="main")
         host = ably.options.get_rest_host()
         assert "main.realtime.ably.net" == host, "Unexpected host mismatch %s" % host
 

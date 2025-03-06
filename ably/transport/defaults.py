@@ -51,13 +51,13 @@ class Defaults:
         if endpoint.startswith("nonprod:"):
             return endpoint[len("nonprod:"):] + ".realtime.ably-nonprod.net"
 
-        if endpoint == "main":
-            return "main.realtime.ably.net"
-
         return endpoint + ".realtime.ably.net"
 
     @staticmethod
     def get_fallback_hosts(endpoint="main"):
+        if "." in endpoint or "::" in endpoint or "localhost" in endpoint:
+            return []
+
         if endpoint.startswith("nonprod:"):
             root = endpoint.replace("nonprod:", "")
             return [
