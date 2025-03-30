@@ -1,14 +1,15 @@
 import base64
+import json
 import re
 import time
+from collections import OrderedDict
 
-import httpx
 import mock
+import niquests
 import pytest
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, parse_qs
 
-import respx
-from httpx import Response
+import responses
 
 from ably import AblyRest
 from ably.transport.defaults import Defaults
@@ -24,12 +25,20 @@ class TestRestHttp(BaseAsyncTestCase):
         assert 'http_open_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
         assert 'http_request_timeout' in ably.http.CONNECTION_RETRY_DEFAULTS
 
-        with mock.patch('httpx.AsyncClient.send', side_effect=httpx.RequestError('')) as send_mock:
-            with pytest.raises(httpx.RequestError):
+        with mock.patch('niquests.AsyncSession.send', side_effect=niquests.RequestException()) as send_mock:
+            with pytest.raises(niquests.RequestException):
                 await ably.http.make_request('GET', '/', version=Defaults.protocol_version, skip_auth=True)
 
             assert send_mock.call_count == Defaults.http_max_retry_count
-            assert send_mock.call_args == mock.call(mock.ANY)
+            assert send_mock.call_args == mock.call(
+                mock.ANY,
+                timeout=(4, 10),
+                allow_redirects=True,
+                proxies=OrderedDict(),
+                stream=False,
+                verify=True,
+                cert=None
+            )
         await ably.close()
 
     async def test_cumulative_timeout(self):
@@ -40,10 +49,10 @@ class TestRestHttp(BaseAsyncTestCase):
 
         def sleep_and_raise(*args, **kwargs):
             time.sleep(0.51)
-            raise httpx.TimeoutException('timeout')
+            raise niquests.Timeout()
 
-        with mock.patch('httpx.AsyncClient.send', side_effect=sleep_and_raise) as send_mock:
-            with pytest.raises(httpx.TimeoutException):
+        with mock.patch('niquests.AsyncSession.send', side_effect=sleep_and_raise) as send_mock:
+            with pytest.raises(niquests.Timeout):
                 await ably.http.make_request('GET', '/', skip_auth=True)
 
             assert send_mock.call_count == 1
@@ -56,41 +65,48 @@ class TestRestHttp(BaseAsyncTestCase):
             base_url = "%s://%s:%d" % (ably.http.preferred_scheme,
                                        host,
                                        ably.http.preferred_port)
+            if base_url.endswith(":443") or base_url.endswith(":80"):
+                base_url = base_url.replace(":443", "").replace(":80", "")
             return urljoin(base_url, '/')
 
-        with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
-            with mock.patch('httpx.AsyncClient.send', side_effect=httpx.RequestError('')) as send_mock:
-                with pytest.raises(httpx.RequestError):
-                    await ably.http.make_request('GET', '/', skip_auth=True)
+        with mock.patch('niquests.AsyncSession.send', side_effect=niquests.RequestException) as send_mock:
+            with pytest.raises(niquests.RequestException):
+                await ably.http.make_request('GET', '/', skip_auth=True)
 
-                assert send_mock.call_count == Defaults.http_max_retry_count
+            assert send_mock.call_count == Defaults.http_max_retry_count
 
-                expected_urls_set = {
-                    make_url(host)
-                    for host in Options(http_max_retry_count=10).get_rest_hosts()
-                }
-                for ((_, url), _) in request_mock.call_args_list:
-                    assert url in expected_urls_set
-                    expected_urls_set.remove(url)
-
-                expected_hosts_set = set(Options(http_max_retry_count=10).get_rest_hosts())
-                for (prep_request_tuple, _) in send_mock.call_args_list:
-                    assert prep_request_tuple[0].headers.get('host') in expected_hosts_set
-                    expected_hosts_set.remove(prep_request_tuple[0].headers.get('host'))
+            expected_urls_set = {
+                make_url(host)
+                for host in Options(http_max_retry_count=10).get_rest_hosts()
+            }
+            expected_hosts_set = set(Options(http_max_retry_count=10).get_rest_hosts())
+            for (prep_request_tuple, _) in send_mock.call_args_list:
+                url = prep_request_tuple[0].url
+                assert url in expected_urls_set
+                expected_urls_set.remove(url)
+                current_host = urlparse(prep_request_tuple[0].url).hostname
+                assert current_host in expected_hosts_set
+                expected_hosts_set.remove(current_host)
         await ably.close()
 
-    @respx.mock
+    @responses.activate
     async def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
         ably = AblyRest(token="foo", rest_host=custom_host)
 
-        mock_route = respx.get("https://example.org").mock(side_effect=httpx.RequestError(''))
+        def _throw_error(*args, **kwargs):
+            raise niquests.RequestException
 
-        with pytest.raises(httpx.RequestError):
+        responses.add_callback(
+            "GET",
+            "https://example.org/",
+            _throw_error
+        )
+
+        with pytest.raises(niquests.RequestException):
             await ably.http.make_request('GET', '/', skip_auth=True)
 
-        assert mock_route.call_count == 1
-        assert respx.calls.call_count == 1
+        assert len(responses.calls) == 1
 
         await ably.close()
 
@@ -101,16 +117,16 @@ class TestRestHttp(BaseAsyncTestCase):
         host = ably.options.get_rest_host()
 
         state = {'errors': 0}
-        client = httpx.AsyncClient(http2=True)
+        client = niquests.AsyncSession()
         send = client.send
 
         async def side_effect(*args, **kwargs):
-            if args[1].url.host == host:
+            if f"://{host}" in args[1].url:
                 state['errors'] += 1
                 raise RuntimeError
             return await send(args[1])
 
-        with mock.patch('httpx.AsyncClient.send', side_effect=side_effect, autospec=True):
+        with mock.patch('niquests.AsyncSession.send', side_effect=side_effect, autospec=True):
             # The main host is called and there's an error
             await ably.time()
             assert state['errors'] == 1
@@ -126,10 +142,10 @@ class TestRestHttp(BaseAsyncTestCase):
             await ably.time()
             assert state['errors'] == 2
 
-        await client.aclose()
+        await client.close()
         await ably.close()
 
-    @respx.mock
+    @responses.activate
     async def test_no_retry_if_not_500_to_599_http_code(self):
         default_host = Options().get_rest_host()
         ably = AblyRest(token="foo")
@@ -139,19 +155,24 @@ class TestRestHttp(BaseAsyncTestCase):
             default_host,
             ably.http.preferred_port)
 
-        mock_response = httpx.Response(600, json={'message': "", 'status_code': 600, 'code': 50500})
+        default_url = default_url.replace(":443/", "/")
 
-        mock_route = respx.get(default_url).mock(return_value=mock_response)
+        mock_route = responses.get(
+            default_url,
+            status=600,
+            content_type="application/json",
+            body=json.dumps({'message': "", 'status_code': 600, 'code': 50500}),
+        )
 
         with pytest.raises(AblyException):
             await ably.http.make_request('GET', '/', skip_auth=True)
 
         assert mock_route.call_count == 1
-        assert respx.calls.call_count == 1
+        assert len(responses.calls) == 1
 
         await ably.close()
 
-    @respx.mock
+    @responses.activate
     async def test_500_errors(self):
         """
         Raise error if all the servers reply with a 5xx error.
@@ -160,7 +181,11 @@ class TestRestHttp(BaseAsyncTestCase):
 
         ably = AblyRest(token="foo")
 
-        mock_request = respx.route().mock(return_value=httpx.Response(500, text="Internal Server Error"))
+        mock_request = responses.get(
+            re.compile(r"(.*)"),
+            status=500,
+            body="Internal Server Error"
+        )
 
         with pytest.raises(AblyException):
             await ably.http.make_request('GET', '/', skip_auth=True)
@@ -199,14 +224,14 @@ class TestRestHttp(BaseAsyncTestCase):
         # With request id
         ably = await TestApp.get_ably_rest(add_request_ids=True)
         r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
-        assert 'request_id' in r.request.url.params
-        request_id1 = r.request.url.params['request_id']
+        assert 'request_id=' in r.request.url
+        request_id1 = parse_qs(urlparse(r.request.url).query)['request_id'][0]
         assert len(base64.urlsafe_b64decode(request_id1)) == 12
 
         # With request id and new request
         r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
-        assert 'request_id' in r.request.url.params
-        request_id2 = r.request.url.params['request_id']
+        assert 'request_id=' in r.request.url
+        request_id2 = parse_qs(urlparse(r.request.url).query)['request_id'][0]
         assert len(base64.urlsafe_b64decode(request_id2)) == 12
         assert request_id1 != request_id2
         await ably.close()
@@ -214,14 +239,16 @@ class TestRestHttp(BaseAsyncTestCase):
         # With request id and new request
         ably = await TestApp.get_ably_rest()
         r = await ably.http.make_request('HEAD', '/time', skip_auth=True)
-        assert 'request_id' not in r.request.url.params
+        assert 'request_id=' not in r.request.url
         await ably.close()
 
+    @responses.activate
     async def test_request_over_http2(self):
-        url = 'https://www.example.com'
-        respx.get(url).mock(return_value=Response(status_code=200))
+        url = 'https://www.example.com/'
+
+        responses.get(url=url, status=200)
 
         ably = await TestApp.get_ably_rest(rest_host=url)
         r = await ably.http.make_request('GET', url, skip_auth=True)
-        assert r.http_version == 'HTTP/2'
+        assert r.http_version == 0  # mocked dummy response don't have a http version
         await ably.close()

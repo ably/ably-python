@@ -33,11 +33,6 @@ python = "^3.7"
 # Mandatory dependencies
 methoddispatch = "^3.0.2"
 msgpack = "^1.0.0"
-httpx = [
-  { version = "^0.24.1", python = "~3.7" },
-  { version = ">= 0.25.0, < 1.0", python = "^3.8" },
-]
-h2 = "^4.1.0" # required for httx package, HTTP2 communication
 websockets = [
   { version = ">= 10.0, < 12.0", python = "~3.7" },
   { version = ">= 12.0, < 14.0", python = "^3.8" },
@@ -46,6 +41,7 @@ pyee = [
   { version = "^9.0.4", python = "~3.7" },
   { version = ">=11.1.0, <13.0.0", python = "^3.8" }
 ]
+niquests = "^3.14.1"
 
 # Optional dependencies
 pycrypto = { version = "^2.6.1", optional = true }
@@ -62,14 +58,14 @@ pep8-naming = "^0.4.1"
 pytest-cov = "^2.4"
 flake8="^3.9.2"
 pytest-xdist = "^1.15"
-respx = "^0.20.0"
 importlib-metadata = "^4.12"
 pytest-timeout = "^2.1.0"
 async-case = { version = "^10.1.0", python = "~3.7" }
 tokenize_rt = "*"
+responses = "^0.23"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]

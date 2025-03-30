@@ -1,6 +1,6 @@
 import logging
 import pytest
-import respx
+import responses
 
 from ably import AblyException
 from ably.http.paginatedresult import PaginatedResult
@@ -92,36 +92,36 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
             'channel_name': channel_name
         }
         port = self.test_vars['tls_port'] if self.test_vars.get('tls') else kwargs['port']
-        if port == 80:
+        if port == 80 or port == 443:
             kwargs['port_sufix'] = ''
         else:
             kwargs['port_sufix'] = ':' + str(port)
         url = '{scheme}://{host}{port_sufix}/channels/{channel_name}/messages'
         return url.format(**kwargs)
 
-    @respx.mock
+    @responses.activate
     @dont_vary_protocol
     async def test_channel_history_default_limit(self):
         self.per_protocol_setup(True)
         channel = self.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         await channel.history()
-        assert 'limit' not in respx.calls[0].request.url.params.keys()
+        assert 'limit=' not in responses.calls[0].request.url
 
-    @respx.mock
+    @responses.activate
     @dont_vary_protocol
     async def test_channel_history_with_limits(self):
         self.per_protocol_setup(True)
         channel = self.ably.channels['persisted:channelhistory_limit']
         url = self.history_mock_url('persisted:channelhistory_limit')
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
 
         await channel.history(limit=500)
-        assert '500' in respx.calls[0].request.url.params.get('limit')
+        assert 'limit=500' in responses.calls[0].request.url
 
         await channel.history(limit=1000)
-        assert '1000' in respx.calls[1].request.url.params.get('limit')
+        assert 'limit=1000' in responses.calls[1].request.url
 
     @dont_vary_protocol
     async def test_channel_history_max_limit_is_1000(self):

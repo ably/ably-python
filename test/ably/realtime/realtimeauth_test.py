@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-import httpx
+import niquests
 import pytest
 from ably.realtime.connection import ConnectionState
 from ably.transport.websockettransport import ProtocolMessageAction
@@ -326,9 +326,9 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         key_secret = key["key_secret"]
 
         async def auth_callback(_):
-            response = httpx.get(
+            response = await niquests.aget(
                 echo_url + '/createJWT',
-                params={"keyName": key_name, "keySecret": key_secret, "expiresIn": 35}
+                params={"keyName": key_name, "keySecret": key_secret, "expiresIn": str(35)}
             )
             return response.text
 

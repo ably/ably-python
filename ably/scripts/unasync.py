@@ -237,8 +237,8 @@ def find_files(dir_path, file_name_regex):
 def run():
     # Source files ==========================================
 
-    _TOKEN_REPLACE["AsyncClient"] = "Client"
-    _TOKEN_REPLACE["aclose"] = "close"
+    _TOKEN_REPLACE["AsyncSession"] = "Session"
+    _TOKEN_REPLACE["close"] = "close"
 
     _IMPORTS_REPLACE["ably"] = "ably.sync"
 
@@ -271,7 +271,7 @@ def run():
     _STRING_REPLACE['ably.rest.auth.Auth.request_token'] = 'ably.sync.rest.auth.AuthSync.request_token'
     _STRING_REPLACE['ably.rest.auth.TokenRequest'] = 'ably.sync.rest.auth.TokenRequest'
     _STRING_REPLACE['ably.rest.rest.Http.post'] = 'ably.sync.rest.rest.HttpSync.post'
-    _STRING_REPLACE['httpx.AsyncClient.send'] = 'httpx.Client.send'
+    _STRING_REPLACE['niquests.AsyncSession.send'] = 'niquests.Session.send'
     _STRING_REPLACE['ably.util.exceptions.AblyException.raise_for_response'] = \
         'ably.sync.util.exceptions.AblyException.raise_for_response'
     _STRING_REPLACE['ably.rest.rest.AblyRest.time'] = 'ably.sync.rest.rest.AblyRestSync.time'

@@ -1,5 +1,6 @@
-import respx
-from httpx import Response
+from urllib.parse import parse_qs, urlparse
+
+import responses
 
 from ably.http.paginatedresult import PaginatedResult
 
@@ -11,18 +12,20 @@ class TestPaginatedResult(BaseAsyncTestCase):
 
     def get_response_callback(self, headers, body, status):
         def callback(request):
-            res = request.url.params.get('page')
+            params = parse_qs(urlparse(request.url).query)
+            res = params["page"][0] if "page" in params else None
+
             if res:
-                return Response(
-                    status_code=status,
-                    headers=headers,
-                    content='[{"page": %i}]' % int(res)
+                return (
+                    status,
+                    headers,
+                    '[{"page": %i}]' % int(res)
                 )
 
-            return Response(
-                status_code=status,
-                headers=headers,
-                content=body
+            return (
+                status,
+                headers,
+                body,
             )
 
         return callback
@@ -31,27 +34,32 @@ class TestPaginatedResult(BaseAsyncTestCase):
         self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
         # Mocked responses
         # without specific headers
-        self.mocked_api = respx.mock(base_url='http://rest.ably.io')
-        self.ch1_route = self.mocked_api.get('/channels/channel_name/ch1')
-        self.ch1_route.return_value = Response(
-            headers={'content-type': 'application/json'},
-            status_code=200,
-            content='[{"id": 0}, {"id": 1}]',
+        self.ch1_route = responses.get(
+            "http://rest.ably.io/channels/channel_name/ch1",
+            content_type="application/json",
+            status=200,
+            body='[{"id": 0}, {"id": 1}]'
         )
+
         # with headers
-        self.ch2_route = self.mocked_api.get('/channels/channel_name/ch2')
-        self.ch2_route.side_effect = self.get_response_callback(
-            headers={
-                'content-type': 'application/json',
-                'link':
-                    '<http://rest.ably.io/channels/channel_name/ch2?page=1>; rel="first",'
-                    ' <http://rest.ably.io/channels/channel_name/ch2?page=2>; rel="next"'
-            },
-            body='[{"id": 0}, {"id": 1}]',
-            status=200
+        responses.add_callback(
+            "GET",
+            "http://rest.ably.io/channels/channel_name/ch2",
+            self.get_response_callback(
+                headers={
+                    'content-type': 'application/json',
+                    'link':
+                        '<http://rest.ably.io/channels/channel_name/ch2?page=1>; rel="first",'
+                        ' <http://rest.ably.io/channels/channel_name/ch2?page=2>; rel="next"'
+                },
+                body='[{"id": 0}, {"id": 1}]',
+                status=200
+            ),
+            content_type="application/json",
         )
+
         # start intercepting requests
-        self.mocked_api.start()
+        responses.start()
 
         self.paginated_result = await PaginatedResult.paginated_query(
             self.ably.http,
@@ -63,8 +71,8 @@ class TestPaginatedResult(BaseAsyncTestCase):
             response_processor=lambda response: response.to_native())
 
     async def asyncTearDown(self):
-        self.mocked_api.stop()
-        self.mocked_api.reset()
+        responses.stop()
+        responses.reset()
         await self.ably.close()
 
     def test_items(self):

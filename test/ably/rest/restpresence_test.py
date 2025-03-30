@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import pytest
-import respx
+import responses
 
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.presence import PresenceMessage
@@ -78,7 +78,7 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
             'host': self.test_vars['host']
         }
         port = self.test_vars['tls_port'] if self.test_vars.get('tls') else kwargs['port']
-        if port == 80:
+        if port == 80 or port == 443:
             kwargs['port_sufix'] = ''
         else:
             kwargs['port_sufix'] = ':' + str(port)
@@ -91,7 +91,7 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
             'host': self.test_vars['host']
         }
         port = self.test_vars['tls_port'] if self.test_vars.get('tls') else kwargs['port']
-        if port == 80:
+        if port == 80 or port == 443:
             kwargs['port_sufix'] = ''
         else:
             kwargs['port_sufix'] = ':' + str(port)
@@ -99,90 +99,90 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         return url.format(**kwargs)
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_get_presence_default_limit(self):
         url = self.presence_mock_url()
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         await self.channel.presence.get()
-        assert 'limit' not in respx.calls[0].request.url.params.keys()
+        assert "limit=" not in responses.calls[0].request.url
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_get_presence_with_limit(self):
         url = self.presence_mock_url()
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         await self.channel.presence.get(300)
-        assert '300' == respx.calls[0].request.url.params.get('limit')
+        assert "limit=300" in responses.calls[0].request.url
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_get_presence_max_limit_is_1000(self):
         url = self.presence_mock_url()
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         with pytest.raises(ValueError):
             await self.channel.presence.get(5000)
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_history_default_limit(self):
         url = self.history_mock_url()
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         await self.channel.presence.history()
-        assert 'limit' not in respx.calls[0].request.url.params.keys()
+        assert "limit=" not in responses.calls[0].request.url
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_history_with_limit(self):
         url = self.history_mock_url()
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         await self.channel.presence.history(300)
-        assert '300' == respx.calls[0].request.url.params.get('limit')
+        assert "limit=300" in responses.calls[0].request.url
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_history_with_direction(self):
         url = self.history_mock_url()
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         await self.channel.presence.history(direction='backwards')
-        assert 'backwards' == respx.calls[0].request.url.params.get('direction')
+        assert "direction=backwards" in responses.calls[0].request.url
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_history_max_limit_is_1000(self):
         url = self.history_mock_url()
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         with pytest.raises(ValueError):
             await self.channel.presence.history(5000)
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_with_milisecond_start_end(self):
         url = self.history_mock_url()
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         await self.channel.presence.history(start=100000, end=100001)
-        assert '100000' == respx.calls[0].request.url.params.get('start')
-        assert '100001' == respx.calls[0].request.url.params.get('end')
+        assert "start=100000" in responses.calls[0].request.url
+        assert "end=100001" in responses.calls[0].request.url
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_with_timedate_startend(self):
         url = self.history_mock_url()
         start = datetime(2015, 8, 15, 17, 11, 44, 706539)
         start_ms = 1439658704706
         end = start + timedelta(hours=1)
         end_ms = start_ms + (1000 * 60 * 60)
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         await self.channel.presence.history(start=start, end=end)
-        assert str(start_ms) in respx.calls[0].request.url.params.get('start')
-        assert str(end_ms) in respx.calls[0].request.url.params.get('end')
+        assert f"start={start_ms}" in responses.calls[0].request.url
+        assert f"end={end_ms}" in responses.calls[0].request.url
 
     @dont_vary_protocol
-    @respx.mock
+    @responses.activate
     async def test_with_start_gt_end(self):
         url = self.history_mock_url()
         end = datetime(2015, 8, 15, 17, 11, 44, 706539)
         start = end + timedelta(hours=1)
-        self.respx_add_empty_msg_pack(url)
+        self.responses_add_empty_msg_pack(url)
         with pytest.raises(ValueError, match="'end' parameter has to be greater than or equal to 'start'"):
             await self.channel.presence.history(start=start, end=end)
 
