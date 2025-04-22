@@ -126,6 +126,101 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
             await ably.request('GET', '/time', version=Defaults.protocol_version)
         await ably.close()
 
+    # RSC15l3
+    @dont_vary_protocol
+    async def test_503_status_fallback(self):
+        default_endpoint = 'https://sandbox-rest.ably.io/time'
+        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        fallback_endpoint = f'https://{fallback_host}/time'
+        ably = await TestApp.get_ably_rest(fallback_hosts=[fallback_host])
+        with respx.mock:
+            default_route = respx.get(default_endpoint)
+            fallback_route = respx.get(fallback_endpoint)
+            headers = {
+                "Content-Type": "application/json"
+            }
+            default_route.return_value = httpx.Response(503, headers=headers)
+            fallback_route.return_value = httpx.Response(200, headers=headers, text='[123]')
+            result = await ably.request('GET', '/time', version=Defaults.protocol_version)
+            assert default_route.called
+            assert result.status_code == 200
+            assert result.items[0] == 123
+        await ably.close()
+
+    # RSC15l2
+    @dont_vary_protocol
+    async def test_httpx_timeout_fallback(self):
+        default_endpoint = 'https://sandbox-rest.ably.io/time'
+        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        fallback_endpoint = f'https://{fallback_host}/time'
+        ably = await TestApp.get_ably_rest(fallback_hosts=[fallback_host])
+        with respx.mock:
+            default_route = respx.get(default_endpoint)
+            fallback_route = respx.get(fallback_endpoint)
+            headers = {
+                "Content-Type": "application/json"
+            }
+            default_route.side_effect = httpx.ReadTimeout
+            fallback_route.return_value = httpx.Response(200, headers=headers, text='[123]')
+            result = await ably.request('GET', '/time', version=Defaults.protocol_version)
+            assert default_route.called
+            assert result.status_code == 200
+            assert result.items[0] == 123
+        await ably.close()
+
+    # RSC15l3
+    @dont_vary_protocol
+    async def test_503_status_fallback_on_publish(self):
+        default_endpoint = 'https://sandbox-rest.ably.io/channels/test/messages'
+        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        fallback_endpoint = f'https://{fallback_host}/channels/test/messages'
+
+        fallback_response_text = (
+            '{"id": "unique_id:0", "channel": "test", "name": "test", "data": "data", '
+            '"clientId": null, "connectionId": "connection_id", "timestamp": 1696944145000, '
+            '"encoding": null}'
+        )
+
+        ably = await TestApp.get_ably_rest(fallback_hosts=[fallback_host])
+        with respx.mock:
+            default_route = respx.post(default_endpoint)
+            fallback_route = respx.post(fallback_endpoint)
+            headers = {
+                "Content-Type": "application/json"
+            }
+            default_route.return_value = httpx.Response(503, headers=headers)
+            fallback_route.return_value = httpx.Response(
+                200,
+                headers=headers,
+                text=fallback_response_text,
+            )
+            message_response = await ably.channels['test'].publish('test', 'data')
+            assert default_route.called
+            assert message_response.to_native()['data'] == 'data'
+        await ably.close()
+
+    # RSC15l4
+    @dont_vary_protocol
+    async def test_400_cloudfront_fallback(self):
+        default_endpoint = 'https://sandbox-rest.ably.io/time'
+        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        fallback_endpoint = f'https://{fallback_host}/time'
+        ably = await TestApp.get_ably_rest(fallback_hosts=[fallback_host])
+        with respx.mock:
+            default_route = respx.get(default_endpoint)
+            fallback_route = respx.get(fallback_endpoint)
+            headers = {
+                "Server": "CloudFront",
+                "Content-Type": "application/json",
+            }
+            default_route.return_value = httpx.Response(400, headers=headers, text='[456]')
+            fallback_route.return_value = httpx.Response(200, headers=headers, text='[123]')
+            result = await ably.request('GET', '/time', version=Defaults.protocol_version)
+            assert default_route.called
+            assert result.status_code == 200
+            assert result.items[0] == 123
+        await ably.close()
+
     async def test_version(self):
         version = "150"  # chosen arbitrarily
         result = await self.ably.request('GET', '/time', "150")
