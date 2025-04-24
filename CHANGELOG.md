@@ -1,5 +1,12 @@
 # Change Log
 
+## [v2.0.12](https://github.com/ably/ably-python/tree/v2.0.12)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.11...v2.0.12)
+
+**Closed issues:**
+- The REST client’s retry mechanism doesn’t follow the spec and doesn’t retry when it should [\#597](https://github.com/ably/ably-python/issues/597)
+
 ## [v2.0.11](https://github.com/ably/ably-python/tree/v2.0.11)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.10...v2.0.11)
