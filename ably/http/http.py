@@ -188,6 +188,11 @@ class Http:
 
         hosts = self.get_rest_hosts()
         for retry_count, host in enumerate(hosts):
+            def should_stop_retrying():
+                time_passed = time.time() - requested_at
+                # if it's the last try or cumulative timeout is done, we stop retrying
+                return retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration
+
             base_url = "%s://%s:%d" % (self.preferred_scheme,
                                        host,
                                        self.preferred_port)
@@ -204,14 +209,24 @@ class Http:
             try:
                 response = await self.__client.send(request)
             except Exception as e:
-                # if last try or cumulative timeout is done, throw exception up
-                time_passed = time.time() - requested_at
-                if retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration:
+                if should_stop_retrying():
                     raise e
             else:
+                # RSC15l4
+                cloud_front_error = (response.headers.get('Server', '').lower() == 'cloudfront'
+                                     and response.status_code >= 400)
+                # RSC15l3
+                retryable_server_error = response.status_code >= 500 and response.status_code <= 504
+                # Resending requests that have failed for other failure conditions will not fix the problem
+                # and will simply increase the load on other datacenters unnecessarily
+                should_fallback = cloud_front_error or retryable_server_error
+
                 try:
                     if raise_on_error:
                         AblyException.raise_for_response(response)
+
+                    if should_fallback and not should_stop_retrying():
+                        continue
 
                     # Keep fallback host for later (RSC15f)
                     if retry_count > 0 and host != self.options.get_rest_host():
@@ -220,12 +235,7 @@ class Http:
 
                     return Response(response)
                 except AblyException as e:
-                    if not e.is_server_error:
-                        raise e
-
-                    # if last try or cumulative timeout is done, throw exception up
-                    time_passed = time.time() - requested_at
-                    if retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration:
+                    if should_stop_retrying() or not should_fallback:
                         raise e
 
     async def delete(self, url, headers=None, skip_auth=False, timeout=None):

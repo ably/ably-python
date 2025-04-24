@@ -151,6 +151,7 @@ class TestRestHttp(BaseAsyncTestCase):
 
         await ably.close()
 
+    @respx.mock
     async def test_500_errors(self):
         """
         Raise error if all the servers reply with a 5xx error.
@@ -159,16 +160,13 @@ class TestRestHttp(BaseAsyncTestCase):
 
         ably = AblyRest(token="foo")
 
-        def raise_ably_exception(*args, **kwargs):
-            raise AblyException(message="", status_code=500, code=50000)
+        mock_request = respx.route().mock(return_value=httpx.Response(500, text="Internal Server Error"))
 
-        with mock.patch('httpx.Request', wraps=httpx.Request):
-            with mock.patch('ably.util.exceptions.AblyException.raise_for_response',
-                            side_effect=raise_ably_exception) as send_mock:
-                with pytest.raises(AblyException):
-                    await ably.http.make_request('GET', '/', skip_auth=True)
+        with pytest.raises(AblyException):
+            await ably.http.make_request('GET', '/', skip_auth=True)
 
-                assert send_mock.call_count == 3
+        assert mock_request.call_count == 3
+
         await ably.close()
 
     def test_custom_http_timeouts(self):
