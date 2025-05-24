@@ -1,6 +1,6 @@
 from mock import patch
 import pytest
-from httpx import AsyncClient
+from niquests import AsyncSession
 
 from ably import AblyRest
 from ably import AblyException
@@ -125,19 +125,19 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_specified_port(self):
         ably = AblyRest(token='foo', port=9998, tls_port=9999)
-        assert 9999 == Defaults.get_port(ably.options),\
+        assert 9999 == Defaults.get_port(ably.options), \
                "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
 
     @dont_vary_protocol
     def test_specified_non_tls_port(self):
         ably = AblyRest(token='foo', port=9998, tls=False)
-        assert 9998 == Defaults.get_port(ably.options),\
+        assert 9998 == Defaults.get_port(ably.options), \
                "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
 
     @dont_vary_protocol
     def test_specified_tls_port(self):
         ably = AblyRest(token='foo', tls_port=9999, tls=True)
-        assert 9999 == Defaults.get_port(ably.options),\
+        assert 9999 == Defaults.get_port(ably.options), \
                "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
 
     @dont_vary_protocol
@@ -168,7 +168,7 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
                                            use_binary_protocol=self.use_binary_protocol)
 
         timestamp = ably.auth._timestamp
-        with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time,\
+        with patch('ably.rest.rest.AblyRest.time', wraps=ably.time) as server_time, \
                 patch('ably.rest.auth.Auth._timestamp', wraps=timestamp) as local_time:
             await ably.auth.request_token()
             assert local_time.call_count == 1
@@ -205,13 +205,13 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     async def test_environment(self):
         ably = AblyRest(token='token', environment='custom')
-        with patch.object(AsyncClient, 'send', wraps=ably.http._Http__client.send) as get_mock:
+        with patch.object(AsyncSession, 'send', wraps=ably.http._Http__client.send) as get_mock:
             try:
                 await ably.time()
             except AblyException:
                 pass
             request = get_mock.call_args_list[0][0][0]
-            assert request.url == 'https://custom-rest.ably.io:443/time'
+            assert request.url == 'https://custom-rest.ably.io/time'
 
         await ably.close()
 

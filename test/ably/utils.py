@@ -12,19 +12,20 @@ else:
 
 import msgpack
 import mock
-import respx
-from httpx import Response
+import responses
 
 from ably.http.http import Http
 
 
 class BaseTestCase(unittest.TestCase):
 
-    def respx_add_empty_msg_pack(self, url, method='GET'):
-        respx.route(method=method, url=url).return_value = Response(
-            status_code=200,
-            headers={'content-type': 'application/x-msgpack'},
-            content=msgpack.packb({})
+    def responses_add_empty_msg_pack(self, url, method='GET'):
+        responses.add(
+            method=method,
+            url=url,
+            body=msgpack.packb({}),
+            status=200,
+            content_type="application/x-msgpack"
         )
 
     @classmethod
@@ -39,11 +40,13 @@ class BaseTestCase(unittest.TestCase):
 
 class BaseAsyncTestCase(IsolatedAsyncioTestCase):
 
-    def respx_add_empty_msg_pack(self, url, method='GET'):
-        respx.route(method=method, url=url).return_value = Response(
-            status_code=200,
-            headers={'content-type': 'application/x-msgpack'},
-            content=msgpack.packb({})
+    def responses_add_empty_msg_pack(self, url, method='GET'):
+        responses.add(
+            method=method,
+            url=url,
+            body=msgpack.packb({}),
+            status=200,
+            content_type="application/x-msgpack"
         )
 
     @classmethod

@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 import asyncio
-import httpx
+import niquests
 from ably.transport.websockettransport import WebSocketTransport, ProtocolMessageAction
 from ably.transport.defaults import Defaults
 from ably.types.connectionerrors import ConnectionErrors
@@ -52,10 +52,10 @@ class ConnectionManager(EventEmitter):
 
     def check_connection(self) -> bool:
         try:
-            response = httpx.get(self.options.connectivity_check_url)
+            response = niquests.get(self.options.connectivity_check_url)
             return 200 <= response.status_code < 300 and \
                 (self.options.connectivity_check_url != Defaults.connectivity_check_url or "yes" in response.text)
-        except httpx.HTTPError:
+        except niquests.HTTPError:
             return False
 
     def get_state_error(self) -> AblyException:

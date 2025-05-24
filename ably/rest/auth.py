@@ -5,7 +5,7 @@ import logging
 import time
 from typing import Optional, TYPE_CHECKING, Union
 import uuid
-import httpx
+import niquests
 
 from ably.types.options import Options
 if TYPE_CHECKING:
@@ -400,7 +400,7 @@ class Auth:
             body = dict(auth_params, **token_params)
 
         from ably.http.http import Response
-        async with httpx.AsyncClient(http2=True) as client:
+        async with niquests.AsyncSession() as client:
             resp = await client.request(method=method, url=url, headers=headers, params=params, data=body)
             response = Response(resp)
 

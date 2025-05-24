@@ -79,16 +79,16 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        assert "This is a string message payload" == message_contents["publish3"],\
+        assert "This is a string message payload" == message_contents["publish3"], \
                "Expect publish3 to be expected String)"
 
-        assert b"This is a byte[] message payload" == message_contents["publish4"],\
+        assert b"This is a byte[] message payload" == message_contents["publish4"], \
                "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
 
-        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"],\
+        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], \
                "Expect publish5 to be expected JSONObject"
 
-        assert ["This is a JSONArray message payload"] == message_contents["publish6"],\
+        assert ["This is a JSONArray message payload"] == message_contents["publish6"], \
                "Expect publish6 to be expected JSONObject"
 
     async def test_crypto_publish_256(self):
@@ -112,16 +112,16 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        assert "This is a string message payload" == message_contents["publish3"],\
+        assert "This is a string message payload" == message_contents["publish3"], \
                "Expect publish3 to be expected String)"
 
-        assert b"This is a byte[] message payload" == message_contents["publish4"],\
+        assert b"This is a byte[] message payload" == message_contents["publish4"], \
                "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
 
-        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"],\
+        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], \
                "Expect publish5 to be expected JSONObject"
 
-        assert ["This is a JSONArray message payload"] == message_contents["publish6"],\
+        assert ["This is a JSONArray message payload"] == message_contents["publish6"], \
                "Expect publish6 to be expected JSONObject"
 
     async def test_crypto_publish_key_mismatch(self):
@@ -161,16 +161,16 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         message_contents = dict((m.name, m.data) for m in messages)
         log.debug("message_contents: %s" % str(message_contents))
 
-        assert "This is a string message payload" == message_contents["publish3"],\
+        assert "This is a string message payload" == message_contents["publish3"], \
                "Expect publish3 to be expected String"
 
-        assert b"This is a byte[] message payload" == message_contents["publish4"],\
+        assert b"This is a byte[] message payload" == message_contents["publish4"], \
                "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
 
-        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"],\
+        assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"], \
                "Expect publish5 to be expected JSONObject"
 
-        assert ["This is a JSONArray message payload"] == message_contents["publish6"],\
+        assert ["This is a JSONArray message payload"] == message_contents["publish6"], \
                "Expect publish6 to be expected JSONObject"
 
     async def test_crypto_encrypted_unhandled(self):

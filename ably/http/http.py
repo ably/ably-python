@@ -4,7 +4,7 @@ import time
 import json
 from urllib.parse import urljoin
 
-import httpx
+import niquests
 import msgpack
 
 from ably.rest.auth import Auth
@@ -86,10 +86,10 @@ class Request:
 
 class Response:
     """
-    Composition for httpx.Response with delegation
+    Composition for niquests.Response with delegation
     """
 
-    def __init__(self, response):
+    def __init__(self, response: niquests.Response):
         self.__response = response
 
     def to_native(self):
@@ -129,10 +129,10 @@ class Http:
         # Cached fallback host (RSC15f)
         self.__host = None
         self.__host_expires = None
-        self.__client = httpx.AsyncClient(http2=True)
+        self.__client = niquests.AsyncSession()
 
     async def close(self):
-        await self.__client.aclose()
+        await self.__client.close()
 
     def dump_body(self, body):
         if self.options.use_binary_protocol:
@@ -196,18 +196,24 @@ class Http:
             base_url = "%s://%s:%d" % (self.preferred_scheme,
                                        host,
                                        self.preferred_port)
+
+            # remove redundant port in base_url
+            if self.preferred_scheme == "https" and self.preferred_port == 443:
+                base_url = base_url.replace(":443", "")
+            elif self.preferred_scheme == "http" and self.preferred_port == 80:
+                base_url = base_url.replace(":80", "")
+
             url = urljoin(base_url, path)
 
-            request = self.__client.build_request(
-                method=method,
-                url=url,
-                content=body,
-                params=params,
-                headers=all_headers,
-                timeout=timeout,
-            )
             try:
-                response = await self.__client.send(request)
+                response = await self.__client.request(
+                    method=method,
+                    url=url,
+                    data=body,
+                    params=params,
+                    headers=all_headers,
+                    timeout=timeout,
+                )
             except Exception as e:
                 if should_stop_retrying():
                     raise e

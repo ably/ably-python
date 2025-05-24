@@ -153,7 +153,7 @@ def get_default_params(params=None):
     if not key:
         raise ValueError("Crypto.get_default_params: a key is required")
 
-    if type(key) == str:
+    if isinstance(key, str):
         key = base64.b64decode(key)
 
     cipher_params = CipherParams(algorithm=algorithm, secret_key=key, iv=iv, mode=mode)

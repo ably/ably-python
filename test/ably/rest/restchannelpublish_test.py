@@ -5,7 +5,7 @@ import logging
 import os
 import uuid
 
-import httpx
+import niquests
 import mock
 import msgpack
 import pytest
@@ -402,7 +402,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
                 # 1)
                 await channel.publish(data=expected_value)
-                async with httpx.AsyncClient(http2=True) as client:
+                async with niquests.AsyncSession() as client:
                     r = await client.get(url, auth=auth)
                 item = r.json()[0]
                 assert item.get('encoding') == encoding
@@ -416,7 +416,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                 history = await channel.history()
                 message = history.items[0]
                 assert message.data == expected_value
-                assert type(message.data) == type_mapping[expected_type]
+                assert type(message.data) is type_mapping[expected_type]
 
     # https://github.com/ably/ably-python/issues/130
     async def test_publish_slash(self):
@@ -534,7 +534,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         channel = ably.channels[self.get_channel_name()]
 
         state = {'failures': 0}
-        client = httpx.AsyncClient(http2=True)
+        client = niquests.AsyncSession()
         send = client.send
 
         async def side_effect(*args, **kwargs):
@@ -545,13 +545,13 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
             return x
 
         messages = [Message('name1', 'data1')]
-        with mock.patch('httpx.AsyncClient.send', side_effect=side_effect, autospec=True):
+        with mock.patch('niquests.AsyncSession.send', side_effect=side_effect, autospec=True):
             await channel.publish(messages=messages)
 
         assert state['failures'] == 2
         history = await channel.history()
         assert len(history.items) == 1
-        await client.aclose()
+        await client.close()
         await ably.close()
 
     # RSL1k5
