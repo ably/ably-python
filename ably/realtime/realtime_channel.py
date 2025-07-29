@@ -156,7 +156,7 @@ class RealtimeChannel(EventEmitter, Channel):
 
         # RTL5h - wait for pending connection
         if self.__realtime.connection.state == ConnectionState.CONNECTING:
-            await self.__realtime.connect()
+            self.__realtime.connect()
 
         state_change = await self.__internal_state_emitter.once_async()
         new_state = state_change.current
