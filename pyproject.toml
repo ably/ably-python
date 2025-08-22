@@ -65,7 +65,7 @@ flake8="^3.9.2"
 pytest-xdist = "^1.15"
 respx = "^0.20.0"
 importlib-metadata = "^4.12"
-pytest-timeout = "^2.1.0"
+pytest-timeout = "^2.4.0"
 async-case = { version = "^10.1.0", python = "~3.7" }
 tokenize_rt = "*"
 
