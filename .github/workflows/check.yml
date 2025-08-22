@@ -36,4 +36,4 @@ jobs:
     - name: Generate rest sync code and tests
       run: poetry run unasync
     - name: Test with pytest
-      run: poetry run pytest
+      run: poetry run pytest --verbose --tb=short
