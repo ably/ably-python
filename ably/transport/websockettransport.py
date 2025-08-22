@@ -11,7 +11,13 @@ from ably.types.connectiondetails import ConnectionDetails
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
 from ably.util.helper import Timer, unix_time_ms
-from websockets.client import WebSocketClientProtocol, connect as ws_connect
+try:
+    # websockets 15+ preferred imports
+    from websockets import ClientConnection as WebSocketClientProtocol, connect as ws_connect
+except ImportError:
+    # websockets 14 and earlier fallback
+    from websockets.client import WebSocketClientProtocol, connect as ws_connect
+
 from websockets.exceptions import ConnectionClosedOK, WebSocketException
 
 if TYPE_CHECKING:
@@ -73,23 +79,32 @@ class WebSocketTransport(EventEmitter):
 
     async def ws_connect(self, ws_url, headers):
         try:
-            async with ws_connect(ws_url, extra_headers=headers) as websocket:
-                log.info(f'ws_connect(): connection established to {ws_url}')
-                self._emit('connected')
-                self.websocket = websocket
-                self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
-                self.read_loop.add_done_callback(self.on_read_loop_done)
-                try:
-                    await self.read_loop
-                except WebSocketException as err:
-                    if not self.is_disposed:
-                        await self.dispose()
-                        self.connection_manager.deactivate_transport(err)
+            # Use additional_headers for websockets 15+, fallback to extra_headers for older versions
+            try:
+                async with ws_connect(ws_url, additional_headers=headers) as websocket:
+                    await self._handle_websocket_connection(ws_url, websocket)
+            except TypeError:
+                # Fallback for websockets 14 and earlier
+                async with ws_connect(ws_url, extra_headers=headers) as websocket:
+                    await self._handle_websocket_connection(ws_url, websocket)
         except (WebSocketException, socket.gaierror) as e:
             exception = AblyException(f'Error opening websocket connection: {e}', 400, 40000)
             log.exception(f'WebSocketTransport.ws_connect(): Error opening websocket connection: {exception}')
             self._emit('failed', exception)
             raise exception
+
+    async def _handle_websocket_connection(self, ws_url, websocket):
+        log.info(f'ws_connect(): connection established to {ws_url}')
+        self._emit('connected')
+        self.websocket = websocket
+        self.read_loop = self.connection_manager.options.loop.create_task(self.ws_read_loop())
+        self.read_loop.add_done_callback(self.on_read_loop_done)
+        try:
+            await self.read_loop
+        except WebSocketException as err:
+            if not self.is_disposed:
+                await self.dispose()
+                self.connection_manager.deactivate_transport(err)
 
     async def on_protocol_message(self, msg):
         self.on_activity()

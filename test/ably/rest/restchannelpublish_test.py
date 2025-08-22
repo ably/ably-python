@@ -9,6 +9,7 @@ import httpx
 import mock
 import msgpack
 import pytest
+import asyncio
 
 from ably import api_version
 from ably import AblyException, IncompatibleClientIdException
@@ -390,7 +391,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         with open(path) as f:
             data = json.load(f)
             for input_msg in data['messages']:
-                data = input_msg['data']
+                msg_data = input_msg['data']
                 encoding = input_msg['encoding']
                 expected_type = input_msg['expectedType']
                 if expected_type == 'binary':
@@ -402,17 +403,21 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
                 # 1)
                 await channel.publish(data=expected_value)
+                # temporary added delay, we need to investigate why messages don't appear immediately
+                await asyncio.sleep(1)
                 async with httpx.AsyncClient(http2=True) as client:
                     r = await client.get(url, auth=auth)
                 item = r.json()[0]
                 assert item.get('encoding') == encoding
                 if encoding == 'json':
-                    assert json.loads(item['data']) == json.loads(data)
+                    assert json.loads(item['data']) == json.loads(msg_data)
                 else:
-                    assert item['data'] == data
+                    assert item['data'] == msg_data
 
                 # 2)
-                await channel.publish(messages=[Message(data=data, encoding=encoding)])
+                await channel.publish(messages=[Message(data=msg_data, encoding=encoding)])
+                # temporary added delay, we need to investigate why messages don't appear immediately
+                await asyncio.sleep(1)
                 history = await channel.history()
                 message = history.items[0]
                 assert message.data == expected_value
