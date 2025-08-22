@@ -1,5 +1,13 @@
 # Change Log
 
+## [v2.0.13](https://github.com/ably/ably-python/tree/v2.0.13)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.12...v2.0.13)
+
+## What's Changed
+* Removed await from sync `connect()` function call by @kavindail in https://github.com/ably/ably-python/pull/605
+* Upgraded websockets dependency to support 15+ by @ttypic in https://github.com/ably/ably-python/pull/612
+
 ## [v2.0.12](https://github.com/ably/ably-python/tree/v2.0.12)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.11...v2.0.12)
