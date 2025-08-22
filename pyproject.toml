@@ -63,7 +63,7 @@ pep8-naming = "^0.4.1"
 pytest-cov = "^2.4"
 flake8="^3.9.2"
 pytest-xdist = "^1.15"
-respx = "^0.20.0"
+respx = "^0.21.1"
 importlib-metadata = "^4.12"
 pytest-timeout = "^2.1.0"
 async-case = { version = "^10.1.0", python = "~3.7" }
