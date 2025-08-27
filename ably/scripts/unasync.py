@@ -239,6 +239,7 @@ def run():
 
     _TOKEN_REPLACE["AsyncClient"] = "Client"
     _TOKEN_REPLACE["aclose"] = "close"
+    _TOKEN_REPLACE["assert_waiter"] = "assert_waiter_sync"
 
     _IMPORTS_REPLACE["ably"] = "ably.sync"
 

@@ -9,7 +9,6 @@ import httpx
 import mock
 import msgpack
 import pytest
-import asyncio
 
 from ably import api_version
 from ably import AblyException, IncompatibleClientIdException
@@ -20,7 +19,7 @@ from ably.util import case
 from test.ably import utils
 
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, assert_waiter
 
 log = logging.getLogger(__name__)
 
@@ -402,26 +401,31 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                     expected_value = input_msg.get('expectedValue')
 
                 # 1)
-                await channel.publish(data=expected_value)
-                # temporary added delay, we need to investigate why messages don't appear immediately
-                await asyncio.sleep(1)
-                async with httpx.AsyncClient(http2=True) as client:
-                    r = await client.get(url, auth=auth)
-                item = r.json()[0]
-                assert item.get('encoding') == encoding
-                if encoding == 'json':
-                    assert json.loads(item['data']) == json.loads(msg_data)
-                else:
-                    assert item['data'] == msg_data
+                response = await channel.publish(data=expected_value)
+                assert response.status_code == 201
+
+                async def check_data():
+                    async with httpx.AsyncClient(http2=True) as client:
+                        r = await client.get(url, auth=auth)
+                        item = r.json()[0]
+                        encoding_is_correct = item.get('encoding') == encoding
+                        if encoding == 'json':
+                            return encoding_is_correct and json.loads(item['data']) == json.loads(msg_data)
+                        else:
+                            return encoding_is_correct and item['data'] == msg_data
+
+                await assert_waiter(check_data)
 
                 # 2)
-                await channel.publish(messages=[Message(data=msg_data, encoding=encoding)])
-                # temporary added delay, we need to investigate why messages don't appear immediately
-                await asyncio.sleep(1)
-                history = await channel.history()
-                message = history.items[0]
-                assert message.data == expected_value
-                assert type(message.data) == type_mapping[expected_type]
+                response = await channel.publish(messages=[Message(data=msg_data, encoding=encoding)])
+                assert response.status_code == 201
+
+                async def check_history():
+                    history = await channel.history()
+                    message = history.items[0]
+                    return message.data == expected_value and type(message.data) == type_mapping[expected_type]
+
+                await assert_waiter(check_history)
 
     # https://github.com/ably/ably-python/issues/130
     async def test_publish_slash(self):
