@@ -21,6 +21,7 @@ Find out more:
 Everything you need to get started with Ably:
 
 * [Getting started with Pub/Sub using Python.](https://ably.com/docs/getting-started/python)
+* [SDK Setup for Python.](https://ably.com/docs/getting-started/setup?lang=python)
 
 ---
 
