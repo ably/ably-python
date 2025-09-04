@@ -11,7 +11,7 @@ from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
 from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyException
-from ably.util.helper import is_token_error
+from ably.util.helper import is_token_error, extract_url_params
 
 log = logging.getLogger(__name__)
 
@@ -198,11 +198,13 @@ class Http:
                                        self.preferred_port)
             url = urljoin(base_url, path)
 
+            (clean_url, url_params) = extract_url_params(url)
+
             request = self.__client.build_request(
                 method=method,
-                url=url,
+                url=clean_url,
                 content=body,
-                params=params,
+                params=dict(url_params, **params),
                 headers=all_headers,
                 timeout=timeout,
             )

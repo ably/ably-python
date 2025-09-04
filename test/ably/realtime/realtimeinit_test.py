@@ -1,3 +1,4 @@
+import asyncio
 from ably.realtime.connection import ConnectionState
 import pytest
 from ably import Auth
@@ -32,7 +33,7 @@ class TestRealtimeInit(BaseAsyncTestCase):
         ably = await TestApp.get_ably_realtime(auto_connect=False)
         assert ably.connection.state == ConnectionState.INITIALIZED
         ably.connect()
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         assert ably.connection.state == ConnectionState.CONNECTED
         await ably.close()
         assert ably.connection.state == ConnectionState.CLOSED

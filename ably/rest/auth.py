@@ -1,13 +1,16 @@
 from __future__ import annotations
+
 import base64
-from datetime import timedelta
 import logging
 import time
-from typing import Optional, TYPE_CHECKING, Union
 import uuid
+from datetime import timedelta
+from typing import Optional, TYPE_CHECKING, Union
+
 import httpx
 
 from ably.types.options import Options
+
 if TYPE_CHECKING:
     from ably.rest.rest import AblyRest
     from ably.realtime.realtime import AblyRealtime
@@ -16,6 +19,7 @@ from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
 from ably.util.exceptions import AblyAuthException, AblyException, IncompatibleClientIdException
+from ably.util.helper import extract_url_params
 
 __all__ = ["Auth"]
 
@@ -23,7 +27,6 @@ log = logging.getLogger(__name__)
 
 
 class Auth:
-
     class Method:
         BASIC = "BASIC"
         TOKEN = "TOKEN"
@@ -271,8 +274,7 @@ class Auth:
         if capability is not None:
             token_request['capability'] = str(Capability(capability))
 
-        token_request["client_id"] = (
-            token_params.get('client_id') or self.client_id)
+        token_request["client_id"] = token_params.get('client_id') or self.client_id
 
         # Note: There is no expectation that the client
         # specifies the nonce; this is done by the library
@@ -388,16 +390,26 @@ class Auth:
 
     async def token_request_from_auth_url(self, method: str, url: str, token_params,
                                           headers, auth_params):
+        # Extract URL parameters using utility function
+        clean_url, url_params = extract_url_params(url)
+
         body = None
         params = None
         if method == 'GET':
             body = {}
-            params = dict(auth_params, **token_params)
+            # Merge URL params, auth_params, and token_params (later params override earlier ones)
+            # we do this because httpx version has inconsistency and some versions override query params
+            # that are specified in url string
+            params = {**url_params, **auth_params, **token_params}
         elif method == 'POST':
             if isinstance(auth_params, TokenDetails):
                 auth_params = auth_params.to_dict()
-            params = {}
+            # For POST, URL params go in query string, auth_params and token_params go in body
+            params = url_params
             body = dict(auth_params, **token_params)
+
+        # Use clean URL for the request
+        url = clean_url
 
         from ably.http.http import Response
         async with httpx.AsyncClient(http2=True) as client:
@@ -420,6 +432,6 @@ class Auth:
             token_request = response.text
         else:
             msg = 'auth_url responded with unacceptable content-type ' + content_type + \
-                ', should be either text/plain, application/jwt or application/json',
+                  ', should be either text/plain, application/jwt or application/json',
             raise AblyAuthException(msg, 401, 40170)
         return token_request

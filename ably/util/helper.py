@@ -3,7 +3,8 @@ import random
 import string
 import asyncio
 import time
-from typing import Callable
+from typing import Callable, Tuple, Dict
+from urllib.parse import urlparse, parse_qs
 
 
 def get_random_id():
@@ -23,6 +24,34 @@ def unix_time_ms():
 
 def is_token_error(exception):
     return 40140 <= exception.code < 40150
+
+
+def extract_url_params(url: str) -> Tuple[str, Dict[str, str]]:
+    """
+    Extract URL parameters from a URL and return a clean URL and parameters dict.
+
+    Args:
+        url: The URL to parse
+
+    Returns:
+        Tuple of (clean_url_without_params, url_params_dict)
+    """
+    parsed_url = urlparse(url)
+    url_params = {}
+
+    if parsed_url.query:
+        # Convert query parameters to a flat dictionary
+        query_params = parse_qs(parsed_url.query)
+        for key, values in query_params.items():
+            # Take the last value if multiple values exist for the same key
+            url_params[key] = values[-1]
+
+    # Reconstruct clean URL without query parameters
+    clean_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
+    if parsed_url.fragment:
+        clean_url += f"#{parsed_url.fragment}"
+
+    return clean_url, url_params
 
 
 class Timer:
