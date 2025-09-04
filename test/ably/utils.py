@@ -233,3 +233,20 @@ def assert_waiter_sync(block: Callable[[], bool], timeout: float = 10) -> None:
             raise TimeoutError(f"Condition not met within {timeout}s")
 
         time.sleep(0.1)
+
+
+class WaitableEvent:
+    def __init__(self):
+        self._finished = False
+
+    def checker(self):
+        async def inner_checker():
+            return self._finished
+
+        return inner_checker
+
+    async def wait(self, timeout=10):
+        await assert_waiter(self.checker(), timeout)
+
+    def finish(self):
+        self._finished = True

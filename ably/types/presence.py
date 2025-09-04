@@ -86,7 +86,7 @@ class PresenceMessage(EncodeDataMixin):
         return self.__extras
 
     @staticmethod
-    def from_encoded(obj, cipher=None):
+    def from_encoded(obj, cipher=None, context=None):
         id = obj.get('id')
         action = obj.get('action', PresenceAction.ENTER)
         client_id = obj.get('clientId')

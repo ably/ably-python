@@ -1,10 +1,17 @@
 import random
 import logging
+from abc import ABC, abstractmethod
 
 from ably.transport.defaults import Defaults
 from ably.types.authoptions import AuthOptions
 
 log = logging.getLogger(__name__)
+
+
+class VCDiffDecoder(ABC):
+    @abstractmethod
+    def decode(self, delta: bytes, base: bytes) -> bytes:
+        pass
 
 
 class Options(AuthOptions):
@@ -14,7 +21,8 @@ class Options(AuthOptions):
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
                  fallback_retry_timeout=None, disconnected_retry_timeout=None, idempotent_rest_publishing=None,
                  loop=None, auto_connect=True, suspended_retry_timeout=None, connectivity_check_url=None,
-                 channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False, **kwargs):
+                 channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False,
+                 vcdiff_decoder=None, **kwargs):
 
         super().__init__(**kwargs)
 
@@ -77,6 +85,7 @@ class Options(AuthOptions):
         self.__connectivity_check_url = connectivity_check_url
         self.__fallback_realtime_host = None
         self.__add_request_ids = add_request_ids
+        self.__vcdiff_decoder = vcdiff_decoder
 
         self.__rest_hosts = self.__get_rest_hosts()
         self.__realtime_hosts = self.__get_realtime_hosts()
@@ -258,6 +267,10 @@ class Options(AuthOptions):
     @property
     def add_request_ids(self):
         return self.__add_request_ids
+
+    @property
+    def vcdiff_decoder(self):
+        return self.__vcdiff_decoder
 
     def __get_rest_hosts(self):
         """
