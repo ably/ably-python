@@ -1,9 +1,12 @@
+import asyncio
 import functools
 import os
 import random
 import string
-import unittest
 import sys
+import time
+import unittest
+from typing import Callable, Awaitable
 
 if sys.version_info >= (3, 8):
     from unittest import IsolatedAsyncioTestCase
@@ -178,3 +181,55 @@ def get_submodule_dir(filepath):
         if os.path.exists(os.path.join(root_dir, 'submodules')):
             return os.path.join(root_dir, 'submodules')
         root_dir = os.path.dirname(root_dir)
+
+
+async def assert_waiter(block: Callable[[], Awaitable[bool]], timeout: float = 10) -> None:
+    """
+    Polls a condition until it succeeds or times out.
+    Args:
+        block: A callable that returns a boolean indicating success
+        timeout: Maximum time to wait in seconds (default: 10)
+    Raises:
+        TimeoutError: If condition not met within timeout
+    """
+    try:
+        await asyncio.wait_for(_poll_until_success(block), timeout=timeout)
+    except asyncio.TimeoutError:
+        raise asyncio.TimeoutError(f"Condition not met within {timeout}s")
+
+
+async def _poll_until_success(block: Callable[[], Awaitable[bool]]) -> None:
+    while True:
+        try:
+            success = await block()
+            if success:
+                break
+        except Exception:
+            pass
+
+        await asyncio.sleep(0.1)
+
+
+def assert_waiter_sync(block: Callable[[], bool], timeout: float = 10) -> None:
+    """
+    Blocking version of assert_waiter that polls a condition until it succeeds or times out.
+    Args:
+        block: A callable that returns a boolean indicating success
+        timeout: Maximum time to wait in seconds (default: 10)
+    Raises:
+        TimeoutError: If condition not met within timeout
+    """
+    start_time = time.time()
+
+    while True:
+        try:
+            success = block()
+            if success:
+                break
+        except Exception:
+            pass
+
+        if time.time() - start_time >= timeout:
+            raise TimeoutError(f"Condition not met within {timeout}s")
+
+        time.sleep(0.1)
