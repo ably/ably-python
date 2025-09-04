@@ -30,6 +30,8 @@ jobs:
 
     - name: Setup poetry
       uses: abatilo/actions-poetry@v4
+      with:
+        poetry-version: '1.8.5'
 
     - name: Setup a local virtual environment
       run: |

@@ -29,13 +29,13 @@ class TestRealtimeResume(BaseAsyncTestCase):
     async def test_connection_resume(self):
         ably = await TestApp.get_ably_realtime()
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         prev_connection_id = ably.connection.connection_manager.connection_id
         connection_key = ably.connection.connection_details.connection_key
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         new_connection_id = ably.connection.connection_manager.connection_id
         assert ably.connection.connection_manager.transport.params["resume"] == connection_key
         assert prev_connection_id == new_connection_id
@@ -46,7 +46,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
     async def test_fatal_resume_error(self):
         ably = await TestApp.get_ably_realtime()
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         ably.auth.auth_options.key_name = "wrong-key"
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
@@ -60,7 +60,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
     async def test_invalid_resume_response(self):
         ably = await TestApp.get_ably_realtime()
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         assert ably.connection.connection_manager.connection_details
         ably.connection.connection_manager.connection_details.connection_key = 'ably-python-fake-key'
@@ -69,7 +69,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
 
-        state_change = await ably.connection.once_async(ConnectionState.CONNECTED)
+        state_change = await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         assert state_change.reason.code == 80018
         assert state_change.reason.status_code == 400
@@ -80,7 +80,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
     async def test_attached_channel_reattaches_on_invalid_resume(self):
         ably = await TestApp.get_ably_realtime()
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get(random_string(5))
 
@@ -93,7 +93,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         assert channel.state == ChannelState.ATTACHING
 
@@ -104,7 +104,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
     async def test_suspended_channel_reattaches_on_invalid_resume(self):
         ably = await TestApp.get_ably_realtime()
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get(random_string(5))
         channel.state = ChannelState.SUSPENDED
@@ -116,7 +116,7 @@ class TestRealtimeResume(BaseAsyncTestCase):
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         assert channel.state == ChannelState.ATTACHING
 
