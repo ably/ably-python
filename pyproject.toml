@@ -69,6 +69,10 @@ respx = [
 ]
 importlib-metadata = "^4.12"
 pytest-timeout = "^2.1.0"
+pytest-rerunfailures = [
+  { version = "^13.0", python = "~3.7" },
+  { version = "^14.0", python = "^3.8" },
+]
 async-case = { version = "^10.1.0", python = "~3.7" }
 tokenize_rt = "*"
 
