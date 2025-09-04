@@ -1,7 +1,7 @@
 from __future__ import annotations
 import asyncio
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Dict, Any, Union
 from ably.realtime.connection import ConnectionState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.rest.channel import Channel, Channels as RestChannels
@@ -14,8 +14,85 @@ from ably.util.helper import Timer, is_callable_or_coroutine
 
 if TYPE_CHECKING:
     from ably.realtime.realtime import AblyRealtime
+    from ably.util.crypto import CipherParams
 
 log = logging.getLogger(__name__)
+
+
+class ChannelOptions:
+    """Channel options for Ably Realtime channels
+
+    Attributes
+    ----------
+    cipher : CipherParams, optional
+        Requests encryption for this channel when not null, and specifies encryption-related parameters.
+    params : Dict[str, str], optional
+        Channel parameters that configure the behavior of the channel.
+    """
+
+    def __init__(self, cipher: Optional[CipherParams] = None, params: Optional[dict] = None):
+        self.__cipher = cipher
+        self.__params = params
+        # Validate params
+        if self.__params and not isinstance(self.__params, dict):
+            raise AblyException("params must be a dictionary", 40000, 400)
+
+    @property
+    def cipher(self):
+        """Get cipher configuration"""
+        return self.__cipher
+
+    @cipher.setter
+    def cipher(self, value):
+        """Set cipher configuration"""
+        self.__cipher = value
+
+    @property
+    def params(self) -> Dict[str, str]:
+        """Get channel parameters"""
+        return self.__params
+
+    @params.setter
+    def params(self, value: Dict[str, str]):
+        """Set channel parameters"""
+        if value and not isinstance(value, dict):
+            raise AblyException("params must be a dictionary", 40000, 400)
+        self.__params = value or {}
+
+    def __eq__(self, other):
+        """Check equality with another ChannelOptions instance"""
+        if not isinstance(other, ChannelOptions):
+            return False
+
+        return (self.__cipher == other.__cipher and
+                self.__params == other.__params)
+
+    def __hash__(self):
+        """Make ChannelOptions hashable"""
+        return hash((
+            self.__cipher,
+            tuple(sorted(self.__params.items())) if self.__params else None,
+        ))
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation"""
+        result = {}
+        if self.__cipher is not None:
+            result['cipher'] = self.__cipher
+        if self.__params:
+            result['params'] = self.__params
+        return result
+
+    @classmethod
+    def from_dict(cls, options_dict: Dict[str, Any]) -> 'ChannelOptions':
+        """Create ChannelOptions from dictionary"""
+        if not isinstance(options_dict, dict):
+            raise AblyException("options must be a dictionary", 40000, 400)
+
+        return cls(
+            cipher=options_dict.get('cipher'),
+            params=options_dict.get('params'),
+        )
 
 
 class RealtimeChannel(EventEmitter, Channel):
@@ -43,7 +120,7 @@ class RealtimeChannel(EventEmitter, Channel):
         Unsubscribe to messages from a channel
     """
 
-    def __init__(self, realtime: AblyRealtime, name: str):
+    def __init__(self, realtime: AblyRealtime, name: str, channel_options: Optional[ChannelOptions] = None):
         EventEmitter.__init__(self)
         self.__name = name
         self.__realtime = realtime
@@ -51,15 +128,31 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__message_emitter = EventEmitter()
         self.__state_timer: Optional[Timer] = None
         self.__attach_resume = False
+        self.__attach_serial: Optional[str] = None
         self.__channel_serial: Optional[str] = None
         self.__retry_timer: Optional[Timer] = None
         self.__error_reason: Optional[AblyException] = None
+        self.__channel_options = channel_options or ChannelOptions()
 
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
         # will be disrupted if the user called .off() to remove all listeners
         self.__internal_state_emitter = EventEmitter()
 
-        Channel.__init__(self, realtime, name, {})
+        # Pass channel options as dictionary to parent Channel class
+        Channel.__init__(self, realtime, name, self.__channel_options.to_dict())
+
+    async def set_options(self, channel_options: ChannelOptions) -> None:
+        """Set channel options"""
+        old_channel_options = self.__channel_options
+        self.__channel_options = channel_options
+        # Update parent class options
+        self.options = channel_options.to_dict()
+
+        if self.should_reattach_to_set_options(old_channel_options, channel_options):
+            self._attach_impl()
+            state_change = await self.__internal_state_emitter.once_async()
+            if state_change.current in (ChannelState.SUSPENDED, ChannelState.FAILED):
+                raise state_change.reason
 
     # RTL4
     async def attach(self) -> None:
@@ -108,6 +201,7 @@ class RealtimeChannel(EventEmitter, Channel):
         # RTL4c
         attach_msg = {
             "action": ProtocolMessageAction.ATTACH,
+            "params": self.__channel_options.params,
             "channel": self.name,
         }
 
@@ -292,8 +386,6 @@ class RealtimeChannel(EventEmitter, Channel):
         action = proto_msg.get('action')
         # RTL4c1
         channel_serial = proto_msg.get('channelSerial')
-        if channel_serial:
-            self.__channel_serial = channel_serial
         # TM2a, TM2c, TM2f
         Message.update_inner_message_fields(proto_msg)
 
@@ -314,6 +406,8 @@ class RealtimeChannel(EventEmitter, Channel):
                 if not resumed:
                     state_change = ChannelStateChange(self.state, ChannelState.ATTACHED, resumed, exception)
                     self._emit("update", state_change)
+                self.__attach_serial = channel_serial
+                self.__channel_serial = channel_serial
             elif self.state == ChannelState.ATTACHING:
                 self._notify_state(ChannelState.ATTACHED, resumed=resumed)
             else:
@@ -327,6 +421,7 @@ class RealtimeChannel(EventEmitter, Channel):
                 self._request_state(ChannelState.ATTACHING)
         elif action == ProtocolMessageAction.MESSAGE:
             messages = Message.from_encoded_array(proto_msg.get('messages'))
+            self.__channel_serial = channel_serial
             for message in messages:
                 self.__message_emitter._emit(message.name, message)
         elif action == ProtocolMessageAction.ERROR:
@@ -431,6 +526,11 @@ class RealtimeChannel(EventEmitter, Channel):
             log.info("RealtimeChannel retry timer expired, attempting a new attach")
             self._request_state(ChannelState.ATTACHING)
 
+    def should_reattach_to_set_options(self, old_options: ChannelOptions, new_options: ChannelOptions) -> bool:
+        if self.state != ChannelState.ATTACHING and self.state != ChannelState.ATTACHED:
+            return False
+        return old_options != new_options
+
     # RTL23
     @property
     def name(self) -> str:
@@ -466,7 +566,7 @@ class Channels(RestChannels):
     """
 
     # RTS3
-    def get(self, name: str) -> RealtimeChannel:
+    def get(self, name: str, options: Optional[Union[dict, ChannelOptions]] = None) -> RealtimeChannel:
         """Creates a new RealtimeChannel object, or returns the existing channel object.
 
         Parameters
@@ -474,11 +574,30 @@ class Channels(RestChannels):
 
         name: str
             Channel name
+        options: ChannelOptions or dict, optional
+            Channel options for the channel
         """
+        # Convert dict to ChannelOptions if needed
+        if options is not None:
+            if isinstance(options, dict):
+                options = ChannelOptions.from_dict(options)
+            elif not isinstance(options, ChannelOptions):
+                raise AblyException("options must be ChannelOptions instance or dictionary", 40000, 400)
+
         if name not in self.__all:
-            channel = self.__all[name] = RealtimeChannel(self.__ably, name)
+            channel = self.__all[name] = RealtimeChannel(self.__ably, name, options)
         else:
             channel = self.__all[name]
+            # Update options if channel is not attached or currently attaching
+            if options and channel.should_reattach_to_set_options(channel.__channel_options, options):
+                raise AblyException(
+                    'Channels.get() cannot be used to set channel options that would cause the channel to '
+                    'reattach. Please, use RealtimeChannel.setOptions() instead.',
+                    400,
+                    40000
+                )
+            elif options:
+                channel.set_options(options)
         return channel
 
     # RTS4
