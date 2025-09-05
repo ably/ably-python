@@ -14,11 +14,11 @@ on:
 jobs:
   check:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,13 +30,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Setup poetry
-        run: |
-          python3 -m pip install --user pipx
-          python3 -m pipx ensurepath
-          pipx install poetry==1.8.5 --python ${{ steps.setup-python.outputs.python-path }}
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: '2.1.4'
 
       - name: Setup a local virtual environment
         run: |
+          poetry env use ${{ steps.setup-python.outputs.python-path }}
+          poetry run python --version
           poetry config virtualenvs.create true --local
           poetry config virtualenvs.in-project true --local
 
