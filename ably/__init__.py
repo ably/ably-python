@@ -5,9 +5,10 @@ from ably.rest.push import Push
 from ably.types.capability import Capability
 from ably.types.channelsubscription import PushChannelSubscription
 from ably.types.device import DeviceDetails
-from ably.types.options import Options
+from ably.types.options import Options, VCDiffDecoder
 from ably.util.crypto import CipherParams
 from ably.util.exceptions import AblyException, AblyAuthException, IncompatibleClientIdException
+from ably.vcdiff_plugin import VCDiffPlugin
 
 import logging
 
