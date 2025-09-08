@@ -10,18 +10,40 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
-    - name: Setup poetry
-      uses: abatilo/actions-poetry@v2.0.0
-      with:
-        poetry-version: 1.3.2
-    - name: Install dependencies
-      run: poetry install -E crypto
-    - name: Lint with flake8
-      run: poetry run flake8
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        id: setup-python
+        with:
+          python-version: '3.9'
+
+      - name: Setup poetry
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: '2.1.4'
+
+      - name: Setup a local virtual environment
+        run: |
+          poetry env use ${{ steps.setup-python.outputs.python-path }}
+          poetry run python --version
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+
+      - uses: actions/cache@v4
+        name: Define a cache for the virtual environment based on the dependencies lock file
+        id: cache
+        with:
+          path: ./.venv
+          key: venv-${{ runner.os }}-3.9-${{ hashFiles('poetry.lock') }}
+
+      - name: Ensure cache is healthy
+        if: steps.cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: poetry run pip --version >/dev/null 2>&1 || (echo "Cache is broken, skip it." && rm -rf .venv)
+
+      - name: Install dependencies
+        run: poetry install
+      - name: Lint with flake8
+        run: poetry run flake8

@@ -43,7 +43,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_connection_ping_connected(self):
         ably = await TestApp.get_ably_realtime()
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert type(response_time_ms) is float
@@ -70,7 +70,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
     async def test_connection_ping_closed(self):
         ably = await TestApp.get_ably_realtime()
         ably.connect()
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         await ably.close()
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
@@ -123,7 +123,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
     async def test_realtime_request_timeout_ping(self):
         ably = await TestApp.get_ably_realtime(realtime_request_timeout=2000)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         original_send_protocol_message = ably.connection.connection_manager.send_protocol_message
 
@@ -162,7 +162,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.connection.once_async(ConnectionState.DISCONNECTED)
 
         # Test that the library eventually connects after two failed attempts
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         await ably.close()
 
@@ -275,7 +275,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         )
 
         # Wait for the client to connect
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         # Simulate random loss of connection
         assert ably.connection.connection_manager.transport
@@ -284,7 +284,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.DISCONNECTED
 
         # Wait for the client to connect again
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         await ably.close()
 
     async def test_fallback_host(self):
@@ -294,7 +294,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.connection.connection_manager.transport
         ably.connection.connection_manager.transport._emit('failed', AblyException("test exception", 502, 50200))
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         assert ably.connection.connection_manager.transport.host != self.test_vars["realtime_host"]
         assert ably.options.fallback_realtime_host != self.test_vars["realtime_host"]
@@ -339,7 +339,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
             }
         }))
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         assert ably.connection.connection_manager.transport.host != self.test_vars["realtime_host"]
         assert ably.options.fallback_realtime_host != self.test_vars["realtime_host"]
@@ -365,7 +365,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         ably = await TestApp.get_ably_realtime(client_id=client_id)
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         assert ably.connection.connection_manager.transport.params["client_id"] == client_id
         assert ably.auth.client_id == client_id
 
@@ -394,6 +394,6 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.connection.once_async(ConnectionState.DISCONNECTED)
 
         # should re-establish connection after disconnected_retry_timeout
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         await ably.close()

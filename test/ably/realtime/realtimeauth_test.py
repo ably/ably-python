@@ -34,7 +34,7 @@ async def auth_callback_failure(options, expect_failure=False):
 class TestRealtimeAuth(BaseAsyncTestCase):
     async def test_auth_valid_api_key(self):
         ably = await TestApp.get_ably_realtime()
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         assert ably.connection.error_reason is None
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
@@ -53,7 +53,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         rest = await TestApp.get_ably_rest()
         token_details = await rest.auth.request_token()
         ably = await TestApp.get_ably_realtime(token=token_details.token)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
@@ -71,7 +71,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         rest = await TestApp.get_ably_rest()
         token_details = await rest.auth.request_token()
         ably = await TestApp.get_ably_realtime(token_details=token_details)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
@@ -93,7 +93,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             return token_details
 
         ably = await TestApp.get_ably_realtime(auth_callback=callback)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
@@ -107,7 +107,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             return token_details
 
         ably = await TestApp.get_ably_realtime(auth_callback=callback)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
@@ -121,7 +121,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             return token_details.token
 
         ably = await TestApp.get_ably_realtime(auth_callback=callback)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
@@ -144,7 +144,10 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         url_path = f"{echo_url}/?type=json&body={urllib.parse.quote_plus(token_details_json)}"
 
         ably = await TestApp.get_ably_realtime(auth_url=url_path)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(
+            ably.connection.once_async(ConnectionState.CONNECTED),
+            timeout=5,
+        )
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
@@ -156,7 +159,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
         url_path = f"{echo_url}/?type=text&body={token_details.token}"
 
         ably = await TestApp.get_ably_realtime(auth_url=url_path)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
@@ -169,7 +172,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         ably = await TestApp.get_ably_realtime(auth_url=url_path, auth_method='POST',
                                                auth_params=token_details)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         response_time_ms = await ably.connection.ping()
         assert response_time_ms is not None
         assert ably.connection.error_reason is None
@@ -183,7 +186,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             return token_details.token
 
         ably = await TestApp.get_ably_realtime(auth_callback=callback)
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         assert ably.connection.connection_manager.transport
         original_access_token = ably.connection.connection_manager.transport.params.get('accessToken')
@@ -307,7 +310,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             "action": ProtocolMessageAction.AUTH,
         }
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         auth_future = asyncio.Future()
 
         def on_update(state_change):
@@ -334,7 +337,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         ably = await TestApp.get_ably_realtime(auth_callback=auth_callback)
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         original_token_details = ably.auth.token_details
         await ably.connection.once_async(ConnectionEvent.UPDATE)
         assert ably.auth.token_details is not original_token_details
@@ -496,7 +499,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             }
         }
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         original_token_details = ably.auth.token_details
         assert ably.connection.connection_manager.transport
         await ably.connection.connection_manager.transport.on_protocol_message(msg)
@@ -511,7 +514,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
 
         ably = await TestApp.get_ably_realtime(token_details=token_details)
 
-        state_change = await ably.connection.once_async(ConnectionState.CONNECTED)
+        state_change = await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         msg = {
             "action": ProtocolMessageAction.DISCONNECTED,
             "error": {
@@ -544,7 +547,7 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             }
         }
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         connection_key = ably.connection.connection_details.connection_key
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
@@ -572,12 +575,12 @@ class TestRealtimeAuth(BaseAsyncTestCase):
             }
         }
 
-        await ably.connection.once_async(ConnectionState.CONNECTED)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         connection_key = ably.connection.connection_details.connection_key
         await ably.connection.connection_manager.transport.dispose()
         ably.connection.connection_manager.notify_state(ConnectionState.DISCONNECTED)
 
-        state_change = await ably.connection.once_async(ConnectionState.CONNECTED)
+        state_change = await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
         assert ably.connection.connection_manager.transport.params["resume"] == connection_key
 
         assert ably.connection.connection_manager.transport
