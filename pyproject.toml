@@ -27,6 +27,11 @@ include = [
   'ably/**/*.py'
 ]
 
+[[tool.poetry.source]]
+name = "experimental"
+url = "https://test.pypi.org/simple/"
+priority = "explicit"
+
 [tool.poetry.dependencies]
 python = "^3.7"
 
@@ -51,10 +56,12 @@ pyee = [
 # Optional dependencies
 pycrypto = { version = "^2.6.1", optional = true }
 pycryptodome = { version = "*", optional = true }
+vcdiff-decoder = { version = "^0.1.0a1", optional = true }
 
 [tool.poetry.extras]
 oldcrypto = ["pycrypto"]
 crypto = ["pycryptodome"]
+vcdiff = ["vcdiff-decoder"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
@@ -75,6 +82,7 @@ pytest-rerunfailures = [
 ]
 async-case = { version = "^10.1.0", python = "~3.7" }
 tokenize_rt = "*"
+vcdiff-decoder = { version = "^0.1.0a1" }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -1,13 +1,15 @@
 from __future__ import annotations
+
 import asyncio
 import logging
 from typing import Optional, TYPE_CHECKING, Dict, Any
 from ably.realtime.connection import ConnectionState
-from ably.transport.websockettransport import ProtocolMessageAction
 from ably.rest.channel import Channel, Channels as RestChannels
+from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState, ChannelStateChange
 from ably.types.flags import Flag, has_flag
 from ably.types.message import Message
+from ably.types.mixins import DecodingContext
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
 from ably.util.helper import Timer, is_callable_or_coroutine
@@ -122,6 +124,11 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__error_reason: Optional[AblyException] = None
         self.__channel_options = channel_options or ChannelOptions()
         self.__params: Optional[Dict[str, str]] = None
+
+        # Delta-specific fields for RTL19/RTL20 compliance
+        vcdiff_decoder = self.__realtime.options.vcdiff_decoder if self.__realtime.options.vcdiff_decoder else None
+        self.__decoding_context = DecodingContext(vcdiff_decoder=vcdiff_decoder)
+        self.__decode_failure_recovery_in_progress = False
 
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
         # will be disrupted if the user called .off() to remove all listeners
@@ -415,8 +422,16 @@ class RealtimeChannel(EventEmitter, Channel):
             else:
                 self._request_state(ChannelState.ATTACHING)
         elif action == ProtocolMessageAction.MESSAGE:
-            messages = Message.from_encoded_array(proto_msg.get('messages'))
-            self.__channel_serial = channel_serial
+            messages = []
+            try:
+                messages = Message.from_encoded_array(proto_msg.get('messages'), context=self.__decoding_context)
+                self.__decoding_context.last_message_id = messages[-1].id
+                self.__channel_serial = channel_serial
+            except AblyException as e:
+                if e.code == 40018:  # Delta decode failure - start recovery
+                    self._start_decode_failure_recovery(e)
+                else:
+                    log.error(f"Message processing error {e}. Skip messages {proto_msg.get('messages')}")
             for message in messages:
                 self.__message_emitter._emit(message.name, message)
         elif action == ProtocolMessageAction.ERROR:
@@ -457,6 +472,9 @@ class RealtimeChannel(EventEmitter, Channel):
         # RTP5a1
         if state in (ChannelState.DETACHED, ChannelState.SUSPENDED, ChannelState.FAILED):
             self.__channel_serial = None
+
+        if state != ChannelState.ATTACHING:
+            self.__decode_failure_recovery_in_progress = False
 
         state_change = ChannelStateChange(self.__state, state, resumed, reason=reason)
 
@@ -553,6 +571,24 @@ class RealtimeChannel(EventEmitter, Channel):
     def params(self) -> Dict[str, str]:
         """Get channel parameters"""
         return self.__params
+
+    def _start_decode_failure_recovery(self, error: AblyException) -> None:
+        """Start RTL18 decode failure recovery procedure"""
+
+        if self.__decode_failure_recovery_in_progress:
+            log.info('VCDiff recovery process already started, skipping')
+            return
+
+        self.__decode_failure_recovery_in_progress = True
+
+        # RTL18a: Log error with code 40018
+        log.error(f'VCDiff decode failure: {error}')
+
+        # RTL18b: Message is already discarded by not processing it
+
+        # RTL18c: Send ATTACH with previous channel serial and transition to ATTACHING
+        self._notify_state(ChannelState.ATTACHING, reason=error)
+        self._check_pending_state()
 
 
 class Channels(RestChannels):
