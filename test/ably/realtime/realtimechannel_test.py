@@ -1,6 +1,6 @@
 import asyncio
 import pytest
-from ably.realtime.realtime_channel import ChannelState, RealtimeChannel
+from ably.realtime.realtime_channel import ChannelState, RealtimeChannel, ChannelOptions
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.message import Message
 from test.ably.testapp import TestApp
@@ -466,5 +466,64 @@ class TestRealtimeChannel(BaseAsyncTestCase):
         assert channel.error_reason is not None
         ably.connect()
         assert channel.error_reason is None
+
+        await ably.close()
+
+    async def test_channel_params_received_by_relatime(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name, ChannelOptions(params={
+            "rewind": "1"
+        }))
+        await channel.attach()
+        assert channel.params["rewind"] == "1"
+
+        await ably.close()
+
+    async def test_channel_params_unknown_params_skipped_by_relatime(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name, ChannelOptions(params={
+            "rewind": "1",
+            "foo": "bar"
+        }))
+        await channel.attach()
+        assert channel.params["rewind"] == "1"
+        assert channel.params.get("foo") is None
+
+        await ably.close()
+
+    async def test_channel_params_as_dict(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name, ChannelOptions(params={"delta": "vcdiff"}))
+        await channel.attach()
+        assert channel.params["delta"] == "vcdiff"
+
+        await ably.close()
+
+    async def test_channel_get_channel_with_same_params(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name, ChannelOptions(params={"rewind": "1"}))
+        await channel.attach()
+        same_channel = ably.channels.get(channel_name, ChannelOptions(params={"rewind": "1"}))
+        assert channel == same_channel
+
+        await ably.close()
+
+    async def test_channel_get_channel_with_different_params(self):
+        ably = await TestApp.get_ably_realtime()
+        channel_name = random_string(5)
+        channel = ably.channels.get(channel_name, ChannelOptions(params={"rewind": "1"}))
+        await channel.attach()
+
+        with pytest.raises(AblyException) as exception:
+            ably.channels.get(channel_name, ChannelOptions(params={"delta": "vcdiff"}))
+
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
+
+        assert channel.params == {"rewind": "1"}
 
         await ably.close()
