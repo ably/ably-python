@@ -8,7 +8,7 @@ from ably.types.device import DeviceDetails
 from ably.types.options import Options, VCDiffDecoder
 from ably.util.crypto import CipherParams
 from ably.util.exceptions import AblyException, AblyAuthException, IncompatibleClientIdException
-from ably.vcdiff_plugin import VCDiffPlugin
+from ably.vcdiff.ably_vcdiff_decoder import AblyVCDiffDecoder
 
 import logging
 

@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from ably import VCDiffPlugin
+from ably import AblyVCDiffDecoder
 from ably.realtime.realtime_channel import ChannelOptions
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, WaitableEvent
@@ -15,11 +15,11 @@ class MockVCDiffDecoder(VCDiffDecoder):
     def __init__(self):
         self.number_of_calls = 0
         self.last_decoded_data = None
-        self.plugin = VCDiffPlugin()
+        self.vcdiff_decoder = AblyVCDiffDecoder()
 
     def decode(self, delta: bytes, base: bytes) -> bytes:
         self.number_of_calls += 1
-        self.last_decoded_data = self.plugin.decode(delta, base)
+        self.last_decoded_data = self.vcdiff_decoder.decode(delta, base)
         return self.last_decoded_data
 
 

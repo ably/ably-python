@@ -22,7 +22,7 @@ class Options(AuthOptions):
                  fallback_retry_timeout=None, disconnected_retry_timeout=None, idempotent_rest_publishing=None,
                  loop=None, auto_connect=True, suspended_retry_timeout=None, connectivity_check_url=None,
                  channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False,
-                 vcdiff_decoder=None, **kwargs):
+                 vcdiff_decoder: VCDiffDecoder = None, **kwargs):
 
         super().__init__(**kwargs)
 

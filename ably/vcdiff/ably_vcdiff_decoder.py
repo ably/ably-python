@@ -1,20 +1,20 @@
 """
-VCDiff Plugin for Ably Python SDK
+VCDiff Decoder for Ably Python SDK
 
-This module provides a production-ready VCDiff decoder plugin using the vcdiff library.
+This module provides a production-ready VCDiff decoder using the vcdiff-decoder library.
 It implements the VCDiffDecoder interface.
 
 Usage:
-    from ably import VCDiffPlugin, AblyRealtime
+    from ably.vcdiff import AblyVCDiffDecoder, AblyRealtime
 
-    # Create VCDiff plugin
-    plugin = VCDiffPlugin()
+    # Create VCDiff decoder
+    vcdiff_decoder = AblyVCDiffDecoder()
 
-    # Create client with plugin
-    client = AblyRealtime(key="your-key", vcdiff_decoder=plugin)
+    # Create client with decoder
+    client = AblyRealtime(key="your-key", vcdiff_decoder=vcdiff_decoder)
 
     # Get channel with delta enabled
-    channel = client.channels.get("test", {"delta": "vcdiff"})
+    channel = client.channels.get("test", ChannelOptions(params={"delta": "vcdiff"}))
 """
 
 import logging
@@ -25,9 +25,9 @@ from ably.util.exceptions import AblyException
 log = logging.getLogger(__name__)
 
 
-class VCDiffPlugin(VCDiffDecoder):
+class AblyVCDiffDecoder(VCDiffDecoder):
     """
-    Production VCDiff decoder plugin using Ably's vcdiff library.
+    Production VCDiff decoder using Ably's vcdiff-decoder library.
 
     Raises:
         ImportError: If vcdiff is not installed
@@ -38,10 +38,10 @@ class VCDiffPlugin(VCDiffDecoder):
         """Initialize the VCDiff plugin.
 
         Raises:
-            ImportError: If vcdiff library is not available
+            ImportError: If vcdiff-decoder library is not available
         """
         try:
-            import vcdiff
+            import vcdiff_decoder as vcdiff
             self._vcdiff = vcdiff
         except ImportError as e:
             log.error("vcdiff library not found. Install with: pip install ably[vcdiff]")
@@ -79,4 +79,4 @@ class VCDiffPlugin(VCDiffDecoder):
 
 
 # Export for easy importing
-__all__ = ['VCDiffPlugin']
+__all__ = ['AblyVCDiffDecoder']
