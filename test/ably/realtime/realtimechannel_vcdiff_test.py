@@ -182,3 +182,44 @@ class TestRealtimeChannelVCDiff(BaseAsyncTestCase):
                 assert expected_message == actual_message, f"Check message.data for message {expected_message}"
         finally:
             await ably.close()
+
+    async def test_delta_message_out_of_order(self):
+        test_vcdiff_decoder = MockVCDiffDecoder()
+        ably = await TestApp.get_ably_realtime(vcdiff_decoder=test_vcdiff_decoder)
+
+        try:
+            await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+            channel = ably.channels.get('delta_plugin_out_of_order', ChannelOptions(params={'delta': 'vcdiff'}))
+            await channel.attach()
+            message_waiters = [WaitableEvent(), WaitableEvent()]
+            messages_received = []
+            counter = 0
+
+            def on_message(message):
+                nonlocal counter
+                messages_received.append(message.data)
+                message_waiters[counter].finish()
+                counter += 1
+
+            await channel.subscribe(on_message)
+            await channel.publish("1", self.test_data[0])
+            await message_waiters[0].wait(timeout=30)
+
+            attaching_reason = None
+
+            def on_attaching(state_change):
+                nonlocal attaching_reason
+                attaching_reason = state_change.reason
+
+            channel.on('attaching', on_attaching)
+
+            object.__getattribute__(channel, '_RealtimeChannel__decoding_context').last_message_id = 'fake_id'
+            await channel.publish("2", self.test_data[1])
+            await message_waiters[1].wait(timeout=30)
+            assert test_vcdiff_decoder.number_of_calls == 0, "Check that no delta message was decoded"
+            assert self._equals(messages_received[0], self.test_data[0]), "Check message.data for message 1"
+            assert self._equals(messages_received[1], self.test_data[1]), "Check message.data for message 2"
+            assert attaching_reason.code == 40018, "Check error code passed through per RTL18c"
+
+        finally:
+            await ably.close()

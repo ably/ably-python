@@ -9,6 +9,16 @@ log = logging.getLogger(__name__)
 
 
 class VCDiffDecoder(ABC):
+    """
+    The VCDiffDecoder class defines the interface for delta decoding operations.
+
+    This class serves as an abstract base class for implementing delta decoding
+    algorithms, which are used to generate target bytes from compressed delta
+    bytes and base bytes. Subclasses of this class should implement the decode
+    method to handle the specifics of delta decoding. The decode method typically
+    takes a delta bytes and base bytes as input and returns the decoded output.
+
+    """
     @abstractmethod
     def decode(self, delta: bytes, base: bytes) -> bytes:
         pass
