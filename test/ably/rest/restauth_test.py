@@ -85,6 +85,7 @@ class TestAuth(BaseAsyncTestCase):
         ably = AblyRest(key_secret='foo', key_name='bar')
 
         with mock.patch.object(AsyncClient, 'send') as get_mock:
+            get_mock.return_value = {"status": 200, "headers": {}}
             try:
                 await ably.http.get('/time', skip_auth=False)
             except Exception:
@@ -98,6 +99,7 @@ class TestAuth(BaseAsyncTestCase):
         ably = AblyRest(key_secret='foo', key_name='bar', client_id='client_id')
 
         with mock.patch.object(AsyncClient, 'send') as get_mock:
+            get_mock.return_value = {"status": 200, "headers": {}}
             try:
                 await ably.http.get('/time', skip_auth=False)
             except Exception:
@@ -110,6 +112,7 @@ class TestAuth(BaseAsyncTestCase):
         ably = AblyRest(token='not_a_real_token')
 
         with mock.patch.object(AsyncClient, 'send') as get_mock:
+            get_mock.return_value = {"status": 200, "headers": {}}
             try:
                 await ably.http.get('/time', skip_auth=False)
             except Exception:

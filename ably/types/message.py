@@ -3,7 +3,7 @@ import json
 import logging
 
 from ably.types.typedbuffer import TypedBuffer
-from ably.types.mixins import EncodeDataMixin
+from ably.types.mixins import EncodeDataMixin, DeltaExtras
 from ably.util.crypto import CipherData
 from ably.util.exceptions import AblyException
 
@@ -178,7 +178,7 @@ class Message(EncodeDataMixin):
         return request_body
 
     @staticmethod
-    def from_encoded(obj, cipher=None):
+    def from_encoded(obj, cipher=None, context=None):
         id = obj.get('id')
         name = obj.get('name')
         data = obj.get('data')
@@ -188,7 +188,12 @@ class Message(EncodeDataMixin):
         encoding = obj.get('encoding', '')
         extras = obj.get('extras', None)
 
-        decoded_data = Message.decode(data, encoding, cipher)
+        delta_extra = DeltaExtras(extras)
+        if delta_extra.from_id and delta_extra.from_id != context.last_message_id:
+            raise AblyException(f"Delta message decode failure - previous message not available. "
+                                f"Message id = {id}", 400, 40018)
+
+        decoded_data = Message.decode(data, encoding, cipher, context)
 
         return Message(
             id=id,

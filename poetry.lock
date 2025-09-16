@@ -883,6 +883,17 @@ files = [
 ]
 
 [[package]]
+name = "vcdiff-decoder"
+version = "0.1.0a1"
+description = "Python implementation of VCDIFF (RFC 3284) delta compression format"
+optional = false
+python-versions = "<4.0,>=3.7"
+files = [
+    {file = "vcdiff_decoder-0.1.0a1-py3-none-any.whl", hash = "sha256:5d33ac9d2e7dfc141bcbf75b59a31f3b9e9cce59e92169995831f128be63d87d"},
+    {file = "vcdiff_decoder-0.1.0a1.tar.gz", hash = "sha256:734a181bae80ad9b44570e0905106dffc847e2351f8c8ffe7cc58c5c79c7890b"},
+]
+
+[[package]]
 name = "websockets"
 version = "11.0.3"
 description = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
@@ -1152,8 +1163,9 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [extras]
 crypto = ["pycryptodome"]
 oldcrypto = ["pycrypto"]
+vcdiff = ["vcdiff-decoder"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "f4eccc80c57888b82f8dfe72d821b62b6dd5bfb38fb324cd8fa494d08d80357a"
+content-hash = "37f7bab9bd673078d3d7362dff9b9fcd5a515867725b68138a4dff5ee1f45204"
