@@ -48,10 +48,14 @@ class AblyRealtime(AblyRest):
             You can set this to false and explicitly connect to Ably using the
             connect() method. The default is true.
         **kwargs: client options
+            endpoint: str
+                Endpoint specifies either a routing policy name or fully qualified domain name to connect to Ably.
             realtime_host: str
+                Deprecated: this property is deprecated and will be removed in a future version.
                 Enables a non-default Ably host to be specified for realtime connections.
                 For development environments only. The default value is realtime.ably.io.
             environment: str
+                Deprecated: this property is deprecated and will be removed in a future version.
                 Enables a custom environment to be used with the Ably service. Defaults to `production`
             realtime_request_timeout: float
                 Timeout (in milliseconds) for the wait of acknowledgement for operations performed via a realtime
