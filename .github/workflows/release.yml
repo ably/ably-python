@@ -107,7 +107,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/ably
+      url: https://test.pypi.org/p/ably-dev
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
