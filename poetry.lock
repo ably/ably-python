@@ -884,13 +884,13 @@ files = [
 
 [[package]]
 name = "vcdiff-decoder"
-version = "0.1.0a1"
+version = "0.1.0"
 description = "Python implementation of VCDIFF (RFC 3284) delta compression format"
 optional = false
 python-versions = "<4.0,>=3.7"
 files = [
-    {file = "vcdiff_decoder-0.1.0a1-py3-none-any.whl", hash = "sha256:5d33ac9d2e7dfc141bcbf75b59a31f3b9e9cce59e92169995831f128be63d87d"},
-    {file = "vcdiff_decoder-0.1.0a1.tar.gz", hash = "sha256:734a181bae80ad9b44570e0905106dffc847e2351f8c8ffe7cc58c5c79c7890b"},
+    {file = "vcdiff_decoder-0.1.0-py3-none-any.whl", hash = "sha256:42f4e3d77b3bd4be881853858ee471a11d6a474fda375482d589b8576b91318f"},
+    {file = "vcdiff_decoder-0.1.0.tar.gz", hash = "sha256:905d9c39fd451331301652c16b19505c16d323446fa4dffa745b2855aff5fe69"},
 ]
 
 [[package]]
@@ -1168,4 +1168,4 @@ vcdiff = ["vcdiff-decoder"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "37f7bab9bd673078d3d7362dff9b9fcd5a515867725b68138a4dff5ee1f45204"
+content-hash = "ce837d7ac901ef173e8cc1077da2342e6335769cb5a65c84015564efe9c9b6bf"

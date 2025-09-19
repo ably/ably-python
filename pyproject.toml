@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ably"
-version = "2.0.13"
+version = "2.1.0"
 description = "Python REST and Realtime client library SDK for Ably realtime messaging service"
 license = "Apache-2.0"
 authors = ["Ably <support@ably.com>"]
@@ -56,7 +56,7 @@ pyee = [
 # Optional dependencies
 pycrypto = { version = "^2.6.1", optional = true }
 pycryptodome = { version = "*", optional = true }
-vcdiff-decoder = { version = "^0.1.0a1", optional = true }
+vcdiff-decoder = { version = "^0.1.0", optional = true }
 
 [tool.poetry.extras]
 oldcrypto = ["pycrypto"]

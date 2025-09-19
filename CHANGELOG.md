@@ -1,5 +1,16 @@
 # Change Log
 
+## [v2.1.0](https://github.com/ably/ably-python/tree/v2.1.0)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.0.13...v2.1.0)
+
+## What's Changed
+
+* Added support for VCDiff delta-compressed messages. If VCDiff compression is enabled in the client options, and 
+deltas are provided by the Ably service, the SDK reconstructs full message payloads from the base content 
+and the received delta, reducing bandwidth usage without requiring changes to your application code.
+[\#620](https://github.com/ably/ably-python/pull/620)
+
 ## [v2.0.13](https://github.com/ably/ably-python/tree/v2.0.13)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.12...v2.0.13)
