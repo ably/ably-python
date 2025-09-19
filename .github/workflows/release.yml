@@ -70,16 +70,22 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
       - name: Extract tag
         id: tag
         run: |
           TAG=${GITHUB_REF#refs/tags/v}
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Read VERSION_NAME from pyproject.toml
+      - name: Read VERSION_NAME from dist/
         id: version
         run: |
-          VERSION_NAME=$(grep '^version' pyproject.toml | cut -d'=' -f2 | tr -d '[:space:]')
+          VERSION_NAME=$(basename dist/ably-*.tar.gz | sed -E 's/^ably-([^-]+)\.tar\.gz$/\1/')
           echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
 
       - name: Compare version with tag
@@ -91,11 +97,7 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.tag.outputs.tag }}
-      - name: Download all the dists
-        uses: actions/download-artifact@v4
-        with:
-          name: python-package-distributions
-          path: dist/
+
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
@@ -107,7 +109,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/ably-dev
+      url: https://test.pypi.org/p/ably
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
