@@ -24,7 +24,7 @@ jobs:
       - name: Setup poetry
         uses: abatilo/actions-poetry@v4
         with:
-          poetry-version: '2.1.4'
+          poetry-version: '1.8.5'
 
       - name: Setup a local virtual environment
         run: |
@@ -56,6 +56,27 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+      - name: Check that wheel and tarball contains ably/sync/
+        run: |
+          # Check wheel
+          WHEEL=$(ls dist/*.whl | head -n 1)
+          echo "Checking wheel: $WHEEL"
+          if unzip -l "$WHEEL" | grep -q "ably/sync/"; then
+            echo "✅ Found ably/sync/ in wheel"
+          else
+            echo "❌ ably/sync/ not found in wheel"
+            exit 1
+          fi
+          
+          # Check tarball
+          TARBALL=$(ls dist/*.tar.gz | head -n 1)
+          echo "Checking tarball: $TARBALL"
+          if tar -tzf "$TARBALL" | grep -q "ably/sync/"; then
+            echo "✅ Found ably/sync/ in tarball"
+          else
+            echo "❌ ably/sync/ not found in tarball"
+            exit 1
+          fi
 
   publish-to-pypi:
     name: Publish Python distribution to PyPI
