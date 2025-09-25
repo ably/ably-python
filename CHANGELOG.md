@@ -1,5 +1,13 @@
 # Change Log
 
+## [v2.1.1](https://github.com/ably/ably-python/tree/v2.1.1)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.1.0...v2.1.1)
+
+## What's Changed
+
+* Added missed `sync` folder to the wheel package 
+
 ## [v2.1.0](https://github.com/ably/ably-python/tree/v2.1.0)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.0.13...v2.1.0)
