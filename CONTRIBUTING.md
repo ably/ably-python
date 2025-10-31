@@ -38,11 +38,10 @@ The release process must include the following steps:
 5. Commit this change: `git add CHANGELOG.md && git commit -m "Update change log."`
 6. Push the release branch to GitHub
 7. Create a release PR (ensure you include an SDK Team Engineering Lead and the SDK Team Product Manager as reviewers) and gain approvals for it, then merge that to `main`
-8. Build the synchronous REST client by running `poetry run unasync`
-9. From the `main` branch, run `poetry build && poetry publish` (will require you to have a PyPi API token, see [guide](https://www.digitalocean.com/community/tutorials/how-to-publish-python-packages-to-pypi-using-poetry-on-ubuntu-22-04)) to build and upload this new package to PyPi
-10. Create a tag named like `v2.0.1` and push it to GitHub - e.g. `git tag v2.0.1 && git push origin v2.0.1`
-11. Create the release on GitHub including populating the release notes
-12. Update the [Ably Changelog](https://changelog.ably.com/) (via [headwayapp](https://headwayapp.co/)) with these changes
+8. Create a tag named like `v2.0.1` and push it to GitHub - e.g. `git tag v2.0.1 && git push origin v2.0.1`
+9. Create the release on GitHub including populating the release notes
+10. Go to the [Release Workflow](https://github.com/ably/ably-python/actions/workflows/release.yml) and ask [ably/team-sdk](https://github.com/orgs/ably/teams/team-sdk) member to approve publishing to the PyPI registry
+11. Update the [Ably Changelog](https://changelog.ably.com/) (via [headwayapp](https://headwayapp.co/)) with these changes
 
 We tend to use [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator) to collate the information required for a change log update.
 Your mileage may vary, but it seems the most reliable method to invoke the generator is something like:
