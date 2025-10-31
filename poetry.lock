@@ -1247,4 +1247,4 @@ vcdiff = ["vcdiff-decoder"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.7"
-content-hash = "321f298a05c03c5f6cae2f92545f4f1f3ceecad5e5bd9d456242f2013b6df3ec"
+content-hash = "fbad8755086c759d0d2d0ebbac45892627d3a43ad3f91a4782cda7fd9a8ba552"
