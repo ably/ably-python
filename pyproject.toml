@@ -50,7 +50,7 @@ websockets = [
 ]
 pyee = [
   { version = "^9.0.4", python = "~3.7" },
-  { version = ">=11.1.0, <13.0.0", python = "^3.8" }
+  { version = ">=11.1.0, <14.0.0", python = "^3.8" }
 ]
 
 # Optional dependencies
