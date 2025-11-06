@@ -1,5 +1,14 @@
 # Change Log
 
+## [v2.1.2](https://github.com/ably/ably-python/tree/v2.1.2)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.1.1...v2.1.2)
+
+## What's Changed
+
+- Support `methoddispatch` version 5 [\#634](https://github.com/ably/ably-python/pull/634)
+- Support `pyee` version 13 [\#635](https://github.com/ably/ably-python/pull/635)
+
 ## [v2.1.1](https://github.com/ably/ably-python/tree/v2.1.1)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.1.0...v2.1.1)
