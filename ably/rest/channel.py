@@ -6,7 +6,6 @@ import os
 from typing import Iterator
 from urllib import parse
 
-from methoddispatch import SingleDispatch, singledispatch
 import msgpack
 
 from ably.http.paginatedresult import PaginatedResult, format_params
@@ -19,7 +18,7 @@ from ably.util.exceptions import catch_all, IncompatibleClientIdException
 log = logging.getLogger(__name__)
 
 
-class Channel(SingleDispatch):
+class Channel:
     def __init__(self, ably, name, options):
         self.__ably = ably
         self.__name = name
@@ -76,15 +75,19 @@ class Channel(SingleDispatch):
 
         return request_body
 
-    @singledispatch
-    def _publish(self, arg, *args, **kwargs):
-        raise TypeError('Unexpected type %s' % type(arg))
+    async def _publish(self, arg, *args, **kwargs):
+        if isinstance(arg, Message):
+            return await self.publish_message(arg, *args, **kwargs)
+        elif isinstance(arg, list):
+            return await self.publish_messages(arg, *args, **kwargs)
+        elif isinstance(arg, str):
+            return await self.publish_name_data(arg, *args, **kwargs)
+        else:
+            raise TypeError('Unexpected type %s' % type(arg))
 
-    @_publish.register(Message)
     async def publish_message(self, message, params=None, timeout=None):
         return await self.publish_messages([message], params, timeout=timeout)
 
-    @_publish.register(list)
     async def publish_messages(self, messages, params=None, timeout=None):
         request_body = self.__publish_request_body(messages)
         if not self.ably.options.use_binary_protocol:
@@ -98,7 +101,6 @@ class Channel(SingleDispatch):
             path += '?' + parse.urlencode(params)
         return await self.ably.http.post(path, body=request_body, timeout=timeout)
 
-    @_publish.register(str)
     async def publish_name_data(self, name, data, timeout=None):
         messages = [Message(name, data)]
         return await self.publish_messages(messages, timeout=timeout)
