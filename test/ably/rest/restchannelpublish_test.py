@@ -423,7 +423,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                 async def check_history():
                     history = await channel.history()
                     message = history.items[0]
-                    return message.data == expected_value and type(message.data) == type_mapping[expected_type]
+                    return message.data == expected_value and isinstance(message.data, type_mapping[expected_type])
 
                 await assert_waiter(check_history)
 
