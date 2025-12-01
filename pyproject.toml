@@ -1,12 +1,13 @@
-[tool.poetry]
+[project]
 name = "ably"
 version = "2.1.2"
 description = "Python REST and Realtime client library SDK for Ably realtime messaging service"
-license = "Apache-2.0"
-authors = ["Ably <support@ably.com>"]
 readme = "LONG_DESCRIPTION.rst"
-homepage = "https://ably.com"
-repository = "https://github.com/ably/ably-python"
+requires-python = ">=3.7"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Ably", email = "support@ably.com" }
+]
 classifiers = [
   "Development Status :: 6 - Mature",
   "Intended Audience :: Developers",
@@ -23,72 +24,58 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-include = [
-  'ably/**/*.py'
+dependencies = [
+  "msgpack>=1.0.0,<2.0.0",
+  "httpx>=0.24.1,<1.0; python_version=='3.7'",
+  "httpx>=0.25.0,<1.0; python_version>='3.8'",
+  "h2>=4.1.0,<5.0.0",
+  "websockets>=10.0,<12.0; python_version=='3.7'",
+  "websockets>=12.0,<15.0; python_version=='3.8'",
+  "websockets>=15.0,<16.0; python_version>='3.9'",
+  "pyee>=9.0.4,<10.0.0; python_version=='3.7'",
+  "pyee>=11.1.0,<14.0.0; python_version>='3.8'",
 ]
 
-[[tool.poetry.source]]
-name = "experimental"
-url = "https://test.pypi.org/simple/"
-priority = "explicit"
-
-[tool.poetry.dependencies]
-python = "^3.7"
-
-# Mandatory dependencies
-msgpack = "^1.0.0"
-httpx = [
-  { version = "^0.24.1", python = "~3.7" },
-  { version = ">= 0.25.0, < 1.0", python = "^3.8" },
-]
-h2 = "^4.1.0" # required for httx package, HTTP2 communication
-websockets = [
-  { version = ">= 10.0, < 12.0", python = "~3.7" },
-  { version = ">= 12.0, < 15.0", python = "~3.8" },
-  { version = ">= 15.0, < 16.0", python = ">=3.9" },
-]
-pyee = [
-  { version = "^9.0.4", python = "~3.7" },
-  { version = ">=11.1.0, <14.0.0", python = "^3.8" }
-]
-
-# Optional dependencies
-pycrypto = { version = "^2.6.1", optional = true }
-pycryptodome = { version = "*", optional = true }
-vcdiff-decoder = { version = "^0.1.0", optional = true }
-
-[tool.poetry.extras]
-oldcrypto = ["pycrypto"]
+[project.optional-dependencies]
+oldcrypto = ["pycrypto>=2.6.1,<3.0.0"]
 crypto = ["pycryptodome"]
-vcdiff = ["vcdiff-decoder"]
+vcdiff = ["vcdiff-decoder>=0.1.0,<0.2.0"]
+dev = [
+  "pytest>=7.1,<8.0",
+  "mock>=4.0.3,<5.0.0",
+  "pep8-naming>=0.4.1,<0.5.0",
+  "pytest-cov>=2.4,<3.0",
+  "flake8>=3.9.2,<4.0.0",
+  "pytest-xdist>=1.15,<2.0",
+  "respx>=0.20.0,<0.21.0; python_version=='3.7'",
+  "respx>=0.22.0,<0.23.0; python_version>='3.8'",
+  "importlib-metadata>=4.12,<5.0",
+  "pytest-timeout>=2.1.0,<3.0.0",
+  "pytest-rerunfailures>=13.0,<14.0; python_version=='3.7'",
+  "pytest-rerunfailures>=14.0,<15.0; python_version>='3.8'",
+  "async-case>=10.1.0,<11.0.0; python_version=='3.7'",
+  "tokenize_rt",
+  "vcdiff-decoder>=0.1.0a1",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.1"
-mock = "^4.0.3"
-pep8-naming = "^0.4.1"
-pytest-cov = "^2.4"
-flake8="^3.9.2"
-pytest-xdist = "^1.15"
-respx = [
-  { version = "^0.20.0", python = "~3.7" },
-  { version = "^0.22.0", python = "^3.8" },
-]
-importlib-metadata = "^4.12"
-pytest-timeout = "^2.1.0"
-pytest-rerunfailures = [
-  { version = "^13.0", python = "~3.7" },
-  { version = "^14.0", python = "^3.8" },
-]
-async-case = { version = "^10.1.0", python = "~3.7" }
-tokenize_rt = "*"
-vcdiff-decoder = { version = "^0.1.0a1" }
+[project.scripts]
+unasync = "ably.scripts.unasync:run"
+
+[project.urls]
+Homepage = "https://ably.com"
+Repository = "https://github.com/ably/ably-python"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ably"]
 
 [tool.pytest.ini_options]
 timeout = 30
 
-[tool.poetry.scripts]
-unasync = 'ably.scripts.unasync:run'
+[[tool.uv.index]]
+name = "experimental"
+url = "https://test.pypi.org/simple/"
+explicit = true

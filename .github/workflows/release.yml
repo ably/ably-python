@@ -21,36 +21,24 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Setup poetry
-        uses: abatilo/actions-poetry@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          poetry-version: '1.8.5'
-
-      - name: Setup a local virtual environment
-        run: |
-          poetry env use ${{ steps.setup-python.outputs.python-path }}
-          poetry run python --version
-          poetry config virtualenvs.create true --local
-          poetry config virtualenvs.in-project true --local
+          enable-cache: true
 
       - uses: actions/cache@v4
         name: Define a cache for the virtual environment based on the dependencies lock file
         id: cache
         with:
           path: ./.venv
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
-
-      - name: Ensure cache is healthy
-        if: steps.cache.outputs.cache-hit == 'true'
-        shell: bash
-        run: poetry run pip --version >/dev/null 2>&1 || (echo "Cache is broken, skip it" && rm -rf .venv)
+          key: venv-${{ runner.os }}-3.12-${{ hashFiles('uv.lock') }}
 
       - name: Install dependencies
-        run: poetry install -E crypto
+        run: uv sync --extra crypto --extra dev
       - name: Generate rest sync code and tests
-        run: poetry run unasync
+        run: uv run unasync
       - name: Build a binary wheel and a source tarball
-        run: poetry build
+        run: uv build
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:

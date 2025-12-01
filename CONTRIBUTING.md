@@ -4,7 +4,7 @@
 
 ### Initialising
 
-ably-python uses [Poetry](https://python-poetry.org/) for packaging and dependency management. Please refer to the [Poetry documentation](https://python-poetry.org/docs/#installation) for up to date instructions on how to install Poetry.
+ably-python uses [uv](https://docs.astral.sh/uv/) for packaging and dependency management. Please refer to the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/) for up to date instructions on how to install uv.
 
 Perform the following operations after cloning the repository contents:
 
@@ -12,13 +12,13 @@ Perform the following operations after cloning the repository contents:
 git submodule init
 git submodule update
 # Install the crypto extra if you wish to be able to run all of the tests
-poetry install -E crypto
+uv sync --extra crypto
 ```
 
 ### Running the test suite
 
 ```shell
-poetry run pytest
+uv run pytest
 ```
 
 ## Release Process
