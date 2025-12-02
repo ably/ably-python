@@ -61,9 +61,7 @@ class AblyRest:
         else:
             options = Options(**kwargs)
 
-        try:
-            self._is_realtime
-        except AttributeError:
+        if not hasattr(self, '_is_realtime'):
             self._is_realtime = False
 
         self.__http = Http(self, options)

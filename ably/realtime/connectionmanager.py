@@ -125,7 +125,7 @@ class ConnectionManager(EventEmitter):
             try:
                 response = await self.__ping_future
             except asyncio.CancelledError:
-                raise AblyException("Ping request cancelled due to request timeout", 504, 50003)
+                raise AblyException("Ping request cancelled due to request timeout", 504, 50003) from None
             return response
 
         self.__ping_future = asyncio.Future()
@@ -139,7 +139,7 @@ class ConnectionManager(EventEmitter):
         try:
             await asyncio.wait_for(self.__ping_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
-            raise AblyException("Timeout waiting for ping response", 504, 50003)
+            raise AblyException("Timeout waiting for ping response", 504, 50003) from None
 
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000

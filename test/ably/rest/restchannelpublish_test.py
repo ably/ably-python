@@ -402,7 +402,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                 response = await channel.publish(data=expected_value)
                 assert response.status_code == 201
 
-                async def check_data():
+                async def check_data(encoding=encoding, msg_data=msg_data):
                     async with httpx.AsyncClient(http2=True) as client:
                         r = await client.get(url, auth=auth)
                         item = r.json()[0]
@@ -418,7 +418,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                 response = await channel.publish(messages=[Message(data=msg_data, encoding=encoding)])
                 assert response.status_code == 201
 
-                async def check_history():
+                async def check_history(expected_value=expected_value, expected_type=expected_type):
                     history = await channel.history()
                     message = history.items[0]
                     return message.data == expected_value and isinstance(message.data, type_mapping[expected_type])

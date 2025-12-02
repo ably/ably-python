@@ -96,7 +96,7 @@ class WebSocketTransport(EventEmitter):
             exception = AblyException(f'Error opening websocket connection: {e}', 400, 40000)
             log.exception(f'WebSocketTransport.ws_connect(): Error opening websocket connection: {exception}')
             self._emit('failed', exception)
-            raise exception
+            raise exception from e
 
     async def _handle_websocket_connection(self, ws_url, websocket):
         log.info(f'ws_connect(): connection established to {ws_url}')

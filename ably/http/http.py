@@ -188,7 +188,7 @@ class Http:
 
         hosts = self.get_rest_hosts()
         for retry_count, host in enumerate(hosts):
-            def should_stop_retrying():
+            def should_stop_retrying(retry_count=retry_count):
                 time_passed = time.time() - requested_at
                 # if it's the last try or cumulative timeout is done, we stop retrying
                 return retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration

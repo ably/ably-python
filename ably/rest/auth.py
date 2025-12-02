@@ -186,7 +186,7 @@ class Auth:
             try:
                 token_request = await auth_callback(token_params)
             except Exception as e:
-                raise AblyException("auth_callback raised an exception", 401, 40170, cause=e)
+                raise AblyException("auth_callback raised an exception", 401, 40170, cause=e) from e
         elif auth_url:
             log.debug("using token auth with authUrl")
 
@@ -210,7 +210,7 @@ class Auth:
             except TypeError as e:
                 msg = "Expected token request callback to call back with a token string, token request object, or \
                 token details object"
-                raise AblyAuthException(msg, 401, 40170, cause=e)
+                raise AblyAuthException(msg, 401, 40170, cause=e) from e
         elif isinstance(token_request, str):
             if len(token_request) == 0:
                 raise AblyAuthException("Token string is empty", 401, 4017)

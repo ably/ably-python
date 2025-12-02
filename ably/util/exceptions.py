@@ -43,7 +43,7 @@ class AblyException(Exception):
                       response.text)
             raise AblyException(message=response.text,
                                 status_code=response.status_code,
-                                code=response.status_code * 100)
+                                code=response.status_code * 100) from None
 
         if decoded_response and 'error' in decoded_response:
             error = decoded_response['error']
@@ -56,7 +56,7 @@ class AblyException(Exception):
             except KeyError:
                 msg = "Unexpected exception decoding server response: %s"
                 msg = msg % response.text
-                raise AblyException(message=msg, status_code=500, code=50000)
+                raise AblyException(message=msg, status_code=500, code=50000) from None
 
         raise AblyException(message="",
                             status_code=response.status_code,
@@ -91,7 +91,7 @@ def catch_all(func):
             return await func(*args, **kwargs)
         except Exception as e:
             log.exception(e)
-            raise AblyException.from_exception(e)
+            raise AblyException.from_exception(e) from e
 
     return wrapper
 

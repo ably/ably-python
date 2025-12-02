@@ -101,7 +101,7 @@ class EncodeDataMixin:
 
                 except Exception as e:
                     log.error(f'VCDiff decode failed: {e}')
-                    raise AblyException('VCDiff decode failure', 40018, 40018)
+                    raise AblyException('VCDiff decode failure', 40018, 40018) from e
 
             elif encoding.startswith(f'{CipherData.ENCODING_ID}+'):
                 if not cipher:

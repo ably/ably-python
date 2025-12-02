@@ -196,7 +196,7 @@ async def assert_waiter(block: Callable[[], Awaitable[bool]], timeout: float = 1
     try:
         await asyncio.wait_for(_poll_until_success(block), timeout=timeout)
     except asyncio.TimeoutError:
-        raise asyncio.TimeoutError(f"Condition not met within {timeout}s")
+        raise asyncio.TimeoutError(f"Condition not met within {timeout}s") from None
 
 
 async def _poll_until_success(block: Callable[[], Awaitable[bool]]) -> None:

@@ -26,7 +26,7 @@ class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
         # Register several devices for later use
         self.devices = {}
-        for i in range(10):
+        for _ in range(10):
             await self.save_device()
 
         # Register several subscriptions for later use
@@ -253,7 +253,7 @@ class TestPush(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert remove_boo_device_response.status_code == 204
         # Doesn't exist (Deletion is async: wait up to a few seconds before giving up)
         with pytest.raises(AblyException):
-            for i in range(5):
+            for _ in range(5):
                 time.sleep(1)
                 await get(device.id)
 
