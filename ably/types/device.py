@@ -1,6 +1,5 @@
 from ably.util import case
 
-
 DevicePushTransportType = {'fcm', 'gcm', 'apns', 'web'}
 DevicePlatform = {'android', 'ios', 'browser'}
 DeviceFormFactor = {'phone', 'tablet', 'desktop', 'tv', 'watch', 'car', 'embedded', 'other'}

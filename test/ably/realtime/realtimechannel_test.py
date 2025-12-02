@@ -1,12 +1,14 @@
 import asyncio
+
 import pytest
-from ably.realtime.realtime_channel import ChannelState, RealtimeChannel, ChannelOptions
+
+from ably.realtime.connection import ConnectionState
+from ably.realtime.realtime_channel import ChannelOptions, ChannelState, RealtimeChannel
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.message import Message
+from ably.util.exceptions import AblyException
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, random_string
-from ably.realtime.connection import ConnectionState
-from ably.util.exceptions import AblyException
 
 
 class TestRealtimeChannel(BaseAsyncTestCase):

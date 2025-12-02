@@ -5,15 +5,15 @@ import logging
 import time
 import uuid
 from datetime import timedelta
-from typing import Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import httpx
 
 from ably.types.options import Options
 
 if TYPE_CHECKING:
-    from ably.rest.rest import AblyRest
     from ably.realtime.realtime import AblyRealtime
+    from ably.rest.rest import AblyRest
 
 from ably.types.capability import Capability
 from ably.types.tokendetails import TokenDetails

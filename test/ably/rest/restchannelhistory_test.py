@@ -1,12 +1,12 @@
 import logging
+
 import pytest
 import respx
 
 from ably import AblyException
 from ably.http.paginatedresult import PaginatedResult
-
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 log = logging.getLogger(__name__)
 

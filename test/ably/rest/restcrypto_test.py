@@ -1,19 +1,17 @@
-import json
-import os
-import logging
 import base64
+import json
+import logging
+import os
 
 import pytest
+from Crypto import Random
 
 from ably import AblyException
 from ably.types.message import Message
-from ably.util.crypto import CipherParams, get_cipher, generate_random_key, get_default_params
-
-from Crypto import Random
-
+from ably.util.crypto import CipherParams, generate_random_key, get_cipher, get_default_params
 from test.ably import utils
 from test.ably.testapp import TestApp
-from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseTestCase, BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, BaseTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 log = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 import base64
-from collections import OrderedDict
-import logging
 import json
+import logging
 import os
+from collections import OrderedDict
 from typing import Iterator
 from urllib import parse
 
@@ -13,7 +13,7 @@ from ably.types.channeldetails import ChannelDetails
 from ably.types.message import Message, make_message_response_handler
 from ably.types.presence import Presence
 from ably.util.crypto import get_cipher
-from ably.util.exceptions import catch_all, IncompatibleClientIdException
+from ably.util.exceptions import IncompatibleClientIdException, catch_all
 
 log = logging.getLogger(__name__)
 

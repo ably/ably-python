@@ -6,15 +6,15 @@ import string
 import sys
 import time
 import unittest
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 if sys.version_info >= (3, 8):
     from unittest import IsolatedAsyncioTestCase
 else:
     from async_case import IsolatedAsyncioTestCase
 
-import msgpack
 import mock
+import msgpack
 import respx
 from httpx import Response
 

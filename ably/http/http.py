@@ -1,17 +1,17 @@
 import functools
+import json
 import logging
 import time
-import json
 from urllib.parse import urljoin
 
 import httpx
 import msgpack
 
-from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
+from ably.rest.auth import Auth
 from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyException
-from ably.util.helper import is_token_error, extract_url_params
+from ably.util.helper import extract_url_params, is_token_error
 
 log = logging.getLogger(__name__)
 

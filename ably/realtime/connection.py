@@ -1,12 +1,14 @@
 from __future__ import annotations
+
 import functools
 import logging
+from typing import TYPE_CHECKING, Optional
+
 from ably.realtime.connectionmanager import ConnectionManager
 from ably.types.connectiondetails import ConnectionDetails
 from ably.types.connectionstate import ConnectionEvent, ConnectionState, ConnectionStateChange
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
-from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ably.realtime.realtime import AblyRealtime

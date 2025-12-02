@@ -5,7 +5,6 @@ import logging
 from ably.util.crypto import CipherData
 from ably.util.exceptions import AblyException
 
-
 log = logging.getLogger(__name__)
 
 ENC_VCDIFF = "vcdiff"

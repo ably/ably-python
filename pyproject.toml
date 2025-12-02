@@ -87,8 +87,8 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-# Enable Pyflakes (F), pycodestyle (E, W), and pep8-naming (N)
-select = ["E", "W", "F", "N"]
+# Enable Pyflakes (F), pycodestyle (E, W), pep8-naming (N), and isort (I)
+select = ["E", "W", "F", "N", "I"]
 ignore = [
   "N818",  # exception name should end in 'Error'
 ]

@@ -1,10 +1,10 @@
+import asyncio
 import inspect
 import random
 import string
-import asyncio
 import time
-from typing import Callable, Tuple, Dict
-from urllib.parse import urlparse, parse_qs
+from typing import Callable, Dict, Tuple
+from urllib.parse import parse_qs, urlparse
 
 
 def get_random_id():

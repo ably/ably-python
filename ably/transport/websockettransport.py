@@ -1,22 +1,27 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 import asyncio
-from enum import IntEnum
 import json
 import logging
 import socket
 import urllib.parse
+from enum import IntEnum
+from typing import TYPE_CHECKING
+
 from ably.http.httputils import HttpUtils
 from ably.types.connectiondetails import ConnectionDetails
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
 from ably.util.helper import Timer, unix_time_ms
+
 try:
     # websockets 15+ preferred imports
-    from websockets import ClientConnection as WebSocketClientProtocol, connect as ws_connect
+    from websockets import ClientConnection as WebSocketClientProtocol
+    from websockets import connect as ws_connect
 except ImportError:
     # websockets 14 and earlier fallback
-    from websockets.client import WebSocketClientProtocol, connect as ws_connect
+    from websockets.client import WebSocketClientProtocol
+    from websockets.client import connect as ws_connect
 
 from websockets.exceptions import ConnectionClosedOK, WebSocketException
 

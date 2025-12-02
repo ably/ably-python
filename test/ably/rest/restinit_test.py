@@ -1,14 +1,12 @@
-from mock import patch
 import pytest
 from httpx import AsyncClient
+from mock import patch
 
-from ably import AblyRest
-from ably import AblyException
+from ably import AblyException, AblyRest
 from ably.transport.defaults import Defaults
 from ably.types.tokendetails import TokenDetails
-
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 
 class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):

@@ -1,8 +1,12 @@
 from typing import Optional
+
 from ably.http.paginatedresult import PaginatedResult, format_params
+from ably.types.channelsubscription import (
+    PushChannelSubscription,
+    channel_subscriptions_response_processor,
+    channels_response_processor,
+)
 from ably.types.device import DeviceDetails, device_details_response_processor
-from ably.types.channelsubscription import PushChannelSubscription, channel_subscriptions_response_processor
-from ably.types.channelsubscription import channels_response_processor
 
 
 class Push:

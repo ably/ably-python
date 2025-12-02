@@ -1,19 +1,22 @@
 from __future__ import annotations
-import logging
+
 import asyncio
+import logging
+from datetime import datetime
+from queue import Queue
+from typing import TYPE_CHECKING, Optional
+
 import httpx
-from ably.transport.websockettransport import WebSocketTransport, ProtocolMessageAction
+
 from ably.transport.defaults import Defaults
+from ably.transport.websockettransport import ProtocolMessageAction, WebSocketTransport
+from ably.types.connectiondetails import ConnectionDetails
 from ably.types.connectionerrors import ConnectionErrors
 from ably.types.connectionstate import ConnectionEvent, ConnectionState, ConnectionStateChange
 from ably.types.tokendetails import TokenDetails
-from ably.util.exceptions import AblyException, IncompatibleClientIdException
 from ably.util.eventemitter import EventEmitter
-from datetime import datetime
-from ably.util.helper import get_random_id, Timer, is_token_error
-from typing import Optional, TYPE_CHECKING
-from ably.types.connectiondetails import ConnectionDetails
-from queue import Queue
+from ably.util.exceptions import AblyException, IncompatibleClientIdException
+from ably.util.helper import Timer, get_random_id, is_token_error
 
 if TYPE_CHECKING:
     from ably.realtime.realtime import AblyRealtime

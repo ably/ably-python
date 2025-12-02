@@ -10,16 +10,14 @@ import mock
 import msgpack
 import pytest
 
-from ably import api_version
-from ably import AblyException, IncompatibleClientIdException
+from ably import AblyException, IncompatibleClientIdException, api_version
 from ably.rest.auth import Auth
 from ably.types.message import Message
 from ably.types.tokendetails import TokenDetails
 from ably.util import case
 from test.ably import utils
-
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, assert_waiter
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, assert_waiter, dont_vary_protocol
 
 log = logging.getLogger(__name__)
 

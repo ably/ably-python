@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Optional, TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
 from ably.realtime.connection import ConnectionState
-from ably.rest.channel import Channel, Channels as RestChannels
+from ably.rest.channel import Channel
+from ably.rest.channel import Channels as RestChannels
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState, ChannelStateChange
 from ably.types.flags import Flag, has_flag

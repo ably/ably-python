@@ -3,9 +3,8 @@ import time
 import pytest
 
 from ably import AblyException
-
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 
 class TestRestTime(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):

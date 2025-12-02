@@ -6,8 +6,7 @@ from ably import AblyRest
 from ably.http.paginatedresult import HttpPaginatedResponse
 from ably.transport.defaults import Defaults
 from test.ably.testapp import TestApp
-from test.ably.utils import BaseAsyncTestCase
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 
 # RSC19

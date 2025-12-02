@@ -2,8 +2,8 @@ import base64
 import logging
 
 try:
-    from Crypto.Cipher import AES
     from Crypto import Random
+    from Crypto.Cipher import AES
 except ImportError:
     from .nocrypto import AES, Random
 

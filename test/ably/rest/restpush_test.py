@@ -5,14 +5,16 @@ import time
 
 import pytest
 
-from ably import AblyException, AblyAuthException
-from ably import DeviceDetails, PushChannelSubscription
+from ably import AblyAuthException, AblyException, DeviceDetails, PushChannelSubscription
 from ably.http.paginatedresult import PaginatedResult
-
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, BaseAsyncTestCase
-from test.ably.utils import new_dict, random_string, get_random_key
-
+from test.ably.utils import (
+    BaseAsyncTestCase,
+    VaryByProtocolTestsMetaclass,
+    get_random_key,
+    new_dict,
+    random_string,
+)
 
 DEVICE_TOKEN = '740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad'
 

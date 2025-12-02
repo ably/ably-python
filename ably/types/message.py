@@ -2,8 +2,8 @@ import base64
 import json
 import logging
 
+from ably.types.mixins import DeltaExtras, EncodeDataMixin
 from ably.types.typedbuffer import TypedBuffer
-from ably.types.mixins import EncodeDataMixin, DeltaExtras
 from ably.util.crypto import CipherData
 from ably.util.exceptions import AblyException
 

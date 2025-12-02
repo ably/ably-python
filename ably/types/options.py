@@ -1,5 +1,5 @@
-import random
 import logging
+import random
 from abc import ABC, abstractmethod
 
 from ably.transport.defaults import Defaults

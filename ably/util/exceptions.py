@@ -1,7 +1,7 @@
 import functools
 import logging
-import msgpack
 
+import msgpack
 
 log = logging.getLogger(__name__)
 

@@ -1,8 +1,10 @@
 import asyncio
 import json
+import urllib.parse
 
 import httpx
 import pytest
+
 from ably.realtime.connection import ConnectionState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState
@@ -10,7 +12,6 @@ from ably.types.connectionstate import ConnectionEvent
 from ably.types.tokendetails import TokenDetails
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, random_string
-import urllib.parse
 
 echo_url = 'https://echo.ably.io'
 
