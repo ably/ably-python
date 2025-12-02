@@ -19,7 +19,7 @@ from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, don
 if sys.version_info >= (3, 8):
     from unittest.mock import AsyncMock
 else:
-    from unittest.mock import AsyncMock
+    from mock import AsyncMock
 
 log = logging.getLogger(__name__)
 
