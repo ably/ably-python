@@ -74,7 +74,7 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert messages is not None, "Expected non-None messages"
         assert 4 == len(messages), "Expected 4 messages"
 
-        message_contents = dict((m.name, m.data) for m in messages)
+        message_contents = {m.name: m.data for m in messages}
         log.debug(f"message_contents: {str(message_contents)}")
 
         assert "This is a string message payload" == message_contents["publish3"],\
@@ -107,7 +107,7 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert messages is not None, "Expected non-None messages"
         assert 4 == len(messages), "Expected 4 messages"
 
-        message_contents = dict((m.name, m.data) for m in messages)
+        message_contents = {m.name: m.data for m in messages}
         log.debug(f"message_contents: {str(message_contents)}")
 
         assert "This is a string message payload" == message_contents["publish3"],\
@@ -156,7 +156,7 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert messages is not None, "Expected non-None messages"
         assert 4 == len(messages), "Expected 4 messages"
 
-        message_contents = dict((m.name, m.data) for m in messages)
+        message_contents = {m.name: m.data for m in messages}
         log.debug(f"message_contents: {str(message_contents)}")
 
         assert "This is a string message payload" == message_contents["publish3"],\

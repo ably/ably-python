@@ -56,7 +56,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert messages is not None, "Expected non-None messages"
         assert len(messages) == 4, "Expected 4 messages"
 
-        message_contents = dict((m.name, m.data) for m in messages)
+        message_contents = {m.name: m.data for m in messages}
         log.debug(f"message_contents: {str(message_contents)}")
 
         assert message_contents["publish0"] == "This is a string message payload", \
@@ -494,7 +494,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         }
         message = Message(**data)
         request_body = channel._Channel__publish_request_body(messages=[message])
-        input_keys = set(case.snake_to_camel(x) for x in data.keys())
+        input_keys = {case.snake_to_camel(x) for x in data.keys()}
         assert input_keys - set(request_body) == set()
 
     # RSL1k1
