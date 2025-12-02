@@ -16,13 +16,13 @@ class DeviceDetails:
             if recipient:
                 transport_type = recipient.get('transportType')
                 if transport_type is not None and transport_type not in DevicePushTransportType:
-                    raise ValueError('unexpected transport type {}'.format(transport_type))
+                    raise ValueError(f'unexpected transport type {transport_type}')
 
         if platform is not None and platform not in DevicePlatform:
-            raise ValueError('unexpected platform {}'.format(platform))
+            raise ValueError(f'unexpected platform {platform}')
 
         if form_factor is not None and form_factor not in DeviceFormFactor:
-            raise ValueError('unexpected form factor {}'.format(form_factor))
+            raise ValueError(f'unexpected form factor {form_factor}')
 
         self.__id = id
         self.__client_id = client_id

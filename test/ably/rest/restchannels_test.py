@@ -61,7 +61,7 @@ class TestChannels(BaseAsyncTestCase):
         assert new_channel_2 in self.ably.channels
 
     def test_channels_iteration(self):
-        channel_names = ['channel_{}'.format(i) for i in range(5)]
+        channel_names = [f'channel_{i}' for i in range(5)]
         [self.ably.channels.get(name) for name in channel_names]
 
         assert isinstance(self.ably.channels, Iterable)

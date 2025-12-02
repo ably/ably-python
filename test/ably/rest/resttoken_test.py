@@ -1,9 +1,9 @@
 import datetime
 import json
 import logging
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
 from ably import AblyException, AblyRest, Capability
 from ably.types.tokendetails import TokenDetails

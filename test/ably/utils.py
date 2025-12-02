@@ -13,7 +13,8 @@ if sys.version_info >= (3, 8):
 else:
     from async_case import IsolatedAsyncioTestCase
 
-import mock
+from unittest import mock
+
 import msgpack
 import respx
 from httpx import Response

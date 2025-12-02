@@ -1,10 +1,10 @@
 import base64
 import re
 import time
+from unittest import mock
 from urllib.parse import urljoin
 
 import httpx
-import mock
 import pytest
 import respx
 from httpx import Response
@@ -52,9 +52,7 @@ class TestRestHttp(BaseAsyncTestCase):
         ably = AblyRest(token="foo")
 
         def make_url(host):
-            base_url = "%s://%s:%d" % (ably.http.preferred_scheme,
-                                       host,
-                                       ably.http.preferred_port)
+            base_url = f"{ably.http.preferred_scheme}://{host}:{ably.http.preferred_port}"
             return urljoin(base_url, '/')
 
         with mock.patch('httpx.Request', wraps=httpx.Request) as request_mock:
@@ -133,10 +131,7 @@ class TestRestHttp(BaseAsyncTestCase):
         default_host = Options().get_rest_host()
         ably = AblyRest(token="foo")
 
-        default_url = "%s://%s:%d/" % (
-            ably.http.preferred_scheme,
-            default_host,
-            ably.http.preferred_port)
+        default_url = f"{ably.http.preferred_scheme}://{default_host}:{ably.http.preferred_port}/"
 
         mock_response = httpx.Response(600, json={'message': "", 'status_code': 600, 'code': 50500})
 

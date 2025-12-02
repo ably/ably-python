@@ -15,7 +15,7 @@ class TestPaginatedResult(BaseAsyncTestCase):
                 return Response(
                     status_code=status,
                     headers=headers,
-                    content='[{"page": %i}]' % int(res)
+                    content=f'[{{"page": {int(res)}}}]'
                 )
 
             return Response(

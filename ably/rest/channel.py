@@ -22,7 +22,7 @@ class Channel:
     def __init__(self, ably, name, options):
         self.__ably = ably
         self.__name = name
-        self.__base_path = '/channels/%s/' % parse.quote_plus(name, safe=':')
+        self.__base_path = '/channels/{}/'.format(parse.quote_plus(name, safe=':'))
         self.__cipher = None
         self.options = options
         self.__presence = Presence(self)
@@ -47,7 +47,7 @@ class Channel:
             if all(message.id is None for message in messages):
                 base_id = base64.b64encode(os.urandom(12)).decode()
                 for serial, message in enumerate(messages):
-                    message.id = '{}:{}'.format(base_id, serial)
+                    message.id = f'{base_id}:{serial}'
 
         request_body_list = []
         for m in messages:
@@ -57,8 +57,8 @@ class Channel:
                     400, 40012)
             elif m.client_id is not None and not self.ably.auth.can_assume_client_id(m.client_id):
                 raise IncompatibleClientIdException(
-                    'Cannot publish with client_id \'{}\' as it is incompatible with the '
-                    'current configured client_id \'{}\''.format(m.client_id, self.ably.auth.client_id),
+                    f'Cannot publish with client_id \'{m.client_id}\' as it is incompatible with the '
+                    f'current configured client_id \'{self.ably.auth.client_id}\'',
                     400, 40012)
 
             if self.cipher:
@@ -83,7 +83,7 @@ class Channel:
         elif isinstance(arg, str):
             return await self.publish_name_data(arg, *args, **kwargs)
         else:
-            raise TypeError('Unexpected type %s' % type(arg))
+            raise TypeError(f'Unexpected type {type(arg)}')
 
     async def publish_message(self, message, params=None, timeout=None):
         return await self.publish_messages([message], params, timeout=timeout)
@@ -136,7 +136,7 @@ class Channel:
     async def status(self):
         """Retrieves current channel active status with no. of publishers, subscribers, presence_members etc"""
 
-        path = '/channels/%s' % self.name
+        path = f'/channels/{self.name}'
         response = await self.ably.http.get(path)
         obj = response.to_native()
         return ChannelDetails.from_dict(obj)

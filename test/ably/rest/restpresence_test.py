@@ -69,7 +69,7 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         presence_page = await self.channel.presence.get()
         member = presence_page.items[0]
 
-        assert member.member_key == "%s:%s" % (member.connection_id, member.client_id)
+        assert member.member_key == f"{member.connection_id}:{member.client_id}"
 
     def presence_mock_url(self):
         kwargs = {

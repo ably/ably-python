@@ -103,7 +103,7 @@ class EncodeDataMixin:
                     log.error(f'VCDiff decode failed: {e}')
                     raise AblyException('VCDiff decode failure', 40018, 40018)
 
-            elif encoding.startswith('%s+' % CipherData.ENCODING_ID):
+            elif encoding.startswith(f'{CipherData.ENCODING_ID}+'):
                 if not cipher:
                     log.error('Message cannot be decrypted as the channel is '
                               'not set up for encryption & decryption')
@@ -116,7 +116,7 @@ class EncodeDataMixin:
                 pass
             else:
                 log.error('Message cannot be decoded. '
-                          "Unsupported encoding type: '%s'" % encoding)
+                          f"Unsupported encoding type: '{encoding}'")
                 encoding_list.append(encoding)
                 break
 

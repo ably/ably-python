@@ -34,7 +34,7 @@ class AuthOptions:
             self.auth_options['key_name'] = key_name
             self.auth_options['key_secret'] = key_secret
         except ValueError:
-            raise AblyException("key of not len 2 parameters: {0}"
+            raise AblyException("key of not len 2 parameters: {}"
                                 .format(key.split(':')),
                                 401, 40101)
 

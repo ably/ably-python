@@ -4,9 +4,9 @@ import json
 import logging
 import os
 import uuid
+from unittest import mock
 
 import httpx
-import mock
 import msgpack
 import pytest
 
@@ -57,13 +57,13 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert len(messages) == 4, "Expected 4 messages"
 
         message_contents = dict((m.name, m.data) for m in messages)
-        log.debug("message_contents: %s" % str(message_contents))
+        log.debug(f"message_contents: {str(message_contents)}")
 
         assert message_contents["publish0"] == "This is a string message payload", \
             "Expect publish0 to be expected String)"
 
         assert message_contents["publish1"] == b"This is a byte[] message payload", \
-            "Expect publish1 to be expected byte[]. Actual: %s" % str(message_contents['publish1'])
+            "Expect publish1 to be expected byte[]. Actual: {}".format(str(message_contents['publish1']))
 
         assert message_contents["publish2"] == {"test": "This is a JSONObject message payload"}, \
             "Expect publish2 to be expected JSONObject"
@@ -82,7 +82,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = self.ably.channels[
             self.get_channel_name('persisted:message_list_channel')]
 
-        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
+        expected_messages = [Message(f"name-{i}", str(i)) for i in range(3)]
 
         await channel.publish(messages=expected_messages)
 
@@ -101,7 +101,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = self.ably.channels[
             self.get_channel_name('persisted:message_list_channel_one_request')]
 
-        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
+        expected_messages = [Message(f"name-{i}", str(i)) for i in range(3)]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -373,7 +373,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         name = self.get_channel_name('persisted:interoperability_channel')
         channel = self.ably.channels[name]
 
-        url = 'https://%s/channels/%s/messages' % (self.test_vars["host"], name)
+        url = 'https://{}/channels/{}/messages'.format(self.test_vars["host"], name)
         key = self.test_vars['keys'][0]
         auth = (key['key_name'], key['key_secret'])
 

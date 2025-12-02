@@ -43,8 +43,8 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
             b'\x28\x4c\xe4\x8d\x4b\xdc\x9d\x42'
             b'\x8a\x77\x6b\x53\x2d\xc7\xb5\xc0')
 
-        log.debug("KEY_LEN: %d" % len(key))
-        log.debug("IV_LEN: %d" % len(iv))
+        log.debug(f"KEY_LEN: {len(key)}")
+        log.debug(f"IV_LEN: {len(iv)}")
         cipher = get_cipher({'key': key, 'iv': iv})
 
         plaintext = b"The quick brown fox"
@@ -75,13 +75,13 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert 4 == len(messages), "Expected 4 messages"
 
         message_contents = dict((m.name, m.data) for m in messages)
-        log.debug("message_contents: %s" % str(message_contents))
+        log.debug(f"message_contents: {str(message_contents)}")
 
         assert "This is a string message payload" == message_contents["publish3"],\
                "Expect publish3 to be expected String)"
 
         assert b"This is a byte[] message payload" == message_contents["publish4"],\
-               "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
+               "Expect publish4 to be expected byte[]. Actual: {}".format(str(message_contents['publish4']))
 
         assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"],\
                "Expect publish5 to be expected JSONObject"
@@ -108,13 +108,13 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert 4 == len(messages), "Expected 4 messages"
 
         message_contents = dict((m.name, m.data) for m in messages)
-        log.debug("message_contents: %s" % str(message_contents))
+        log.debug(f"message_contents: {str(message_contents)}")
 
         assert "This is a string message payload" == message_contents["publish3"],\
                "Expect publish3 to be expected String)"
 
         assert b"This is a byte[] message payload" == message_contents["publish4"],\
-               "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
+               "Expect publish4 to be expected byte[]. Actual: {}".format(str(message_contents['publish4']))
 
         assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"],\
                "Expect publish5 to be expected JSONObject"
@@ -157,13 +157,13 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert 4 == len(messages), "Expected 4 messages"
 
         message_contents = dict((m.name, m.data) for m in messages)
-        log.debug("message_contents: %s" % str(message_contents))
+        log.debug(f"message_contents: {str(message_contents)}")
 
         assert "This is a string message payload" == message_contents["publish3"],\
                "Expect publish3 to be expected String"
 
         assert b"This is a byte[] message payload" == message_contents["publish4"],\
-               "Expect publish4 to be expected byte[]. Actual: %s" % str(message_contents['publish4'])
+               "Expect publish4 to be expected byte[]. Actual: {}".format(str(message_contents['publish4']))
 
         assert {"test": "This is a JSONObject message payload"} == message_contents["publish5"],\
                "Expect publish5 to be expected JSONObject"
@@ -204,7 +204,7 @@ class AbstractTestCryptoWithFixture:
     @classmethod
     def setUpClass(cls):
         resources_path = os.path.join(utils.get_submodule_dir(__file__), 'test-resources', cls.fixture_file)
-        with open(resources_path, 'r') as f:
+        with open(resources_path) as f:
             cls.fixture = json.loads(f.read())
             cls.params = {
                 'secret_key': base64.b64decode(cls.fixture['key'].encode('ascii')),

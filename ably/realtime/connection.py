@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from ably.realtime.connectionmanager import ConnectionManager
 from ably.types.connectiondetails import ConnectionDetails
@@ -41,7 +41,7 @@ class Connection(EventEmitter):  # RTN4
 
     def __init__(self, realtime: AblyRealtime):
         self.__realtime = realtime
-        self.__error_reason: Optional[AblyException] = None
+        self.__error_reason: AblyException | None = None
         self.__state = ConnectionState.CONNECTING if realtime.options.auto_connect else ConnectionState.INITIALIZED
         self.__connection_manager = ConnectionManager(self.__realtime, self.state)
         self.__connection_manager.on('connectionstate', self._on_state_update)  # RTN4a
@@ -104,7 +104,7 @@ class Connection(EventEmitter):  # RTN4
 
     # RTN25
     @property
-    def error_reason(self) -> Optional[AblyException]:
+    def error_reason(self) -> AblyException | None:
         """An object describing the last error which occurred on the channel, if any."""
         return self.__error_reason
 
@@ -117,5 +117,5 @@ class Connection(EventEmitter):  # RTN4
         return self.__connection_manager
 
     @property
-    def connection_details(self) -> Optional[ConnectionDetails]:
+    def connection_details(self) -> ConnectionDetails | None:
         return self.__connection_manager.connection_details

@@ -18,7 +18,7 @@ def to_text(value):
     elif isinstance(value, bytes):
         return value.decode()
     else:
-        raise TypeError("expected string or bytes, not %s" % type(value))
+        raise TypeError(f"expected string or bytes, not {type(value)}")
 
 
 class Message(EncodeDataMixin):

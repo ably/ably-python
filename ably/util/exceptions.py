@@ -20,9 +20,9 @@ class AblyException(Exception):
         self.cause = cause
 
     def __str__(self):
-        str = '%s %s %s' % (self.code, self.status_code, self.message)
+        str = f'{self.code} {self.status_code} {self.message}'
         if self.cause is not None:
-            str += ' (cause: %s)' % self.cause
+            str += f' (cause: {self.cause})'
         return str
 
     @property
@@ -77,7 +77,7 @@ class AblyException(Exception):
     def from_exception(e):
         if isinstance(e, AblyException):
             return e
-        return AblyException("Unexpected exception: %s" % e, 500, 50000)
+        return AblyException(f"Unexpected exception: {e}", 500, 50000)
 
     @staticmethod
     def from_dict(value: dict):

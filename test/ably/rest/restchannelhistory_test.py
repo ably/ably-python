@@ -59,7 +59,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history0 = self.get_channel('persisted:channelhistory_multi_50_f')
 
         for i in range(50):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='forwards')
         assert history is not None
@@ -67,14 +67,14 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert len(messages) == 50, "Expected 50 messages"
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(50)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(50)]
         assert messages == expected_messages, 'Expect messages in forward order'
 
     async def test_channel_history_multi_50_backwards(self):
         history0 = self.get_channel('persisted:channelhistory_multi_50_b')
 
         for i in range(50):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='backwards')
         assert history is not None
@@ -82,7 +82,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 50 == len(messages), "Expected 50 messages"
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(49, -1, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(49, -1, -1)]
         assert expected_messages == messages, 'Expect messages in reverse order'
 
     def history_mock_url(self, channel_name):
@@ -133,7 +133,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         history0 = self.get_channel('persisted:channelhistory_limit_f')
 
         for i in range(50):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='forwards', limit=25)
         assert history is not None
@@ -141,14 +141,14 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert len(messages) == 25, "Expected 25 messages"
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(25)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(25)]
         assert messages == expected_messages, 'Expect messages in forward order'
 
     async def test_channel_history_limit_backwards(self):
         history0 = self.get_channel('persisted:channelhistory_limit_b')
 
         for i in range(50):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='backwards', limit=25)
         assert history is not None
@@ -156,24 +156,24 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert len(messages) == 25, "Expected 25 messages"
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(49, 24, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(49, 24, -1)]
         assert messages == expected_messages, 'Expect messages in forward order'
 
     async def test_channel_history_time_forwards(self):
         history0 = self.get_channel('persisted:channelhistory_time_f')
 
         for i in range(20):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         interval_start = await self.ably.time()
 
         for i in range(20, 40):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         interval_end = await self.ably.time()
 
         for i in range(40, 60):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='forwards', start=interval_start,
                                          end=interval_end)
@@ -182,24 +182,24 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 20 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(20, 40)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(20, 40)]
         assert expected_messages == messages, 'Expect messages in forward order'
 
     async def test_channel_history_time_backwards(self):
         history0 = self.get_channel('persisted:channelhistory_time_b')
 
         for i in range(20):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         interval_start = await self.ably.time()
 
         for i in range(20, 40):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         interval_end = await self.ably.time()
 
         for i in range(40, 60):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='backwards', start=interval_start,
                                          end=interval_end)
@@ -208,14 +208,14 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 20 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(39, 19, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(39, 19, -1)]
         assert expected_messages, messages == 'Expect messages in reverse order'
 
     async def test_channel_history_paginate_forwards(self):
         history0 = self.get_channel('persisted:channelhistory_paginate_f')
 
         for i in range(50):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='forwards', limit=10)
         messages = history.items
@@ -223,7 +223,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(0, 10)]
         assert expected_messages == messages, 'Expected 10 messages'
 
         history = await history.next()
@@ -231,7 +231,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(10, 20)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(10, 20)]
         assert expected_messages == messages, 'Expected 10 messages'
 
         history = await history.next()
@@ -239,21 +239,21 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(20, 30)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(20, 30)]
         assert expected_messages == messages, 'Expected 10 messages'
 
     async def test_channel_history_paginate_backwards(self):
         history0 = self.get_channel('persisted:channelhistory_paginate_b')
 
         for i in range(50):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='backwards', limit=10)
         messages = history.items
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(49, 39, -1)]
         assert expected_messages == messages, 'Expected 10 messages'
 
         history = await history.next()
@@ -261,7 +261,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(39, 29, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(39, 29, -1)]
         assert expected_messages == messages, 'Expected 10 messages'
 
         history = await history.next()
@@ -269,20 +269,20 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(29, 19, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(29, 19, -1)]
         assert expected_messages == messages, 'Expected 10 messages'
 
     async def test_channel_history_paginate_forwards_first(self):
         history0 = self.get_channel('persisted:channelhistory_paginate_first_f')
         for i in range(50):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='forwards', limit=10)
         messages = history.items
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(0, 10)]
         assert expected_messages == messages, 'Expected 10 messages'
 
         history = await history.next()
@@ -290,7 +290,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(10, 20)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(10, 20)]
         assert expected_messages == messages, 'Expected 10 messages'
 
         history = await history.first()
@@ -298,21 +298,21 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(0, 10)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(0, 10)]
         assert expected_messages == messages, 'Expected 10 messages'
 
     async def test_channel_history_paginate_backwards_rel_first(self):
         history0 = self.get_channel('persisted:channelhistory_paginate_first_b')
 
         for i in range(50):
-            await history0.publish('history%d' % i, str(i))
+            await history0.publish(f'history{i}', str(i))
 
         history = await history0.history(direction='backwards', limit=10)
         messages = history.items
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(49, 39, -1)]
         assert expected_messages == messages, 'Expected 10 messages'
 
         history = await history.next()
@@ -320,7 +320,7 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(39, 29, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(39, 29, -1)]
         assert expected_messages == messages, 'Expected 10 messages'
 
         history = await history.first()
@@ -328,5 +328,5 @@ class TestRestChannelHistory(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert 10 == len(messages)
 
         message_contents = {m.name: m for m in messages}
-        expected_messages = [message_contents['history%d' % i] for i in range(49, 39, -1)]
+        expected_messages = [message_contents[f'history{i}'] for i in range(49, 39, -1)]
         assert expected_messages == messages, 'Expected 10 messages'

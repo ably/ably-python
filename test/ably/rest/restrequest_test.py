@@ -18,9 +18,9 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
         # Populate the channel (using the new api)
         self.channel = self.get_channel_name()
-        self.path = '/channels/%s/messages' % self.channel
+        self.path = f'/channels/{self.channel}/messages'
         for i in range(20):
-            body = {'name': 'event%s' % i, 'data': 'lorem ipsum %s' % i}
+            body = {'name': f'event{i}', 'data': f'lorem ipsum {i}'}
             await self.ably.request('POST', self.path, body=body, version=Defaults.protocol_version)
 
     async def asyncTearDown(self):

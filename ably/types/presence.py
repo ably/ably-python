@@ -79,7 +79,7 @@ class PresenceMessage(EncodeDataMixin):
     @property
     def member_key(self):
         if self.connection_id and self.client_id:
-            return "%s:%s" % (self.connection_id, self.client_id)
+            return f"{self.connection_id}:{self.client_id}"
 
     @property
     def extras(self):
@@ -115,7 +115,7 @@ class PresenceMessage(EncodeDataMixin):
 
 class Presence:
     def __init__(self, channel):
-        self.__base_path = '/channels/%s/' % parse.quote_plus(channel.name)
+        self.__base_path = f'/channels/{parse.quote_plus(channel.name)}/'
         self.__binary = channel.ably.options.use_binary_protocol
         self.__http = channel.ably.http
         self.__cipher = channel.cipher

@@ -193,9 +193,7 @@ class Http:
                 # if it's the last try or cumulative timeout is done, we stop retrying
                 return retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration
 
-            base_url = "%s://%s:%d" % (self.preferred_scheme,
-                                       host,
-                                       self.preferred_port)
+            base_url = f"{self.preferred_scheme}://{host}:{self.preferred_port}"
             url = urljoin(base_url, path)
 
             (clean_url, url_params) = extract_url_params(url)

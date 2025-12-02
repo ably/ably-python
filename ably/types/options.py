@@ -301,7 +301,7 @@ class Options(AuthOptions):
 
         # Prepend environment
         if environment != 'production':
-            host = '%s-%s' % (environment, host)
+            host = f'{environment}-{host}'
 
         # Fallback hosts
         fallback_hosts = self.fallback_hosts

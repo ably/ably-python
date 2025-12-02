@@ -22,7 +22,7 @@ class TokenRequest:
             self.ttl or "",
             self.capability or "",
             self.client_id or "",
-            "%d" % (self.timestamp or 0),
+            f"{self.timestamp or 0}",
             self.nonce or "",
             "",  # to get the trailing new line
         ]])

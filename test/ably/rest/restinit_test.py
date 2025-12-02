@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 import pytest
 from httpx import AsyncClient
-from mock import patch
 
 from ably import AblyException, AblyRest
 from ably.transport.defaults import Defaults
@@ -74,12 +75,12 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         # environment: production
         ably = AblyRest(token='foo', environment="production")
         host = ably.options.get_rest_host()
-        assert "rest.ably.io" == host, "Unexpected host mismatch %s" % host
+        assert "rest.ably.io" == host, f"Unexpected host mismatch {host}"
 
         # environment: other
         ably = AblyRest(token='foo', environment="sandbox")
         host = ably.options.get_rest_host()
-        assert "sandbox-rest.ably.io" == host, "Unexpected host mismatch %s" % host
+        assert "sandbox-rest.ably.io" == host, f"Unexpected host mismatch {host}"
 
         # both, as per #TO3k2
         with pytest.raises(ValueError):
@@ -124,19 +125,19 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     def test_specified_port(self):
         ably = AblyRest(token='foo', port=9998, tls_port=9999)
         assert 9999 == Defaults.get_port(ably.options),\
-               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+               f"Unexpected port mismatch. Expected: 9999. Actual: {ably.options.tls_port}"
 
     @dont_vary_protocol
     def test_specified_non_tls_port(self):
         ably = AblyRest(token='foo', port=9998, tls=False)
         assert 9998 == Defaults.get_port(ably.options),\
-               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+               f"Unexpected port mismatch. Expected: 9999. Actual: {ably.options.tls_port}"
 
     @dont_vary_protocol
     def test_specified_tls_port(self):
         ably = AblyRest(token='foo', tls_port=9999, tls=True)
         assert 9999 == Defaults.get_port(ably.options),\
-               "Unexpected port mismatch. Expected: 9999. Actual: %d" % ably.options.tls_port
+               f"Unexpected port mismatch. Expected: 9999. Actual: {ably.options.tls_port}"
 
     @dont_vary_protocol
     def test_tls_defaults_to_true(self):
@@ -180,13 +181,13 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_requests_over_https_production(self):
         ably = AblyRest(token='token')
-        assert 'https://rest.ably.io' == '{0}://{1}'.format(ably.http.preferred_scheme, ably.http.preferred_host)
+        assert 'https://rest.ably.io' == f'{ably.http.preferred_scheme}://{ably.http.preferred_host}'
         assert ably.http.preferred_port == 443
 
     @dont_vary_protocol
     def test_requests_over_http_production(self):
         ably = AblyRest(token='token', tls=False)
-        assert 'http://rest.ably.io' == '{0}://{1}'.format(ably.http.preferred_scheme, ably.http.preferred_host)
+        assert 'http://rest.ably.io' == f'{ably.http.preferred_scheme}://{ably.http.preferred_host}'
         assert ably.http.preferred_port == 80
 
     @dont_vary_protocol

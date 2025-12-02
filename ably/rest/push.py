@@ -47,10 +47,10 @@ class PushAdmin:
         - `data`: the data of the notification
         """
         if not isinstance(recipient, dict):
-            raise TypeError('Unexpected %s recipient, expected a dict' % type(recipient))
+            raise TypeError(f'Unexpected {type(recipient)} recipient, expected a dict')
 
         if not isinstance(data, dict):
-            raise TypeError('Unexpected %s data, expected a dict' % type(data))
+            raise TypeError(f'Unexpected {type(data)} data, expected a dict')
 
         if not recipient:
             raise ValueError('recipient is empty')
@@ -79,7 +79,7 @@ class PushDeviceRegistrations:
         :Parameters:
         - `device_id`: the id of the device
         """
-        path = '/push/deviceRegistrations/%s' % device_id
+        path = f'/push/deviceRegistrations/{device_id}'
         response = await self.ably.http.get(path)
         obj = response.to_native()
         return DeviceDetails.from_dict(obj)
@@ -103,7 +103,7 @@ class PushDeviceRegistrations:
         - `device`: a dictionary with the device information
         """
         device_details = DeviceDetails.factory(device)
-        path = '/push/deviceRegistrations/%s' % device_details.id
+        path = f'/push/deviceRegistrations/{device_details.id}'
         body = device_details.as_dict()
         response = await self.ably.http.put(path, body=body)
         obj = response.to_native()
@@ -115,7 +115,7 @@ class PushDeviceRegistrations:
         :Parameters:
         - `device_id`: the id of the device
         """
-        path = '/push/deviceRegistrations/%s' % device_id
+        path = f'/push/deviceRegistrations/{device_id}'
         return await self.ably.http.delete(path)
 
     async def remove_where(self, **params):

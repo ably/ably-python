@@ -5,7 +5,7 @@ import logging
 import time
 import uuid
 from datetime import timedelta
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -31,7 +31,7 @@ class Auth:
         BASIC = "BASIC"
         TOKEN = "TOKEN"
 
-    def __init__(self, ably: Union[AblyRest, AblyRealtime], options: Options):
+    def __init__(self, ably: AblyRest | AblyRealtime, options: Options):
         self.__ably = ably
         self.__auth_options = options
 
@@ -43,10 +43,10 @@ class Auth:
             self.__client_id = None
         self.__client_id_validated: bool = False
 
-        self.__basic_credentials: Optional[str] = None
-        self.__auth_params: Optional[dict] = None
-        self.__token_details: Optional[TokenDetails] = None
-        self.__time_offset: Optional[int] = None
+        self.__basic_credentials: str | None = None
+        self.__auth_params: dict | None = None
+        self.__token_details: TokenDetails | None = None
+        self.__time_offset: int | None = None
 
         must_use_token_auth = options.use_token_auth is True
         must_not_use_token_auth = options.use_token_auth is False
@@ -56,7 +56,7 @@ class Auth:
             # default to using basic auth
             log.debug("anonymous, using basic auth")
             self.__auth_mechanism = Auth.Method.BASIC
-            basic_key = "%s:%s" % (options.key_name, options.key_secret)
+            basic_key = f"{options.key_name}:{options.key_secret}"
             basic_key = base64.b64encode(basic_key.encode('utf-8'))
             self.__basic_credentials = basic_key.decode('ascii')
             return
@@ -151,14 +151,14 @@ class Auth:
 
         return expires < timestamp + token_details.TOKEN_EXPIRY_BUFFER
 
-    async def authorize(self, token_params: Optional[dict] = None, auth_options=None):
+    async def authorize(self, token_params: dict | None = None, auth_options=None):
         return await self.__authorize_when_necessary(token_params, auth_options, force=True)
 
-    async def request_token(self, token_params: Optional[dict] = None,
+    async def request_token(self, token_params: dict | None = None,
                             # auth_options
-                            key_name: Optional[str] = None, key_secret: Optional[str] = None, auth_callback=None,
-                            auth_url: Optional[str] = None, auth_method: Optional[str] = None,
-                            auth_headers: Optional[dict] = None, auth_params: Optional[dict] = None,
+                            key_name: str | None = None, key_secret: str | None = None, auth_callback=None,
+                            auth_url: str | None = None, auth_method: str | None = None,
+                            auth_headers: dict | None = None, auth_params: dict | None = None,
                             query_time=None):
         token_params = token_params or {}
         token_params = dict(self.auth_options.default_token_params,
@@ -166,8 +166,8 @@ class Auth:
         key_name = key_name or self.auth_options.key_name
         key_secret = key_secret or self.auth_options.key_secret
 
-        log.debug("Auth callback: %s" % auth_callback)
-        log.debug("Auth options: %s" % self.auth_options)
+        log.debug(f"Auth callback: {auth_callback}")
+        log.debug(f"Auth options: {self.auth_options}")
         if query_time is None:
             query_time = self.auth_options.query_time
         query_time = bool(query_time)
@@ -180,7 +180,7 @@ class Auth:
 
         auth_headers = auth_headers or self.auth_options.auth_headers or {}
 
-        log.debug("Token Params: %s" % token_params)
+        log.debug(f"Token Params: {token_params}")
         if auth_callback:
             log.debug("using token auth with authCallback")
             try:
@@ -218,7 +218,7 @@ class Auth:
         elif token_request is None:
             raise AblyAuthException("Token string was None", 401, 40170)
 
-        token_path = "/keys/%s/requestToken" % token_request.key_name
+        token_path = f"/keys/{token_request.key_name}/requestToken"
 
         response = await self.ably.http.post(
             token_path,
@@ -229,11 +229,11 @@ class Auth:
 
         AblyException.raise_for_response(response)
         response_dict = response.to_native()
-        log.debug("Token: %s" % str(response_dict.get("token")))
+        log.debug("Token: {}".format(str(response_dict.get("token"))))
         return TokenDetails.from_dict(response_dict)
 
-    async def create_token_request(self, token_params: Optional[dict | str] = None, key_name: Optional[str] = None,
-                                   key_secret: Optional[str] = None, query_time=None):
+    async def create_token_request(self, token_params: dict | str | None = None, key_name: str | None = None,
+                                   key_secret: str | None = None, query_time=None):
         token_params = token_params or {}
         token_request = {}
 
@@ -349,7 +349,7 @@ class Auth:
         if original_client_id is not None and original_client_id != '*' and new_client_id != original_client_id:
             raise IncompatibleClientIdException(
                 "Client ID is immutable once configured for a client. "
-                "Client ID cannot be changed to '{}'".format(new_client_id), 400, 40102)
+                f"Client ID cannot be changed to '{new_client_id}'", 400, 40102)
 
         self.__client_id_validated = True
         self.__client_id = new_client_id
@@ -369,16 +369,16 @@ class Auth:
             # RSA7e2
             if self.client_id:
                 return {
-                    'Authorization': 'Basic %s' % self.basic_credentials,
+                    'Authorization': f'Basic {self.basic_credentials}',
                     'X-Ably-ClientId': base64.b64encode(self.client_id.encode('utf-8'))
                 }
             return {
-                'Authorization': 'Basic %s' % self.basic_credentials,
+                'Authorization': f'Basic {self.basic_credentials}',
             }
         else:
             await self.__authorize_when_necessary()
             return {
-                'Authorization': 'Bearer %s' % self.token_credentials,
+                'Authorization': f'Bearer {self.token_credentials}',
             }
 
     def _timestamp(self):

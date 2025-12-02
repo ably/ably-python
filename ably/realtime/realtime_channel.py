@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 from ably.realtime.connection import ConnectionState
 from ably.rest.channel import Channel
@@ -34,7 +34,7 @@ class ChannelOptions:
         Channel parameters that configure the behavior of the channel.
     """
 
-    def __init__(self, cipher: Optional[CipherParams] = None, params: Optional[dict] = None):
+    def __init__(self, cipher: CipherParams | None = None, params: dict | None = None):
         self.__cipher = cipher
         self.__params = params
         # Validate params
@@ -47,7 +47,7 @@ class ChannelOptions:
         return self.__cipher
 
     @property
-    def params(self) -> Dict[str, str]:
+    def params(self) -> dict[str, str]:
         """Get channel parameters"""
         return self.__params
 
@@ -66,7 +66,7 @@ class ChannelOptions:
             tuple(sorted(self.__params.items())) if self.__params else None,
         ))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation"""
         result = {}
         if self.__cipher is not None:
@@ -76,7 +76,7 @@ class ChannelOptions:
         return result
 
     @classmethod
-    def from_dict(cls, options_dict: Dict[str, Any]) -> 'ChannelOptions':
+    def from_dict(cls, options_dict: dict[str, Any]) -> ChannelOptions:
         """Create ChannelOptions from dictionary"""
         if not isinstance(options_dict, dict):
             raise AblyException("options must be a dictionary", 40000, 400)
@@ -112,20 +112,20 @@ class RealtimeChannel(EventEmitter, Channel):
         Unsubscribe to messages from a channel
     """
 
-    def __init__(self, realtime: AblyRealtime, name: str, channel_options: Optional[ChannelOptions] = None):
+    def __init__(self, realtime: AblyRealtime, name: str, channel_options: ChannelOptions | None = None):
         EventEmitter.__init__(self)
         self.__name = name
         self.__realtime = realtime
         self.__state = ChannelState.INITIALIZED
         self.__message_emitter = EventEmitter()
-        self.__state_timer: Optional[Timer] = None
+        self.__state_timer: Timer | None = None
         self.__attach_resume = False
-        self.__attach_serial: Optional[str] = None
-        self.__channel_serial: Optional[str] = None
-        self.__retry_timer: Optional[Timer] = None
-        self.__error_reason: Optional[AblyException] = None
+        self.__attach_serial: str | None = None
+        self.__channel_serial: str | None = None
+        self.__retry_timer: Timer | None = None
+        self.__error_reason: AblyException | None = None
         self.__channel_options = channel_options or ChannelOptions()
-        self.__params: Optional[Dict[str, str]] = None
+        self.__params: dict[str, str] | None = None
 
         # Delta-specific fields for RTL19/RTL20 compliance
         vcdiff_decoder = self.__realtime.options.vcdiff_decoder if self.__realtime.options.vcdiff_decoder else None
@@ -445,7 +445,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self._notify_state(state)
         self._check_pending_state()
 
-    def _notify_state(self, state: ChannelState, reason: Optional[AblyException] = None,
+    def _notify_state(self, state: ChannelState, reason: AblyException | None = None,
                       resumed: bool = False) -> None:
         log.debug(f'RealtimeChannel._notify_state(): state = {state}')
 
@@ -565,12 +565,12 @@ class RealtimeChannel(EventEmitter, Channel):
 
     # RTL24
     @property
-    def error_reason(self) -> Optional[AblyException]:
+    def error_reason(self) -> AblyException | None:
         """An AblyException instance describing the last error which occurred on the channel, if any."""
         return self.__error_reason
 
     @property
-    def params(self) -> Dict[str, str]:
+    def params(self) -> dict[str, str]:
         """Get channel parameters"""
         return self.__params
 
@@ -605,7 +605,7 @@ class Channels(RestChannels):
     """
 
     # RTS3
-    def get(self, name: str, options: Optional[ChannelOptions] = None) -> RealtimeChannel:
+    def get(self, name: str, options: ChannelOptions | None = None) -> RealtimeChannel:
         """Creates a new RealtimeChannel object, or returns the existing channel object.
 
         Parameters
@@ -668,7 +668,7 @@ class Channels(RestChannels):
 
         channel._on_message(msg)
 
-    def _propagate_connection_interruption(self, state: ConnectionState, reason: Optional[AblyException]) -> None:
+    def _propagate_connection_interruption(self, state: ConnectionState, reason: AblyException | None) -> None:
         from_channel_states = (
             ChannelState.ATTACHING,
             ChannelState.ATTACHED,

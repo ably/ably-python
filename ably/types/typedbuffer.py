@@ -74,7 +74,7 @@ class TypedBuffer:
                 data_type = DataType.INT64
                 buffer = struct.pack('>q', obj)
             else:
-                raise ValueError('Number too large %d' % obj)
+                raise ValueError(f'Number too large {obj}')
         elif isinstance(obj, float):
             data_type = DataType.DOUBLE
             buffer = struct.pack('>d', obj)
@@ -85,7 +85,7 @@ class TypedBuffer:
             data_type = DataType.JSONOBJECT
             buffer = json.dumps(obj, separators=(',', ':')).encode('utf-8')
         else:
-            raise TypeError('Unexpected object type %s' % type(obj))
+            raise TypeError(f'Unexpected object type {type(obj)}')
 
         return TypedBuffer(buffer, data_type)
 
@@ -101,4 +101,4 @@ class TypedBuffer:
         decoder = _decoders.get(self.type)
         if decoder is not None:
             return decoder(self.buffer)
-        raise ValueError('Unsupported data type %s' % self.type)
+        raise ValueError(f'Unsupported data type {self.type}')

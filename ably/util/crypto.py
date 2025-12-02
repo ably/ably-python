@@ -116,8 +116,7 @@ class CbcChannelCipher:
 
     @property
     def cipher_type(self):
-        return ("%s-%s-%s" % (self.__algorithm, self.__key_length,
-                self.__mode)).lower()
+        return (f"{self.__algorithm}-{self.__key_length}-{self.__mode}").lower()
 
 
 class CipherData(TypedBuffer):
@@ -175,5 +174,5 @@ def validate_cipher_params(cipher_params):
         if key_length == 128 or key_length == 256:
             return
         raise ValueError(
-            'Unsupported key length %s for aes-cbc encryption. Encryption key must be 128 or 256 bits'
-            ' (16 or 32 ASCII characters)' % key_length)
+            f'Unsupported key length {key_length} for aes-cbc encryption. Encryption key must be 128 or 256 bits'
+            ' (16 or 32 ASCII characters)')
