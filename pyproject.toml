@@ -43,9 +43,8 @@ vcdiff = ["vcdiff-decoder>=0.1.0,<0.2.0"]
 dev = [
   "pytest>=7.1,<8.0",
   "mock>=4.0.3,<5.0.0",
-  "pep8-naming>=0.4.1,<0.5.0",
   "pytest-cov>=2.4,<3.0",
-  "flake8>=3.9.2,<4.0.0",
+  "ruff>=0.14.0,<1.0.0",
   "pytest-xdist>=1.15,<2.0",
   "respx>=0.20.0,<0.21.0; python_version=='3.7'",
   "respx>=0.22.0,<0.23.0; python_version>='3.8'",
@@ -79,3 +78,20 @@ timeout = 30
 name = "experimental"
 url = "https://test.pypi.org/simple/"
 explicit = true
+
+[tool.ruff]
+line-length = 115
+extend-exclude = [
+  "ably/sync",
+  "test/ably/sync",
+]
+
+[tool.ruff.lint]
+# Enable Pyflakes (F), pycodestyle (E, W), and pep8-naming (N)
+select = ["E", "W", "F", "N"]
+ignore = [
+  "N818",  # exception name should end in 'Error'
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # imported but unused

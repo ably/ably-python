@@ -33,5 +33,5 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --extra dev
-      - name: Lint with flake8
-        run: uv run flake8
+      - name: Lint with ruff
+        run: uv run ruff check
