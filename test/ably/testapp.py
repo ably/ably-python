@@ -1,16 +1,16 @@
 import json
-import os
 import logging
+import os
 
+from ably.realtime.realtime import AblyRealtime
 from ably.rest.rest import AblyRest
 from ably.types.capability import Capability
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
-from ably.realtime.realtime import AblyRealtime
 
 log = logging.getLogger(__name__)
 
-with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json', 'r') as f:
+with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json') as f:
     app_spec_local = json.loads(f.read())
 
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
@@ -56,9 +56,9 @@ class TestApp:
                 "environment": environment,
                 "realtime_host": realtime_host,
                 "keys": [{
-                    "key_name": "%s.%s" % (app_id, k.get("id", "")),
+                    "key_name": "{}.{}".format(app_id, k.get("id", "")),
                     "key_secret": k.get("value", ""),
-                    "key_str": "%s.%s:%s" % (app_id, k.get("id", ""), k.get("value", "")),
+                    "key_str": "{}.{}:{}".format(app_id, k.get("id", ""), k.get("value", "")),
                     "capability": Capability(json.loads(k.get("capability", "{}"))),
                 } for k in app_spec.get("keys", [])]
             }

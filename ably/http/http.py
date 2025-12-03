@@ -1,17 +1,17 @@
 import functools
+import json
 import logging
 import time
-import json
 from urllib.parse import urljoin
 
 import httpx
 import msgpack
 
-from ably.rest.auth import Auth
 from ably.http.httputils import HttpUtils
+from ably.rest.auth import Auth
 from ably.transport.defaults import Defaults
 from ably.util.exceptions import AblyException
-from ably.util.helper import is_token_error, extract_url_params
+from ably.util.helper import extract_url_params, is_token_error
 
 log = logging.getLogger(__name__)
 
@@ -188,14 +188,12 @@ class Http:
 
         hosts = self.get_rest_hosts()
         for retry_count, host in enumerate(hosts):
-            def should_stop_retrying():
+            def should_stop_retrying(retry_count=retry_count):
                 time_passed = time.time() - requested_at
                 # if it's the last try or cumulative timeout is done, we stop retrying
                 return retry_count == len(hosts) - 1 or time_passed > http_max_retry_duration
 
-            base_url = "%s://%s:%d" % (self.preferred_scheme,
-                                       host,
-                                       self.preferred_port)
+            base_url = f"{self.preferred_scheme}://{host}:{self.preferred_port}"
             url = urljoin(base_url, path)
 
             (clean_url, url_params) = extract_url_params(url)

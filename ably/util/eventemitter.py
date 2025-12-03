@@ -1,5 +1,6 @@
 import asyncio
 import logging
+
 from pyee.asyncio import AsyncIOEventEmitter
 
 from ably.util.helper import is_callable_or_coroutine

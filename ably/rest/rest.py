@@ -3,15 +3,14 @@ from typing import Optional
 from urllib.parse import urlencode
 
 from ably.http.http import Http
-from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse
-from ably.http.paginatedresult import format_params
+from ably.http.paginatedresult import HttpPaginatedResponse, PaginatedResult, format_params
 from ably.rest.auth import Auth
 from ably.rest.channel import Channels
 from ably.rest.push import Push
-from ably.util.exceptions import AblyException, catch_all
 from ably.types.options import Options
 from ably.types.stats import stats_response_processor
 from ably.types.tokendetails import TokenDetails
+from ably.util.exceptions import AblyException, catch_all
 
 log = logging.getLogger(__name__)
 
@@ -62,9 +61,7 @@ class AblyRest:
         else:
             options = Options(**kwargs)
 
-        try:
-            self._is_realtime
-        except AttributeError:
+        if not hasattr(self, '_is_realtime'):
             self._is_realtime = False
 
         self.__http = Http(self, options)

@@ -1,7 +1,7 @@
 import logging
 
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass
 
 log = logging.getLogger(__name__)
 

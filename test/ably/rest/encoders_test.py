@@ -2,14 +2,13 @@ import base64
 import json
 import logging
 import sys
+from unittest import mock
 
-import mock
 import msgpack
 
 from ably import CipherParams
-from ably.util.crypto import get_cipher
 from ably.types.message import Message
-
+from ably.util.crypto import get_cipher
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 

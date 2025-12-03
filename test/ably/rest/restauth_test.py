@@ -1,23 +1,20 @@
+import base64
 import logging
 import sys
 import time
 import uuid
-import base64
-
+from unittest import mock
 from urllib.parse import parse_qs
-import mock
+
 import pytest
 import respx
-from httpx import Response, AsyncClient
+from httpx import AsyncClient, Response
 
 import ably
-from ably import AblyRest
-from ably import Auth
-from ably import AblyAuthException
+from ably import AblyAuthException, AblyRest, Auth
 from ably.types.tokendetails import TokenDetails
-
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 if sys.version_info >= (3, 8):
     from unittest.mock import AsyncMock
@@ -92,7 +89,7 @@ class TestAuth(BaseAsyncTestCase):
                 pass
         request = get_mock.call_args_list[0][0][0]
         authorization = request.headers['Authorization']
-        assert authorization == 'Basic %s' % base64.b64encode('bar:foo'.encode('ascii')).decode('utf-8')
+        assert authorization == 'Basic {}'.format(base64.b64encode('bar:foo'.encode('ascii')).decode('utf-8'))
 
     # RSA7e2
     async def test_request_basic_auth_header_with_client_id(self):
@@ -119,7 +116,8 @@ class TestAuth(BaseAsyncTestCase):
                 pass
         request = get_mock.call_args_list[0][0][0]
         authorization = request.headers['Authorization']
-        assert authorization == 'Bearer %s' % base64.b64encode('not_a_real_token'.encode('ascii')).decode('utf-8')
+        expected_token = base64.b64encode('not_a_real_token'.encode('ascii')).decode('utf-8')
+        assert authorization == f'Bearer {expected_token}'
 
     def test_if_cant_authenticate_via_token(self):
         with pytest.raises(ValueError):
@@ -221,7 +219,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
 
         # Authorize may call request_token with some default auth_options.
         for arg, value in auth_params.items():
-            assert auth_called[arg] == value, "%s called with wrong value: %s" % (arg, value)
+            assert auth_called[arg] == value, f"{arg} called with wrong value: {value}"
 
     async def test_with_token_str_https(self):
         token = await self.ably.auth.authorize()
@@ -491,7 +489,7 @@ class TestRenewToken(BaseAsyncTestCase):
         self.channel = uuid.uuid4().hex
         tokens = ['a_token', 'another_token']
         headers = {'Content-Type': 'application/json'}
-        self.mocked_api = respx.mock(base_url='https://{}'.format(self.host))
+        self.mocked_api = respx.mock(base_url=f'https://{self.host}')
         self.request_token_route = self.mocked_api.post(
             "/keys/{}/requestToken".format(self.test_vars["keys"][0]['key_name']),
             name="request_token_route")
@@ -520,7 +518,7 @@ class TestRenewToken(BaseAsyncTestCase):
                 },
             )
 
-        self.publish_attempt_route = self.mocked_api.post("/channels/{}/messages".format(self.channel),
+        self.publish_attempt_route = self.mocked_api.post(f"/channels/{self.channel}/messages",
                                                           name="publish_attempt_route")
         self.publish_attempt_route.side_effect = call_back
         self.mocked_api.start()
@@ -594,8 +592,8 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
         key = self.test_vars["keys"][0]['key_name']
         headers = {'Content-Type': 'application/json'}
 
-        self.mocked_api = respx.mock(base_url='https://{}'.format(self.host))
-        self.request_token_route = self.mocked_api.post("/keys/{}/requestToken".format(key),
+        self.mocked_api = respx.mock(base_url=f'https://{self.host}')
+        self.request_token_route = self.mocked_api.post(f"/keys/{key}/requestToken",
                                                         name="request_token_route")
         self.request_token_route.return_value = Response(
             status_code=200,
@@ -605,7 +603,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
                 'expires': int(time.time() * 1000),  # Always expires
             }
         )
-        self.publish_message_route = self.mocked_api.post("/channels/{}/messages".format(self.channel),
+        self.publish_message_route = self.mocked_api.post(f"/channels/{self.channel}/messages",
                                                           name="publish_message_route")
         self.time_route = self.mocked_api.get("/time", name="time_route")
         self.time_route.return_value = Response(

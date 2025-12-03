@@ -1,19 +1,22 @@
 from __future__ import annotations
-import logging
+
 import asyncio
+import logging
+from datetime import datetime
+from queue import Queue
+from typing import TYPE_CHECKING
+
 import httpx
-from ably.transport.websockettransport import WebSocketTransport, ProtocolMessageAction
+
 from ably.transport.defaults import Defaults
+from ably.transport.websockettransport import ProtocolMessageAction, WebSocketTransport
+from ably.types.connectiondetails import ConnectionDetails
 from ably.types.connectionerrors import ConnectionErrors
 from ably.types.connectionstate import ConnectionEvent, ConnectionState, ConnectionStateChange
 from ably.types.tokendetails import TokenDetails
-from ably.util.exceptions import AblyException, IncompatibleClientIdException
 from ably.util.eventemitter import EventEmitter
-from datetime import datetime
-from ably.util.helper import get_random_id, Timer, is_token_error
-from typing import Optional, TYPE_CHECKING
-from ably.types.connectiondetails import ConnectionDetails
-from queue import Queue
+from ably.util.exceptions import AblyException, IncompatibleClientIdException
+from ably.util.helper import Timer, get_random_id, is_token_error
 
 if TYPE_CHECKING:
     from ably.realtime.realtime import AblyRealtime
@@ -26,23 +29,23 @@ class ConnectionManager(EventEmitter):
         self.options = realtime.options
         self.__ably = realtime
         self.__state: ConnectionState = initial_state
-        self.__ping_future: Optional[asyncio.Future] = None
+        self.__ping_future: asyncio.Future | None = None
         self.__timeout_in_secs: float = self.options.realtime_request_timeout / 1000
-        self.transport: Optional[WebSocketTransport] = None
-        self.__connection_details: Optional[ConnectionDetails] = None
-        self.connection_id: Optional[str] = None
+        self.transport: WebSocketTransport | None = None
+        self.__connection_details: ConnectionDetails | None = None
+        self.connection_id: str | None = None
         self.__fail_state = ConnectionState.DISCONNECTED
-        self.transition_timer: Optional[Timer] = None
-        self.suspend_timer: Optional[Timer] = None
-        self.retry_timer: Optional[Timer] = None
-        self.connect_base_task: Optional[asyncio.Task] = None
-        self.disconnect_transport_task: Optional[asyncio.Task] = None
+        self.transition_timer: Timer | None = None
+        self.suspend_timer: Timer | None = None
+        self.retry_timer: Timer | None = None
+        self.connect_base_task: asyncio.Task | None = None
+        self.disconnect_transport_task: asyncio.Task | None = None
         self.__fallback_hosts: list[str] = self.options.get_fallback_realtime_hosts()
         self.queued_messages: Queue = Queue()
-        self.__error_reason: Optional[AblyException] = None
+        self.__error_reason: AblyException | None = None
         super().__init__()
 
-    def enact_state_change(self, state: ConnectionState, reason: Optional[AblyException] = None) -> None:
+    def enact_state_change(self, state: ConnectionState, reason: AblyException | None = None) -> None:
         current_state = self.__state
         log.debug(f'ConnectionManager.enact_state_change(): {current_state} -> {state}; reason = {reason}')
         self.__state = state
@@ -122,7 +125,7 @@ class ConnectionManager(EventEmitter):
             try:
                 response = await self.__ping_future
             except asyncio.CancelledError:
-                raise AblyException("Ping request cancelled due to request timeout", 504, 50003)
+                raise AblyException("Ping request cancelled due to request timeout", 504, 50003) from None
             return response
 
         self.__ping_future = asyncio.Future()
@@ -136,14 +139,14 @@ class ConnectionManager(EventEmitter):
         try:
             await asyncio.wait_for(self.__ping_future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
-            raise AblyException("Timeout waiting for ping response", 504, 50003)
+            raise AblyException("Timeout waiting for ping response", 504, 50003) from None
 
         ping_end_time = datetime.now().timestamp()
         response_time_ms = (ping_end_time - ping_start_time) * 1000
         return round(response_time_ms, 2)
 
     def on_connected(self, connection_details: ConnectionDetails, connection_id: str,
-                     reason: Optional[AblyException] = None) -> None:
+                     reason: AblyException | None = None) -> None:
         self.__fail_state = ConnectionState.DISCONNECTED
 
         self.__connection_details = connection_details
@@ -233,7 +236,7 @@ class ConnectionManager(EventEmitter):
     def on_channel_message(self, msg: dict) -> None:
         self.__ably.channels._on_channel_message(msg)
 
-    def on_heartbeat(self, id: Optional[str]) -> None:
+    def on_heartbeat(self, id: str | None) -> None:
         if self.__ping_future:
             # Resolve on heartbeat from ping request.
             if self.__ping_id == id:
@@ -241,7 +244,7 @@ class ConnectionManager(EventEmitter):
                     self.__ping_future.set_result(None)
                 self.__ping_future = None
 
-    def deactivate_transport(self, reason: Optional[AblyException] = None):
+    def deactivate_transport(self, reason: AblyException | None = None):
         self.transport = None
         self.notify_state(ConnectionState.DISCONNECTED, reason)
 
@@ -275,7 +278,7 @@ class ConnectionManager(EventEmitter):
         self.start_transition_timer(ConnectionState.CONNECTING)
         self.connect_base_task = asyncio.create_task(self.connect_base())
 
-    async def connect_with_fallback_hosts(self, fallback_hosts: list) -> Optional[Exception]:
+    async def connect_with_fallback_hosts(self, fallback_hosts: list) -> Exception | None:
         for host in fallback_hosts:
             try:
                 if self.check_connection():
@@ -343,8 +346,8 @@ class ConnectionManager(EventEmitter):
         except asyncio.CancelledError:
             return
 
-    def notify_state(self, state: ConnectionState, reason: Optional[AblyException] = None,
-                     retry_immediately: Optional[bool] = None) -> None:
+    def notify_state(self, state: ConnectionState, reason: AblyException | None = None,
+                     retry_immediately: bool | None = None) -> None:
         # RTN15a
         retry_immediately = (retry_immediately is not False) and (
             state == ConnectionState.DISCONNECTED and self.__state == ConnectionState.CONNECTED)
@@ -383,7 +386,7 @@ class ConnectionManager(EventEmitter):
             self.fail_queued_messages(reason)
             self.ably.channels._propagate_connection_interruption(state, reason)
 
-    def start_transition_timer(self, state: ConnectionState, fail_state: Optional[ConnectionState] = None) -> None:
+    def start_transition_timer(self, state: ConnectionState, fail_state: ConnectionState | None = None) -> None:
         log.debug(f'ConnectionManager.start_transition_timer(): transition state = {state}')
 
         if self.transition_timer:
@@ -520,5 +523,5 @@ class ConnectionManager(EventEmitter):
         return self.__state
 
     @property
-    def connection_details(self) -> Optional[ConnectionDetails]:
+    def connection_details(self) -> ConnectionDetails | None:
         return self.__connection_details

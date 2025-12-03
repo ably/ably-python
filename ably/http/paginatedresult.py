@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 def format_time_param(t):
     try:
-        return '%d' % (calendar.timegm(t.utctimetuple()) * 1000)
+        return f'{calendar.timegm(t.utctimetuple()) * 1000}'
     except Exception:
         return str(t)
 
@@ -33,7 +33,7 @@ def format_params(params=None, direction=None, start=None, end=None, limit=None,
     if limit:
         if limit > 1000:
             raise ValueError("The maximum allowed limit is 1000")
-        params['limit'] = '%d' % limit
+        params['limit'] = f'{limit}'
 
     if 'start' in params and 'end' in params and params['start'] > params['end']:
         raise ValueError("'end' parameter has to be greater than or equal to 'start'")

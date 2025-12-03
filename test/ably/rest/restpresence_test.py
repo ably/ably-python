@@ -5,9 +5,8 @@ import respx
 
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.presence import PresenceMessage
-
-from test.ably.utils import dont_vary_protocol, VaryByProtocolTestsMetaclass, BaseAsyncTestCase
 from test.ably.testapp import TestApp
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 
 class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
@@ -70,7 +69,7 @@ class TestPresence(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         presence_page = await self.channel.presence.get()
         member = presence_page.items[0]
 
-        assert member.member_key == "%s:%s" % (member.connection_id, member.client_id)
+        assert member.member_key == f"{member.connection_id}:{member.client_id}"
 
     def presence_mock_url(self):
         kwargs = {

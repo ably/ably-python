@@ -1,8 +1,7 @@
-from collections.abc import MutableMapping
-from typing import Optional, Union
 import json
 import logging
-
+from collections.abc import MutableMapping
+from typing import Optional, Union
 
 log = logging.getLogger(__name__)
 

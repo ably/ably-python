@@ -5,7 +5,6 @@ import pytest
 from ably import AblyException
 from ably.rest.channel import Channel, Channels, Presence
 from ably.util.crypto import generate_random_key
-
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
@@ -62,7 +61,7 @@ class TestChannels(BaseAsyncTestCase):
         assert new_channel_2 in self.ably.channels
 
     def test_channels_iteration(self):
-        channel_names = ['channel_{}'.format(i) for i in range(5)]
+        channel_names = [f'channel_{i}' for i in range(5)]
         [self.ably.channels.get(name) for name in channel_names]
 
         assert isinstance(self.ably.channels, Iterable)

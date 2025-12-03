@@ -1,18 +1,15 @@
 import datetime
 import json
 import logging
+from unittest.mock import patch
 
-from mock import patch
 import pytest
 
-from ably import AblyException
-from ably import AblyRest
-from ably import Capability
+from ably import AblyException, AblyRest, Capability
 from ably.types.tokendetails import TokenDetails
 from ably.types.tokenrequest import TokenRequest
-
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
 log = logging.getLogger(__name__)
 

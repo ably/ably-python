@@ -6,15 +6,16 @@ import string
 import sys
 import time
 import unittest
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 if sys.version_info >= (3, 8):
     from unittest import IsolatedAsyncioTestCase
 else:
     from async_case import IsolatedAsyncioTestCase
 
+from unittest import mock
+
 import msgpack
-import mock
 import respx
 from httpx import Response
 
@@ -195,7 +196,7 @@ async def assert_waiter(block: Callable[[], Awaitable[bool]], timeout: float = 1
     try:
         await asyncio.wait_for(_poll_until_success(block), timeout=timeout)
     except asyncio.TimeoutError:
-        raise asyncio.TimeoutError(f"Condition not met within {timeout}s")
+        raise asyncio.TimeoutError(f"Condition not met within {timeout}s") from None
 
 
 async def _poll_until_success(block: Callable[[], Awaitable[bool]]) -> None:

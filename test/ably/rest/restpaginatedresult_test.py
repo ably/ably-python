@@ -2,7 +2,6 @@ import respx
 from httpx import Response
 
 from ably.http.paginatedresult import PaginatedResult
-
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
@@ -16,7 +15,7 @@ class TestPaginatedResult(BaseAsyncTestCase):
                 return Response(
                     status_code=status,
                     headers=headers,
-                    content='[{"page": %i}]' % int(res)
+                    content=f'[{{"page": {int(res)}}}]'
                 )
 
             return Response(

@@ -2,8 +2,8 @@ import base64
 import json
 import logging
 
+from ably.types.mixins import DeltaExtras, EncodeDataMixin
 from ably.types.typedbuffer import TypedBuffer
-from ably.types.mixins import EncodeDataMixin, DeltaExtras
 from ably.util.crypto import CipherData
 from ably.util.exceptions import AblyException
 
@@ -18,7 +18,7 @@ def to_text(value):
     elif isinstance(value, bytes):
         return value.decode()
     else:
-        raise TypeError("expected string or bytes, not %s" % type(value))
+        raise TypeError(f"expected string or bytes, not {type(value)}")
 
 
 class Message(EncodeDataMixin):

@@ -4,22 +4,20 @@ import json
 import logging
 import os
 import uuid
+from unittest import mock
 
 import httpx
-import mock
 import msgpack
 import pytest
 
-from ably import api_version
-from ably import AblyException, IncompatibleClientIdException
+from ably import AblyException, IncompatibleClientIdException, api_version
 from ably.rest.auth import Auth
 from ably.types.message import Message
 from ably.types.tokendetails import TokenDetails
 from ably.util import case
 from test.ably import utils
-
 from test.ably.testapp import TestApp
-from test.ably.utils import VaryByProtocolTestsMetaclass, dont_vary_protocol, BaseAsyncTestCase, assert_waiter
+from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, assert_waiter, dont_vary_protocol
 
 log = logging.getLogger(__name__)
 
@@ -58,14 +56,14 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         assert messages is not None, "Expected non-None messages"
         assert len(messages) == 4, "Expected 4 messages"
 
-        message_contents = dict((m.name, m.data) for m in messages)
-        log.debug("message_contents: %s" % str(message_contents))
+        message_contents = {m.name: m.data for m in messages}
+        log.debug(f"message_contents: {str(message_contents)}")
 
         assert message_contents["publish0"] == "This is a string message payload", \
             "Expect publish0 to be expected String)"
 
         assert message_contents["publish1"] == b"This is a byte[] message payload", \
-            "Expect publish1 to be expected byte[]. Actual: %s" % str(message_contents['publish1'])
+            "Expect publish1 to be expected byte[]. Actual: {}".format(str(message_contents['publish1']))
 
         assert message_contents["publish2"] == {"test": "This is a JSONObject message payload"}, \
             "Expect publish2 to be expected JSONObject"
@@ -84,7 +82,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = self.ably.channels[
             self.get_channel_name('persisted:message_list_channel')]
 
-        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
+        expected_messages = [Message(f"name-{i}", str(i)) for i in range(3)]
 
         await channel.publish(messages=expected_messages)
 
@@ -103,7 +101,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         channel = self.ably.channels[
             self.get_channel_name('persisted:message_list_channel_one_request')]
 
-        expected_messages = [Message("name-{}".format(i), str(i)) for i in range(3)]
+        expected_messages = [Message(f"name-{i}", str(i)) for i in range(3)]
 
         with mock.patch('ably.rest.rest.Http.post',
                         wraps=channel.ably.http.post) as post_mock:
@@ -375,7 +373,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
         name = self.get_channel_name('persisted:interoperability_channel')
         channel = self.ably.channels[name]
 
-        url = 'https://%s/channels/%s/messages' % (self.test_vars["host"], name)
+        url = 'https://{}/channels/{}/messages'.format(self.test_vars["host"], name)
         key = self.test_vars['keys'][0]
         auth = (key['key_name'], key['key_secret'])
 
@@ -404,7 +402,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                 response = await channel.publish(data=expected_value)
                 assert response.status_code == 201
 
-                async def check_data():
+                async def check_data(encoding=encoding, msg_data=msg_data):
                     async with httpx.AsyncClient(http2=True) as client:
                         r = await client.get(url, auth=auth)
                         item = r.json()[0]
@@ -420,7 +418,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                 response = await channel.publish(messages=[Message(data=msg_data, encoding=encoding)])
                 assert response.status_code == 201
 
-                async def check_history():
+                async def check_history(expected_value=expected_value, expected_type=expected_type):
                     history = await channel.history()
                     message = history.items[0]
                     return message.data == expected_value and isinstance(message.data, type_mapping[expected_type])
@@ -496,7 +494,7 @@ class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtoc
         }
         message = Message(**data)
         request_body = channel._Channel__publish_request_body(messages=[message])
-        input_keys = set(case.snake_to_camel(x) for x in data.keys())
+        input_keys = {case.snake_to_camel(x) for x in data.keys()}
         assert input_keys - set(request_body) == set()
 
     # RSL1k1

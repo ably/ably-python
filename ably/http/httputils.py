@@ -42,7 +42,7 @@ class HttpUtils:
             version = ably.api_version
         return {
             "X-Ably-Version": version,
-            "Ably-Agent": 'ably-python/%s python/%s' % (ably.lib_version, platform.python_version())
+            "Ably-Agent": f'ably-python/{ably.lib_version} python/{platform.python_version()}'
         }
 
     @staticmethod
