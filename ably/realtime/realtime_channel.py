@@ -13,8 +13,8 @@ from ably.types.flags import Flag, has_flag
 from ably.types.message import Message
 from ably.types.mixins import DecodingContext
 from ably.util.eventemitter import EventEmitter
-from ably.util.exceptions import AblyException
-from ably.util.helper import Timer, is_callable_or_coroutine
+from ably.util.exceptions import AblyException, IncompatibleClientIdException
+from ably.util.helper import Timer, is_callable_or_coroutine, validate_message_size
 
 if TYPE_CHECKING:
     from ably.realtime.realtime import AblyRealtime
@@ -383,6 +383,138 @@ class RealtimeChannel(EventEmitter, Channel):
         else:
             # RTL8a
             self.__message_emitter.off(listener)
+
+    # RTL6
+    async def publish(self, *args, **kwargs) -> None:
+        """Publish a message or messages on this channel
+
+        Publishes a single message or an array of messages to the channel.
+
+        Parameters
+        ----------
+        *args: name and data, or message object(s)
+            Either:
+            - name (str) and data (any): publish a single message
+            - message (Message or dict): publish a single message object
+            - messages (list): publish multiple message objects
+
+        Raises
+        ------
+        AblyException
+            If the channel or connection state prevents publishing,
+            if clientId validation fails, or if message size exceeds limits
+        ValueError
+            If invalid arguments are provided
+        """
+        messages = []
+
+        # RTL6i: Parse arguments - expect Message object, array of Messages, or name and data
+        if len(args) == 1:
+            if isinstance(args[0], Message):
+                # Single Message object
+                messages = [args[0]]
+            elif isinstance(args[0], dict):
+                # Message as dict
+                messages = [Message(**args[0])]
+            elif isinstance(args[0], list):
+                # RTL6i2: Array of Message objects
+                messages = []
+                for msg in args[0]:
+                    if isinstance(msg, Message):
+                        messages.append(msg)
+                    elif isinstance(msg, dict):
+                        messages.append(Message(**msg))
+                    else:
+                        raise ValueError("Array must contain Message objects or dicts")
+            else:
+                raise ValueError(
+                    "The single-argument form of publish() expects a message object or an array of message objects"
+                )
+        elif len(args) == 2:
+            # RTL6i1: name and data form
+            # RTL6i3: Allow name and/or data to be None
+            name = args[0]
+            data = args[1]
+            messages = [Message(name=name, data=data)]
+        else:
+            raise ValueError("publish() expects either (name, data) or a message object or array of messages")
+
+        # RTL6g: Validate clientId for identified clients
+        if self.ably.auth.client_id:
+            for m in messages:
+                # RTL6g3: Reject messages with different clientId
+                if m.client_id == '*':
+                    raise IncompatibleClientIdException(
+                        'Wildcard client_id is reserved and cannot be used when publishing messages',
+                        400, 40012)
+                elif m.client_id is not None and not self.ably.auth.can_assume_client_id(m.client_id):
+                    raise IncompatibleClientIdException(
+                        f'Cannot publish with client_id \'{m.client_id}\' as it is incompatible with the '
+                        f'current configured client_id \'{self.ably.auth.client_id}\'',
+                        400, 40012)
+
+
+        # Encode messages (RTL6a: same encoding as RestChannel#publish)
+        encoded_messages = []
+        for m in messages:
+            # Encode the message with encryption if needed
+            if self.cipher:
+                m.encrypt(self.cipher)
+
+            # Convert to dict representation
+            msg_dict = m.as_dict(binary=self.ably.options.use_binary_protocol)
+            encoded_messages.append(msg_dict)
+
+        # RSL1i: Check message size limit
+        max_message_size = getattr(self.ably.options, 'max_message_size', 65536)  # 64KB default
+        validate_message_size(encoded_messages, self.ably.options.use_binary_protocol, max_message_size)
+
+        # RTL6c: Check connection and channel state
+        self._throw_if_unpublishable_state()
+
+        log.info(
+            f'RealtimeChannel.publish(): sending message; '
+            f'channel = {self.name}, state = {self.state}, message count = {len(encoded_messages)}'
+        )
+
+        # Send protocol message
+        protocol_message = {
+            "action": ProtocolMessageAction.MESSAGE,
+            "channel": self.name,
+            "messages": encoded_messages,
+        }
+
+        # RTL6b: Await acknowledgment from server
+        await self.__realtime.connection.connection_manager.send_protocol_message(protocol_message)
+
+    def _throw_if_unpublishable_state(self) -> None:
+        """Check if the channel and connection are in a state that allows publishing
+
+        Raises
+        ------
+        AblyException
+            If the channel or connection state prevents publishing
+        """
+        # RTL6c4: Check connection state
+        connection_state = self.__realtime.connection.state
+        if connection_state not in [
+            ConnectionState.CONNECTED,
+            ConnectionState.CONNECTING,
+            ConnectionState.DISCONNECTED,
+        ]:
+            raise AblyException(
+                f"Cannot publish message; connection state is {connection_state}",
+                400,
+                40001,
+            )
+
+        # RTL6c4: Check channel state
+        if self.state in [ChannelState.SUSPENDED, ChannelState.FAILED]:
+            raise AblyException(
+                f"Cannot publish message; channel state is {self.state}",
+                400,
+                90001,
+            )
 
     def _on_message(self, proto_msg: dict) -> None:
         action = proto_msg.get('action')

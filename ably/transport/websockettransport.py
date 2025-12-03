@@ -33,7 +33,11 @@ log = logging.getLogger(__name__)
 
 class ProtocolMessageAction(IntEnum):
     HEARTBEAT = 0
+    ACK = 1
+    NACK = 2
+    CONNECT = 3
     CONNECTED = 4
+    DISCONNECT = 5
     DISCONNECTED = 6
     CLOSE = 7
     CLOSED = 8
@@ -42,8 +46,14 @@ class ProtocolMessageAction(IntEnum):
     ATTACHED = 11
     DETACH = 12
     DETACHED = 13
+    PRESENCE = 14
     MESSAGE = 15
+    SYNC = 16
     AUTH = 17
+    ACTIVATE = 18
+    OBJECT = 19
+    OBJECT_SYNC = 20
+    ANNOTATION = 21
 
 
 class WebSocketTransport(EventEmitter):
@@ -155,6 +165,18 @@ class WebSocketTransport(EventEmitter):
         elif action == ProtocolMessageAction.HEARTBEAT:
             id = msg.get('id')
             self.connection_manager.on_heartbeat(id)
+        elif action == ProtocolMessageAction.ACK:
+            # Handle acknowledgment of sent messages
+            msg_serial = msg.get('msgSerial', 0)
+            count = msg.get('count', 1)
+            self.connection_manager.on_ack(msg_serial, count)
+        elif action == ProtocolMessageAction.NACK:
+            # Handle negative acknowledgment (error sending messages)
+            msg_serial = msg.get('msgSerial', 0)
+            count = msg.get('count', 1)
+            error = msg.get('error')
+            exception = AblyException.from_dict(error) if error else None
+            self.connection_manager.on_nack(msg_serial, count, exception)
         elif action in (
             ProtocolMessageAction.ATTACHED,
             ProtocolMessageAction.DETACHED,
