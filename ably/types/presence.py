@@ -85,6 +85,67 @@ class PresenceMessage(EncodeDataMixin):
     def extras(self):
         return self.__extras
 
+    def is_synthesized(self):
+        """
+        Check if message is synthesized (RTP2b1).
+        A message is synthesized if its connectionId is not an initial substring of its id.
+        This happens with synthesized leave events sent by realtime to indicate
+        a connection disconnected unexpectedly.
+        """
+        if not self.id or not self.connection_id:
+            return False
+        return not self.id.startswith(self.connection_id + ':')
+
+    def parse_id(self):
+        """
+        Parse id into components (connId, msgSerial, index) for RTP2b2 comparison.
+        Expected format: connId:msgSerial:index (e.g., "aaaaaa:0:0")
+
+        Returns:
+            dict with 'msgSerial' and 'index' as integers
+
+        Raises:
+            ValueError: If id is missing or has invalid format
+        """
+        if not self.id:
+            raise ValueError("Cannot parse id: id is None or empty")
+
+        parts = self.id.split(':')
+
+        try:
+            return {
+                'msgSerial': int(parts[1]),
+                'index': int(parts[2])
+            }
+        except (ValueError, IndexError) as e:
+            raise ValueError(f"Cannot parse id: invalid msgSerial or index in '{self.id}'") from e
+
+    def to_encoded(self, cipher=None):
+        """
+        Convert to wire protocol format for sending.
+
+        Note: For Phase 1, this provides basic serialization. Full encoding
+        (encryption, compression) will be handled by the channel/transport layer.
+        """
+        result = {
+            'action': self.action,
+        }
+        if self.id:
+            result['id'] = self.id
+        if self.client_id:
+            result['clientId'] = self.client_id
+        if self.connection_id:
+            result['connectionId'] = self.connection_id
+        if self.data is not None:
+            result['data'] = self.data
+        if self.encoding:
+            result['encoding'] = self.encoding
+        if self.extras:
+            result['extras'] = self.extras
+        if self.timestamp:
+            result['timestamp'] = _ms_since_epoch(self.timestamp)
+        return result
+
     @staticmethod
     def from_encoded(obj, cipher=None, context=None):
         id = obj.get('id')
@@ -111,6 +172,13 @@ class PresenceMessage(EncodeDataMixin):
             extras=extras,
             **decoded_data
         )
+
+    @staticmethod
+    def from_encoded_array(encoded_array, cipher=None, context=None):
+        """
+        Decode array of presence messages.
+        """
+        return [PresenceMessage.from_encoded(item, cipher, context) for item in encoded_array]
 
 
 class Presence:
