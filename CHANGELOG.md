@@ -1,5 +1,14 @@
 # Change Log
 
+## [v2.1.3](https://github.com/ably/ably-python/tree/v2.1.3)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.1.2...v2.1.3)
+
+## What's Changed
+
+- Got rid of `methoddispatch` dependency in [\#639](https://github.com/ably/ably-python/pull/639)
+- Upgraded internal build tools
+
 ## [v2.1.2](https://github.com/ably/ably-python/tree/v2.1.2)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.1.1...v2.1.2)
