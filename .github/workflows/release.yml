@@ -52,6 +52,7 @@ jobs:
           if unzip -l "$WHEEL" | grep -q "ably/sync/"; then
             echo "✅ Found ably/sync/ in wheel"
           else
+            unzip -l "$WHEEL" 
             echo "❌ ably/sync/ not found in wheel"
             exit 1
           fi
@@ -62,6 +63,7 @@ jobs:
           if tar -tzf "$TARBALL" | grep -q "ably/sync/"; then
             echo "✅ Found ably/sync/ in tarball"
           else
+            tar -tzf "$TARBALL"
             echo "❌ ably/sync/ not found in tarball"
             exit 1
           fi
