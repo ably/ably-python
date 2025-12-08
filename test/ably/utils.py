@@ -3,16 +3,8 @@ import functools
 import os
 import random
 import string
-import sys
 import time
-import unittest
 from typing import Awaitable, Callable
-
-if sys.version_info >= (3, 8):
-    from unittest import IsolatedAsyncioTestCase
-else:
-    from async_case import IsolatedAsyncioTestCase
-
 from unittest import mock
 
 import msgpack
@@ -22,7 +14,7 @@ from httpx import Response
 from ably.http.http import Http
 
 
-class BaseTestCase(unittest.TestCase):
+class BaseTestCase:
 
     def respx_add_empty_msg_pack(self, url, method='GET'):
         respx.route(method=method, url=url).return_value = Response(
@@ -41,7 +33,7 @@ class BaseTestCase(unittest.TestCase):
         return cls.ably.channels.get(name)
 
 
-class BaseAsyncTestCase(IsolatedAsyncioTestCase):
+class BaseAsyncTestCase:
 
     def respx_add_empty_msg_pack(self, url, method='GET'):
         respx.route(method=method, url=url).return_value = Response(

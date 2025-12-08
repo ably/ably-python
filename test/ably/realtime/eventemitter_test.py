@@ -1,12 +1,15 @@
 import asyncio
 
+import pytest
+
 from ably.realtime.connection import ConnectionState
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
 
 class TestEventEmitter(BaseAsyncTestCase):
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
 
     async def test_event_listener_error(self):

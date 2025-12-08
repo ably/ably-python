@@ -5,6 +5,7 @@ import sys
 from unittest import mock
 
 import msgpack
+import pytest
 
 from ably import CipherParams
 from ably.types.message import Message
@@ -21,10 +22,10 @@ log = logging.getLogger(__name__)
 
 
 class TestTextEncodersNoEncryption(BaseAsyncTestCase):
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
 
     async def test_text_utf8(self):
@@ -143,12 +144,11 @@ class TestTextEncodersNoEncryption(BaseAsyncTestCase):
 
 
 class TestTextEncodersEncryption(BaseAsyncTestCase):
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
-        self.cipher_params = CipherParams(secret_key='keyfordecrypt_16',
-                                          algorithm='aes')
-
-    async def asyncTearDown(self):
+        self.cipher_params = CipherParams(secret_key='keyfordecrypt_16', algorithm='aes')
+        yield
         await self.ably.close()
 
     def decrypt(self, payload, options=None):
@@ -257,10 +257,10 @@ class TestTextEncodersEncryption(BaseAsyncTestCase):
 
 class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest()
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
 
     def decode(self, data):
@@ -348,11 +348,11 @@ class TestBinaryEncodersNoEncryption(BaseAsyncTestCase):
 
 class TestBinaryEncodersEncryption(BaseAsyncTestCase):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest()
         self.cipher_params = CipherParams(secret_key='keyfordecrypt_16', algorithm='aes')
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
 
     def decrypt(self, payload, options=None):

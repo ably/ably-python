@@ -12,7 +12,8 @@ from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, don
 # RSC19
 class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest()
         self.test_vars = await TestApp.get_test_vars()
 
@@ -22,8 +23,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
         for i in range(20):
             body = {'name': f'event{i}', 'data': f'lorem ipsum {i}'}
             await self.ably.request('POST', self.path, body=body, version=Defaults.protocol_version)
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):

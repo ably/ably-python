@@ -1,5 +1,7 @@
 import logging
 
+import pytest
+
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass
 
@@ -8,10 +10,10 @@ log = logging.getLogger(__name__)
 
 class TestRestChannelStatus(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest()
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):

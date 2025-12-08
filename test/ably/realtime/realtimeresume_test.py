@@ -1,5 +1,7 @@
 import asyncio
 
+import pytest
+
 from ably.realtime.connection import ConnectionState
 from ably.realtime.realtime_channel import ChannelState
 from ably.transport.websockettransport import ProtocolMessageAction
@@ -22,7 +24,8 @@ async def send_and_await(rest_channel, realtime_channel):
 
 
 class TestRealtimeResume(BaseAsyncTestCase):
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.valid_key_format = "api:key"
 

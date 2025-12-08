@@ -1,13 +1,10 @@
-import asyncio
-
-import pytest
+import pytest_asyncio
 
 from test.ably.testapp import TestApp
 
 
-@pytest.fixture(scope='session', autouse=True)
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    loop.run_until_complete(TestApp.get_test_vars())
-    yield loop
-    loop.run_until_complete(TestApp.clear_test_vars())
+@pytest_asyncio.fixture(scope='session', autouse=True)
+async def test_app_setup():
+    await TestApp.get_test_vars()
+    yield
+    await TestApp.clear_test_vars()
