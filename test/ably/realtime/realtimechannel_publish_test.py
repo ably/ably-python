@@ -3,9 +3,10 @@ import asyncio
 import pytest
 
 from ably.realtime.connection import ConnectionState
-from ably.realtime.realtime_channel import ChannelState
+from ably.realtime.realtime_channel import ChannelOptions, ChannelState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.message import Message
+from ably.util.crypto import CipherParams
 from ably.util.exceptions import AblyException, IncompatibleClientIdException
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, WaitableEvent, assert_waiter
@@ -973,5 +974,39 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
         assert len(data_received) == 2, "Only two messages should have been received"
         assert data_received[0] == 'first message'
         assert data_received[1] == 'third message'
+
+        await ably.close()
+
+    async def test_publish_with_encryption(self):
+        """Verify that encrypted messages can be published and received correctly"""
+        # Create connection with binary protocol enabled
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=True)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+
+        # Get channel with encryption enabled
+        cipher_params = CipherParams(secret_key=b'0123456789abcdef0123456789abcdef')
+        channel_options = ChannelOptions(cipher=cipher_params)
+        channel = ably.channels.get('encrypted_channel', channel_options)
+        await channel.attach()
+
+        received_data = None
+        data_received = WaitableEvent()
+        def on_message(message):
+            nonlocal received_data
+            try:
+                # message.decode()
+                received_data = message.data
+                data_received.finish()
+            except Exception as e:
+                data_received.finish()
+                raise e
+
+        await channel.subscribe(on_message)
+
+        await channel.publish('encrypted_event', 'sensitive data')
+
+        await data_received.wait()
+
+        assert received_data == 'sensitive data'
 
         await ably.close()

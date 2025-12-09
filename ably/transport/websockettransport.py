@@ -8,6 +8,8 @@ import urllib.parse
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
+import msgpack
+
 from ably.http.httputils import HttpUtils
 from ably.types.connectiondetails import ConnectionDetails
 from ably.util.eventemitter import EventEmitter
@@ -71,6 +73,7 @@ class WebSocketTransport(EventEmitter):
         self.is_disposed = False
         self.host = host
         self.params = params
+        self.format = params.get('format', 'json')
         super().__init__()
 
     def connect(self):
@@ -189,11 +192,22 @@ class WebSocketTransport(EventEmitter):
             raise AblyException('ws_read_loop started with no websocket', 500, 50000)
         try:
             async for raw in self.websocket:
-                msg = json.loads(raw)
-                task = asyncio.create_task(self.on_protocol_message(msg))
-                task.add_done_callback(self.on_protcol_message_handled)
+                # Decode based on format
+                msg = self.decode_raw_websocket_frame(raw)
+                if msg is not None:
+                    task = asyncio.create_task(self.on_protocol_message(msg))
+                    task.add_done_callback(self.on_protcol_message_handled)
         except ConnectionClosedOK:
             return
+
+    def decode_raw_websocket_frame(self, raw: str | bytes) -> dict:
+        try:
+            if self.format == 'msgpack':
+                return msgpack.unpackb(raw)
+            return json.loads(raw)
+        except Exception as e:
+            log.exception(f"WebSocketTransport.decode(): Unexpected exception handing channel message: {e}")
+            return None
 
     def on_protcol_message_handled(self, task):
         try:
@@ -231,8 +245,13 @@ class WebSocketTransport(EventEmitter):
     async def send(self, message: dict):
         if self.websocket is None:
             raise Exception()
-        raw_msg = json.dumps(message)
-        log.info(f'WebSocketTransport.send(): sending {raw_msg}')
+        # Encode based on format
+        if self.format == 'msgpack':
+            raw_msg = msgpack.packb(message)
+            log.info(f'WebSocketTransport.send(): sending msgpack message (length: {len(raw_msg)} bytes)')
+        else:
+            raw_msg = json.dumps(message)
+            log.info(f'WebSocketTransport.send(): sending {raw_msg}')
         await self.websocket.send(raw_msg)
 
     def set_idle_timer(self, timeout: float):
