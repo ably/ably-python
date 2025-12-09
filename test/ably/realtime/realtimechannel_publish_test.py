@@ -12,17 +12,19 @@ from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, WaitableEvent, assert_waiter
 
 
+@pytest.mark.parametrize("transport", ["json", "msgpack"], ids=["JSON", "MsgPack"])
 class TestRealtimeChannelPublish(BaseAsyncTestCase):
     """Tests for RTN7 spec - Message acknowledgment"""
 
     @pytest.fixture(autouse=True)
-    async def setup(self):
+    async def setup(self, transport):
         self.test_vars = await TestApp.get_test_vars()
+        self.use_binary_protocol = True if transport == 'msgpack' else False
 
     # RTN7a - Basic ACK/NACK functionality
     async def test_publish_returns_ack_on_success(self):
         """RTN7a: Verify that publish awaits ACK from server"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_ack_channel')
@@ -35,7 +37,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_raises_on_nack(self):
         """RTN7a: Verify that publish raises exception when NACK is received"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_nack_channel')
@@ -77,7 +79,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RTN7b - msgSerial incrementing
     async def test_msgserial_increments_sequentially(self):
         """RTN7b: Verify that msgSerial increments for each message"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_msgserial_channel')
@@ -109,7 +111,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RTN7e - Fail pending messages on SUSPENDED, CLOSED, FAILED
     async def test_pending_messages_fail_on_suspended(self):
         """RTN7e: Verify pending messages fail when connection enters SUSPENDED state"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_suspended_channel')
@@ -154,7 +156,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_pending_messages_fail_on_failed(self):
         """RTN7e: Verify pending messages fail when connection enters FAILED state"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_failed_channel')
@@ -196,7 +198,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     async def test_fail_on_disconnected_when_queue_messages_false(self):
         """RTN7d: Verify pending messages fail on DISCONNECTED if queueMessages is false"""
         # Create client with queueMessages=False
-        ably = await TestApp.get_ably_realtime(queue_messages=False)
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol, queue_messages=False)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_disconnected_channel')
@@ -237,7 +239,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     async def test_queue_on_disconnected_when_queue_messages_true(self):
         """RTN7d: Verify messages are queued (not failed) on DISCONNECTED when queueMessages is true"""
         # Create client with queueMessages=True (default)
-        ably = await TestApp.get_ably_realtime(queue_messages=True)
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol, queue_messages=True)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_queue_channel')
@@ -286,7 +288,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RTN19a2 - Reset msgSerial on new connectionId
     async def test_msgserial_resets_on_new_connection_id(self):
         """RTN19a2: Verify msgSerial resets to 0 when connectionId changes"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_reset_serial_channel')
@@ -323,7 +325,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_msgserial_not_reset_on_same_connection_id(self):
         """RTN19a2: Verify msgSerial is NOT reset when connectionId stays the same"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_same_connection_channel')
@@ -361,7 +363,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # Test that multiple messages get correct msgSerial values
     async def test_multiple_messages_concurrent(self):
         """RTN7b: Test that multiple concurrent publishes get sequential msgSerials"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_concurrent_channel')
@@ -384,7 +386,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RTN19a - Resend messages awaiting ACK on reconnect
     async def test_pending_messages_resent_on_reconnect(self):
         """RTN19a: Verify messages awaiting ACK are resent when transport reconnects"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_resend_channel')
@@ -438,7 +440,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_msgserial_preserved_on_resume(self):
         """RTN19a2: Verify msgSerial counter is preserved when resuming (same connectionId)"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_preserve_serial_channel')
@@ -489,7 +491,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_msgserial_reset_on_failed_resume(self):
         """RTN19a2: Verify msgSerial counter is reset when resume fails (new connectionId)"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_reset_serial_resume_channel')
@@ -541,7 +543,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # Test ACK with count > 1
     async def test_ack_with_multiple_count(self):
         """RTN7a/RTN7b: Test that ACK with count > 1 completes multiple messages"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_multi_ack_channel')
@@ -590,7 +592,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     async def test_queued_messages_sent_before_channel_reattach(self):
         """RTL3d + RTL6c2: Verify queued messages are sent immediately on reconnection,
         without waiting for channel reattachment to complete"""
-        ably = await TestApp.get_ably_realtime(queue_messages=True)
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol, queue_messages=True)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_rtl3d_rtl6c2_channel')
@@ -682,7 +684,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RSL1i - Message size limit tests
     async def test_publish_message_exceeding_size_limit(self):
         """RSL1i: Verify that publishing a message exceeding the size limit raises an exception"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_size_limit_channel')
@@ -703,7 +705,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_message_within_size_limit(self):
         """RSL1i: Verify that publishing a message within the size limit succeeds"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_size_ok_channel')
@@ -721,7 +723,9 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RTL6g - Client ID validation tests
     async def test_publish_with_matching_client_id(self):
         """RTL6g2: Verify that publishing with explicit matching clientId succeeds"""
-        ably = await TestApp.get_ably_realtime(client_id='test_client_123')
+        ably = await TestApp.get_ably_realtime(
+            use_binary_protocol=self.use_binary_protocol, client_id='test_client_123'
+        )
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_client_id_channel')
@@ -737,7 +741,9 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_with_null_client_id_when_identified(self):
         """RTL6g1: Verify that publishing with null clientId gets populated by server when client is identified"""
-        ably = await TestApp.get_ably_realtime(client_id='test_client_456')
+        ably = await TestApp.get_ably_realtime(
+            use_binary_protocol=self.use_binary_protocol, client_id='test_client_456'
+        )
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_null_client_id_channel')
@@ -750,7 +756,9 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_with_mismatched_client_id_fails(self):
         """RTL6g3: Verify that publishing with mismatched clientId is rejected"""
-        ably = await TestApp.get_ably_realtime(client_id='test_client_789')
+        ably = await TestApp.get_ably_realtime(
+            use_binary_protocol=self.use_binary_protocol, client_id='test_client_789'
+        )
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_mismatch_client_id_channel')
@@ -770,7 +778,9 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_with_wildcard_client_id_fails(self):
         """RTL6g3: Verify that publishing with wildcard clientId is rejected"""
-        ably = await TestApp.get_ably_realtime(client_id='test_client_wildcard')
+        ably = await TestApp.get_ably_realtime(
+            use_binary_protocol=self.use_binary_protocol, client_id='test_client_wildcard'
+        )
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_wildcard_client_id_channel')
@@ -791,7 +801,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RTL6i - Data type variation tests
     async def test_publish_with_string_data(self):
         """RTL6i: Verify that publishing with string data succeeds"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_string_data_channel')
@@ -804,7 +814,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_with_json_object_data(self):
         """RTL6i: Verify that publishing with JSON object data succeeds"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_json_object_channel')
@@ -823,7 +833,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_with_json_array_data(self):
         """RTL6i: Verify that publishing with JSON array data succeeds"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_json_array_channel')
@@ -837,7 +847,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_with_null_data(self):
         """RTL6i3: Verify that publishing with null data succeeds"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_null_data_channel')
@@ -850,7 +860,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_with_null_name(self):
         """RTL6i3: Verify that publishing with null name succeeds"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_null_name_channel')
@@ -863,7 +873,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_message_array(self):
         """RTL6i2: Verify that publishing an array of messages succeeds"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_message_array_channel')
@@ -882,7 +892,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RTL6c4 - Channel state validation tests
     async def test_publish_fails_on_suspended_channel(self):
         """RTL6c4: Verify that publishing on a SUSPENDED channel fails"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_suspended_channel')
@@ -905,7 +915,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
     async def test_publish_fails_on_failed_channel(self):
         """RTL6c4: Verify that publishing on a FAILED channel fails"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         channel = ably.channels.get('test_failed_channel')
@@ -929,10 +939,10 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     # RSL1k - Idempotent publishing test
     async def test_idempotent_realtime_publishing(self):
         """RSL1k2, RSL1k5: Verify that messages with explicit IDs can be published for idempotent behavior"""
-        ably = await TestApp.get_ably_realtime()
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
-        channel = ably.channels.get('test_idempotent_channel')
+        channel = ably.channels.get(f'test_idempotent_channel_{self.use_binary_protocol}')
         await channel.attach()
 
         idempotent_id = 'test-msg-id-12345'
@@ -980,7 +990,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
     async def test_publish_with_encryption(self):
         """Verify that encrypted messages can be published and received correctly"""
         # Create connection with binary protocol enabled
-        ably = await TestApp.get_ably_realtime(use_binary_protocol=True)
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         # Get channel with encryption enabled
@@ -994,7 +1004,6 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
         def on_message(message):
             nonlocal received_data
             try:
-                # message.decode()
                 received_data = message.data
                 data_received.finish()
             except Exception as e:
