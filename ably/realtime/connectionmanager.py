@@ -172,6 +172,12 @@ class ConnectionManager(EventEmitter):
             await self.disconnect_transport_task
         self.cancel_retry_timer()
 
+        # Clear connection details to prevent resume on next connect
+        # When explicitly closed, we want a fresh connection, not a resume
+        self.__connection_details = None
+        self.connection_id = None
+        self.msg_serial = 0
+
         self.notify_state(ConnectionState.CLOSED)
 
     async def send_protocol_message(self, protocol_message: dict) -> None:
