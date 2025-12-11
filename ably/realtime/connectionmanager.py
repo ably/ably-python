@@ -180,7 +180,11 @@ class ConnectionManager(EventEmitter):
         self.cancel_suspend_timer()
         self.start_transition_timer(ConnectionState.CLOSING, fail_state=ConnectionState.CLOSED)
         if self.transport:
-            await self.transport.dispose()
+            # Try to send protocol CLOSE message in the background
+            asyncio.create_task(self.transport.close())
+            # Yield to event loop to give the close message a chance to send
+            await asyncio.sleep(0)
+            await self.transport.dispose()  # Dispose transport resources
         if self.connect_base_task:
             self.connect_base_task.cancel()
         if self.disconnect_transport_task:
