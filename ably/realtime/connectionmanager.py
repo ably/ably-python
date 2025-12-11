@@ -135,6 +135,17 @@ class ConnectionManager(EventEmitter):
         self.__state = state
         if reason:
             self.__error_reason = reason
+
+        # RTN16d: Clear connection state when entering SUSPENDED or terminal states
+        if state == ConnectionState.SUSPENDED or state in (
+            ConnectionState.CLOSED,
+            ConnectionState.FAILED
+        ):
+            self.__connection_details = None
+            self.connection_id = None
+            self.__connection_key = None
+            self.msg_serial = 0
+
         self._emit('connectionstate', ConnectionStateChange(current_state, state, state, reason))
 
     def check_connection(self) -> bool:
@@ -654,7 +665,6 @@ class ConnectionManager(EventEmitter):
                     AblyException("Connection to server unavailable", 400, 80002)
                 )
                 self.__fail_state = ConnectionState.SUSPENDED
-                self.__connection_details = None
 
         self.suspend_timer = Timer(Defaults.connection_state_ttl, on_suspend_timer_expire)
 
