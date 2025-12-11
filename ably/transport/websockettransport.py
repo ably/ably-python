@@ -183,7 +183,9 @@ class WebSocketTransport(EventEmitter):
         elif action in (
             ProtocolMessageAction.ATTACHED,
             ProtocolMessageAction.DETACHED,
-            ProtocolMessageAction.MESSAGE
+            ProtocolMessageAction.MESSAGE,
+            ProtocolMessageAction.PRESENCE,
+            ProtocolMessageAction.SYNC
         ):
             self.connection_manager.on_channel_message(msg)
 

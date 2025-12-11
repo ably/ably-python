@@ -89,6 +89,7 @@ class PresenceMap:
         self._member_key_fn = member_key_fn
         self._is_newer_fn = is_newer_fn or _is_newer
         self._logger = logger_instance or logger
+        self._sync_complete_callbacks: List[Callable[[], None]] = []
 
     @property
     def sync_in_progress(self) -> bool:
@@ -303,7 +304,29 @@ class PresenceMap:
                 f"{len(residual_list)} residual members"
             )
 
+            # Notify callbacks that sync is complete
+            for callback in self._sync_complete_callbacks:
+                try:
+                    callback()
+                except Exception as e:
+                    self._logger.error(f"Error in sync complete callback: {e}")
+            self._sync_complete_callbacks.clear()
+
         return residual_list, absent_list
+
+    def wait_sync(self, callback: Callable[[], None]) -> None:
+        """
+        Wait for SYNC to complete, calling callback when done.
+
+        If sync is not in progress, callback is called immediately.
+
+        Args:
+            callback: Function to call when sync completes
+        """
+        if not self._sync_in_progress:
+            callback()
+        else:
+            self._sync_complete_callbacks.append(callback)
 
     def clear(self) -> None:
         """
@@ -314,4 +337,5 @@ class PresenceMap:
         self._map.clear()
         self._residual_members = None
         self._sync_in_progress = False
+        self._sync_complete_callbacks.clear()
         self._logger.debug("PresenceMap.clear: cleared all members")
