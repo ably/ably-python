@@ -168,6 +168,10 @@ class ConnectionManager(EventEmitter):
         # RTN2a: Set format to msgpack if use_binary_protocol is enabled
         if self.options.use_binary_protocol:
             params["format"] = "msgpack"
+
+        # Add any custom transport params from options
+        params.update(self.options.transport_params)
+
         return params
 
     async def close_impl(self) -> None:
