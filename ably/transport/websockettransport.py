@@ -193,21 +193,21 @@ class WebSocketTransport(EventEmitter):
         try:
             async for raw in self.websocket:
                 # Decode based on format
-                msg = self.decode_raw_websocket_frame(raw)
-                if msg is not None:
+                try:
+                    msg = self.decode_raw_websocket_frame(raw)
                     task = asyncio.create_task(self.on_protocol_message(msg))
                     task.add_done_callback(self.on_protcol_message_handled)
+                except Exception as e:
+                    log.exception(
+                        f"WebSocketTransport.decode(): Unexpected exception handling channel message: {e}"
+                    )
         except ConnectionClosedOK:
             return
 
     def decode_raw_websocket_frame(self, raw: str | bytes) -> dict:
-        try:
-            if self.format == 'msgpack':
-                return msgpack.unpackb(raw)
-            return json.loads(raw)
-        except Exception as e:
-            log.exception(f"WebSocketTransport.decode(): Unexpected exception handing channel message: {e}")
-            return None
+        if self.format == 'msgpack':
+            return msgpack.unpackb(raw)
+        return json.loads(raw)
 
     def on_protcol_message_handled(self, task):
         try:
