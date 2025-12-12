@@ -206,7 +206,7 @@ class WebSocketTransport(EventEmitter):
 
     def decode_raw_websocket_frame(self, raw: str | bytes) -> dict:
         if self.format == 'msgpack':
-            return msgpack.unpackb(raw)
+            return msgpack.unpackb(raw, raw=False)
         return json.loads(raw)
 
     def on_protcol_message_handled(self, task):
@@ -247,7 +247,7 @@ class WebSocketTransport(EventEmitter):
             raise Exception()
         # Encode based on format
         if self.format == 'msgpack':
-            raw_msg = msgpack.packb(message)
+            raw_msg = msgpack.packb(message, use_bin_type=True)
             log.info(f'WebSocketTransport.send(): sending msgpack message (length: {len(raw_msg)} bytes)')
         else:
             raw_msg = json.dumps(message)
