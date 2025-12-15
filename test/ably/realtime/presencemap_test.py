@@ -76,7 +76,7 @@ class TestPresenceMessageHelpers(BaseAsyncTestCase):
         )
         with self.assertRaises(ValueError) as context:
             msg.parse_id()
-        assert "expected format 'connId:msgSerial:index'" in str(context.exception)
+        assert "invalid msgSerial or index" in str(context.exception)
 
     def test_parse_id_non_numeric_parts(self):
         """Test parsing id with non-numeric msgSerial/index raises ValueError."""
@@ -124,6 +124,91 @@ class TestPresenceMessageHelpers(BaseAsyncTestCase):
         assert encoded['clientId'] == 'client1'
         assert encoded['data'] == 'test data'
         assert 'timestamp' in encoded
+
+    def test_to_encoded_with_dict_data(self):
+        """Test converting message with dict data (should be JSON serialized)."""
+        msg = PresenceMessage(
+            id='connection123:0:0',
+            connection_id='connection123',
+            client_id='client1',
+            action=PresenceAction.ENTER,
+            data={'key': 'value', 'number': 42}
+        )
+        encoded = msg.to_encoded()
+        assert encoded['data'] == '{"key": "value", "number": 42}'
+        assert encoded['encoding'] == 'json'
+
+    def test_to_encoded_with_list_data(self):
+        """Test converting message with list data (should be JSON serialized)."""
+        msg = PresenceMessage(
+            id='connection123:0:0',
+            connection_id='connection123',
+            client_id='client1',
+            action=PresenceAction.ENTER,
+            data=['item1', 'item2', 3]
+        )
+        encoded = msg.to_encoded()
+        assert encoded['data'] == '["item1", "item2", 3]'
+        assert encoded['encoding'] == 'json'
+
+    def test_to_encoded_with_binary_data(self):
+        """Test converting message with binary data (should be base64 encoded)."""
+        import base64
+        binary_data = b'binary data here'
+        msg = PresenceMessage(
+            id='connection123:0:0',
+            connection_id='connection123',
+            client_id='client1',
+            action=PresenceAction.ENTER,
+            data=binary_data
+        )
+        encoded = msg.to_encoded()
+        assert encoded['data'] == base64.b64encode(binary_data).decode('ascii')
+        assert encoded['encoding'] == 'base64'
+
+    def test_to_encoded_with_bytearray_data(self):
+        """Test converting message with bytearray data (should be base64 encoded)."""
+        import base64
+        binary_data = bytearray(b'bytearray data')
+        msg = PresenceMessage(
+            id='connection123:0:0',
+            connection_id='connection123',
+            client_id='client1',
+            action=PresenceAction.ENTER,
+            data=binary_data
+        )
+        encoded = msg.to_encoded()
+        assert encoded['data'] == base64.b64encode(binary_data).decode('ascii')
+        assert encoded['encoding'] == 'base64'
+
+    def test_to_encoded_with_existing_encoding(self):
+        """Test that existing encoding is preserved and appended to."""
+        msg = PresenceMessage(
+            id='connection123:0:0',
+            connection_id='connection123',
+            client_id='client1',
+            action=PresenceAction.ENTER,
+            data=b'test',
+            encoding='utf-8'
+        )
+        encoded = msg.to_encoded()
+        assert 'utf-8' in encoded['encoding']
+        assert 'base64' in encoded['encoding']
+        assert encoded['encoding'] == 'utf-8/base64'
+
+    def test_to_encoded_binary_mode(self):
+        """Test converting message in binary mode (no base64 encoding)."""
+        binary_data = b'binary data'
+        msg = PresenceMessage(
+            id='connection123:0:0',
+            connection_id='connection123',
+            client_id='client1',
+            action=PresenceAction.ENTER,
+            data=binary_data
+        )
+        encoded = msg.to_encoded(binary=True)
+        assert encoded['data'] == binary_data
+        assert 'encoding' not in encoded  # No base64 added in binary mode
 
     def test_from_encoded_array(self):
         """Test decoding array of presence messages."""

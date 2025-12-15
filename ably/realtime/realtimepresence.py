@@ -246,8 +246,12 @@ class RealtimePresence(EventEmitter):
             data=data
         )
 
+        # Encrypt if cipher is configured
+        if channel.cipher:
+            presence_msg.encrypt(channel.cipher)
+
         # Convert to wire format
-        wire_msg = presence_msg.to_encoded(cipher=channel.cipher)
+        wire_msg = presence_msg.to_encoded(binary=channel.ably.options.use_binary_protocol)
 
         # RTP8d/RTP8g: Handle based on channel state
         if channel.state == ChannelState.ATTACHED:
@@ -317,8 +321,12 @@ class RealtimePresence(EventEmitter):
             data=data
         )
 
+        # Encrypt if cipher is configured
+        if channel.cipher:
+            presence_msg.encrypt(channel.cipher)
+
         # Convert to wire format
-        wire_msg = presence_msg.to_encoded(cipher=channel.cipher)
+        wire_msg = presence_msg.to_encoded(binary=channel.ably.options.use_binary_protocol)
 
         # RTP10e: Handle based on channel state
         if channel.state == ChannelState.ATTACHED:

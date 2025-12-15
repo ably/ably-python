@@ -1,8 +1,13 @@
+import base64
+import json
 from datetime import datetime, timedelta
 from urllib import parse
 
 from ably.http.paginatedresult import PaginatedResult
 from ably.types.mixins import EncodeDataMixin
+from ably.types.typedbuffer import TypedBuffer
+from ably.util.crypto import CipherData
+from ably.util.exceptions import AblyException
 
 
 def _ms_since_epoch(dt):
@@ -38,12 +43,13 @@ class PresenceMessage(EncodeDataMixin):
                  extras=None,  # TP3i (functionality not specified)
                  ):
 
+        super().__init__(encoding or '')
+
         self.__id = id
         self.__action = action
         self.__client_id = client_id
         self.__connection_id = connection_id
         self.__data = data
-        self.__encoding = encoding
         self.__timestamp = timestamp
         self.__member_key = member_key
         self.__extras = extras
@@ -67,10 +73,6 @@ class PresenceMessage(EncodeDataMixin):
     @property
     def data(self):
         return self.__data
-
-    @property
-    def encoding(self):
-        return self.__encoding
 
     @property
     def timestamp(self):
@@ -120,30 +122,84 @@ class PresenceMessage(EncodeDataMixin):
         except (ValueError, IndexError) as e:
             raise ValueError(f"Cannot parse id: invalid msgSerial or index in '{self.id}'") from e
 
-    def to_encoded(self, cipher=None):
+    def encrypt(self, channel_cipher):
+        """
+        Encrypt the presence message data using the provided cipher.
+        Similar to Message.encrypt().
+        """
+        if isinstance(self.data, CipherData):
+            return
+
+        elif isinstance(self.data, str):
+            self._encoding_array.append('utf-8')
+
+        if isinstance(self.data, dict) or isinstance(self.data, list):
+            self._encoding_array.append('json')
+            self._encoding_array.append('utf-8')
+
+        typed_data = TypedBuffer.from_obj(self.data)
+        if typed_data.buffer is None:
+            return
+        encrypted_data = channel_cipher.encrypt(typed_data.buffer)
+        self.__data = CipherData(encrypted_data, typed_data.type,
+                                 cipher_type=channel_cipher.cipher_type)
+
+    def to_encoded(self, binary=False):
         """
         Convert to wire protocol format for sending.
 
-        Note: For Phase 1, this provides basic serialization. Full encoding
-        (encryption, compression) will be handled by the channel/transport layer.
+        Handles proper encoding of data including JSON serialization,
+        base64 encoding for binary data, and encryption support.
         """
+        data = self.data
+        data_type = None
+        encoding = self._encoding_array[:]
+
+        # Handle different data types and build encoding string
+        if isinstance(data, (dict, list)):
+            encoding.append('json')
+            data = json.dumps(data)
+            data = str(data)
+        elif isinstance(data, str) and not binary:
+            pass
+        elif not binary and isinstance(data, (bytearray, bytes)):
+            data = base64.b64encode(data).decode('ascii')
+            encoding.append('base64')
+        elif isinstance(data, CipherData):
+            encoding.append(data.encoding_str)
+            data_type = data.type
+            if not binary:
+                data = base64.b64encode(data.buffer).decode('ascii')
+                encoding.append('base64')
+            else:
+                data = data.buffer
+        elif binary and isinstance(data, bytearray):
+            data = bytes(data)
+
+        if not (isinstance(data, (bytes, str, list, dict, bytearray)) or data is None):
+            raise AblyException("Invalid data payload", 400, 40011)
+
         result = {
             'action': self.action,
         }
+
         if self.id:
             result['id'] = self.id
         if self.client_id:
             result['clientId'] = self.client_id
         if self.connection_id:
             result['connectionId'] = self.connection_id
-        if self.data is not None:
-            result['data'] = self.data
-        if self.encoding:
-            result['encoding'] = self.encoding
+        if data is not None:
+            result['data'] = data
+        if data_type:
+            result['type'] = data_type
+        if encoding:
+            result['encoding'] = '/'.join(encoding).strip('/')
         if self.extras:
             result['extras'] = self.extras
         if self.timestamp:
             result['timestamp'] = _ms_since_epoch(self.timestamp)
+
         return result
 
     @staticmethod
