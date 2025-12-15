@@ -30,16 +30,24 @@ async def force_suspended(client):
     await client.connection._when_state(ConnectionState.SUSPENDED)
 
 
+@pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
 class TestRealtimePresenceBasics(BaseAsyncTestCase):
     """Test basic presence operations: enter, leave, update."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self):
+    async def setup(self, use_binary_protocol):
         """Set up test fixtures."""
         self.test_vars = await TestApp.get_test_vars()
+        self.use_binary_protocol = use_binary_protocol
 
-        self.client1 = await TestApp.get_ably_realtime(client_id='client1')
-        self.client2 = await TestApp.get_ably_realtime(client_id='client2')
+        self.client1 = await TestApp.get_ably_realtime(
+            client_id='client1',
+            use_binary_protocol=use_binary_protocol
+        )
+        self.client2 = await TestApp.get_ably_realtime(
+            client_id='client2',
+            use_binary_protocol=use_binary_protocol
+        )
 
         yield
 
@@ -161,7 +169,7 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
         Test RTP8j: Anonymous clients cannot enter presence.
         """
         # Create client without clientId
-        client = await TestApp.get_ably_realtime()
+        client = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         await client.connection.once_async('connected')
 
         channel = client.channels.get(self.get_channel_name('anonymous'))
@@ -175,16 +183,24 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
             await client.close()
 
 
+@pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
 class TestRealtimePresenceGet(BaseAsyncTestCase):
     """Test presence.get() functionality."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self):
+    async def setup(self, use_binary_protocol):
         """Set up test fixtures."""
         self.test_vars = await TestApp.get_test_vars()
+        self.use_binary_protocol = use_binary_protocol
 
-        self.client1 = await TestApp.get_ably_realtime(client_id='client1')
-        self.client2 = await TestApp.get_ably_realtime(client_id='client2')
+        self.client1 = await TestApp.get_ably_realtime(
+            client_id='client1',
+            use_binary_protocol=use_binary_protocol
+        )
+        self.client2 = await TestApp.get_ably_realtime(
+            client_id='client2',
+            use_binary_protocol=use_binary_protocol
+        )
 
         yield
 
@@ -261,16 +277,24 @@ class TestRealtimePresenceGet(BaseAsyncTestCase):
         assert len(members) == 0
 
 
+@pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
 class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
     """Test presence.subscribe() functionality."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self):
+    async def setup(self, use_binary_protocol):
         """Set up test fixtures."""
         self.test_vars = await TestApp.get_test_vars()
+        self.use_binary_protocol = use_binary_protocol
 
-        self.client1 = await TestApp.get_ably_realtime(client_id='client1')
-        self.client2 = await TestApp.get_ably_realtime(client_id='client2')
+        self.client1 = await TestApp.get_ably_realtime(
+            client_id='client1',
+            use_binary_protocol=use_binary_protocol
+        )
+        self.client2 = await TestApp.get_ably_realtime(
+            client_id='client2',
+            use_binary_protocol=use_binary_protocol
+        )
 
         yield
 
@@ -327,16 +351,21 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
         assert msg.action == PresenceAction.ENTER
 
 
+@pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
 class TestRealtimePresenceEnterClient(BaseAsyncTestCase):
     """Test enterClient/updateClient/leaveClient functionality."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self):
+    async def setup(self, use_binary_protocol):
         """Set up test fixtures."""
         self.test_vars = await TestApp.get_test_vars()
+        self.use_binary_protocol = use_binary_protocol
 
         # Use wildcard auth for enterClient
-        self.client = await TestApp.get_ably_realtime(client_id='*')
+        self.client = await TestApp.get_ably_realtime(
+            client_id='*',
+            use_binary_protocol=use_binary_protocol
+        )
 
         yield
 
@@ -407,13 +436,15 @@ class TestRealtimePresenceEnterClient(BaseAsyncTestCase):
         assert members[0].client_id == 'client2'
 
 
+@pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
 class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
     """Test presence behavior during connection lifecycle events."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self):
+    async def setup(self, use_binary_protocol):
         """Set up test fixtures."""
         self.test_vars = await TestApp.get_test_vars()
+        self.use_binary_protocol = use_binary_protocol
         yield
 
     async def test_presence_enter_without_connect(self):
@@ -424,7 +455,10 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
         channel_name = self.get_channel_name('enter_without_connect')
 
         # Create listener client
-        listener_client = await TestApp.get_ably_realtime(client_id='listener')
+        listener_client = await TestApp.get_ably_realtime(
+            client_id='listener',
+            use_binary_protocol=self.use_binary_protocol
+        )
         listener_channel = listener_client.channels.get(channel_name)
 
         received = asyncio.Future()
@@ -436,7 +470,10 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
         await listener_channel.presence.subscribe(on_presence)
 
         # Create client and enter before it's connected
-        enterer_client = await TestApp.get_ably_realtime(client_id='enterer')
+        enterer_client = await TestApp.get_ably_realtime(
+            client_id='enterer',
+            use_binary_protocol=self.use_binary_protocol
+        )
         enterer_channel = enterer_client.channels.get(channel_name)
 
         # Enter without waiting for connection
@@ -458,7 +495,10 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
         channel_name = self.get_channel_name('enter_after_close')
 
         # Create listener
-        listener_client = await TestApp.get_ably_realtime(client_id='listener')
+        listener_client = await TestApp.get_ably_realtime(
+            client_id='listener',
+            use_binary_protocol=self.use_binary_protocol
+        )
         listener_channel = listener_client.channels.get(channel_name)
 
         second_enter_received = asyncio.Future()
@@ -470,7 +510,10 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
         await listener_channel.presence.subscribe(on_presence)
 
         # Create enterer client
-        enterer_client = await TestApp.get_ably_realtime(client_id='enterer')
+        enterer_client = await TestApp.get_ably_realtime(
+            client_id='enterer',
+            use_binary_protocol=self.use_binary_protocol
+        )
         enterer_channel = enterer_client.channels.get(channel_name)
 
         await enterer_client.connection.once_async('connected')
@@ -502,7 +545,7 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
         """
         channel_name = self.get_channel_name('enter_closed')
 
-        client = await TestApp.get_ably_realtime()
+        client = await TestApp.get_ably_realtime(use_binary_protocol=self.use_binary_protocol)
         channel = client.channels.get(channel_name)
 
         await client.connection.once_async('connected')
@@ -521,13 +564,15 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
         await client.close()
 
 
+@pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
 class TestRealtimePresenceAutoReentry(BaseAsyncTestCase):
     """Test automatic re-entry of presence after connection suspension."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self):
+    async def setup(self, use_binary_protocol):
         """Set up test fixtures."""
         self.test_vars = await TestApp.get_test_vars()
+        self.use_binary_protocol = use_binary_protocol
         yield
 
     async def test_presence_auto_reenter_after_suspend(self):
@@ -539,7 +584,10 @@ class TestRealtimePresenceAutoReentry(BaseAsyncTestCase):
         """
         channel_name = self.get_channel_name('auto_reenter')
 
-        client = await TestApp.get_ably_realtime(client_id='test_client')
+        client = await TestApp.get_ably_realtime(
+            client_id='test_client',
+            use_binary_protocol=self.use_binary_protocol
+        )
         channel = client.channels.get(channel_name)
 
         await channel.attach()
@@ -592,7 +640,10 @@ class TestRealtimePresenceAutoReentry(BaseAsyncTestCase):
         channel_name = self.get_channel_name('auto_reenter_different_connid')
 
         # Create observer client
-        observer_client = await TestApp.get_ably_realtime(client_id='observer')
+        observer_client = await TestApp.get_ably_realtime(
+            client_id='observer',
+            use_binary_protocol=self.use_binary_protocol
+        )
         observer_channel = observer_client.channels.get(channel_name)
         await observer_channel.attach()
 
@@ -613,7 +664,8 @@ class TestRealtimePresenceAutoReentry(BaseAsyncTestCase):
         # This tells the server to send LEAVE for presence members 5 seconds after disconnect
         client = await TestApp.get_ably_realtime(
             client_id='test_client',
-            transport_params={'remainPresentFor': 1000}
+            transport_params={'remainPresentFor': 1000},
+            use_binary_protocol=self.use_binary_protocol
         )
         channel = client.channels.get(channel_name)
 
@@ -671,13 +723,15 @@ class TestRealtimePresenceAutoReentry(BaseAsyncTestCase):
         await client.close()
 
 
+@pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
 class TestRealtimePresenceSyncBehavior(BaseAsyncTestCase):
     """Test presence SYNC behavior and state management."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self):
+    async def setup(self, use_binary_protocol):
         """Set up test fixtures."""
         self.test_vars = await TestApp.get_test_vars()
+        self.use_binary_protocol = use_binary_protocol
         yield
 
     async def test_presence_refresh_on_detach(self):
@@ -691,11 +745,17 @@ class TestRealtimePresenceSyncBehavior(BaseAsyncTestCase):
         channel_name = self.get_channel_name('refresh_on_detach')
 
         # Client that manages presence
-        manager_client = await TestApp.get_ably_realtime(client_id='*')
+        manager_client = await TestApp.get_ably_realtime(
+            client_id='*',
+            use_binary_protocol=self.use_binary_protocol
+        )
         manager_channel = manager_client.channels.get(channel_name)
 
         # Observer client that will detach/reattach
-        observer_client = await TestApp.get_ably_realtime(client_id='observer')
+        observer_client = await TestApp.get_ably_realtime(
+            client_id='observer',
+            use_binary_protocol=self.use_binary_protocol
+        )
         observer_channel = observer_client.channels.get(channel_name)
 
         # Enter two members
@@ -755,9 +815,18 @@ class TestRealtimePresenceSyncBehavior(BaseAsyncTestCase):
         channel_name = self.get_channel_name('suspended_preserves')
 
         # Create multiple clients
-        main_client = await TestApp.get_ably_realtime(client_id='main')
-        continuous_client = await TestApp.get_ably_realtime(client_id='continuous')
-        leaves_client = await TestApp.get_ably_realtime(client_id='leaves')
+        main_client = await TestApp.get_ably_realtime(
+            client_id='main',
+            use_binary_protocol=self.use_binary_protocol
+        )
+        continuous_client = await TestApp.get_ably_realtime(
+            client_id='continuous',
+            use_binary_protocol=self.use_binary_protocol
+        )
+        leaves_client = await TestApp.get_ably_realtime(
+            client_id='leaves',
+            use_binary_protocol=self.use_binary_protocol
+        )
 
         main_channel = main_client.channels.get(channel_name)
         continuous_channel = continuous_client.channels.get(channel_name)
