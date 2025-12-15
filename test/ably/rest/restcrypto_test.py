@@ -18,12 +18,12 @@ log = logging.getLogger(__name__)
 
 class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.ably = await TestApp.get_ably_rest()
         self.ably2 = await TestApp.get_ably_rest()
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
         await self.ably2.close()
 
@@ -201,20 +201,20 @@ class TestRestCrypto(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
 class AbstractTestCryptoWithFixture:
 
-    @classmethod
-    def setUpClass(cls):
-        resources_path = os.path.join(utils.get_submodule_dir(__file__), 'test-resources', cls.fixture_file)
+    @pytest.fixture(autouse=True)
+    def setUpClass(self):
+        resources_path = os.path.join(utils.get_submodule_dir(__file__), 'test-resources', self.fixture_file)
         with open(resources_path) as f:
-            cls.fixture = json.loads(f.read())
-            cls.params = {
-                'secret_key': base64.b64decode(cls.fixture['key'].encode('ascii')),
-                'mode': cls.fixture['mode'],
-                'algorithm': cls.fixture['algorithm'],
-                'iv': base64.b64decode(cls.fixture['iv'].encode('ascii')),
+            self.fixture = json.loads(f.read())
+            self.params = {
+                'secret_key': base64.b64decode(self.fixture['key'].encode('ascii')),
+                'mode': self.fixture['mode'],
+                'algorithm': self.fixture['algorithm'],
+                'iv': base64.b64decode(self.fixture['iv'].encode('ascii')),
             }
-            cls.cipher_params = CipherParams(**cls.params)
-            cls.cipher = get_cipher(cls.cipher_params)
-            cls.items = cls.fixture['items']
+            self.cipher_params = CipherParams(**self.params)
+            self.cipher = get_cipher(self.cipher_params)
+            self.items = self.fixture['items']
 
     def get_encoded(self, encoded_item):
         if encoded_item.get('encoding') == 'base64':

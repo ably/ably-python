@@ -14,7 +14,8 @@ from test.ably.utils import BaseAsyncTestCase, WaitableEvent, assert_waiter
 class TestRealtimeChannelPublish(BaseAsyncTestCase):
     """Tests for RTN7 spec - Message acknowledgment"""
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
 
     # RTN7a - Basic ACK/NACK functionality

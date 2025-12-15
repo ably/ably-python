@@ -1,6 +1,8 @@
 import asyncio
 import json
 
+import pytest
+
 from ably import AblyVCDiffDecoder
 from ably.realtime.connection import ConnectionState
 from ably.realtime.realtime_channel import ChannelOptions
@@ -31,7 +33,8 @@ class FailingVCDiffDecoder(VCDiffDecoder):
 
 
 class TestRealtimeChannelVCDiff(BaseAsyncTestCase):
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.valid_key_format = "api:key"
 

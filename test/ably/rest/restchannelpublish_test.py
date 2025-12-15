@@ -26,13 +26,13 @@ log = logging.getLogger(__name__)
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.ably = await TestApp.get_ably_rest()
         self.client_id = uuid.uuid4().hex
         self.ably_with_client_id = await TestApp.get_ably_rest(client_id=self.client_id, use_token_auth=True)
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
         await self.ably_with_client_id.close()
 
@@ -450,11 +450,11 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
 
 class TestRestChannelPublishIdempotent(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest()
         self.ably_idempotent = await TestApp.get_ably_rest(idempotent_rest_publishing=True)
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
         await self.ably_idempotent.close()
 

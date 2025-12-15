@@ -11,7 +11,8 @@ from test.ably.utils import BaseAsyncTestCase
 
 
 class TestRealtimeConnection(BaseAsyncTestCase):
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.valid_key_format = "api:key"
 

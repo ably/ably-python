@@ -23,7 +23,8 @@ class TestRestAppStatsSetup:
             'limit': 1
         }
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest()
         self.ably_text = await TestApp.get_ably_rest(use_binary_protocol=False)
 
@@ -67,12 +68,10 @@ class TestRestAppStatsSetup:
                 }
             )
         # asynctest does not support setUpClass method
-        if TestRestAppStatsSetup.__stats_added:
-            return
-        await self.ably.http.post('/stats', body=stats + previous_stats)
-        TestRestAppStatsSetup.__stats_added = True
-
-    async def asyncTearDown(self):
+        if not TestRestAppStatsSetup.__stats_added:
+            await self.ably.http.post('/stats', body=stats + previous_stats)
+            TestRestAppStatsSetup.__stats_added = True
+        yield
         await self.ably.close()
         await self.ably_text.close()
 

@@ -26,7 +26,8 @@ log = logging.getLogger(__name__)
 
 # does not make any request, no need to vary by protocol
 class TestAuth(BaseAsyncTestCase):
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
 
     def test_auth_init_key_only(self):
@@ -167,11 +168,11 @@ class TestAuth(BaseAsyncTestCase):
 
 class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest()
         self.test_vars = await TestApp.get_test_vars()
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):
@@ -322,7 +323,8 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
 
 class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
 
     def per_protocol_setup(self, use_binary_protocol):
@@ -480,7 +482,8 @@ class TestRequestToken(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass
 
 class TestRenewToken(BaseAsyncTestCase):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.host = 'fake-host.ably.io'
         self.ably = await TestApp.get_ably_rest(use_binary_protocol=False, rest_host=self.host)
@@ -522,8 +525,7 @@ class TestRenewToken(BaseAsyncTestCase):
                                                           name="publish_attempt_route")
         self.publish_attempt_route.side_effect = call_back
         self.mocked_api.start()
-
-    async def asyncTearDown(self):
+        yield
         # We need to have quiet here in order to do not have check if all endpoints were called
         self.mocked_api.stop(quiet=True)
         self.mocked_api.reset()
@@ -583,7 +585,8 @@ class TestRenewToken(BaseAsyncTestCase):
 
 class TestRenewExpiredToken(BaseAsyncTestCase):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.publish_attempts = 0
         self.channel = uuid.uuid4().hex
@@ -629,8 +632,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
 
         self.publish_message_route.side_effect = cb_publish
         self.mocked_api.start()
-
-    async def asyncTearDown(self):
+        yield
         self.mocked_api.stop(quiet=True)
         self.mocked_api.reset()
 

@@ -1,3 +1,4 @@
+import pytest
 import respx
 from httpx import Response
 
@@ -26,7 +27,8 @@ class TestPaginatedResult(BaseAsyncTestCase):
 
         return callback
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest(use_binary_protocol=False)
         # Mocked responses
         # without specific headers
@@ -60,8 +62,7 @@ class TestPaginatedResult(BaseAsyncTestCase):
             self.ably.http,
             url='http://rest.ably.io/channels/channel_name/ch2',
             response_processor=lambda response: response.to_native())
-
-    async def asyncTearDown(self):
+        yield
         self.mocked_api.stop()
         self.mocked_api.reset()
         await self.ably.close()

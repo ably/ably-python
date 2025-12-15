@@ -12,7 +12,8 @@ from test.ably.utils import BaseAsyncTestCase, random_string
 
 
 class TestRealtimeChannel(BaseAsyncTestCase):
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.valid_key_format = "api:key"
 

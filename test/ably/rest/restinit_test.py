@@ -12,7 +12,8 @@ from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, don
 
 class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
 
     @dont_vary_protocol

@@ -13,10 +13,10 @@ class TestRestTime(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         self.ably.options.use_binary_protocol = use_binary_protocol
         self.use_binary_protocol = use_binary_protocol
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.ably = await TestApp.get_ably_rest()
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
 
     async def test_time_accuracy(self):

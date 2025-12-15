@@ -8,11 +8,11 @@ from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, don
 
 class TestRestCapability(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.ably = await TestApp.get_ably_rest()
-
-    async def asyncTearDown(self):
+        yield
         await self.ably.close()
 
     def per_protocol_setup(self, use_binary_protocol):
