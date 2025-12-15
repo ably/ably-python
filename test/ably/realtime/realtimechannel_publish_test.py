@@ -285,6 +285,27 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
         await ably.close()
 
+    async def test_publish_fails_on_initialized_when_queue_messages_false(self):
+        """RTN7d: Verify publish fails immediately when connection is CONNECTING and queueMessages=false"""
+        # Create client with queueMessages=False
+        ably = await TestApp.get_ably_realtime(
+            use_binary_protocol=self.use_binary_protocol,
+            queue_messages=False,
+            auto_connect=False
+        )
+
+        channel = ably.channels.get('test_initialized_channel')
+
+        # Try to publish while in the INITIALIZED state with queueMessages=false
+        with pytest.raises(AblyException) as exc_info:
+            await channel.publish('test_event', 'test_data')
+
+        # Verify it failed with appropriate error
+        assert exc_info.value.code == 90000
+        assert exc_info.value.status_code == 400
+
+        await ably.close()
+
     # RTN19a2 - Reset msgSerial on new connectionId
     async def test_msgserial_resets_on_new_connection_id(self):
         """RTN19a2: Verify msgSerial resets to 0 when connectionId changes"""

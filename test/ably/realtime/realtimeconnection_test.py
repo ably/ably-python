@@ -460,3 +460,12 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert all(isinstance(frame, str) for frame in received_raw_websocket_frames)
 
         await ably.close()
+
+    # TO3g
+    async def test_queue_messages_defaults_to_true(self):
+        """TO3g: Verify that queueMessages client option defaults to true"""
+        ably = await TestApp.get_ably_realtime(auto_connect=False)
+
+        # TO3g: queueMessages defaults to true
+        assert ably.options.queue_messages is True
+        assert ably.connection.connection_manager.options.queue_messages is True
