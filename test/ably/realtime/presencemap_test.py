@@ -736,3 +736,37 @@ class TestPresenceMapSyncOperations(BaseAsyncTestCase):
         # Call start_sync again - should not reset residual
         self.presence_map.start_sync()
         assert self.presence_map._residual_members is initial_residual
+
+    def test_clear_invokes_sync_callbacks(self):
+        """
+        Test that clear() invokes pending sync callbacks to prevent hanging.
+
+        This ensures that if get() is waiting for sync and the channel
+        transitions to DETACHED/FAILED, the waiting Future is resolved
+        and the caller is not left blocked.
+        """
+        msg1 = PresenceMessage(
+            id='conn1:0:0',
+            connection_id='conn1',
+            client_id='client1',
+            action=PresenceAction.PRESENT
+        )
+
+        self.presence_map.put(msg1)
+        self.presence_map.start_sync()
+
+        # Register a callback as if _wait_for_sync() was called
+        callback_invoked = False
+
+        def sync_callback():
+            nonlocal callback_invoked
+            callback_invoked = True
+
+        self.presence_map.wait_sync(sync_callback)
+
+        # Clear should invoke the callback
+        self.presence_map.clear()
+
+        assert callback_invoked, "clear() should invoke pending sync callbacks"
+        assert not self.presence_map.sync_in_progress
+        assert len(self.presence_map.values()) == 0

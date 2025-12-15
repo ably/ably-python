@@ -333,7 +333,17 @@ class PresenceMap:
         Clear all members and reset sync state.
 
         Used when channel enters DETACHED or FAILED state (RTP5a).
+        Invokes any pending sync callbacks before clearing to ensure
+        waiting Futures are resolved and callers are not left blocked.
         """
+        # Notify any callbacks waiting for sync to complete
+        # This ensures Futures created by _wait_for_sync() are resolved
+        for callback in self._sync_complete_callbacks:
+            try:
+                callback()
+            except Exception as e:
+                self._logger.error(f"Error in sync complete callback during clear: {e}")
+
         self._map.clear()
         self._residual_members = None
         self._sync_in_progress = False
