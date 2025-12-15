@@ -7,6 +7,8 @@ testing enter/leave/update operations, presence subscriptions, and SYNC behavior
 
 import asyncio
 
+import pytest
+
 from ably.realtime.connection import ConnectionState
 from ably.types.channelstate import ChannelState
 from ably.types.presence import PresenceAction
@@ -18,32 +20,31 @@ from test.ably.utils import BaseAsyncTestCase
 async def force_suspended(client):
     client.connection.connection_manager.request_state(ConnectionState.DISCONNECTED)
 
-    await client.connection._when_state('disconnected')
+    await client.connection._when_state(ConnectionState.DISCONNECTED)
 
     client.connection.connection_manager.notify_state(
         ConnectionState.SUSPENDED,
         AblyException("Connection to server unavailable", 400, 80002)
     )
 
-    await client.connection._when_state('suspended')
+    await client.connection._when_state(ConnectionState.SUSPENDED)
 
 
 class TestRealtimePresenceBasics(BaseAsyncTestCase):
     """Test basic presence operations: enter, leave, update."""
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         """Set up test fixtures."""
-        await super().asyncSetUp()
         self.test_vars = await TestApp.get_test_vars()
 
         self.client1 = await TestApp.get_ably_realtime(client_id='client1')
         self.client2 = await TestApp.get_ably_realtime(client_id='client2')
 
-    async def asyncTearDown(self):
-        """Clean up test resources."""
+        yield
+
         await self.client1.close()
         await self.client2.close()
-        await super().asyncTearDown()
 
     async def test_presence_enter_without_attach(self):
         """
@@ -167,7 +168,7 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
 
         try:
             await channel.presence.enter('data')
-            self.fail('Should have raised exception for anonymous client')
+            pytest.fail('Should have raised exception for anonymous client')
         except Exception as e:
             assert 'clientId must be specified' in str(e)
         finally:
@@ -177,19 +178,18 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
 class TestRealtimePresenceGet(BaseAsyncTestCase):
     """Test presence.get() functionality."""
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         """Set up test fixtures."""
-        await super().asyncSetUp()
         self.test_vars = await TestApp.get_test_vars()
 
         self.client1 = await TestApp.get_ably_realtime(client_id='client1')
         self.client2 = await TestApp.get_ably_realtime(client_id='client2')
 
-    async def asyncTearDown(self):
-        """Clean up test resources."""
+        yield
+
         await self.client1.close()
         await self.client2.close()
-        await super().asyncTearDown()
 
     async def test_presence_enter_get(self):
         """
@@ -264,19 +264,18 @@ class TestRealtimePresenceGet(BaseAsyncTestCase):
 class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
     """Test presence.subscribe() functionality."""
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         """Set up test fixtures."""
-        await super().asyncSetUp()
         self.test_vars = await TestApp.get_test_vars()
 
         self.client1 = await TestApp.get_ably_realtime(client_id='client1')
         self.client2 = await TestApp.get_ably_realtime(client_id='client2')
 
-    async def asyncTearDown(self):
-        """Clean up test resources."""
+        yield
+
         await self.client1.close()
         await self.client2.close()
-        await super().asyncTearDown()
 
     async def test_presence_subscribe_unattached(self):
         """
@@ -331,18 +330,17 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
 class TestRealtimePresenceEnterClient(BaseAsyncTestCase):
     """Test enterClient/updateClient/leaveClient functionality."""
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         """Set up test fixtures."""
-        await super().asyncSetUp()
         self.test_vars = await TestApp.get_test_vars()
 
         # Use wildcard auth for enterClient
         self.client = await TestApp.get_ably_realtime(client_id='*')
 
-    async def asyncTearDown(self):
-        """Clean up test resources."""
+        yield
+
         await self.client.close()
-        await super().asyncTearDown()
 
     async def test_enter_client_multiple(self):
         """
@@ -412,14 +410,11 @@ class TestRealtimePresenceEnterClient(BaseAsyncTestCase):
 class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
     """Test presence behavior during connection lifecycle events."""
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         """Set up test fixtures."""
-        await super().asyncSetUp()
         self.test_vars = await TestApp.get_test_vars()
-
-    async def asyncTearDown(self):
-        """Clean up test resources."""
-        await super().asyncTearDown()
+        yield
 
     async def test_presence_enter_without_connect(self):
         """
@@ -518,7 +513,7 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
         # Try to enter - should fail
         try:
             await channel.presence.enter_client('client1', 'data')
-            self.fail('Should have raised exception for closed connection')
+            pytest.fail('Should have raised exception for closed connection')
         except Exception as e:
             # Should get an error about closed/failed connection
             assert 'closed' in str(e).lower() or 'failed' in str(e).lower() or '80017' in str(e)
@@ -529,14 +524,11 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
 class TestRealtimePresenceAutoReentry(BaseAsyncTestCase):
     """Test automatic re-entry of presence after connection suspension."""
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         """Set up test fixtures."""
-        await super().asyncSetUp()
         self.test_vars = await TestApp.get_test_vars()
-
-    async def asyncTearDown(self):
-        """Clean up test resources."""
-        await super().asyncTearDown()
+        yield
 
     async def test_presence_auto_reenter_after_suspend(self):
         """
@@ -682,14 +674,11 @@ class TestRealtimePresenceAutoReentry(BaseAsyncTestCase):
 class TestRealtimePresenceSyncBehavior(BaseAsyncTestCase):
     """Test presence SYNC behavior and state management."""
 
-    async def asyncSetUp(self):
+    @pytest.fixture(autouse=True)
+    async def setup(self):
         """Set up test fixtures."""
-        await super().asyncSetUp()
         self.test_vars = await TestApp.get_test_vars()
-
-    async def asyncTearDown(self):
-        """Clean up test resources."""
-        await super().asyncTearDown()
+        yield
 
     async def test_presence_refresh_on_detach(self):
         """

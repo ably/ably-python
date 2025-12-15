@@ -6,6 +6,8 @@ Tests RTP2 specification requirements for presence map operations.
 
 from datetime import datetime
 
+import pytest
+
 from ably.realtime.presencemap import PresenceMap, _is_newer
 from ably.types.presence import PresenceAction, PresenceMessage
 from test.ably.utils import BaseAsyncTestCase
@@ -62,9 +64,9 @@ class TestPresenceMessageHelpers(BaseAsyncTestCase):
             client_id='client1',
             action=PresenceAction.PRESENT
         )
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as context:
             msg.parse_id()
-        assert "id is None or empty" in str(context.exception)
+        assert "id is None or empty" in str(context.value)
 
     def test_parse_id_invalid_format(self):
         """Test parsing invalid id format raises ValueError."""
@@ -74,9 +76,9 @@ class TestPresenceMessageHelpers(BaseAsyncTestCase):
             client_id='client1',
             action=PresenceAction.PRESENT
         )
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as context:
             msg.parse_id()
-        assert "invalid msgSerial or index" in str(context.exception)
+        assert "invalid msgSerial or index" in str(context.value)
 
     def test_parse_id_non_numeric_parts(self):
         """Test parsing id with non-numeric msgSerial/index raises ValueError."""
@@ -86,9 +88,9 @@ class TestPresenceMessageHelpers(BaseAsyncTestCase):
             client_id='client1',
             action=PresenceAction.PRESENT
         )
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as context:
             msg.parse_id()
-        assert "invalid msgSerial or index" in str(context.exception)
+        assert "invalid msgSerial or index" in str(context.value)
 
     def test_member_key_property(self):
         """Test member_key property (TP3h)."""
@@ -333,11 +335,13 @@ class TestNewnessComparison(BaseAsyncTestCase):
 class TestPresenceMapBasicOperations(BaseAsyncTestCase):
     """Test basic PresenceMap operations."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self):
         """Set up test fixtures."""
         self.presence_map = PresenceMap(
             member_key_fn=lambda msg: msg.member_key
         )
+        yield
 
     def test_put_enter_message(self):
         """Test RTP2d: ENTER message stored as PRESENT."""
@@ -566,11 +570,13 @@ class TestPresenceMapBasicOperations(BaseAsyncTestCase):
 class TestPresenceMapSyncOperations(BaseAsyncTestCase):
     """Test SYNC operations (RTP18, RTP19)."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self):
         """Set up test fixtures."""
         self.presence_map = PresenceMap(
             member_key_fn=lambda msg: msg.member_key
         )
+        yield
 
     def test_start_sync(self):
         """Test RTP18: start_sync captures residual members."""
