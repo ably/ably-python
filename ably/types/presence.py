@@ -1,6 +1,6 @@
 import base64
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib import parse
 
 from ably.http.paginatedresult import PaginatedResult
@@ -11,13 +11,13 @@ from ably.util.exceptions import AblyException
 
 
 def _ms_since_epoch(dt):
-    epoch = datetime.utcfromtimestamp(0)
+    epoch = datetime.fromtimestamp(0, timezone.utc)
     delta = dt - epoch
     return int(delta.total_seconds() * 1000)
 
 
 def _dt_from_ms_epoch(ms):
-    epoch = datetime.utcfromtimestamp(0)
+    epoch = datetime.fromtimestamp(0, timezone.utc)
     return epoch + timedelta(milliseconds=ms)
 
 
