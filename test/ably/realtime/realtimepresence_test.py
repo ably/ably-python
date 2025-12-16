@@ -41,11 +41,11 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
         self.use_binary_protocol = use_binary_protocol
 
         self.client1 = await TestApp.get_ably_realtime(
-            client_id='client1',
+            client_id='basics_client1',
             use_binary_protocol=use_binary_protocol
         )
         self.client2 = await TestApp.get_ably_realtime(
-            client_id='client2',
+            client_id='basics_client2',
             use_binary_protocol=use_binary_protocol
         )
 
@@ -66,7 +66,7 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
         presence_received = asyncio.Future()
 
         def on_presence(msg):
-            if msg.action == PresenceAction.ENTER and msg.client_id == 'client2':
+            if msg.action == PresenceAction.ENTER and msg.client_id == 'basics_client2':
                 presence_received.set_result(msg)
 
         await channel1.presence.subscribe(on_presence)
@@ -79,7 +79,7 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
 
         # Should receive presence event
         msg = await asyncio.wait_for(presence_received, timeout=5.0)
-        assert msg.client_id == 'client2'
+        assert msg.client_id == 'basics_client2'
         assert msg.data == 'test data'
         assert msg.action == PresenceAction.ENTER
 
@@ -98,7 +98,7 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
         # Verify member is present
         members = await channel.presence.get()
         assert len(members) == 1
-        assert members[0].client_id == 'client1'
+        assert members[0].client_id == 'basics_client1'
         assert members[0].data == 'test data'
 
     async def test_presence_enter_and_leave(self):
@@ -125,14 +125,14 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
 
         # Wait for enter event
         await asyncio.sleep(0.5)
-        assert (PresenceAction.ENTER, 'client2') in events
+        assert (PresenceAction.ENTER, 'basics_client2') in events
 
         # Client 2 leaves
         await channel2.presence.leave()
 
         # Wait for leave event
         await asyncio.sleep(0.5)
-        assert (PresenceAction.LEAVE, 'client2') in events
+        assert (PresenceAction.LEAVE, 'basics_client2') in events
 
     async def test_presence_enter_update(self):
         """
@@ -194,11 +194,11 @@ class TestRealtimePresenceGet(BaseAsyncTestCase):
         self.use_binary_protocol = use_binary_protocol
 
         self.client1 = await TestApp.get_ably_realtime(
-            client_id='client1',
+            client_id='get_client1',
             use_binary_protocol=use_binary_protocol
         )
         self.client2 = await TestApp.get_ably_realtime(
-            client_id='client2',
+            client_id='get_client2',
             use_binary_protocol=use_binary_protocol
         )
 
@@ -226,7 +226,7 @@ class TestRealtimePresenceGet(BaseAsyncTestCase):
         members = await channel2.presence.get()
 
         assert len(members) == 1
-        assert members[0].client_id == 'client1'
+        assert members[0].client_id == 'get_client1'
         assert members[0].data == 'test data'
         assert members[0].action == PresenceAction.PRESENT
 
@@ -252,7 +252,7 @@ class TestRealtimePresenceGet(BaseAsyncTestCase):
         # Channel should now be attached
         assert channel2.state == ChannelState.ATTACHED
         assert len(members) == 1
-        assert members[0].client_id == 'client1'
+        assert members[0].client_id == 'get_client1'
 
     async def test_presence_enter_leave_get(self):
         """
@@ -288,11 +288,11 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
         self.use_binary_protocol = use_binary_protocol
 
         self.client1 = await TestApp.get_ably_realtime(
-            client_id='client1',
+            client_id='subscribe_client1',
             use_binary_protocol=use_binary_protocol
         )
         self.client2 = await TestApp.get_ably_realtime(
-            client_id='client2',
+            client_id='subscribe_client2',
             use_binary_protocol=use_binary_protocol
         )
 
@@ -312,7 +312,7 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
         received = asyncio.Future()
 
         def on_presence(msg):
-            if msg.client_id == 'client2':
+            if msg.client_id == 'subscribe_client2':
                 received.set_result(msg)
 
         # Subscribe without attaching first
@@ -329,7 +329,7 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
 
         # Should receive event
         msg = await asyncio.wait_for(received, timeout=5.0)
-        assert msg.client_id == 'client2'
+        assert msg.client_id == 'subscribe_client2'
 
     async def test_presence_message_action(self):
         """
