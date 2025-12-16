@@ -498,6 +498,7 @@ class RealtimeChannel(EventEmitter, Channel):
         # RTL6c4: Check connection state
         connection_state = self.__realtime.connection.state
         if connection_state not in [
+            ConnectionState.INITIALIZED,
             ConnectionState.CONNECTED,
             ConnectionState.CONNECTING,
             ConnectionState.DISCONNECTED,

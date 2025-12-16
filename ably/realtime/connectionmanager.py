@@ -182,8 +182,19 @@ class ConnectionManager(EventEmitter):
         Returns:
             None
         """
-        if self.state not in (ConnectionState.DISCONNECTED, ConnectionState.CONNECTING, ConnectionState.CONNECTED):
-            raise AblyException(f"ConnectionManager.send_protocol_message(): called in {self.state}", 500, 50000)
+        state_should_queue = (self.state in
+                           (ConnectionState.INITIALIZED, ConnectionState.DISCONNECTED, ConnectionState.CONNECTING))
+
+        if self.state != ConnectionState.CONNECTED and not state_should_queue:
+            raise AblyException(f"Cannot send message while connection is {self.state}", 400, 90000)
+
+        # RTL6c2: If queueMessages is false, fail immediately when not CONNECTED
+        if state_should_queue and not self.options.queue_messages:
+            raise AblyException(
+                f"Cannot send message while connection is {self.state}, and queue_messages is false",
+                400,
+                90000,
+            )
 
         pending_message = PendingMessage(protocol_message)
 
@@ -194,7 +205,7 @@ class ConnectionManager(EventEmitter):
             self.pending_message_queue.push(pending_message)
             self.msg_serial += 1
 
-        if self.state in (ConnectionState.DISCONNECTED, ConnectionState.CONNECTING):
+        if state_should_queue:
             self.queued_messages.appendleft(pending_message)
             if pending_message.ack_required:
                 await pending_message.future

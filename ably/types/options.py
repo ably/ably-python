@@ -26,7 +26,7 @@ class VCDiffDecoder(ABC):
 
 class Options(AuthOptions):
     def __init__(self, client_id=None, log_level=0, tls=True, rest_host=None, realtime_host=None, port=0,
-                 tls_port=0, use_binary_protocol=True, queue_messages=False, recover=False, environment=None,
+                 tls_port=0, use_binary_protocol=True, queue_messages=True, recover=False, environment=None,
                  http_open_timeout=None, http_request_timeout=None, realtime_request_timeout=None,
                  http_max_retry_count=None, http_max_retry_duration=None, fallback_hosts=None,
                  fallback_retry_timeout=None, disconnected_retry_timeout=None, idempotent_rest_publishing=None,
