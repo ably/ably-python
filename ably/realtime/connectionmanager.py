@@ -154,6 +154,9 @@ class ConnectionManager(EventEmitter):
         params["v"] = protocol_version
         if self.connection_details:
             params["resume"] = self.connection_details.connection_key
+        # RTN2a: Set format to msgpack if use_binary_protocol is enabled
+        if self.options.use_binary_protocol:
+            params["format"] = "msgpack"
         return params
 
     async def close_impl(self) -> None:

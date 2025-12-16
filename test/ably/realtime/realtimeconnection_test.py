@@ -400,3 +400,63 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         await ably.close()
+
+    # RTN2f - Test msgpack format parameter when use_binary_protocol is enabled
+    async def test_connection_format_msgpack_with_binary_protocol(self):
+        """Test that format=msgpack is sent when use_binary_protocol=True"""
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=True)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+
+        received_raw_websocket_frames = []
+        transport = ably.connection.connection_manager.transport
+        original_decode_raw_websocket_frame = transport.decode_raw_websocket_frame
+
+        def intercepted_websocket_frame(data):
+            received_raw_websocket_frames.append(data)
+            return original_decode_raw_websocket_frame(data)
+
+        transport.decode_raw_websocket_frame = intercepted_websocket_frame
+
+        # Verify transport has format set to msgpack
+        assert ably.connection.connection_manager.transport is not None
+        assert ably.connection.connection_manager.transport.format == 'msgpack'
+
+        # Verify params include format=msgpack
+        assert ably.connection.connection_manager.transport.params.get('format') == 'msgpack'
+
+        await ably.channels.get('connection_test').publish('test', b'test')
+
+        assert len(received_raw_websocket_frames) > 0
+        assert all(isinstance(frame, bytes) for frame in received_raw_websocket_frames)
+
+        await ably.close()
+
+    async def test_connection_format_json_without_binary_protocol(self):
+        """Test that format defaults to json when use_binary_protocol=False"""
+        ably = await TestApp.get_ably_realtime(use_binary_protocol=False)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+
+        received_raw_websocket_frames = []
+        transport = ably.connection.connection_manager.transport
+        original_decode_raw_websocket_frame = transport.decode_raw_websocket_frame
+
+        def intercepted_websocket_frame(data):
+            received_raw_websocket_frames.append(data)
+            return original_decode_raw_websocket_frame(data)
+
+        transport.decode_raw_websocket_frame = intercepted_websocket_frame
+
+        # Verify transport has format set to json (default)
+        assert ably.connection.connection_manager.transport is not None
+        assert ably.connection.connection_manager.transport.format == 'json'
+
+        await ably.channels.get('connection_test').publish('test', b'test')
+
+        # Verify params don't include format parameter (or it's json)
+        transport_format = ably.connection.connection_manager.transport.params.get('format')
+        assert transport_format is None or transport_format == 'json'
+
+        assert len(received_raw_websocket_frames) > 0
+        assert all(isinstance(frame, str) for frame in received_raw_websocket_frames)
+
+        await ably.close()
