@@ -46,4 +46,4 @@ jobs:
       - name: Generate rest sync code and tests
         run: uv run unasync
       - name: Test with pytest
-        run: uv run pytest --verbose --tb=short --reruns 3
+        run: uv run pytest -s --verbose --tb=short --reruns 3
