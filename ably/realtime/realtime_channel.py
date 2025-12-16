@@ -12,6 +12,7 @@ from ably.types.channelstate import ChannelState, ChannelStateChange
 from ably.types.flags import Flag, has_flag
 from ably.types.message import Message
 from ably.types.mixins import DecodingContext
+from ably.types.presence import PresenceMessage
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException, IncompatibleClientIdException
 from ably.util.helper import Timer, is_callable_or_coroutine, validate_message_size
@@ -135,6 +136,10 @@ class RealtimeChannel(EventEmitter, Channel):
         # Used to listen to state changes internally, if we use the public event emitter interface then internals
         # will be disrupted if the user called .off() to remove all listeners
         self.__internal_state_emitter = EventEmitter()
+
+        # Initialize presence for this channel
+        from ably.realtime.realtimepresence import RealtimePresence
+        self.__presence = RealtimePresence(self)
 
         # Pass channel options as dictionary to parent Channel class
         Channel.__init__(self, realtime, name, self.__channel_options.to_dict())
@@ -529,6 +534,7 @@ class RealtimeChannel(EventEmitter, Channel):
             error = proto_msg.get("error")
             exception = None
             resumed = False
+            has_presence = False
 
             self.__attach_serial = channel_serial
             self.__channel_serial = channel_serial
@@ -539,6 +545,8 @@ class RealtimeChannel(EventEmitter, Channel):
 
             if flags:
                 resumed = has_flag(flags, Flag.RESUMED)
+                # RTP1: Check for HAS_PRESENCE flag
+                has_presence = has_flag(flags, Flag.HAS_PRESENCE)
 
             #  RTL12
             if self.state == ChannelState.ATTACHED:
@@ -546,7 +554,7 @@ class RealtimeChannel(EventEmitter, Channel):
                     state_change = ChannelStateChange(self.state, ChannelState.ATTACHED, resumed, exception)
                     self._emit("update", state_change)
             elif self.state == ChannelState.ATTACHING:
-                self._notify_state(ChannelState.ATTACHED, resumed=resumed)
+                self._notify_state(ChannelState.ATTACHED, resumed=resumed, has_presence=has_presence)
             else:
                 log.warn("RealtimeChannel._on_message(): ATTACHED received while not attaching")
         elif action == ProtocolMessageAction.DETACHED:
@@ -570,6 +578,17 @@ class RealtimeChannel(EventEmitter, Channel):
                     log.error(f"Message processing error {e}. Skip messages {proto_msg.get('messages')}")
             for message in messages:
                 self.__message_emitter._emit(message.name, message)
+        elif action == ProtocolMessageAction.PRESENCE:
+            # Handle PRESENCE messages
+            presence_messages = proto_msg.get('presence', [])
+            decoded_presence = PresenceMessage.from_encoded_array(presence_messages, cipher=self.cipher)
+            self.__presence.set_presence(decoded_presence, is_sync=False)
+        elif action == ProtocolMessageAction.SYNC:
+            # Handle SYNC messages (RTP18)
+            presence_messages = proto_msg.get('presence', [])
+            decoded_presence = PresenceMessage.from_encoded_array(presence_messages, cipher=self.cipher)
+            sync_channel_serial = proto_msg.get('channelSerial')
+            self.__presence.set_presence(decoded_presence, is_sync=True, sync_channel_serial=sync_channel_serial)
         elif action == ProtocolMessageAction.ERROR:
             error = AblyException.from_dict(proto_msg.get('error'))
             self._notify_state(ChannelState.FAILED, reason=error)
@@ -580,7 +599,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self._check_pending_state()
 
     def _notify_state(self, state: ChannelState, reason: AblyException | None = None,
-                      resumed: bool = False) -> None:
+                      resumed: bool = False, has_presence: bool = False) -> None:
         log.debug(f'RealtimeChannel._notify_state(): state = {state}')
 
         self.__clear_state_timer()
@@ -617,6 +636,9 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__state = state
         self._emit(state, state_change)
         self.__internal_state_emitter._emit(state, state_change)
+
+        # RTP5: Notify presence of channel state change
+        self.__presence.act_on_channel_state(state, has_presence=has_presence, error=reason)
 
     def _send_message(self, msg: dict) -> None:
         asyncio.create_task(self.__realtime.connection.connection_manager.send_protocol_message(msg))
@@ -707,6 +729,11 @@ class RealtimeChannel(EventEmitter, Channel):
     def params(self) -> dict[str, str]:
         """Get channel parameters"""
         return self.__params
+
+    @property
+    def presence(self):
+        """Get the RealtimePresence object for this channel"""
+        return self.__presence
 
     def _start_decode_failure_recovery(self, error: AblyException) -> None:
         """Start RTL18 decode failure recovery procedure"""

@@ -135,6 +135,17 @@ class ConnectionManager(EventEmitter):
         self.__state = state
         if reason:
             self.__error_reason = reason
+
+        # RTN16d: Clear connection state when entering SUSPENDED or terminal states
+        if state == ConnectionState.SUSPENDED or state in (
+            ConnectionState.CLOSED,
+            ConnectionState.FAILED
+        ):
+            self.__connection_details = None
+            self.connection_id = None
+            self.__connection_key = None
+            self.msg_serial = 0
+
         self._emit('connectionstate', ConnectionStateChange(current_state, state, state, reason))
 
     def check_connection(self) -> bool:
@@ -157,6 +168,10 @@ class ConnectionManager(EventEmitter):
         # RTN2a: Set format to msgpack if use_binary_protocol is enabled
         if self.options.use_binary_protocol:
             params["format"] = "msgpack"
+
+        # Add any custom transport params from options
+        params.update(self.options.transport_params)
+
         return params
 
     async def close_impl(self) -> None:
@@ -165,12 +180,22 @@ class ConnectionManager(EventEmitter):
         self.cancel_suspend_timer()
         self.start_transition_timer(ConnectionState.CLOSING, fail_state=ConnectionState.CLOSED)
         if self.transport:
-            await self.transport.dispose()
+            # Try to send protocol CLOSE message in the background
+            asyncio.create_task(self.transport.close())
+            # Yield to event loop to give the close message a chance to send
+            await asyncio.sleep(0)
+            await self.transport.dispose()  # Dispose transport resources
         if self.connect_base_task:
             self.connect_base_task.cancel()
         if self.disconnect_transport_task:
             await self.disconnect_transport_task
         self.cancel_retry_timer()
+
+        # Clear connection details to prevent resume on next connect
+        # When explicitly closed, we want a fresh connection, not a resume
+        self.__connection_details = None
+        self.connection_id = None
+        self.msg_serial = 0
 
         self.notify_state(ConnectionState.CLOSED)
 
@@ -648,7 +673,6 @@ class ConnectionManager(EventEmitter):
                     AblyException("Connection to server unavailable", 400, 80002)
                 )
                 self.__fail_state = ConnectionState.SUSPENDED
-                self.__connection_details = None
 
         self.suspend_timer = Timer(Defaults.connection_state_ttl, on_suspend_timer_expire)
 

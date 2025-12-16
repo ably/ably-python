@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import functools
 import logging
 from typing import TYPE_CHECKING
@@ -64,7 +65,7 @@ class Connection(EventEmitter):  # RTN4
         connection without an explicit call to connect()
         """
         self.connection_manager.request_state(ConnectionState.CLOSING)
-        await self.once_async(ConnectionState.CLOSED)
+        await self._when_state(ConnectionState.CLOSED)
 
     # RTN13
     async def ping(self) -> float:
@@ -85,6 +86,13 @@ class Connection(EventEmitter):  # RTN4
             The response time in milliseconds
         """
         return await self.__connection_manager.ping()
+
+    def _when_state(self, state: ConnectionState):
+        if self.state == state:
+            fut = asyncio.get_event_loop().create_future()
+            fut.set_result(None)
+            return fut
+        return self.once_async(state)
 
     def _on_state_update(self, state_change: ConnectionStateChange) -> None:
         log.info(f'Connection state changing from {self.state} to {state_change.current}')
