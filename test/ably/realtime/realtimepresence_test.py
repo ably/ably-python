@@ -287,17 +287,24 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
         self.test_vars = await TestApp.get_test_vars()
         self.use_binary_protocol = use_binary_protocol
 
+        protocol = 'msgpack' if use_binary_protocol else 'json'
+
         self.client1 = await TestApp.get_ably_realtime(
             client_id='client1',
             use_binary_protocol=use_binary_protocol
         )
+        print(f"[{protocol}] FIXTURE SETUP: Created client1 id={id(self.client1)}, state={self.client1.connection.state}")
+
         self.client2 = await TestApp.get_ably_realtime(
             client_id='client2',
             use_binary_protocol=use_binary_protocol
         )
+        print(f"[{protocol}] FIXTURE SETUP: Created client2 id={id(self.client2)}, state={self.client2.connection.state}")
 
         yield
 
+        print(f"[{protocol}] FIXTURE TEARDOWN: client1 id={id(self.client1)}, state={self.client1.connection.state}")
+        print(f"[{protocol}] FIXTURE TEARDOWN: client2 id={id(self.client2)}, state={self.client2.connection.state}")
         await self.client1.close()
         await self.client2.close()
 
@@ -335,20 +342,27 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
         """
         Test RTP8c: PresenceMessage should have correct action string.
         """
+        protocol = 'msgpack' if self.use_binary_protocol else 'json'
+        print(f"[{protocol}] TEST START: client1 id={id(self.client1)}, state={self.client1.connection.state}")
+
         channel_name = self.get_channel_name('message_action')
 
         channel1 = self.client1.channels.get(channel_name)
+        print(f"[{protocol}] TEST: Got channel, client1.state={self.client1.connection.state}")
 
         received = asyncio.Future()
 
         def on_presence(msg):
             received.set_result(msg)
 
+        print(f"[{protocol}] TEST: About to subscribe, client1.state={self.client1.connection.state}")
         await channel1.presence.subscribe(on_presence)
+        print(f"[{protocol}] TEST: About to enter, client1.state={self.client1.connection.state}")
         await channel1.presence.enter()
 
         msg = await asyncio.wait_for(received, timeout=5.0)
         assert msg.action == PresenceAction.ENTER
+        print(f"[{protocol}] TEST END: client1.state={self.client1.connection.state}")
 
 
 @pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
