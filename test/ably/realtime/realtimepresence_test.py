@@ -35,24 +35,26 @@ class TestRealtimePresenceBasics(BaseAsyncTestCase):
     """Test basic presence operations: enter, leave, update."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self, use_binary_protocol):
+    async def setup(self, use_binary_protocol, request):
         """Set up test fixtures."""
-        self.test_vars = await TestApp.get_test_vars()
-        self.use_binary_protocol = use_binary_protocol
+        test_instance = request.instance
 
-        self.client1 = await TestApp.get_ably_realtime(
+        test_instance.test_vars = await TestApp.get_test_vars()
+        test_instance.use_binary_protocol = use_binary_protocol
+
+        test_instance.client1 = await TestApp.get_ably_realtime(
             client_id='client1',
             use_binary_protocol=use_binary_protocol
         )
-        self.client2 = await TestApp.get_ably_realtime(
+        test_instance.client2 = await TestApp.get_ably_realtime(
             client_id='client2',
             use_binary_protocol=use_binary_protocol
         )
 
         yield
 
-        await self.client1.close()
-        await self.client2.close()
+        await test_instance.client1.close()
+        await test_instance.client2.close()
 
     async def test_presence_enter_without_attach(self):
         """
@@ -188,24 +190,26 @@ class TestRealtimePresenceGet(BaseAsyncTestCase):
     """Test presence.get() functionality."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self, use_binary_protocol):
+    async def setup(self, use_binary_protocol, request):
         """Set up test fixtures."""
-        self.test_vars = await TestApp.get_test_vars()
-        self.use_binary_protocol = use_binary_protocol
+        test_instance = request.instance
 
-        self.client1 = await TestApp.get_ably_realtime(
+        test_instance.test_vars = await TestApp.get_test_vars()
+        test_instance.use_binary_protocol = use_binary_protocol
+
+        test_instance.client1 = await TestApp.get_ably_realtime(
             client_id='client1',
             use_binary_protocol=use_binary_protocol
         )
-        self.client2 = await TestApp.get_ably_realtime(
+        test_instance.client2 = await TestApp.get_ably_realtime(
             client_id='client2',
             use_binary_protocol=use_binary_protocol
         )
 
         yield
 
-        await self.client1.close()
-        await self.client2.close()
+        await test_instance.client1.close()
+        await test_instance.client2.close()
 
     async def test_presence_enter_get(self):
         """
@@ -289,36 +293,18 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
         test_instance.test_vars = await TestApp.get_test_vars()
         test_instance.use_binary_protocol = use_binary_protocol
 
-        protocol = 'msgpack' if use_binary_protocol else 'json'
-
         test_instance.client1 = await TestApp.get_ably_realtime(
             client_id='client1',
             use_binary_protocol=use_binary_protocol
-        )
-        print(
-            f"[{protocol}] FIXTURE SETUP: Created client1 id={id(test_instance.client1)}, "
-            f"state={test_instance.client1.connection.state}"
         )
 
         test_instance.client2 = await TestApp.get_ably_realtime(
             client_id='client2',
             use_binary_protocol=use_binary_protocol
         )
-        print(
-            f"[{protocol}] FIXTURE SETUP: Created client2 id={id(test_instance.client2)}, "
-            f"state={test_instance.client2.connection.state}"
-        )
 
         yield
 
-        print(
-            f"[{protocol}] FIXTURE TEARDOWN: client1 id={id(test_instance.client1)}, "
-            f"state={test_instance.client1.connection.state}"
-        )
-        print(
-            f"[{protocol}] FIXTURE TEARDOWN: client2 id={id(test_instance.client2)}, "
-            f"state={test_instance.client2.connection.state}"
-        )
         await test_instance.client1.close()
         await test_instance.client2.close()
 
@@ -356,27 +342,26 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
         """
         Test RTP8c: PresenceMessage should have correct action string.
         """
-        protocol = 'msgpack' if self.use_binary_protocol else 'json'
-        print(f"[{protocol}] TEST START: client1 id={id(self.client1)}, state={self.client1.connection.state}")
-
         channel_name = self.get_channel_name('message_action')
 
         channel1 = self.client1.channels.get(channel_name)
-        print(f"[{protocol}] TEST: Got channel, client1.state={self.client1.connection.state}")
 
         received = asyncio.Future()
 
         def on_presence(msg):
             received.set_result(msg)
 
-        print(f"[{protocol}] TEST: About to subscribe, client1.state={self.client1.connection.state}")
         await channel1.presence.subscribe(on_presence)
-        print(f"[{protocol}] TEST: About to enter, client1.state={self.client1.connection.state}")
+
+        # Wait for channel to attach before entering to avoid race with SYNC
+        await channel1.attach()
+
         await channel1.presence.enter()
 
         msg = await asyncio.wait_for(received, timeout=5.0)
-        assert msg.action == PresenceAction.ENTER
-        print(f"[{protocol}] TEST END: client1.state={self.client1.connection.state}")
+        # RTP8c: Should receive ENTER action since we're entering for the first time
+        assert msg.action == PresenceAction.ENTER, \
+            f"Expected ENTER action, got {msg.action}"
 
 
 @pytest.mark.parametrize('use_binary_protocol', [True, False], ids=['msgpack', 'json'])
@@ -384,20 +369,22 @@ class TestRealtimePresenceEnterClient(BaseAsyncTestCase):
     """Test enterClient/updateClient/leaveClient functionality."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self, use_binary_protocol):
+    async def setup(self, use_binary_protocol, request):
         """Set up test fixtures."""
-        self.test_vars = await TestApp.get_test_vars()
-        self.use_binary_protocol = use_binary_protocol
+        test_instance = request.instance
+
+        test_instance.test_vars = await TestApp.get_test_vars()
+        test_instance.use_binary_protocol = use_binary_protocol
 
         # Use wildcard auth for enterClient
-        self.client = await TestApp.get_ably_realtime(
+        test_instance.client = await TestApp.get_ably_realtime(
             client_id='*',
             use_binary_protocol=use_binary_protocol
         )
 
         yield
 
-        await self.client.close()
+        await test_instance.client.close()
 
     async def test_enter_client_multiple(self):
         """
@@ -469,10 +456,12 @@ class TestRealtimePresenceConnectionLifecycle(BaseAsyncTestCase):
     """Test presence behavior during connection lifecycle events."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self, use_binary_protocol):
+    async def setup(self, use_binary_protocol, request):
         """Set up test fixtures."""
-        self.test_vars = await TestApp.get_test_vars()
-        self.use_binary_protocol = use_binary_protocol
+        test_instance = request.instance
+
+        test_instance.test_vars = await TestApp.get_test_vars()
+        test_instance.use_binary_protocol = use_binary_protocol
         yield
 
     async def test_presence_enter_without_connect(self):
@@ -597,10 +586,12 @@ class TestRealtimePresenceAutoReentry(BaseAsyncTestCase):
     """Test automatic re-entry of presence after connection suspension."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self, use_binary_protocol):
+    async def setup(self, use_binary_protocol, request):
         """Set up test fixtures."""
-        self.test_vars = await TestApp.get_test_vars()
-        self.use_binary_protocol = use_binary_protocol
+        test_instance = request.instance
+
+        test_instance.test_vars = await TestApp.get_test_vars()
+        test_instance.use_binary_protocol = use_binary_protocol
         yield
 
     async def test_presence_auto_reenter_after_suspend(self):
@@ -756,10 +747,12 @@ class TestRealtimePresenceSyncBehavior(BaseAsyncTestCase):
     """Test presence SYNC behavior and state management."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self, use_binary_protocol):
+    async def setup(self, use_binary_protocol, request):
         """Set up test fixtures."""
-        self.test_vars = await TestApp.get_test_vars()
-        self.use_binary_protocol = use_binary_protocol
+        test_instance = request.instance
+
+        test_instance.test_vars = await TestApp.get_test_vars()
+        test_instance.use_binary_protocol = use_binary_protocol
         yield
 
     async def test_presence_refresh_on_detach(self):
