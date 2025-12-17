@@ -282,31 +282,45 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
     """Test presence.subscribe() functionality."""
 
     @pytest.fixture(autouse=True)
-    async def setup(self, use_binary_protocol):
+    async def setup(self, use_binary_protocol, request):
         """Set up test fixtures."""
-        self.test_vars = await TestApp.get_test_vars()
-        self.use_binary_protocol = use_binary_protocol
+        test_instance = request.instance
+
+        test_instance.test_vars = await TestApp.get_test_vars()
+        test_instance.use_binary_protocol = use_binary_protocol
 
         protocol = 'msgpack' if use_binary_protocol else 'json'
 
-        self.client1 = await TestApp.get_ably_realtime(
+        test_instance.client1 = await TestApp.get_ably_realtime(
             client_id='client1',
             use_binary_protocol=use_binary_protocol
         )
-        print(f"[{protocol}] FIXTURE SETUP: Created client1 id={id(self.client1)}, state={self.client1.connection.state}")
+        print(
+            f"[{protocol}] FIXTURE SETUP: Created client1 id={id(test_instance.client1)}, "
+            f"state={test_instance.client1.connection.state}"
+        )
 
-        self.client2 = await TestApp.get_ably_realtime(
+        test_instance.client2 = await TestApp.get_ably_realtime(
             client_id='client2',
             use_binary_protocol=use_binary_protocol
         )
-        print(f"[{protocol}] FIXTURE SETUP: Created client2 id={id(self.client2)}, state={self.client2.connection.state}")
+        print(
+            f"[{protocol}] FIXTURE SETUP: Created client2 id={id(test_instance.client2)}, "
+            f"state={test_instance.client2.connection.state}"
+        )
 
         yield
 
-        print(f"[{protocol}] FIXTURE TEARDOWN: client1 id={id(self.client1)}, state={self.client1.connection.state}")
-        print(f"[{protocol}] FIXTURE TEARDOWN: client2 id={id(self.client2)}, state={self.client2.connection.state}")
-        await self.client1.close()
-        await self.client2.close()
+        print(
+            f"[{protocol}] FIXTURE TEARDOWN: client1 id={id(test_instance.client1)}, "
+            f"state={test_instance.client1.connection.state}"
+        )
+        print(
+            f"[{protocol}] FIXTURE TEARDOWN: client2 id={id(test_instance.client2)}, "
+            f"state={test_instance.client2.connection.state}"
+        )
+        await test_instance.client1.close()
+        await test_instance.client2.close()
 
     async def test_presence_subscribe_unattached(self):
         """
