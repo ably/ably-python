@@ -362,6 +362,10 @@ class RealtimePresence(EventEmitter):
             'presence': presence_messages
         }
 
+        print(
+            f"[PRESENCE DEBUG] _send_presence: Sending {len(presence_messages)} messages "
+            f"on channel {self.channel.name}"
+        )
         await self.channel.ably.connection.connection_manager.send_protocol_message(protocol_msg)
 
     async def _queue_presence(self, wire_msg: dict) -> None:
@@ -468,6 +472,10 @@ class RealtimePresence(EventEmitter):
         Raises:
             AblyException: If channel state prevents subscription
         """
+        print(
+            f"[PRESENCE DEBUG] subscribe: Called on channel {self.channel.name}, "
+            f"channel.state={self.channel.state}"
+        )
         # RTP6d: Implicitly attach
         if self.channel.state in [ChannelState.INITIALIZED, ChannelState.DETACHED, ChannelState.DETACHING]:
             asyncio.create_task(self.channel.attach())
@@ -477,11 +485,13 @@ class RealtimePresence(EventEmitter):
             # subscribe(listener)
             listener = args[0]
             self._subscriptions.on(listener)
+            print("[PRESENCE DEBUG] subscribe: Registered listener for all events")
         elif len(args) == 2:
             # subscribe(event, listener)
             event = args[0]
             listener = args[1]
             self._subscriptions.on(event, listener)
+            print(f"[PRESENCE DEBUG] subscribe: Registered listener for event '{event}'")
         else:
             raise ValueError('Invalid subscribe arguments')
 
@@ -524,6 +534,10 @@ class RealtimePresence(EventEmitter):
             is_sync: True if this is part of a SYNC operation
             sync_channel_serial: Optional sync cursor for tracking sync progress
         """
+        print(
+            f"[PRESENCE DEBUG] set_presence: Received {len(presence_set)} messages "
+            f"on channel {self.channel.name}, is_sync={is_sync}"
+        )
         log.info(
             f'RealtimePresence.set_presence(): '
             f'received presence for {len(presence_set)} members; '
@@ -588,8 +602,16 @@ class RealtimePresence(EventEmitter):
                 broadcast_messages.append(synthesized_leave)
 
         # Broadcast messages to subscribers
+        print(
+            f"[PRESENCE DEBUG] set_presence: Broadcasting {len(broadcast_messages)} messages "
+            f"to subscribers on channel {self.channel.name}"
+        )
         for presence in broadcast_messages:
             action_name = PresenceAction._action_name(presence.action).lower()
+            print(
+                f"[PRESENCE DEBUG] set_presence: Emitting '{action_name}' "
+                f"for client_id={presence.client_id}"
+            )
             self._subscriptions._emit(action_name, presence)
 
     def on_attached(self, has_presence: bool = False) -> None:
