@@ -470,7 +470,7 @@ class RealtimePresence(EventEmitter):
         """
         # RTP6d: Implicitly attach
         if self.channel.state in [ChannelState.INITIALIZED, ChannelState.DETACHED, ChannelState.DETACHING]:
-            asyncio.create_task(self.channel.attach())
+            await self.channel.attach()
 
         # Parse arguments: similar to channel subscribe
         if len(args) == 1:

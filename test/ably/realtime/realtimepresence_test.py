@@ -288,7 +288,12 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
     @pytest.fixture(autouse=True)
     async def setup(self, use_binary_protocol, request):
         """Set up test fixtures."""
+        protocol = 'msgpack' if use_binary_protocol else 'json'
         test_instance = request.instance
+        print(f"[{protocol}] FIXTURE: request.instance = {test_instance}, id = {id(test_instance) if test_instance else 'None'}")
+
+        if test_instance is None:
+            raise RuntimeError(f"[{protocol}] FIXTURE ERROR: request.instance is None!")
 
         test_instance.test_vars = await TestApp.get_test_vars()
         test_instance.use_binary_protocol = use_binary_protocol
@@ -352,10 +357,6 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
             received.set_result(msg)
 
         await channel1.presence.subscribe(on_presence)
-
-        # Wait for channel to attach before entering to avoid race with SYNC
-        await channel1.attach()
-
         await channel1.presence.enter()
 
         msg = await asyncio.wait_for(received, timeout=5.0)
