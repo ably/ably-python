@@ -77,7 +77,13 @@ class AblyException(Exception):
     def from_exception(e):
         if isinstance(e, AblyException):
             return e
-        return AblyException(f"Unexpected exception: {e}", 500, 50000)
+        exc_type = type(e).__name__
+        exc_msg = str(e)
+        if exc_msg:
+            message = f"{exc_type}: {exc_msg}"
+        else:
+            message = exc_type
+        return AblyException(f"Unexpected exception: {message}", 500, 50000)
 
     @staticmethod
     def from_dict(value: dict):
