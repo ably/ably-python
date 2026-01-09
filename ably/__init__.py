@@ -15,5 +15,5 @@ from ably.vcdiff.default_vcdiff_decoder import AblyVCDiffDecoder
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-api_version = '3'
+api_version = '4'
 lib_version = '2.1.3'

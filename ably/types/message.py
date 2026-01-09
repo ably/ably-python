@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+from enum import IntEnum
 
 from ably.types.mixins import DeltaExtras, EncodeDataMixin
 from ably.types.typedbuffer import TypedBuffer
@@ -21,6 +22,91 @@ def to_text(value):
         raise TypeError(f"expected string or bytes, not {type(value)}")
 
 
+class MessageVersion:
+    """
+    Contains the details regarding the current version of the message - including when it was updated and by whom.
+    """
+
+    def __init__(self,
+                 serial=None,
+                 timestamp=None,
+                 client_id=None,
+                 description=None,
+                 metadata=None):
+        """
+        Args:
+            serial: A unique identifier for the version of the message, lexicographically-comparable with other
+                   versions (that share the same Message.serial). Will differ from the Message.serial only if the
+                   message has been updated or deleted.
+            timestamp: The timestamp of the message version. If the Message.action is message.create,
+                      this will equal the Message.timestamp.
+            client_id: The client ID of the client that updated the message to this version.
+            description: The description provided by the client that updated the message to this version.
+            metadata: A dict of string key-value pairs that may contain metadata associated with the operation
+                     to update the message to this version.
+        """
+        self.__serial = to_text(serial) if serial is not None else None
+        self.__timestamp = timestamp
+        self.__client_id = to_text(client_id) if client_id is not None else None
+        self.__description = to_text(description) if description is not None else None
+        self.__metadata = metadata
+
+    @property
+    def serial(self):
+        return self.__serial
+
+    @property
+    def timestamp(self):
+        return self.__timestamp
+
+    @property
+    def client_id(self):
+        return self.__client_id
+
+    @property
+    def description(self):
+        return self.__description
+
+    @property
+    def metadata(self):
+        return self.__metadata
+
+    def as_dict(self):
+        """Convert MessageVersion to dictionary format."""
+        result = {
+            'serial': self.serial,
+            'timestamp': self.timestamp,
+            'clientId': self.client_id,
+            'description': self.description,
+            'metadata': self.metadata,
+        }
+        # Remove None values
+        return {k: v for k, v in result.items() if v is not None}
+
+    @staticmethod
+    def from_dict(obj):
+        """Create MessageVersion from dictionary."""
+        if obj is None:
+            return None
+        return MessageVersion(
+            serial=obj.get('serial'),
+            timestamp=obj.get('timestamp'),
+            client_id=obj.get('clientId'),
+            description=obj.get('description'),
+            metadata=obj.get('metadata'),
+        )
+
+
+class MessageAction(IntEnum):
+    """Message action types"""
+    MESSAGE_CREATE = 0
+    MESSAGE_UPDATE = 1
+    MESSAGE_DELETE = 2
+    META = 3
+    MESSAGE_SUMMARY = 4
+    MESSAGE_APPEND = 5
+
+
 class Message(EncodeDataMixin):
 
     def __init__(self,
@@ -33,6 +119,9 @@ class Message(EncodeDataMixin):
                  encoding='',  # TM2e
                  timestamp=None,  # TM2f
                  extras=None,  # TM2i
+                 serial=None, # TM2r
+                 action=None, # TM2j
+                 version=None, # TM2s
                  ):
 
         super().__init__(encoding)
@@ -45,6 +134,19 @@ class Message(EncodeDataMixin):
         self.__connection_key = connection_key
         self.__timestamp = timestamp
         self.__extras = extras
+        self.__serial = serial
+        # Handle action - can be MessageAction enum, int, or None
+        if action is not None:
+            try:
+                self.__action = MessageAction(action)
+            except ValueError:
+                # If it's not a valid action value, store as None
+                self.__action = None
+        if isinstance(version, MessageVersion):
+            self.__version = version
+        else:
+            self.__version = MessageVersion.from_dict(version)
+
 
     def __eq__(self, other):
         if isinstance(other, Message):
@@ -96,6 +198,18 @@ class Message(EncodeDataMixin):
     @property
     def extras(self):
         return self.__extras
+
+    @property
+    def version(self):
+        return self.__version
+
+    @property
+    def serial(self):
+        return self.__serial
+
+    @property
+    def action(self):
+        return self.__action
 
     def encrypt(self, channel_cipher):
         if isinstance(self.data, CipherData):
@@ -167,6 +281,9 @@ class Message(EncodeDataMixin):
             'connectionId': self.connection_id or None,
             'connectionKey': self.connection_key or None,
             'extras': self.extras,
+            'version': self.version.as_dict() if self.version else None,
+            'serial': self.serial,
+            'action': int(self.action) if self.action is not None else None,
         }
 
         if encoding:
@@ -187,6 +304,9 @@ class Message(EncodeDataMixin):
         timestamp = obj.get('timestamp')
         encoding = obj.get('encoding', '')
         extras = obj.get('extras', None)
+        serial = obj.get('serial')
+        action = obj.get('action')
+        version = obj.get('version', None)
 
         delta_extra = DeltaExtras(extras)
         if delta_extra.from_id and delta_extra.from_id != context.last_message_id:
@@ -202,6 +322,9 @@ class Message(EncodeDataMixin):
             client_id=client_id,
             timestamp=timestamp,
             extras=extras,
+            serial=serial,
+            action=action,
+            version=version,
             **decoded_data
         )
 
