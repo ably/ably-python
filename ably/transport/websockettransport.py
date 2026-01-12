@@ -203,7 +203,9 @@ class WebSocketTransport(EventEmitter):
                     log.exception(
                         f"WebSocketTransport.decode(): Unexpected exception handling channel message: {e}"
                     )
-        except ConnectionClosedOK:
+        except (ConnectionClosedOK, GeneratorExit):
+            # ConnectionClosedOK: normal websocket closure
+            # GeneratorExit: coroutine being closed (e.g., during event loop shutdown)
             return
 
     def decode_raw_websocket_frame(self, raw: str | bytes) -> dict:
@@ -229,17 +231,37 @@ class WebSocketTransport(EventEmitter):
 
     async def dispose(self):
         self.is_disposed = True
+
+        # Cancel tasks but don't await them yet to avoid deadlock
+        tasks_to_await = []
+
         if self.read_loop:
             self.read_loop.cancel()
+            tasks_to_await.append(self.read_loop)
         if self.ws_connect_task:
             self.ws_connect_task.cancel()
+            tasks_to_await.append(self.ws_connect_task)
         if self.idle_timer:
             self.idle_timer.cancel()
+
+        # Schedule cleanup of cancelled tasks in the background to avoid blocking dispose()
+        # This prevents deadlock when dispose() is called from within these tasks
+        if tasks_to_await:
+            asyncio.create_task(self._cleanup_tasks(tasks_to_await))
+
         if self.websocket:
             try:
                 await self.websocket.close()
             except asyncio.CancelledError:
                 return
+
+    async def _cleanup_tasks(self, tasks):
+        """Wait for cancelled tasks to complete their cleanup."""
+        for task in tasks:
+            try:
+                await task
+            except Exception:
+                pass  # Ignore all exceptions from cancelled/failed tasks
 
     async def close(self):
         await self.send({'action': ProtocolMessageAction.CLOSE})

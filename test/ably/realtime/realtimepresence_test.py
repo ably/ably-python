@@ -342,7 +342,8 @@ class TestRealtimePresenceSubscribe(BaseAsyncTestCase):
         received = asyncio.Future()
 
         def on_presence(msg):
-            received.set_result(msg)
+            if msg.action == PresenceAction.ENTER:
+                received.set_result(msg)
 
         await channel1.presence.subscribe(on_presence)
         await channel1.presence.enter()

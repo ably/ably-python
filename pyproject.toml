@@ -52,8 +52,6 @@ dev = [
   "respx>=0.22.0,<0.23.0; python_version>='3.8'",
   "importlib-metadata>=4.12,<5.0",
   "pytest-timeout>=2.1.0,<3.0.0",
-  "pytest-rerunfailures>=13.0,<14.0; python_version=='3.7'",
-  "pytest-rerunfailures>=14.0,<15.0; python_version>='3.8'",
   "async-case>=10.1.0,<11.0.0; python_version=='3.7'",
   "tokenize_rt",
   "vcdiff-decoder>=0.1.0a1",
