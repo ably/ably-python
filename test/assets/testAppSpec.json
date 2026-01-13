@@ -26,7 +26,11 @@
 		{
 			"id": "canpublish",
 			"pushEnabled": true
-		}
+		},
+        {
+          "id": "mutable",
+          "mutableMessages": true
+        }
 	],
   "channels": [
     {

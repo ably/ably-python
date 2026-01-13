@@ -135,18 +135,8 @@ class Message(EncodeDataMixin):
         self.__timestamp = timestamp
         self.__extras = extras
         self.__serial = serial
-        # Handle action - can be MessageAction enum, int, or None
-        if action is not None:
-            try:
-                self.__action = MessageAction(action)
-            except ValueError:
-                # If it's not a valid action value, store as None
-                self.__action = None
-        if isinstance(version, MessageVersion):
-            self.__version = version
-        else:
-            self.__version = MessageVersion.from_dict(version)
-
+        self.__action = action
+        self.__version = version
 
     def __eq__(self, other):
         if isinstance(other, Message):
@@ -315,6 +305,21 @@ class Message(EncodeDataMixin):
 
         decoded_data = Message.decode(data, encoding, cipher, context)
 
+        if action is not None:
+            try:
+                action = MessageAction(action)
+            except ValueError:
+                # If it's not a valid action value, store as None
+                action = None
+        else:
+            action = None
+
+        if version is not None:
+            version = MessageVersion.from_dict(version)
+        else:
+            # TM2s
+            version = MessageVersion(serial=serial, timestamp=timestamp)
+
         return Message(
             id=id,
             name=name,
@@ -358,4 +363,10 @@ def make_message_response_handler(cipher):
     def encrypted_message_response_handler(response):
         messages = response.to_native()
         return Message.from_encoded_array(messages, cipher=cipher)
+    return encrypted_message_response_handler
+
+def make_single_message_response_handler(cipher):
+    def encrypted_message_response_handler(response):
+        message = response.to_native()
+        return Message.from_encoded(message, cipher=cipher)
     return encrypted_message_response_handler
