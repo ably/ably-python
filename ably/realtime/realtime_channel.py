@@ -10,8 +10,9 @@ from ably.rest.channel import Channels as RestChannels
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.channelstate import ChannelState, ChannelStateChange
 from ably.types.flags import Flag, has_flag
-from ably.types.message import Message
+from ably.types.message import Message, MessageAction, MessageVersion
 from ably.types.mixins import DecodingContext
+from ably.types.operations import MessageOperation, PublishResult, UpdateDeleteResult
 from ably.types.presence import PresenceMessage
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException, IncompatibleClientIdException
@@ -390,7 +391,7 @@ class RealtimeChannel(EventEmitter, Channel):
             self.__message_emitter.off(listener)
 
     # RTL6
-    async def publish(self, *args, **kwargs) -> None:
+    async def publish(self, *args, **kwargs) -> PublishResult:
         """Publish a message or messages on this channel
 
         Publishes a single message or an array of messages to the channel.
@@ -490,7 +491,7 @@ class RealtimeChannel(EventEmitter, Channel):
         }
 
         # RTL6b: Await acknowledgment from server
-        await self.__realtime.connection.connection_manager.send_protocol_message(protocol_message)
+        return await self.__realtime.connection.connection_manager.send_protocol_message(protocol_message)
 
     def _throw_if_unpublishable_state(self) -> None:
         """Check if the channel and connection are in a state that allows publishing
@@ -521,6 +522,224 @@ class RealtimeChannel(EventEmitter, Channel):
                 400,
                 90001,
             )
+
+    async def _send_update(
+            self,
+            message: Message,
+            action: MessageAction,
+            operation: MessageOperation | None = None,
+            params: dict | None = None,
+    ) -> UpdateDeleteResult:
+        """Internal method to send update/delete/append operations via websocket.
+
+        Parameters
+        ----------
+        message : Message
+            Message object with serial field required
+        action : MessageAction
+            The action type (MESSAGE_UPDATE, MESSAGE_DELETE, MESSAGE_APPEND)
+        operation : MessageOperation, optional
+            Operation metadata (description, metadata)
+
+        Returns
+        -------
+        UpdateDeleteResult
+            Result containing version serial of the operation
+
+        Raises
+        ------
+        AblyException
+            If message serial is missing or connection/channel state prevents operation
+        """
+        # Check message has serial
+        if not message.serial:
+            raise AblyException(
+                "Message serial is required for update/delete/append operations",
+                400,
+                40003
+            )
+
+        # Check connection and channel state
+        self._throw_if_unpublishable_state()
+
+        # Create version from operation if provided
+        if not operation:
+            version = None
+        else:
+            version = MessageVersion(
+                client_id=operation.client_id,
+                description=operation.description,
+                metadata=operation.metadata
+            )
+
+        # Create a new message with the operation fields
+        update_message = Message(
+            name=message.name,
+            data=message.data,
+            client_id=message.client_id,
+            serial=message.serial,
+            action=action,
+            version=version,
+        )
+
+        # Encrypt if needed
+        if self.cipher:
+            update_message.encrypt(self.cipher)
+
+        # Convert to dict representation
+        msg_dict = update_message.as_dict(binary=self.ably.options.use_binary_protocol)
+
+        log.info(
+            f'RealtimeChannel._send_update(): sending {action.name} message; '
+            f'channel = {self.name}, state = {self.state}, serial = {message.serial}'
+        )
+
+        stringified_params = {k: str(v).lower() if type(v) is bool else v for k, v in params.items()} \
+            if params else None
+
+        # Send protocol message
+        protocol_message = {
+            "action": ProtocolMessageAction.MESSAGE,
+            "channel": self.name,
+            "messages": [msg_dict],
+            "params": stringified_params,
+        }
+
+        # Send and await acknowledgment
+        result = await self.__realtime.connection.connection_manager.send_protocol_message(protocol_message)
+
+        # Return UpdateDeleteResult - we don't have version_serial from the result yet
+        # The server will send ACK with the result
+        if result and hasattr(result, 'serials') and result.serials:
+            return UpdateDeleteResult(version_serial=result.serials[0])
+        return UpdateDeleteResult()
+
+    async def update_message(
+            self,
+            message: Message,
+            operation: MessageOperation | None = None,
+            params: dict | None = None,
+    ) -> UpdateDeleteResult:
+        """Updates an existing message on this channel.
+
+        Parameters
+        ----------
+        message : Message
+            Message object to update. Must have a serial field.
+        operation : MessageOperation, optional
+            Optional MessageOperation containing description and metadata for the update.
+
+        Returns
+        -------
+        UpdateDeleteResult
+            Result containing the version serial of the updated message.
+
+        Raises
+        ------
+        AblyException
+            If message serial is missing or connection/channel state prevents the update
+        """
+        return await self._send_update(message, MessageAction.MESSAGE_UPDATE, operation, params)
+
+    async def delete_message(
+            self,
+            message: Message,
+            operation: MessageOperation | None = None,
+            params: dict | None = None
+    ) -> UpdateDeleteResult:
+        """Deletes a message on this channel.
+
+        Parameters
+        ----------
+        message : Message
+            Message object to delete. Must have a serial field.
+        operation : MessageOperation, optional
+            Optional MessageOperation containing description and metadata for the delete.
+
+        Returns
+        -------
+        UpdateDeleteResult
+            Result containing the version serial of the deleted message.
+
+        Raises
+        ------
+        AblyException
+            If message serial is missing or connection/channel state prevents the delete
+        """
+        return await self._send_update(message, MessageAction.MESSAGE_DELETE, operation, params)
+
+    async def append_message(
+            self,
+            message: Message,
+            operation: MessageOperation | None = None,
+            params: dict | None = None,
+    ) -> UpdateDeleteResult:
+        """Appends data to an existing message on this channel.
+
+        Parameters
+        ----------
+        message : Message
+            Message object with data to append. Must have a serial field.
+        operation : MessageOperation, optional
+            Optional MessageOperation containing description and metadata for the append.
+
+        Returns
+        -------
+        UpdateDeleteResult
+            Result containing the version serial of the appended message.
+
+        Raises
+        ------
+        AblyException
+            If message serial is missing or connection/channel state prevents the append
+        """
+        return await self._send_update(message, MessageAction.MESSAGE_APPEND, operation, params)
+
+    async def get_message(self, serial_or_message, timeout=None):
+        """Retrieves a single message by its serial using the REST API.
+
+        Parameters
+        ----------
+        serial_or_message : str or Message
+            Either a string serial or a Message object with a serial field.
+        timeout : float, optional
+            Timeout for the request.
+
+        Returns
+        -------
+        Message
+            Message object for the requested serial.
+
+        Raises
+        ------
+        AblyException
+            If the serial is missing or the message cannot be retrieved.
+        """
+        # Delegate to parent Channel (REST) implementation
+        return await Channel.get_message(self, serial_or_message, timeout=timeout)
+
+    async def get_message_versions(self, serial_or_message, params=None):
+        """Retrieves version history for a message using the REST API.
+
+        Parameters
+        ----------
+        serial_or_message : str or Message
+            Either a string serial or a Message object with a serial field.
+        params : dict, optional
+            Optional dict of query parameters for pagination.
+
+        Returns
+        -------
+        PaginatedResult
+            PaginatedResult containing Message objects representing each version.
+
+        Raises
+        ------
+        AblyException
+            If the serial is missing or versions cannot be retrieved.
+        """
+        # Delegate to parent Channel (REST) implementation
+        return await Channel.get_message_versions(self, serial_or_message, params=params)
 
     def _on_message(self, proto_msg: dict) -> None:
         action = proto_msg.get('action')
@@ -766,7 +985,7 @@ class Channels(RestChannels):
     """
 
     # RTS3
-    def get(self, name: str, options: ChannelOptions | None = None) -> RealtimeChannel:
+    def get(self, name: str, options: ChannelOptions | None = None, **kwargs) -> RealtimeChannel:
         """Creates a new RealtimeChannel object, or returns the existing channel object.
 
         Parameters
@@ -776,7 +995,15 @@ class Channels(RestChannels):
             Channel name
         options: ChannelOptions or dict, optional
             Channel options for the channel
+        **kwargs:
+            Additional keyword arguments to create ChannelOptions (e.g., cipher, params)
         """
+        # Convert kwargs to ChannelOptions if provided
+        if kwargs and not options:
+            options = ChannelOptions(**kwargs)
+        elif options and isinstance(options, dict):
+            options = ChannelOptions.from_dict(options)
+
         if name not in self.__all:
             channel = self.__all[name] = RealtimeChannel(self.__ably, name, options)
         else:

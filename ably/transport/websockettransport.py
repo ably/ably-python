@@ -12,6 +12,7 @@ import msgpack
 
 from ably.http.httputils import HttpUtils
 from ably.types.connectiondetails import ConnectionDetails
+from ably.types.operations import PublishResult
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
 from ably.util.helper import Timer, unix_time_ms
@@ -172,7 +173,10 @@ class WebSocketTransport(EventEmitter):
             # Handle acknowledgment of sent messages
             msg_serial = msg.get('msgSerial', 0)
             count = msg.get('count', 1)
-            self.connection_manager.on_ack(msg_serial, count)
+            res = msg.get('res')
+            if res is not None:
+                res = [PublishResult.from_dict(result) for result in res]
+            self.connection_manager.on_ack(msg_serial, count, res)
         elif action == ProtocolMessageAction.NACK:
             # Handle negative acknowledgment (error sending messages)
             msg_serial = msg.get('msgSerial', 0)
