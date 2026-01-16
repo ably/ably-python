@@ -1,0 +1,77 @@
+site_name: Ably Python SDK
+site_description: Python REST and Realtime client library SDK for Ably realtime messaging service
+site_url: https://sdk.ably.com/builds/ably/ably-python/main/docs
+repo_url: https://github.com/ably/ably-python
+repo_name: ably/ably-python
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: orange
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: orange
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - API Reference:
+    - Overview: api/overview.md
+    - REST Client: api/rest.md
+    - Realtime Client: api/realtime.md
+    - Channels: api/channels.md
+    - Messages: api/messages.md
+    - Authentication: api/auth.md
+    - Types: api/types.md
+    - Utilities: api/util.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_object_full_path: false
+            show_category_heading: true
+            show_if_no_docstring: false
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+            filters:
+              - "!^_"  # exclude all private members
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
