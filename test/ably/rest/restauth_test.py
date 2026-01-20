@@ -486,7 +486,7 @@ class TestRenewToken(BaseAsyncTestCase):
     async def setup(self):
         self.test_vars = await TestApp.get_test_vars()
         self.host = 'fake-host.ably.io'
-        self.ably = await TestApp.get_ably_rest(use_binary_protocol=False, rest_host=self.host)
+        self.ably = await TestApp.get_ably_rest(use_binary_protocol=False, endpoint=self.host)
         # with headers
         self.publish_attempts = 0
         self.channel = uuid.uuid4().hex
@@ -549,7 +549,7 @@ class TestRenewToken(BaseAsyncTestCase):
 
         self.ably = await TestApp.get_ably_rest(
             key=None,
-            rest_host=self.host,
+            endpoint=self.host,
             token='token ID cannot be used to create a new token',
             use_binary_protocol=False)
         await self.ably.channels[self.channel].publish('evt', 'msg')
@@ -568,7 +568,7 @@ class TestRenewToken(BaseAsyncTestCase):
         token_details = TokenDetails(token='a_dummy_token')
         self.ably = await TestApp.get_ably_rest(
             key=None,
-            rest_host=self.host,
+            endpoint=self.host,
             token_details=token_details,
             use_binary_protocol=False)
         await self.ably.channels[self.channel].publish('evt', 'msg')
@@ -638,7 +638,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
 
     # RSA4b1
     async def test_query_time_false(self):
-        ably = await TestApp.get_ably_rest(rest_host=self.host)
+        ably = await TestApp.get_ably_rest(endpoint=self.host)
         await ably.auth.authorize()
         self.publish_fail = True
         await ably.channels[self.channel].publish('evt', 'msg')
@@ -647,7 +647,7 @@ class TestRenewExpiredToken(BaseAsyncTestCase):
 
     # RSA4b1
     async def test_query_time_true(self):
-        ably = await TestApp.get_ably_rest(query_time=True, rest_host=self.host)
+        ably = await TestApp.get_ably_rest(query_time=True, endpoint=self.host)
         await ably.auth.authorize()
         self.publish_fail = False
         await ably.channels[self.channel].publish('evt', 'msg')

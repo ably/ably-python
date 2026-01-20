@@ -187,7 +187,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.connection.connection_manager.check_connection() is False
 
     async def test_unroutable_host(self):
-        ably = await TestApp.get_ably_realtime(realtime_host="10.255.255.1", realtime_request_timeout=3000)
+        ably = await TestApp.get_ably_realtime(endpoint="10.255.255.1", realtime_request_timeout=3000)
         state_change = await ably.connection.once_async()
         assert state_change.reason
         assert state_change.reason.code == 50003
@@ -197,7 +197,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
 
     async def test_invalid_host(self):
-        ably = await TestApp.get_ably_realtime(realtime_host="iamnotahost")
+        ably = await TestApp.get_ably_realtime(endpoint="iamnotahost")
         state_change = await ably.connection.once_async()
         assert state_change.reason
         assert state_change.reason.code == 40000
@@ -299,8 +299,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
-        assert ably.connection.connection_manager.transport.host != self.test_vars["realtime_host"]
-        assert ably.options.fallback_realtime_host != self.test_vars["realtime_host"]
+        assert ably.connection.connection_manager.transport.host != self.test_vars["host"]
+        assert ably.options.fallback_host != self.test_vars["host"]
         await ably.close()
 
     async def test_fallback_host_no_connection(self):
@@ -325,7 +325,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         await ably.connection.once_async(ConnectionState.DISCONNECTED)
 
-        assert ably.options.fallback_realtime_host is None
+        assert ably.options.fallback_host is None
         await ably.close()
 
     async def test_fallback_host_disconnected_protocol_msg(self):
@@ -344,8 +344,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
-        assert ably.connection.connection_manager.transport.host != self.test_vars["realtime_host"]
-        assert ably.options.fallback_realtime_host != self.test_vars["realtime_host"]
+        assert ably.connection.connection_manager.transport.host != self.test_vars["host"]
+        assert ably.options.fallback_host != self.test_vars["host"]
         await ably.close()
 
     #  RTN2d

@@ -69,24 +69,24 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     # RSC11
     @dont_vary_protocol
     def test_rest_host_and_environment(self):
-        # rest host
-        ably = AblyRest(token='foo', rest_host="some.other.host")
-        assert "some.other.host" == ably.options.rest_host, "Unexpected host mismatch"
+        # endpoint host
+        ably = AblyRest(token='foo', endpoint="some.other.host")
+        assert "some.other.host" == ably.options.get_host(), "Unexpected host mismatch"
 
-        # environment: main
-        ably = AblyRest(token='foo', environment="main")
-        host = ably.options.get_rest_host()
+        # endpoint: main
+        ably = AblyRest(token='foo', endpoint="main")
+        host = ably.options.get_host()
         assert "main.realtime.ably.net" == host, f"Unexpected host mismatch {host}"
 
-        # environment: other
-        ably = AblyRest(token='foo', environment="nonprod:sandbox")
-        host = ably.options.get_rest_host()
+        # endpoint: other
+        ably = AblyRest(token='foo', endpoint="nonprod:sandbox")
+        host = ably.options.get_host()
         assert "sandbox.realtime.ably-nonprod.net" == host, f"Unexpected host mismatch {host}"
 
         # both, as per #TO3k2
-        with pytest.raises(ValueError):
+        with pytest.raises(AblyException):
             ably = AblyRest(token='foo', rest_host="some.other.host",
-                            environment="some.other.environment")
+                            endpoint="some.other.environment")
 
     # RSC15
     @dont_vary_protocol
@@ -100,16 +100,16 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         # Fallback hosts specified (RSC15g1)
         for aux in fallback_hosts:
             ably = AblyRest(token='foo', fallback_hosts=aux)
-            assert sorted(aux) == sorted(ably.options.get_fallback_rest_hosts())
+            assert sorted(aux) == sorted(ably.options.get_fallback_hosts())
 
-        # Specify environment (RSC15g2)
-        ably = AblyRest(token='foo', environment='nonprod:sandbox', http_max_retry_count=10)
+        # Specify endpoint (RSC15g2)
+        ably = AblyRest(token='foo', endpoint='nonprod:sandbox', http_max_retry_count=10)
         assert sorted(Defaults.get_fallback_hosts('nonprod:sandbox')) == sorted(
-            ably.options.get_fallback_rest_hosts())
+            ably.options.get_fallback_hosts())
 
-        # Fallback hosts and environment not specified (RSC15g3)
+        # Fallback hosts and endpoint not specified (RSC15g3)
         ably = AblyRest(token='foo', http_max_retry_count=10)
-        assert sorted(Defaults.get_fallback_hosts()) == sorted(ably.options.get_fallback_rest_hosts())
+        assert sorted(Defaults.get_fallback_hosts()) == sorted(ably.options.get_fallback_hosts())
 
         # RSC15f
         ably = AblyRest(token='foo')
@@ -118,9 +118,9 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
         assert 1000 == ably.options.fallback_retry_timeout
 
     @dont_vary_protocol
-    def test_specified_realtime_host(self):
-        ably = AblyRest(token='foo', realtime_host="some.other.host")
-        assert "some.other.host" == ably.options.realtime_host, "Unexpected host mismatch"
+    def test_specified_host(self):
+        ably = AblyRest(token='foo', endpoint="some.other.host")
+        assert "some.other.host" == ably.options.get_host(), "Unexpected host mismatch"
 
     @dont_vary_protocol
     def test_specified_port(self):
@@ -182,17 +182,13 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
     @dont_vary_protocol
     def test_requests_over_https_production(self):
         ably = AblyRest(token='token')
-        assert 'https://main.realtime.ably.net' == f'{
-            ably.http.preferred_scheme}://{ ably.http.preferred_host
-        }'
+        assert 'https://main.realtime.ably.net' == f'{ably.http.preferred_scheme}://{ably.http.preferred_host}'
         assert ably.http.preferred_port == 443
 
     @dont_vary_protocol
     def test_requests_over_http_production(self):
         ably = AblyRest(token='token', tls=False)
-        assert 'http://main.realtime.ably.net' == f'{
-            ably.http.preferred_scheme}://{ ably.http.preferred_host
-        }'
+        assert 'http://main.realtime.ably.net' == f'{ably.http.preferred_scheme}://{ ably.http.preferred_host}'
         assert ably.http.preferred_port == 80
 
     @dont_vary_protocol
@@ -208,7 +204,7 @@ class TestRestInit(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @dont_vary_protocol
     async def test_environment(self):
-        ably = AblyRest(token='token', environment='custom')
+        ably = AblyRest(token='token', endpoint='custom')
         with patch.object(AsyncClient, 'send', wraps=ably.http._Http__client.send) as get_mock:
             try:
                 await ably.time()

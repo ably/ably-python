@@ -35,7 +35,7 @@ class TestRestTime(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass):
 
     @dont_vary_protocol
     async def test_time_fails_without_valid_host(self):
-        ably = await TestApp.get_ably_rest(key=None, token='foo', rest_host="this.host.does.not.exist")
+        ably = await TestApp.get_ably_rest(key=None, token='foo', endpoint="this.host.does.not.exist")
         with pytest.raises(AblyException):
             await ably.time()
 

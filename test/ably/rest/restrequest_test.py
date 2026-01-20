@@ -117,7 +117,7 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
 
         # Bad host, no Fallback
         ably = AblyRest(key=self.test_vars["keys"][0]["key_str"],
-                        rest_host='some.other.host',
+                        endpoint='some.other.host',
                         port=self.test_vars["port"],
                         tls_port=self.test_vars["tls_port"],
                         tls=self.test_vars["tls"])
@@ -128,8 +128,8 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     # RSC15l3
     @dont_vary_protocol
     async def test_503_status_fallback(self):
-        default_endpoint = 'https://sandbox-rest.ably.io/time'
-        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        default_endpoint = 'https://sandbox.realtime.ably-nonprod.net/time'
+        fallback_host = 'sandbox.a.fallback.ably-realtime-nonprod.com'
         fallback_endpoint = f'https://{fallback_host}/time'
         ably = await TestApp.get_ably_rest(fallback_hosts=[fallback_host])
         with respx.mock:
@@ -149,8 +149,8 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     # RSC15l2
     @dont_vary_protocol
     async def test_httpx_timeout_fallback(self):
-        default_endpoint = 'https://sandbox-rest.ably.io/time'
-        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        default_endpoint = 'https://sandbox.realtime.ably-nonprod.net/time'
+        fallback_host = 'sandbox.a.fallback.ably-realtime-nonprod.com'
         fallback_endpoint = f'https://{fallback_host}/time'
         ably = await TestApp.get_ably_rest(fallback_hosts=[fallback_host])
         with respx.mock:
@@ -170,8 +170,8 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     # RSC15l3
     @dont_vary_protocol
     async def test_503_status_fallback_on_publish(self):
-        default_endpoint = 'https://sandbox-rest.ably.io/channels/test/messages'
-        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        default_endpoint = 'https://sandbox.realtime.ably-nonprod.net/channels/test/messages'
+        fallback_host = 'sandbox.a.fallback.ably-realtime-nonprod.com'
         fallback_endpoint = f'https://{fallback_host}/channels/test/messages'
 
         fallback_response_text = (
@@ -200,8 +200,8 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
     # RSC15l4
     @dont_vary_protocol
     async def test_400_cloudfront_fallback(self):
-        default_endpoint = 'https://sandbox-rest.ably.io/time'
-        fallback_host = 'sandbox-a-fallback.ably-realtime.com'
+        default_endpoint = 'https://sandbox.realtime.ably-nonprod.net/time'
+        fallback_host = 'sandbox.a.fallback.ably-realtime-nonprod.com'
         fallback_endpoint = f'https://{fallback_host}/time'
         ably = await TestApp.get_ably_rest(fallback_hosts=[fallback_host])
         with respx.mock:

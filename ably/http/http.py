@@ -140,9 +140,9 @@ class Http:
         else:
             return json.dumps(body, separators=(',', ':'))
 
-    def get_rest_hosts(self):
-        hosts = self.options.get_rest_hosts()
-        host = self.__host or self.options.fallback_realtime_host
+    def get_hosts(self):
+        hosts = self.options.get_hosts()
+        host = self.__host or self.options.fallback_host
         if host is None:
             return hosts
 
@@ -186,7 +186,7 @@ class Http:
         http_max_retry_duration = self.http_max_retry_duration
         requested_at = time.time()
 
-        hosts = self.get_rest_hosts()
+        hosts = self.get_hosts()
         for retry_count, host in enumerate(hosts):
             def should_stop_retrying(retry_count=retry_count):
                 time_passed = time.time() - requested_at
@@ -229,7 +229,7 @@ class Http:
                         continue
 
                     # Keep fallback host for later (RSC15f)
-                    if retry_count > 0 and host != self.options.get_rest_host():
+                    if retry_count > 0 and host != self.options.get_host():
                         self.__host = host
                         self.__host_expires = time.time() + (self.options.fallback_retry_timeout / 1000.0)
 
@@ -277,7 +277,7 @@ class Http:
 
     @property
     def preferred_host(self):
-        return self.options.get_rest_host()
+        return self.options.get_host()
 
     @property
     def preferred_port(self):

@@ -143,8 +143,8 @@ class WebSocketTransport(EventEmitter):
                 self.max_idle_interval = max_idle_interval + self.options.realtime_request_timeout
                 self.on_activity()
             self.is_connected = True
-            if self.host != self.options.get_realtime_host():  # RTN17e
-                self.options.fallback_realtime_host = self.host
+            if self.host != self.options.get_host():  # RTN17e
+                self.options.fallback_host = self.host
             self.connection_manager.on_connected(connection_details, connection_id, reason=exception)
         elif action == ProtocolMessageAction.DISCONNECTED:
             error = msg.get('error')

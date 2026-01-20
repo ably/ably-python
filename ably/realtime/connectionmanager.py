@@ -136,7 +136,7 @@ class ConnectionManager(EventEmitter):
         self.retry_timer: Timer | None = None
         self.connect_base_task: asyncio.Task | None = None
         self.disconnect_transport_task: asyncio.Task | None = None
-        self.__fallback_hosts: list[str] = self.options.get_fallback_realtime_hosts()
+        self.__fallback_hosts: list[str] = self.options.get_fallback_hosts()
         self.queued_messages: deque[PendingMessage] = deque()
         self.__error_reason: AblyException | None = None
         self.msg_serial: int = 0
@@ -551,7 +551,7 @@ class ConnectionManager(EventEmitter):
 
     async def connect_base(self) -> None:
         fallback_hosts = self.__fallback_hosts
-        primary_host = self.options.get_realtime_host()
+        primary_host = self.options.get_host()
         try:
             await self.try_host(primary_host)
             return
