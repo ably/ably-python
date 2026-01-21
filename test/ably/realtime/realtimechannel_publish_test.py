@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from ably.realtime.connection import ConnectionState
-from ably.realtime.realtime_channel import ChannelOptions, ChannelState
+from ably.realtime.realtimechannel import ChannelOptions, ChannelState
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.message import Message
 from ably.util.crypto import CipherParams

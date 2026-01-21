@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 
 from ably.realtime.connection import Connection, ConnectionState
-from ably.realtime.realtime_channel import Channels
+from ably.realtime.realtimechannel import Channels
 from ably.rest.rest import AblyRest
 
 log = logging.getLogger(__name__)
