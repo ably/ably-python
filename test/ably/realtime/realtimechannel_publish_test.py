@@ -451,11 +451,11 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
 
         # Restore on_ack and simulate ACK from server
         connection_manager.on_ack = original_on_ack
-        connection_manager.on_ack(0, 1)
+        connection_manager.on_ack(0, 1, None)
 
         # Future should be resolved
         result = await asyncio.wait_for(publish_future, timeout=1)
-        assert result is None
+        assert result is not None, "Publish should have succeeded"
 
         await ably.close()
 
