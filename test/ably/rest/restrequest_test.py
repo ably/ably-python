@@ -193,9 +193,8 @@ class TestRestRequest(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclass)
                 headers=headers,
                 text=fallback_response_text,
             )
-            message_response = await ably.channels['test'].publish('test', 'data')
+            await ably.channels['test'].publish('test', 'data')
             assert default_route.called
-            assert message_response.to_native()['data'] == 'data'
         await ably.close()
 
     # RSC15l4

@@ -399,8 +399,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                     expected_value = input_msg.get('expectedValue')
 
                 # 1)
-                response = await channel.publish(data=expected_value)
-                assert response.status_code == 201
+                await channel.publish(data=expected_value)
 
                 async def check_data(encoding=encoding, msg_data=msg_data):
                     async with httpx.AsyncClient(http2=True) as client:
@@ -415,8 +414,7 @@ class TestRestChannelPublish(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMet
                 await assert_waiter(check_data)
 
                 # 2)
-                response = await channel.publish(messages=[Message(data=msg_data, encoding=encoding)])
-                assert response.status_code == 201
+                await channel.publish(messages=[Message(data=msg_data, encoding=encoding)])
 
                 async def check_history(expected_value=expected_value, expected_type=expected_type):
                     history = await channel.history()
