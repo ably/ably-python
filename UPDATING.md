@@ -1,5 +1,95 @@
 # Upgrade / Migration Guide
 
+## Version 2.x to 3.0.0
+
+The 3.0.0 version of ably-python introduces several breaking changes to improve the realtime experience and align the API with the Ably specification. These include:
+
+  - The realtime channel publish method now uses WebSocket connection instead of REST
+  - `ably.realtime.realtime_channel` module renamed to `ably.realtime.channel`
+  - `ChannelOptions` moved to `ably.types.channeloptions`
+  - REST publish returns publish result with message serials instead of Response object
+
+### The realtime channel publish method now uses WebSocket
+
+In previous versions, publishing messages on a realtime channel would use the REST API. In version 3.0.0, realtime channels now publish messages over the WebSocket connection, which is more efficient and provides better consistency.
+
+This change is mostly transparent to users, but you should be aware that:
+- Messages are now published through the realtime connection
+- You will receive publish results containing message serials
+- The behavior is now consistent with other Ably SDKs
+
+### Module rename: `ably.realtime.realtime_channel` to `ably.realtime.channel`
+
+If you were importing from `ably.realtime.realtime_channel`, you will need to update your imports:
+
+Example 2.x code:
+```python
+from ably.realtime.realtime_channel import RealtimeChannel
+```
+
+Example 3.0.0 code:
+```python
+from ably.realtime.channel import RealtimeChannel
+```
+
+### `ChannelOptions` moved to `ably.types.channeloptions`
+
+The `ChannelOptions` class has been moved to a new location for better organization.
+
+Example 2.x code:
+```python
+from ably.realtime.realtime_channel import ChannelOptions
+```
+
+Example 3.0.0 code:
+```python
+from ably.types.channeloptions import ChannelOptions
+```
+
+### REST publish returns publish result with serials
+
+The REST `publish` method now returns a publish result object containing the message serial(s) instead of a raw Response object with `status_code`.
+
+Example 2.x code:
+```python
+response = await channel.publish('event', 'message')
+print(response.status_code)  # 201
+```
+
+Example 3.0.0 code:
+```python
+result = await channel.publish('event', 'message')
+print(result.serials)  # message serials
+```
+
+### Client options: `endpoint` replaces `environment`, `rest_host`, and `realtime_host`
+
+The `environment`, `rest_host`, and `realtime_host` client options have been deprecated in favor of a single `endpoint` option for better consistency and simplicity.
+
+Example 2.x code:
+```python
+# Using environment
+rest_client = AblyRest(key='api:key', environment='custom')
+
+# Or using rest_host
+rest_client = AblyRest(key='api:key', rest_host='custom.ably.net')
+
+# For realtime
+realtime_client = AblyRealtime(key='api:key', realtime_host='custom.ably.net')
+```
+
+Example 3.0.0 code:
+```python
+# Using environment
+rest_client = AblyRest(key='api:key', endpoint='custom')
+
+# Using endpoint for REST
+rest_client = AblyRest(key='api:key', endpoint='custom.ably.net')
+
+# Using endpoint for Realtime
+realtime_client = AblyRealtime(key='api:key', endpoint='custom.ably.net')
+```
+
 ## Version 1.2.x to 2.x
 
 The 2.0 version of ably-python introduces our first Python realtime client. For guidance on how to use the realtime client, refer to the usage examples in the [README](./README.md).

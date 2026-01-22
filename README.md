@@ -31,15 +31,15 @@ Ably aims to support a wide range of platforms. If you experience any compatibil
 
 The following platforms are supported:
 
-| Platform | Support |
-|----------|---------|
-| Python | Python 3.7+ through 3.13 |
+| Platform | Support                  |
+|----------|--------------------------|
+| Python | Python 3.7+ through 3.14 |
 
 > [!NOTE]
 > This SDK works across all major operating platforms (Linux, macOS, Windows) as long as Python 3.7+ is available.
 
 > [!IMPORTANT]
-> SDK versions < 2.0.0-beta.6 will be [deprecated](https://ably.com/docs/platform/deprecate/protocol-v1) from November 1, 2025.
+> SDK versions < 2.0.0 are [deprecated](https://ably.com/docs/platform/deprecate/protocol-v1).
 
 ---
 
