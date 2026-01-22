@@ -64,13 +64,13 @@ class TestRestHttp(BaseAsyncTestCase):
 
                 expected_urls_set = {
                     make_url(host)
-                    for host in Options(http_max_retry_count=10).get_rest_hosts()
+                    for host in Options(http_max_retry_count=10).get_hosts()
                 }
                 for ((_, url), _) in request_mock.call_args_list:
                     assert url in expected_urls_set
                     expected_urls_set.remove(url)
 
-                expected_hosts_set = set(Options(http_max_retry_count=10).get_rest_hosts())
+                expected_hosts_set = set(Options(http_max_retry_count=10).get_hosts())
                 for (prep_request_tuple, _) in send_mock.call_args_list:
                     assert prep_request_tuple[0].headers.get('host') in expected_hosts_set
                     expected_hosts_set.remove(prep_request_tuple[0].headers.get('host'))
@@ -79,7 +79,7 @@ class TestRestHttp(BaseAsyncTestCase):
     @respx.mock
     async def test_no_host_fallback_nor_retries_if_custom_host(self):
         custom_host = 'example.org'
-        ably = AblyRest(token="foo", rest_host=custom_host)
+        ably = AblyRest(token="foo", endpoint=custom_host)
 
         mock_route = respx.get("https://example.org").mock(side_effect=httpx.RequestError(''))
 
@@ -95,7 +95,7 @@ class TestRestHttp(BaseAsyncTestCase):
     async def test_cached_fallback(self):
         timeout = 2000
         ably = await TestApp.get_ably_rest(fallback_retry_timeout=timeout)
-        host = ably.options.get_rest_host()
+        host = ably.options.get_host()
 
         state = {'errors': 0}
         client = httpx.AsyncClient(http2=True)
@@ -128,7 +128,7 @@ class TestRestHttp(BaseAsyncTestCase):
 
     @respx.mock
     async def test_no_retry_if_not_500_to_599_http_code(self):
-        default_host = Options().get_rest_host()
+        default_host = Options().get_host()
         ably = AblyRest(token="foo")
 
         default_url = f"{ably.http.preferred_scheme}://{default_host}:{ably.http.preferred_port}/"
@@ -215,7 +215,7 @@ class TestRestHttp(BaseAsyncTestCase):
         url = 'https://www.example.com'
         respx.get(url).mock(return_value=Response(status_code=200))
 
-        ably = await TestApp.get_ably_rest(rest_host=url)
+        ably = await TestApp.get_ably_rest(endpoint=url)
         r = await ably.http.make_request('GET', url, skip_auth=True)
         assert r.http_version == 'HTTP/2'
         await ably.close()

@@ -4,6 +4,7 @@ import os
 
 from ably.realtime.realtime import AblyRealtime
 from ably.rest.rest import AblyRest
+from ably.transport.defaults import Defaults
 from ably.types.capability import Capability
 from ably.types.options import Options
 from ably.util.exceptions import AblyException
@@ -14,23 +15,14 @@ with open(os.path.dirname(__file__) + '/../assets/testAppSpec.json') as f:
     app_spec_local = json.loads(f.read())
 
 tls = (os.environ.get('ABLY_TLS') or "true").lower() == "true"
-rest_host = os.environ.get('ABLY_REST_HOST', 'sandbox-rest.ably.io')
-realtime_host = os.environ.get('ABLY_REALTIME_HOST', 'sandbox-realtime.ably.io')
-
-environment = os.environ.get('ABLY_ENV', 'sandbox')
+endpoint = os.environ.get('ABLY_ENDPOINT', 'nonprod:sandbox')
 
 port = 80
 tls_port = 443
 
-if rest_host and not rest_host.endswith("rest.ably.io"):
-    tls = tls and rest_host != "localhost"
-    port = 8080
-    tls_port = 8081
-
-
 ably = AblyRest(token='not_a_real_token',
                 port=port, tls_port=tls_port, tls=tls,
-                environment=environment,
+                endpoint=endpoint,
                 use_binary_protocol=False)
 
 
@@ -49,12 +41,11 @@ class TestApp:
 
             test_vars = {
                 "app_id": app_id,
-                "host": rest_host,
                 "port": port,
                 "tls_port": tls_port,
                 "tls": tls,
-                "environment": environment,
-                "realtime_host": realtime_host,
+                "endpoint": endpoint,
+                "host": Defaults.get_hostname(endpoint),
                 "keys": [{
                     "key_name": "{}.{}".format(app_id, k.get("id", "")),
                     "key_secret": k.get("value", ""),
@@ -88,14 +79,11 @@ class TestApp:
             'port': test_vars["port"],
             'tls_port': test_vars["tls_port"],
             'tls': test_vars["tls"],
-            'environment': test_vars["environment"],
+            'endpoint': test_vars["endpoint"],
         }
         auth_methods = ["auth_url", "auth_callback", "token", "token_details", "key"]
         if not any(x in kwargs for x in auth_methods):
             options["key"] = test_vars["keys"][0]["key_str"]
-
-        if any(x in kwargs for x in ["rest_host", "realtime_host"]):
-            options["environment"] = None
 
         options.update(kwargs)
 
@@ -105,7 +93,6 @@ class TestApp:
     async def clear_test_vars():
         test_vars = TestApp.__test_vars
         options = Options(key=test_vars["keys"][0]["key_str"])
-        options.rest_host = test_vars["host"]
         options.port = test_vars["port"]
         options.tls_port = test_vars["tls_port"]
         options.tls = test_vars["tls"]
