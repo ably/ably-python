@@ -1,5 +1,29 @@
 # Change Log
 
+## [v3.0.0](https://github.com/ably/ably-python/tree/v3.0.0)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v2.1.3...v3.0.0)
+
+### What's Changed
+
+- Added realtime publish support for publishing messages to channels over the realtime connection [#648](https://github.com/ably/ably-python/pull/648)
+- Added realtime presence support, allowing clients to enter, leave, update presence data, and track presence on channels [#651](https://github.com/ably/ably-python/pull/651)
+- Added mutable messages API with support for editing, deleting, and appending to messages [#660](https://github.com/ably/ably-python/pull/660), [#659](https://github.com/ably/ably-python/pull/659)
+- Added publish results containing serial of published messages [#660](https://github.com/ably/ably-python/pull/660), [#659](https://github.com/ably/ably-python/pull/659)
+- Deprecated `environment`, `rest_host`, and `realtime_host` client options in favor of `endpoint` option [#590](https://github.com/ably/ably-python/pull/590)
+
+### Breaking change
+
+The 3.0.0 version of ably-python introduces several breaking changes to improve the realtime experience and align the API with the Ably specification. These include:
+
+- The realtime channel publish method now uses WebSocket connection instead of REST
+- `ably.realtime.realtime_channel` module renamed to `ably.realtime.channel`
+- `ChannelOptions` moved to `ably.types.channeloptions`
+- REST publish returns publish result with message serials instead of Response object
+- Deprecated `environment`, `rest_host`, and `realtime_host` client options in favor of `endpoint` option
+
+For detailed migration instructions, please refer to the [Upgrading Guide](UPDATING.md).
+
 ## [v2.1.3](https://github.com/ably/ably-python/tree/v2.1.3)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.1.2...v2.1.3)
