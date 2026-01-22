@@ -57,3 +57,4 @@ test/ably/restsetup.py.orig
 .idea/**/*
 ably/sync/**
 test/ably/sync/**
+site/
