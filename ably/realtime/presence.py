@@ -20,7 +20,7 @@ from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
 
 if TYPE_CHECKING:
-    from ably.realtime.realtimechannel import RealtimeChannel
+    from ably.realtime.channel import RealtimeChannel
 
 log = logging.getLogger(__name__)
 
