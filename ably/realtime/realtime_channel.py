@@ -184,13 +184,14 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__error_reason = None
 
         # RTL4b
-        if self.__realtime.connection.state not in [
+        connection_state = self.__realtime.connection.state
+        if connection_state not in [
             ConnectionState.CONNECTING,
             ConnectionState.CONNECTED,
             ConnectionState.DISCONNECTED
         ]:
             raise AblyException(
-                message=f"Unable to attach; channel state = {self.state}",
+                message=f"Unable to attach channel; connection state = {connection_state}",
                 code=90001,
                 status_code=400
             )
