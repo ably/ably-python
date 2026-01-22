@@ -12,7 +12,7 @@ from ably.types.operations import MessageOperation, PublishResult, UpdateDeleteR
 from ably.types.options import Options, VCDiffDecoder
 from ably.util.crypto import CipherParams
 from ably.util.exceptions import AblyAuthException, AblyException, IncompatibleClientIdException
-from ably.vcdiff.default_vcdiff_decoder import AblyVCDiffDecoder
+from ably.vcdiff.defaultvcdiffdecoder import AblyVCDiffDecoder
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

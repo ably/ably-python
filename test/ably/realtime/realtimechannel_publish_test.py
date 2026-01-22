@@ -2,9 +2,10 @@ import asyncio
 
 import pytest
 
+from ably.realtime.channel import ChannelState
 from ably.realtime.connection import ConnectionState
-from ably.realtime.realtime_channel import ChannelOptions, ChannelState
 from ably.transport.websockettransport import ProtocolMessageAction
+from ably.types.channeloptions import ChannelOptions
 from ably.types.message import Message
 from ably.util.crypto import CipherParams
 from ably.util.exceptions import AblyException, IncompatibleClientIdException
