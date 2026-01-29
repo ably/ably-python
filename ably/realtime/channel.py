@@ -11,6 +11,7 @@ from ably.rest.channel import Channel
 from ably.rest.channel import Channels as RestChannels
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.annotation import Annotation
+from ably.types.channelmode import ChannelMode, decode_channel_mode, encode_channel_mode
 from ably.types.channeloptions import ChannelOptions
 from ably.types.channelstate import ChannelState, ChannelStateChange
 from ably.types.flags import Flag, has_flag
@@ -21,7 +22,6 @@ from ably.types.presence import PresenceMessage
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException, IncompatibleClientIdException
 from ably.util.helper import Timer, is_callable_or_coroutine, validate_message_size
-from ably.types.channelmode import ChannelMode, decode_channel_mode, encode_channel_mode
 
 if TYPE_CHECKING:
     from ably.realtime.realtime import AblyRealtime
@@ -68,7 +68,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__error_reason: AblyException | None = None
         self.__channel_options = channel_options or ChannelOptions()
         self.__params: dict[str, str] | None = None
-        self.__modes: list[ChannelMode] = list()  # Channel mode flags from ATTACHED message
+        self.__modes: list[ChannelMode] = []  # Channel mode flags from ATTACHED message
 
         # Delta-specific fields for RTL19/RTL20 compliance
         vcdiff_decoder = self.__realtime.options.vcdiff_decoder if self.__realtime.options.vcdiff_decoder else None
@@ -910,6 +910,10 @@ class RealtimeChannel(EventEmitter, Channel):
     def presence(self):
         """Get the RealtimePresence object for this channel"""
         return self.__presence
+
+    @property
+    def annotations(self) -> RealtimeAnnotations:
+        return self._Channel__annotations
 
     @property
     def modes(self):

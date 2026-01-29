@@ -122,9 +122,6 @@ class Annotation(EncodeDataMixin):
 
         Note: Annotations are not encrypted as they need to be parsed by the server.
         """
-        # Encode data
-        encoded = encode_data(self.data, self._encoding_array, binary)
-
         request_body = {
             'action': int(self.action) if self.action is not None else None,
             'serial': self.serial,
@@ -132,12 +129,10 @@ class Annotation(EncodeDataMixin):
             'type': self.type,  # Annotation type (not data type)
             'name': self.name,
             'count': self.count,
-            'data': encoded.get('data'),
-            'encoding': encoded.get('encoding', ''),
-            'dataType': encoded.get('type'),  # Data type (not annotation type)
             'clientId': self.client_id or None,
             'timestamp': self.timestamp or None,
             'extras': self.extras,
+            **encode_data(self.data, self._encoding_array, binary)
         }
 
         # None values aren't included

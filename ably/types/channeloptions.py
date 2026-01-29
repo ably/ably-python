@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from ably.types.channelmode import ChannelMode
 from ably.util.crypto import CipherParams
 from ably.util.exceptions import AblyException
-from ably.types.channelmode import ChannelMode
 
 
 class ChannelOptions:
@@ -18,7 +18,12 @@ class ChannelOptions:
         Channel parameters that configure the behavior of the channel.
     """
 
-    def __init__(self, cipher: CipherParams | None = None, params: dict | None = None, modes: list[ChannelMode] | None = None):
+    def __init__(
+        self,
+        cipher: CipherParams | None = None,
+        params: dict | None = None,
+        modes: list[ChannelMode] | None = None
+    ):
         self.__cipher = cipher
         self.__params = params
         self.__modes = modes

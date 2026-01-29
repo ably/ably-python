@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from ably.rest.annotations import RestAnnotations, construct_validate_annotation
 from ably.transport.websockettransport import ProtocolMessageAction
-from ably.types.annotation import Annotation, AnnotationAction
+from ably.types.annotation import AnnotationAction
 from ably.types.channelstate import ChannelState
 from ably.types.flags import Flag
 from ably.util.eventemitter import EventEmitter
@@ -40,13 +40,13 @@ class RealtimeAnnotations:
         self.__subscriptions = EventEmitter()
         self.__rest_annotations = RestAnnotations(channel)
 
-    async def publish(self, msg_or_serial, annotation: dict | Annotation, params: dict=None):
+    async def publish(self, msg_or_serial, annotation: dict, params: dict | None = None):
         """
         Publish an annotation on a message via the realtime connection.
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
-            annotation: Dict containing annotation properties (type, name, data, etc.) or Annotation object
+            annotation: Dict containing annotation properties (type, name, data, etc.)
             params: Optional dict of query parameters
 
         Returns:
@@ -84,7 +84,12 @@ class RealtimeAnnotations:
         # Send via WebSocket
         await self.__connection_manager.send_protocol_message(protocol_message)
 
-    async def delete(self, msg_or_serial, annotation: dict | Annotation, params=None, timeout=None):
+    async def delete(
+        self,
+        msg_or_serial,
+        annotation: dict,
+        params: dict | None = None,
+    ):
         """
         Delete an annotation on a message.
 
@@ -93,9 +98,8 @@ class RealtimeAnnotations:
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
-            annotation: Dict containing annotation properties or Annotation object
+            annotation: Dict containing annotation properties
             params: Optional dict of query parameters
-            timeout: Optional timeout (not used for realtime, kept for compatibility)
 
         Returns:
             None
@@ -103,10 +107,7 @@ class RealtimeAnnotations:
         Raises:
             AblyException: If the request fails or inputs are invalid
         """
-        if isinstance(annotation, Annotation):
-            annotation_values = annotation.as_dict()
-        else:
-            annotation_values = annotation.copy()
+        annotation_values = annotation.copy()
         annotation_values['action'] = AnnotationAction.ANNOTATION_DELETE
         return await self.publish(msg_or_serial, annotation_values, params)
 
@@ -161,13 +162,13 @@ class RealtimeAnnotations:
 
         # Check if ANNOTATION_SUBSCRIBE mode is enabled
         if self.__channel.state == ChannelState.ATTACHED:
-            if not Flag.ANNOTATION_SUBSCRIBE in self.__channel.modes:
+            if Flag.ANNOTATION_SUBSCRIBE not in self.__channel.modes:
                 raise AblyException(
-                    "You are trying to add an annotation listener, but you haven't requested the "
+                    message="You are trying to add an annotation listener, but you haven't requested the "
                     "annotation_subscribe channel mode in ChannelOptions, so this won't do anything "
                     "(we only deliver annotations to clients who have explicitly requested them)",
-                    93001,
-                    400
+                    code=93001,
+                    status_code=400,
                 )
 
     def unsubscribe(self, *args):
@@ -219,7 +220,7 @@ class RealtimeAnnotations:
             annotation_type = annotation.type or ''
             self.__subscriptions._emit(annotation_type, annotation)
 
-    async def get(self, msg_or_serial, params=None):
+    async def get(self, msg_or_serial, params: dict | None = None):
         """
         Retrieve annotations for a message with pagination support.
 

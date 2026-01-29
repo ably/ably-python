@@ -9,6 +9,7 @@ import msgpack
 from ably.http.paginatedresult import PaginatedResult, format_params
 from ably.types.annotation import (
     Annotation,
+    AnnotationAction,
     make_annotation_response_handler,
 )
 from ably.types.message import Message
@@ -48,7 +49,7 @@ def serial_from_msg_or_serial(msg_or_serial):
     return message_serial
 
 
-def construct_validate_annotation(msg_or_serial, annotation: dict | Annotation):
+def construct_validate_annotation(msg_or_serial, annotation: dict):
     """
     Construct and validate an Annotation from input values.
 
@@ -71,11 +72,8 @@ def construct_validate_annotation(msg_or_serial, annotation: dict | Annotation):
             status_code=400,
             code=40003,
         )
-    elif isinstance(annotation, Annotation):
-        annotation_values = annotation.as_dict()
-    else:
-        annotation_values = annotation
 
+    annotation_values = annotation.copy()
     annotation_values['message_serial'] = message_serial
 
     return Annotation.from_values(annotation_values)
@@ -108,15 +106,19 @@ class RestAnnotations:
         channel_path = '/channels/{}/'.format(parse.quote_plus(self.__channel.name, safe=':'))
         return channel_path + 'messages/' + parse.quote_plus(serial, safe=':') + '/annotations'
 
-    async def publish(self, msg_or_serial, annotation_values, params=None, timeout=None):
+    async def publish(
+        self,
+        msg_or_serial,
+        annotation: dict | Annotation,
+        params: dict | None = None,
+    ):
         """
         Publish an annotation on a message.
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
-            annotation_values: Dict containing annotation properties (type, name, data, etc.)
+            annotation: Dict containing annotation properties (type, name, data, etc.) or Annotation object
             params: Optional dict of query parameters
-            timeout: Optional timeout for the HTTP request
 
         Returns:
             None
@@ -124,7 +126,7 @@ class RestAnnotations:
         Raises:
             AblyException: If the request fails or inputs are invalid
         """
-        annotation = construct_validate_annotation(msg_or_serial, annotation_values)
+        annotation = construct_validate_annotation(msg_or_serial, annotation)
 
         # Convert to wire format
         request_body = annotation.as_dict(binary=self.__channel.ably.options.use_binary_protocol)
@@ -145,9 +147,14 @@ class RestAnnotations:
             path += '?' + parse.urlencode(params)
 
         # Send request
-        await self.__channel.ably.http.post(path, body=request_body, timeout=timeout)
+        await self.__channel.ably.http.post(path, body=request_body)
 
-    async def delete(self, msg_or_serial, annotation_values, params=None, timeout=None):
+    async def delete(
+        self,
+        msg_or_serial,
+        annotation: dict | Annotation,
+        params: dict | None = None,
+    ):
         """
         Delete an annotation on a message.
 
@@ -156,9 +163,8 @@ class RestAnnotations:
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
-            annotation_values: Dict containing annotation properties
+            annotation: Dict containing annotation properties or Annotation object
             params: Optional dict of query parameters
-            timeout: Optional timeout for the HTTP request
 
         Returns:
             None
@@ -167,11 +173,14 @@ class RestAnnotations:
             AblyException: If the request fails or inputs are invalid
         """
         # Set action to delete
-        annotation_values = annotation_values.copy()
-        annotation_values['action'] = 'annotation.delete'
-        return await self.publish(msg_or_serial, annotation_values, params, timeout)
+        if isinstance(annotation, Annotation):
+            annotation_values = annotation.as_dict()
+        else:
+            annotation_values = annotation.copy()
+        annotation_values['action'] = AnnotationAction.ANNOTATION_DELETE
+        return await self.publish(msg_or_serial, annotation_values, params)
 
-    async def get(self, msg_or_serial, params=None):
+    async def get(self, msg_or_serial, params: dict | None = None):
         """
         Retrieve annotations for a message with pagination support.
 

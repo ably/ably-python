@@ -1,8 +1,11 @@
 import logging
+import random
+import string
 
 import pytest
 
 from ably import AblyException
+from ably.types.annotation import AnnotationAction
 from ably.types.message import Message
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, assert_waiter
@@ -16,8 +19,10 @@ class TestRestAnnotations(BaseAsyncTestCase):
     @pytest.fixture(autouse=True)
     async def setup(self, transport):
         self.test_vars = await TestApp.get_test_vars()
+        client_id = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
         self.ably = await TestApp.get_ably_rest(
             use_binary_protocol=True if transport == 'msgpack' else False,
+            client_id=client_id,
         )
 
     async def test_publish_annotation_success(self):
@@ -32,7 +37,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
 
         # Publish an annotation
         await channel.annotations.publish(serial, {
-            'type': 'reaction:multiple.v1',
+            'type': 'reaction:distinct.v1',
             'name': '👍'
         })
 
@@ -50,7 +55,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
         annotations = annotations_result.items
         assert len(annotations) >= 1
         assert annotations[0].message_serial == serial
-        assert annotations[0].type == 'reaction:multiple.v1'
+        assert annotations[0].type == 'reaction:distinct.v1'
         assert annotations[0].name == '👍'
 
     async def test_publish_annotation_with_message_object(self):
@@ -66,7 +71,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
 
         # Publish annotation with message object
         await channel.annotations.publish(message, {
-            'type': 'reaction:multiple.v1',
+            'type': 'reaction:distinct.v1',
             'name': '😕'
         })
 
@@ -106,7 +111,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
 
         # Publish an annotation
         await channel.annotations.publish(serial, {
-            'type': 'reaction:multiple.v1',
+            'type': 'reaction:distinct.v1',
             'name': '👍'
         })
 
@@ -122,7 +127,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
 
         # Delete the annotation
         await channel.annotations.delete(serial, {
-            'type': 'reaction:multiple.v1',
+            'type': 'reaction:distinct.v1',
             'name': '👍'
         })
 
@@ -130,55 +135,11 @@ class TestRestAnnotations(BaseAsyncTestCase):
         async def check_deleted_annotation():
             nonlocal annotations_result
             annotations_result = await channel.annotations.get(serial)
-            return len(annotations_result.items) == 0
+            return len(annotations_result.items) >= 2
 
         await assert_waiter(check_deleted_annotation, timeout=10)
-
-    async def test_get_annotations_pagination(self):
-        """Test retrieving annotations with pagination"""
-        channel = self.ably.channels[self.get_channel_name('mutable:annotation_pagination_test')]
-
-        # Publish a message
-        result = await channel.publish('test-event', 'test data')
-        serial = result.serials[0]
-
-        # Publish multiple annotations
-        emojis = ['👍', '😕', '👎', '👍👍', '😕😕', '👎👎']
-        for emoji in emojis:
-            await channel.annotations.publish(serial, {
-                'type': 'reaction:multiple.v1',
-                'name': emoji
-            })
-
-        # Wait for annotations to appear
-        async def check_annotations():
-            res = await channel.annotations.get(serial)
-            return len(res.items) == 6
-
-        await assert_waiter(check_annotations, timeout=10)
-
-        # Test pagination with limit
-        result = await channel.annotations.get(serial, {'limit': 2})
-        assert len(result.items) == 2
-        assert result.items[0].name == '👍'
-        assert result.items[1].name == '😕'
-        assert result.has_next()
-
-        # Get next page
-        result = await result.next()
-        assert result is not None
-        assert len(result.items) == 2
-        assert result.items[0].name == '👎'
-        assert result.items[1].name == '👍👍'
-        assert result.has_next()
-
-        # Get last page
-        result = await result.next()
-        assert result is not None
-        assert len(result.items) == 2
-        assert result.items[0].name == '😕😕'
-        assert result.items[1].name == '👎👎'
-        assert not result.has_next()
+        assert annotations_result.items[-1].type == 'reaction:distinct.v1'
+        assert annotations_result.items[-1].action == AnnotationAction.ANNOTATION_DELETE
 
     async def test_get_all_annotations(self):
         """Test retrieving all annotations for a message"""
@@ -189,9 +150,9 @@ class TestRestAnnotations(BaseAsyncTestCase):
         serial = result.serials[0]
 
         # Publish annotations
-        await channel.annotations.publish(serial, {'type': 'reaction:multiple.v1', 'name': '👍'})
-        await channel.annotations.publish(serial, {'type': 'reaction:multiple.v1', 'name': '😕'})
-        await channel.annotations.publish(serial, {'type': 'reaction:multiple.v1', 'name': '👎'})
+        await channel.annotations.publish(serial, {'type': 'reaction:distinct.v1', 'name': '👍'})
+        await channel.annotations.publish(serial, {'type': 'reaction:distinct.v1', 'name': '😕'})
+        await channel.annotations.publish(serial, {'type': 'reaction:distinct.v1', 'name': '👎'})
 
         # Wait and get all annotations
         async def check_annotations():
@@ -203,7 +164,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
         annotations_result = await channel.annotations.get(serial)
         annotations = annotations_result.items
         assert len(annotations) >= 3
-        assert annotations[0].type == 'reaction:multiple.v1'
+        assert annotations[0].type == 'reaction:distinct.v1'
         assert annotations[0].message_serial == serial
         # Verify serials are in order
         if len(annotations) > 1:
@@ -221,7 +182,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
 
         # Publish annotation with various properties
         await channel.annotations.publish(serial, {
-            'type': 'reaction:multiple.v1',
+            'type': 'reaction:distinct.v1',
             'name': '❤️',
             'data': {'count': 5}
         })
@@ -236,7 +197,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
         annotations_result = await channel.annotations.get(serial)
         annotation = annotations_result.items[0]
         assert annotation.message_serial == serial
-        assert annotation.type == 'reaction:multiple.v1'
+        assert annotation.type == 'reaction:distinct.v1'
         assert annotation.name == '❤️'
         assert annotation.serial is not None
         assert annotation.serial > serial

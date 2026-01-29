@@ -27,7 +27,9 @@ def encode_data(data: Any, encoding_array: list, binary: bool = False):
     elif binary and isinstance(data, bytearray):
         data = bytes(data)
 
-    return {
-        'data': data,
-        'encoding': '/'.join(encoding).strip('/')
-    }
+    result = { 'data': data }
+
+    if encoding:
+        result['encoding'] = '/'.join(encoding).strip('/')
+
+    return result

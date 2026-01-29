@@ -369,7 +369,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         ably = await TestApp.get_ably_realtime(client_id=client_id)
 
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
-        assert ably.connection.connection_manager.transport.params["client_id"] == client_id
+        assert ably.connection.connection_manager.transport.params["clientId"] == client_id
         assert ably.auth.client_id == client_id
 
         await ably.close()

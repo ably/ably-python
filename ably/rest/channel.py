@@ -31,6 +31,8 @@ log = logging.getLogger(__name__)
 
 
 class Channel:
+    __annotations: RestAnnotations
+
     def __init__(self, ably, name, options):
         self.__ably = ably
         self.__name = name
@@ -366,7 +368,7 @@ class Channel:
         return self.__presence
 
     @property
-    def annotations(self):
+    def annotations(self) -> RestAnnotations:
         return self.__annotations
 
     @options.setter
