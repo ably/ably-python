@@ -1,5 +1,3 @@
-import base64
-import json
 from datetime import datetime, timedelta
 from urllib import parse
 
@@ -7,7 +5,7 @@ from ably.http.paginatedresult import PaginatedResult
 from ably.types.mixins import EncodeDataMixin
 from ably.types.typedbuffer import TypedBuffer
 from ably.util.crypto import CipherData
-from ably.util.exceptions import AblyException
+from ably.util.encoding import encode_data
 
 
 def _ms_since_epoch(dt):
@@ -151,36 +149,10 @@ class PresenceMessage(EncodeDataMixin):
         Handles proper encoding of data including JSON serialization,
         base64 encoding for binary data, and encryption support.
         """
-        data = self.data
-        data_type = None
-        encoding = self._encoding_array[:]
-
-        # Handle different data types and build encoding string
-        if isinstance(data, (dict, list)):
-            encoding.append('json')
-            data = json.dumps(data)
-            data = str(data)
-        elif isinstance(data, str) and not binary:
-            pass
-        elif not binary and isinstance(data, (bytearray, bytes)):
-            data = base64.b64encode(data).decode('ascii')
-            encoding.append('base64')
-        elif isinstance(data, CipherData):
-            encoding.append(data.encoding_str)
-            data_type = data.type
-            if not binary:
-                data = base64.b64encode(data.buffer).decode('ascii')
-                encoding.append('base64')
-            else:
-                data = data.buffer
-        elif binary and isinstance(data, bytearray):
-            data = bytes(data)
-
-        if not (isinstance(data, (bytes, str, list, dict, bytearray)) or data is None):
-            raise AblyException("Invalid data payload", 400, 40011)
 
         result = {
             'action': self.action,
+            **encode_data(self.data, self._encoding_array, binary),
         }
 
         if self.id:
@@ -189,12 +161,6 @@ class PresenceMessage(EncodeDataMixin):
             result['clientId'] = self.client_id
         if self.connection_id:
             result['connectionId'] = self.connection_id
-        if data is not None:
-            result['data'] = data
-        if data_type:
-            result['type'] = data_type
-        if encoding:
-            result['encoding'] = '/'.join(encoding).strip('/')
         if self.extras:
             result['extras'] = self.extras
         if self.timestamp:

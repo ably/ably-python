@@ -4,10 +4,13 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
+from ably.realtime.annotations import RealtimeAnnotations
 from ably.realtime.connection import ConnectionState
+from ably.realtime.presence import RealtimePresence
 from ably.rest.channel import Channel
 from ably.rest.channel import Channels as RestChannels
 from ably.transport.websockettransport import ProtocolMessageAction
+from ably.types.annotation import Annotation
 from ably.types.channeloptions import ChannelOptions
 from ably.types.channelstate import ChannelState, ChannelStateChange
 from ably.types.flags import Flag, has_flag
@@ -18,6 +21,7 @@ from ably.types.presence import PresenceMessage
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException, IncompatibleClientIdException
 from ably.util.helper import Timer, is_callable_or_coroutine, validate_message_size
+from ably.types.channelmode import ChannelMode, decode_channel_mode, encode_channel_mode
 
 if TYPE_CHECKING:
     from ably.realtime.realtime import AblyRealtime
@@ -64,6 +68,7 @@ class RealtimeChannel(EventEmitter, Channel):
         self.__error_reason: AblyException | None = None
         self.__channel_options = channel_options or ChannelOptions()
         self.__params: dict[str, str] | None = None
+        self.__modes: list[ChannelMode] = list()  # Channel mode flags from ATTACHED message
 
         # Delta-specific fields for RTL19/RTL20 compliance
         vcdiff_decoder = self.__realtime.options.vcdiff_decoder if self.__realtime.options.vcdiff_decoder else None
@@ -74,12 +79,15 @@ class RealtimeChannel(EventEmitter, Channel):
         # will be disrupted if the user called .off() to remove all listeners
         self.__internal_state_emitter = EventEmitter()
 
-        # Initialize presence for this channel
-        from ably.realtime.presence import RealtimePresence
-        self.__presence = RealtimePresence(self)
-
         # Pass channel options as dictionary to parent Channel class
         Channel.__init__(self, realtime, name, self.__channel_options.to_dict())
+
+        # Initialize presence for this channel
+
+        self.__presence = RealtimePresence(self)
+
+        # Initialize realtime annotations for this channel (override REST annotations)
+        self._Channel__annotations = RealtimeAnnotations(self, realtime.connection.connection_manager)
 
     async def set_options(self, channel_options: ChannelOptions) -> None:
         """Set channel options"""
@@ -149,8 +157,10 @@ class RealtimeChannel(EventEmitter, Channel):
             "channel": self.name,
         }
 
-        if self.__attach_resume:
-            attach_msg["flags"] = Flag.ATTACH_RESUME
+        flags = self._encode_flags()
+
+        if flags:
+            attach_msg["flags"] = flags
         if self.__channel_serial:
             attach_msg["channelSerial"] = self.__channel_serial
 
@@ -491,8 +501,8 @@ class RealtimeChannel(EventEmitter, Channel):
         if not message.serial:
             raise AblyException(
                 "Message serial is required for update/delete/append operations",
-                400,
-                40003
+                status_code=400,
+                code=40003,
             )
 
         # Check connection and channel state
@@ -702,6 +712,8 @@ class RealtimeChannel(EventEmitter, Channel):
                 resumed = has_flag(flags, Flag.RESUMED)
                 # RTP1: Check for HAS_PRESENCE flag
                 has_presence = has_flag(flags, Flag.HAS_PRESENCE)
+                # Store channel attach flags
+                self.__modes = decode_channel_mode(flags)
 
             #  RTL12
             if self.state == ChannelState.ATTACHED:
@@ -744,6 +756,15 @@ class RealtimeChannel(EventEmitter, Channel):
             decoded_presence = PresenceMessage.from_encoded_array(presence_messages, cipher=self.cipher)
             sync_channel_serial = proto_msg.get('channelSerial')
             self.__presence.set_presence(decoded_presence, is_sync=True, sync_channel_serial=sync_channel_serial)
+        elif action == ProtocolMessageAction.ANNOTATION:
+            # Handle ANNOTATION messages
+            annotation_data = proto_msg.get('annotations', [])
+            try:
+                annotations = Annotation.from_encoded_array(annotation_data, cipher=self.cipher)
+                # Process annotations through the annotations handler
+                self.annotations._process_incoming(annotations)
+            except Exception as e:
+                log.error(f"Annotation processing error {e}. Skip annotations {annotation_data}")
         elif action == ProtocolMessageAction.ERROR:
             error = AblyException.from_dict(proto_msg.get('error'))
             self._notify_state(ChannelState.FAILED, reason=error)
@@ -890,6 +911,11 @@ class RealtimeChannel(EventEmitter, Channel):
         """Get the RealtimePresence object for this channel"""
         return self.__presence
 
+    @property
+    def modes(self):
+        """Get the list of channel modes"""
+        return self.__modes
+
     def _start_decode_failure_recovery(self, error: AblyException) -> None:
         """Start RTL18 decode failure recovery procedure"""
 
@@ -907,6 +933,20 @@ class RealtimeChannel(EventEmitter, Channel):
         # RTL18c: Send ATTACH with previous channel serial and transition to ATTACHING
         self._notify_state(ChannelState.ATTACHING, reason=error)
         self._check_pending_state()
+
+    def _encode_flags(self) -> int | None:
+        if not self.__channel_options.modes and not self.__attach_resume:
+            return None
+
+        flags = 0
+
+        if self.__attach_resume:
+            flags |= Flag.ATTACH_RESUME
+
+        if self.__channel_options.modes:
+            flags |= encode_channel_mode(self.__channel_options.modes)
+
+        return flags
 
 
 class Channels(RestChannels):

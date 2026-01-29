@@ -1,25 +1,14 @@
-import base64
-import json
 import logging
 from enum import IntEnum
 
 from ably.types.mixins import DeltaExtras, EncodeDataMixin
 from ably.types.typedbuffer import TypedBuffer
 from ably.util.crypto import CipherData
+from ably.util.encoding import encode_data
 from ably.util.exceptions import AblyException
+from ably.util.helper import to_text
 
 log = logging.getLogger(__name__)
-
-
-def to_text(value):
-    if value is None:
-        return value
-    elif isinstance(value, str):
-        return value
-    elif isinstance(value, bytes):
-        return value.decode()
-    else:
-        raise TypeError(f"expected string or bytes, not {type(value)}")
 
 
 class MessageVersion:
@@ -234,38 +223,9 @@ class Message(EncodeDataMixin):
             self.__data = decrypted_data
 
     def as_dict(self, binary=False):
-        data = self.data
-        data_type = None
-        encoding = self._encoding_array[:]
-
-        if isinstance(data, (dict, list)):
-            encoding.append('json')
-            data = json.dumps(data)
-            data = str(data)
-        elif isinstance(data, str) and not binary:
-            pass
-        elif not binary and isinstance(data, (bytearray, bytes)):
-            data = base64.b64encode(data).decode('ascii')
-            encoding.append('base64')
-        elif isinstance(data, CipherData):
-            encoding.append(data.encoding_str)
-            data_type = data.type
-            if not binary:
-                data = base64.b64encode(data.buffer).decode('ascii')
-                encoding.append('base64')
-            else:
-                data = data.buffer
-        elif binary and isinstance(data, bytearray):
-            data = bytes(data)
-
-        if not (isinstance(data, (bytes, str, list, dict, bytearray)) or data is None):
-            raise AblyException("Invalid data payload", 400, 40011)
-
         request_body = {
             'name': self.name,
-            'data': data,
             'timestamp': self.timestamp or None,
-            'type': data_type or None,
             'clientId': self.client_id or None,
             'id': self.id or None,
             'connectionId': self.connection_id or None,
@@ -274,10 +234,8 @@ class Message(EncodeDataMixin):
             'version': self.version.as_dict() if self.version else None,
             'serial': self.serial,
             'action': int(self.action) if self.action is not None else None,
+            **encode_data(self.data, self._encoding_array, binary),
         }
-
-        if encoding:
-            request_body['encoding'] = '/'.join(encoding).strip('/')
 
         # None values aren't included
         request_body = {k: v for k, v in request_body.items() if v is not None}

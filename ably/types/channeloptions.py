@@ -4,6 +4,7 @@ from typing import Any
 
 from ably.util.crypto import CipherParams
 from ably.util.exceptions import AblyException
+from ably.types.channelmode import ChannelMode
 
 
 class ChannelOptions:
@@ -17,22 +18,28 @@ class ChannelOptions:
         Channel parameters that configure the behavior of the channel.
     """
 
-    def __init__(self, cipher: CipherParams | None = None, params: dict | None = None):
+    def __init__(self, cipher: CipherParams | None = None, params: dict | None = None, modes: list[ChannelMode] | None = None):
         self.__cipher = cipher
         self.__params = params
+        self.__modes = modes
         # Validate params
         if self.__params and not isinstance(self.__params, dict):
             raise AblyException("params must be a dictionary", 40000, 400)
 
     @property
-    def cipher(self):
+    def cipher(self) -> CipherParams | None:
         """Get cipher configuration"""
         return self.__cipher
 
     @property
-    def params(self) -> dict[str, str]:
+    def params(self) -> dict[str, str] | None:
         """Get channel parameters"""
         return self.__params
+
+    @property
+    def modes(self) -> list[ChannelMode] | None:
+        """Get channel parameters"""
+        return self.__modes
 
     def __eq__(self, other):
         """Check equality with another ChannelOptions instance"""
@@ -40,13 +47,14 @@ class ChannelOptions:
             return False
 
         return (self.__cipher == other.__cipher and
-                self.__params == other.__params)
+                self.__params == other.__params and self.__modes == other.__modes)
 
     def __hash__(self):
         """Make ChannelOptions hashable"""
         return hash((
             self.__cipher,
             tuple(sorted(self.__params.items())) if self.__params else None,
+            tuple(sorted(self.__modes)) if self.__modes else None
         ))
 
     def to_dict(self) -> dict[str, Any]:
@@ -56,6 +64,8 @@ class ChannelOptions:
             result['cipher'] = self.__cipher
         if self.__params:
             result['params'] = self.__params
+        if self.__modes:
+            result['modes'] = self.__modes
         return result
 
     @classmethod
@@ -67,4 +77,5 @@ class ChannelOptions:
         return cls(
             cipher=options_dict.get('cipher'),
             params=options_dict.get('params'),
+            modes=options_dict.get('modes'),
         )

@@ -9,6 +9,7 @@ from urllib import parse
 import msgpack
 
 from ably.http.paginatedresult import PaginatedResult, format_params
+from ably.rest.annotations import RestAnnotations
 from ably.types.channeldetails import ChannelDetails
 from ably.types.message import (
     Message,
@@ -37,6 +38,7 @@ class Channel:
         self.__cipher = None
         self.options = options
         self.__presence = Presence(self)
+        self.__annotations = RestAnnotations(self)
 
     @catch_all
     async def history(self, direction=None, limit: int = None, start=None, end=None):
@@ -169,8 +171,8 @@ class Channel:
         if not message.serial:
             raise AblyException(
                 "Message serial is required for update/delete/append operations",
-                400,
-                40003
+                status_code=400,
+                code=40003,
             )
 
         if not operation:
@@ -282,8 +284,8 @@ class Channel:
             raise AblyException(
                 'This message lacks a serial. Make sure you have enabled "Message annotations, '
                 'updates, and deletes" in channel settings on your dashboard.',
-                400,
-                40003
+                status_code=400,
+                code=40003,
             )
 
         # Build the path
@@ -321,8 +323,8 @@ class Channel:
             raise AblyException(
                 'This message lacks a serial. Make sure you have enabled "Message annotations, '
                 'updates, and deletes" in channel settings on your dashboard.',
-                400,
-                40003
+                status_code=400,
+                code=40003,
             )
 
         # Build the path
@@ -362,6 +364,10 @@ class Channel:
     @property
     def presence(self):
         return self.__presence
+
+    @property
+    def annotations(self):
+        return self.__annotations
 
     @options.setter
     def options(self, options):
