@@ -8,6 +8,10 @@ from ably.util.helper import to_text
 log = logging.getLogger(__name__)
 
 
+# Sentinel value to distinguish between "not provided" and "explicitly None"
+_UNSET = object()
+
+
 class AnnotationAction(IntEnum):
     """Annotation action types"""
     ANNOTATION_CREATE = 0
@@ -59,6 +63,7 @@ class Annotation(EncodeDataMixin):
         self.__client_id = to_text(client_id) if client_id is not None else None
         self.__timestamp = timestamp
         self.__extras = extras
+        self.__encoding = encoding
 
     def __eq__(self, other):
         if isinstance(other, Annotation):
@@ -203,6 +208,62 @@ class Annotation(EncodeDataMixin):
 
     def __repr__(self):
         return self.__str__()
+
+    def _copy_with(self,
+                  action=_UNSET,
+                  serial=_UNSET,
+                  message_serial=_UNSET,
+                  type=_UNSET,
+                  name=_UNSET,
+                  count=_UNSET,
+                  data=_UNSET,
+                  encoding=_UNSET,
+                  client_id=_UNSET,
+                  timestamp=_UNSET,
+                  extras=_UNSET):
+        """
+        Create a copy of this Annotation with optionally modified fields.
+
+        To explicitly set a field to None, pass None as the value.
+        Fields not provided will retain their original values.
+
+        Args:
+            action: Override the action type (or None to clear it)
+            serial: Override the serial (or None to clear it)
+            message_serial: Override the message serial (or None to clear it)
+            type: Override the type (or None to clear it)
+            name: Override the name (or None to clear it)
+            count: Override the count (or None to clear it)
+            data: Override the data payload (or None to clear it)
+            encoding: Override the encoding format (or None to clear it)
+            client_id: Override the client ID (or None to clear it)
+            timestamp: Override the timestamp (or None to clear it)
+            extras: Override the extras metadata (or None to clear it)
+
+        Returns:
+            A new Annotation instance with the specified fields updated
+
+        Example:
+            # Keep existing name, change type
+            new_ann = annotation.copy_with(type="like")
+
+            # Explicitly set name to None
+            new_ann = annotation.copy_with(name=None)
+        """
+        # Get encoding from the mixin's property
+        return Annotation(
+            action=self.__action if action is _UNSET else action,
+            serial=self.__serial if serial is _UNSET else serial,
+            message_serial=self.__message_serial if message_serial is _UNSET else message_serial,
+            type=self.__type if type is _UNSET else type,
+            name=self.__name if name is _UNSET else name,
+            count=self.__count if count is _UNSET else count,
+            data=self.__data if data is _UNSET else data,
+            encoding=self.__encoding if encoding is _UNSET else encoding,
+            client_id=self.__client_id if client_id is _UNSET else client_id,
+            timestamp=self.__timestamp if timestamp is _UNSET else timestamp,
+            extras=self.__extras if extras is _UNSET else extras,
+        )
 
 
 def make_annotation_response_handler(cipher=None):

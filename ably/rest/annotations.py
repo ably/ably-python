@@ -49,13 +49,13 @@ def serial_from_msg_or_serial(msg_or_serial):
     return message_serial
 
 
-def construct_validate_annotation(msg_or_serial, annotation: dict):
+def construct_validate_annotation(msg_or_serial, annotation: Annotation) -> Annotation:
     """
     Construct and validate an Annotation from input values.
 
     Args:
         msg_or_serial: Either a string serial or a Message object
-        annotation: Dict of annotation properties or Annotation object
+        annotation: Annotation object
 
     Returns:
         Annotation: The constructed annotation
@@ -65,7 +65,7 @@ def construct_validate_annotation(msg_or_serial, annotation: dict):
     """
     message_serial = serial_from_msg_or_serial(msg_or_serial)
 
-    if not annotation or (not isinstance(annotation, dict) and not isinstance(annotation, Annotation)):
+    if not annotation or not isinstance(annotation, Annotation):
         raise AblyException(
             message='Second argument of annotations.publish() must be a dict or Annotation '
             '(the intended annotation to publish)',
@@ -73,10 +73,9 @@ def construct_validate_annotation(msg_or_serial, annotation: dict):
             code=40003,
         )
 
-    annotation_values = annotation.copy()
-    annotation_values['message_serial'] = message_serial
-
-    return Annotation.from_values(annotation_values)
+    return annotation._copy_with(
+        message_serial=message_serial,
+    )
 
 
 class RestAnnotations:
@@ -109,7 +108,7 @@ class RestAnnotations:
     async def publish(
         self,
         msg_or_serial,
-        annotation: dict | Annotation,
+        annotation: Annotation,
         params: dict | None = None,
     ):
         """
@@ -117,7 +116,7 @@ class RestAnnotations:
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
-            annotation: Dict containing annotation properties (type, name, data, etc.) or Annotation object
+            annotation: Annotation object
             params: Optional dict of query parameters
 
         Returns:
@@ -152,7 +151,7 @@ class RestAnnotations:
     async def delete(
         self,
         msg_or_serial,
-        annotation: dict | Annotation,
+        annotation: Annotation,
         params: dict | None = None,
     ):
         """
@@ -163,7 +162,7 @@ class RestAnnotations:
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
-            annotation: Dict containing annotation properties or Annotation object
+            annotation: Annotation object
             params: Optional dict of query parameters
 
         Returns:
@@ -172,13 +171,11 @@ class RestAnnotations:
         Raises:
             AblyException: If the request fails or inputs are invalid
         """
-        # Set action to delete
-        if isinstance(annotation, Annotation):
-            annotation_values = annotation.as_dict()
-        else:
-            annotation_values = annotation.copy()
-        annotation_values['action'] = AnnotationAction.ANNOTATION_DELETE
-        return await self.publish(msg_or_serial, annotation_values, params)
+        return await self.publish(
+            msg_or_serial,
+            annotation._copy_with(action=AnnotationAction.ANNOTATION_DELETE),
+            params,
+        )
 
     async def get(self, msg_or_serial, params: dict | None = None):
         """

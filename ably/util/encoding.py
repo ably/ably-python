@@ -3,6 +3,7 @@ import json
 from typing import Any
 
 from ably.util.crypto import CipherData
+from ably.util.exceptions import AblyException
 
 
 def encode_data(data: Any, encoding_array: list, binary: bool = False):
@@ -28,6 +29,9 @@ def encode_data(data: Any, encoding_array: list, binary: bool = False):
         data = bytes(data)
 
     result = { 'data': data }
+
+    if not (isinstance(data, (bytes, str, list, dict, bytearray)) or data is None):
+        raise AblyException("Invalid data payload", 400, 40011)
 
     if encoding:
         result['encoding'] = '/'.join(encoding).strip('/')

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from ably.rest.annotations import RestAnnotations, construct_validate_annotation
 from ably.transport.websockettransport import ProtocolMessageAction
-from ably.types.annotation import AnnotationAction
+from ably.types.annotation import Annotation, AnnotationAction
 from ably.types.channelstate import ChannelState
 from ably.types.flags import Flag
 from ably.util.eventemitter import EventEmitter
@@ -40,13 +40,13 @@ class RealtimeAnnotations:
         self.__subscriptions = EventEmitter()
         self.__rest_annotations = RestAnnotations(channel)
 
-    async def publish(self, msg_or_serial, annotation: dict, params: dict | None = None):
+    async def publish(self, msg_or_serial, annotation: Annotation, params: dict | None = None):
         """
         Publish an annotation on a message via the realtime connection.
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
-            annotation: Dict containing annotation properties (type, name, data, etc.)
+            annotation: Annotation object
             params: Optional dict of query parameters
 
         Returns:
@@ -87,7 +87,7 @@ class RealtimeAnnotations:
     async def delete(
         self,
         msg_or_serial,
-        annotation: dict,
+        annotation: Annotation,
         params: dict | None = None,
     ):
         """
@@ -98,7 +98,7 @@ class RealtimeAnnotations:
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
-            annotation: Dict containing annotation properties
+            annotation: Annotation containing annotation properties
             params: Optional dict of query parameters
 
         Returns:
@@ -107,9 +107,11 @@ class RealtimeAnnotations:
         Raises:
             AblyException: If the request fails or inputs are invalid
         """
-        annotation_values = annotation.copy()
-        annotation_values['action'] = AnnotationAction.ANNOTATION_DELETE
-        return await self.publish(msg_or_serial, annotation_values, params)
+        return await self.publish(
+            msg_or_serial,
+            annotation._copy_with(action=AnnotationAction.ANNOTATION_DELETE),
+            params,
+        )
 
     async def subscribe(self, *args):
         """
@@ -163,6 +165,10 @@ class RealtimeAnnotations:
         # Check if ANNOTATION_SUBSCRIBE mode is enabled
         if self.__channel.state == ChannelState.ATTACHED:
             if Flag.ANNOTATION_SUBSCRIBE not in self.__channel.modes:
+                if annotation_type is not None:
+                    self.__subscriptions.off(annotation_type, listener)
+                else:
+                    self.__subscriptions.off(listener)
                 raise AblyException(
                     message="You are trying to add an annotation listener, but you haven't requested the "
                     "annotation_subscribe channel mode in ChannelOptions, so this won't do anything "
