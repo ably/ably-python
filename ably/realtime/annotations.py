@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from ably.rest.annotations import RestAnnotations, construct_validate_annotation
 from ably.transport.websockettransport import ProtocolMessageAction
 from ably.types.annotation import Annotation, AnnotationAction
+from ably.types.channelmode import ChannelMode
 from ably.types.channelstate import ChannelState
-from ably.types.flags import Flag
 from ably.util.eventemitter import EventEmitter
 from ably.util.exceptions import AblyException
 from ably.util.helper import is_callable_or_coroutine
@@ -164,7 +164,7 @@ class RealtimeAnnotations:
 
         # Check if ANNOTATION_SUBSCRIBE mode is enabled
         if self.__channel.state == ChannelState.ATTACHED:
-            if Flag.ANNOTATION_SUBSCRIBE not in self.__channel.modes:
+            if ChannelMode.ANNOTATION_SUBSCRIBE not in self.__channel.modes:
                 if annotation_type is not None:
                     self.__subscriptions.off(annotation_type, listener)
                 else:

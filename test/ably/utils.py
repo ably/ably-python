@@ -259,7 +259,9 @@ class ReusableFuture:
         self.__future = asyncio.Future()
 
     def set_result(self, result):
-        self.__future.set_result(result)
+        if not self.__future.done():
+            self.__future.set_result(result)
 
     def set_exception(self, exception):
-        self.__future.set_exception(exception)
+        if not self.__future.done():
+            self.__future.set_exception(exception)

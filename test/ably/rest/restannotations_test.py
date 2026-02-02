@@ -5,7 +5,7 @@ import string
 import pytest
 
 from ably import AblyException
-from ably.types.annotation import AnnotationAction
+from ably.types.annotation import Annotation, AnnotationAction
 from ably.types.message import Message
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, assert_waiter
@@ -36,10 +36,10 @@ class TestRestAnnotations(BaseAsyncTestCase):
         serial = result.serials[0]
 
         # Publish an annotation
-        await channel.annotations.publish(serial, {
-            'type': 'reaction:distinct.v1',
-            'name': '👍'
-        })
+        await channel.annotations.publish(serial, Annotation(
+            type='reaction:distinct.v1',
+            name='👍'
+        ))
 
         annotations_result = None
 
@@ -70,10 +70,10 @@ class TestRestAnnotations(BaseAsyncTestCase):
         message = Message(serial=serial)
 
         # Publish annotation with message object
-        await channel.annotations.publish(message, {
-            'type': 'reaction:distinct.v1',
-            'name': '😕'
-        })
+        await channel.annotations.publish(message, Annotation(
+            type='reaction:distinct.v1',
+            name='😕'
+        ))
 
         annotations_result = None
 
@@ -96,7 +96,7 @@ class TestRestAnnotations(BaseAsyncTestCase):
         channel = self.ably.channels[self.get_channel_name('mutable:annotation_no_serial')]
 
         with pytest.raises(AblyException) as exc_info:
-            await channel.annotations.publish(None, {'type': 'reaction', 'name': '👍'})
+            await channel.annotations.publish(None, Annotation(type='reaction', name='👍'))
 
         assert exc_info.value.status_code == 400
         assert exc_info.value.code == 40003
@@ -110,10 +110,10 @@ class TestRestAnnotations(BaseAsyncTestCase):
         serial = result.serials[0]
 
         # Publish an annotation
-        await channel.annotations.publish(serial, {
-            'type': 'reaction:distinct.v1',
-            'name': '👍'
-        })
+        await channel.annotations.publish(serial, Annotation(
+            type='reaction:distinct.v1',
+            name='👍'
+        ))
 
         annotations_result = None
 
@@ -126,10 +126,10 @@ class TestRestAnnotations(BaseAsyncTestCase):
         await assert_waiter(check_annotation, timeout=10)
 
         # Delete the annotation
-        await channel.annotations.delete(serial, {
-            'type': 'reaction:distinct.v1',
-            'name': '👍'
-        })
+        await channel.annotations.delete(serial, Annotation(
+            type='reaction:distinct.v1',
+            name='👍'
+        ))
 
         # Wait for annotation to appear
         async def check_deleted_annotation():
@@ -150,9 +150,9 @@ class TestRestAnnotations(BaseAsyncTestCase):
         serial = result.serials[0]
 
         # Publish annotations
-        await channel.annotations.publish(serial, {'type': 'reaction:distinct.v1', 'name': '👍'})
-        await channel.annotations.publish(serial, {'type': 'reaction:distinct.v1', 'name': '😕'})
-        await channel.annotations.publish(serial, {'type': 'reaction:distinct.v1', 'name': '👎'})
+        await channel.annotations.publish(serial, Annotation(type='reaction:distinct.v1', name='👍'))
+        await channel.annotations.publish(serial, Annotation(type='reaction:distinct.v1', name='😕'))
+        await channel.annotations.publish(serial, Annotation(type='reaction:distinct.v1', name='👎'))
 
         # Wait and get all annotations
         async def check_annotations():
@@ -181,11 +181,11 @@ class TestRestAnnotations(BaseAsyncTestCase):
         serial = result.serials[0]
 
         # Publish annotation with various properties
-        await channel.annotations.publish(serial, {
-            'type': 'reaction:distinct.v1',
-            'name': '❤️',
-            'data': {'count': 5}
-        })
+        await channel.annotations.publish(serial, Annotation(
+            type='reaction:distinct.v1',
+            name='❤️',
+            data={'count': 5}
+        ))
 
         # Retrieve and verify
         async def check_annotation():

@@ -6,7 +6,7 @@ import string
 import pytest
 
 from ably import AblyException
-from ably.types.annotation import AnnotationAction
+from ably.types.annotation import Annotation, AnnotationAction
 from ably.types.channelmode import ChannelMode
 from ably.types.channeloptions import ChannelOptions
 from ably.types.message import MessageAction
@@ -71,10 +71,10 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         await channel.subscribe('message', on_message)
 
         # Publish annotation using realtime
-        await channel.annotations.publish(publish_result.serials[0], {
-            'type': 'reaction:distinct.v1',
-            'name': '👍'
-        })
+        await channel.annotations.publish(publish_result.serials[0], Annotation(
+            type='reaction:distinct.v1',
+            name='👍'
+        ))
 
         # Wait for annotation
         annotation = await annotation_future
@@ -88,6 +88,7 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         summary = await message_summary
         assert summary.action == MessageAction.MESSAGE_SUMMARY
         assert summary.serial == publish_result.serials[0]
+        assert summary.annotations.summary['reaction:distinct.v1']['👍']['total'] == 1
 
         # Try again but with REST publish
         annotation_future2 = asyncio.Future()
@@ -98,10 +99,10 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
 
         await channel.annotations.subscribe(on_annotation2)
 
-        await rest_channel.annotations.publish(publish_result.serials[0], {
-            'type': 'reaction:distinct.v1',
-            'name': '😕'
-        })
+        await rest_channel.annotations.publish(publish_result.serials[0], Annotation(
+            type='reaction:distinct.v1',
+            name='😕'
+        ))
 
         annotation = await annotation_future2
         assert annotation.action == AnnotationAction.ANNOTATION_CREATE
@@ -130,10 +131,10 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         # Publish multiple annotations
         emojis = ['👍', '😕', '👎']
         for emoji in emojis:
-            await channel.annotations.publish(publish_result.serials[0], {
-                'type': 'reaction:distinct.v1',
-                'name': emoji
-            })
+            await channel.annotations.publish(publish_result.serials[0], Annotation(
+                type='reaction:distinct.v1',
+                name=emoji
+            ))
 
         # Wait for all annotations to appear
         annotations = []
@@ -191,10 +192,10 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         # Publish message and annotation
         publish_result = await channel.publish('message', 'test')
 
-        await channel.annotations.publish(publish_result.serials[0], {
-            'type': 'reaction:distinct.v1',
-            'name': '👍'
-        })
+        await channel.annotations.publish(publish_result.serials[0], Annotation(
+            type='reaction:distinct.v1',
+            name='👍'
+        ))
 
         # Should receive the annotation
         annotation = await reaction_future
@@ -227,10 +228,10 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         # Publish message and first annotation
         publish_result = await channel.publish('message', 'test')
 
-        await channel.annotations.publish(publish_result.serials[0], {
-            'type': 'reaction:distinct.v1',
-            'name': '👍'
-        })
+        await channel.annotations.publish(publish_result.serials[0], Annotation(
+            type='reaction:distinct.v1',
+            name='👍'
+        ))
 
         # Wait for the first annotation to appear
         await annotation_future.get()
@@ -242,10 +243,10 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         await channel.annotations.subscribe(lambda annotation: annotation_future.set_result(annotation))
 
         # Publish another annotation
-        await channel.annotations.publish(publish_result.serials[0], {
-            'type': 'reaction:distinct.v1',
-            'name': '😕'
-        })
+        await channel.annotations.publish(publish_result.serials[0], Annotation(
+            type='reaction:distinct.v1',
+            name='😕'
+        ))
 
         # Wait for the second annotation to appear in another listener
         await annotation_future.get()
@@ -287,10 +288,10 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         await channel.publish('message', 'test')
         message = await message_future
 
-        await channel.annotations.publish(message.serial, {
-            'type': 'reaction:distinct.v1',
-            'name': '👍'
-        })
+        await channel.annotations.publish(message.serial, Annotation(
+            type='reaction:distinct.v1',
+            name='👍'
+        ))
 
         await annotation_future.get()
 
@@ -299,10 +300,10 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         assert annotations_received[0].action == AnnotationAction.ANNOTATION_CREATE
 
         # Delete the annotation
-        await channel.annotations.delete(message.serial, {
-            'type': 'reaction:distinct.v1',
-            'name': '👍'
-        })
+        await channel.annotations.delete(message.serial, Annotation(
+            type='reaction:distinct.v1',
+            name='👍'
+        ))
 
         # Wait for delete annotation
         await annotation_future.get()

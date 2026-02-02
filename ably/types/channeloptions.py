@@ -43,7 +43,7 @@ class ChannelOptions:
 
     @property
     def modes(self) -> list[ChannelMode] | None:
-        """Get channel parameters"""
+        """Get channel modes"""
         return self.__modes
 
     def __eq__(self, other):

@@ -11,6 +11,42 @@ from ably.util.helper import to_text
 log = logging.getLogger(__name__)
 
 
+class MessageAnnotations:
+    """
+    Contains information about annotations associated with a particular message.
+    """
+
+    def __init__(self, summary=None):
+        """
+        Args:
+            summary: A dict mapping annotation types to their aggregated values.
+                    The keys are annotation types (e.g., "reaction:distinct.v1").
+                    The values depend on the aggregation method of the annotation type.
+        """
+        # TM8a: Ensure summary exists
+        self.__summary = summary if summary is not None else {}
+
+    @property
+    def summary(self):
+        """A dict of annotation type to aggregated annotation values."""
+        return self.__summary
+
+    def as_dict(self):
+        """Convert MessageAnnotations to dictionary format."""
+        return {
+            'summary': self.summary,
+        }
+
+    @staticmethod
+    def from_dict(obj):
+        """Create MessageAnnotations from dictionary."""
+        if obj is None:
+            return MessageAnnotations()
+        return MessageAnnotations(
+            summary=obj.get('summary'),
+        )
+
+
 class MessageVersion:
     """
     Contains the details regarding the current version of the message - including when it was updated and by whom.
@@ -111,6 +147,7 @@ class Message(EncodeDataMixin):
                  serial=None, # TM2r
                  action=None, # TM2j
                  version=None, # TM2s
+                 annotations=None, # TM2t
                  ):
 
         super().__init__(encoding)
@@ -126,6 +163,7 @@ class Message(EncodeDataMixin):
         self.__serial = serial
         self.__action = action
         self.__version = version
+        self.__annotations = annotations
 
     def __eq__(self, other):
         if isinstance(other, Message):
@@ -190,6 +228,10 @@ class Message(EncodeDataMixin):
     def action(self):
         return self.__action
 
+    @property
+    def annotations(self):
+        return self.__annotations
+
     def encrypt(self, channel_cipher):
         if isinstance(self.data, CipherData):
             return
@@ -234,6 +276,7 @@ class Message(EncodeDataMixin):
             'version': self.version.as_dict() if self.version else None,
             'serial': self.serial,
             'action': int(self.action) if self.action is not None else None,
+            'annotations': self.annotations.as_dict() if self.annotations else None,
             **encode_data(self.data, self._encoding_array, binary),
         }
 
@@ -278,6 +321,31 @@ class Message(EncodeDataMixin):
             # TM2s
             version = MessageVersion(serial=serial, timestamp=timestamp)
 
+        # Parse annotations from the wire format
+        annotations_obj = obj.get('annotations')
+        if annotations_obj is None:
+            # TM2u: Always initialize annotations with empty summary
+            annotations = MessageAnnotations()
+        else:
+            annotations = MessageAnnotations.from_dict(annotations_obj)
+
+        # Process annotation summary entries to ensure clipped fields are set
+        if annotations and annotations.summary:
+            for annotation_type, summary_entry in annotations.summary.items():
+                # TM7c1c, TM7d1c: For distinct.v1, unique.v1, multiple.v1
+                if (annotation_type.endswith(':distinct.v1') or
+                    annotation_type.endswith(':unique.v1') or
+                    annotation_type.endswith(':multiple.v1')):
+                    # These types have entries that need clipped field
+                    if isinstance(summary_entry, dict):
+                        for _entry_key, entry_value in summary_entry.items():
+                            if isinstance(entry_value, dict) and 'clipped' not in entry_value:
+                                entry_value['clipped'] = False
+                # TM7c1c: For flag.v1
+                elif annotation_type.endswith(':flag.v1'):
+                    if isinstance(summary_entry, dict) and 'clipped' not in summary_entry:
+                        summary_entry['clipped'] = False
+
         return Message(
             id=id,
             name=name,
@@ -288,6 +356,7 @@ class Message(EncodeDataMixin):
             serial=serial,
             action=action,
             version=version,
+            annotations=annotations,
             **decoded_data
         )
 

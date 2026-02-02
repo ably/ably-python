@@ -41,7 +41,7 @@ def serial_from_msg_or_serial(msg_or_serial):
     if not message_serial or not isinstance(message_serial, str):
         raise AblyException(
             message='First argument of annotations.publish() must be either a Message '
-            '(or at least an object with a string `serial` property) or a message serial (string)',
+            'or a message serial (string)',
             status_code=400,
             code=40003,
         )
@@ -67,7 +67,7 @@ def construct_validate_annotation(msg_or_serial, annotation: Annotation) -> Anno
 
     if not annotation or not isinstance(annotation, Annotation):
         raise AblyException(
-            message='Second argument of annotations.publish() must be a dict or Annotation '
+            message='Second argument of annotations.publish() must be an Annotation '
             '(the intended annotation to publish)',
             status_code=400,
             code=40003,
