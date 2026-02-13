@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import base64
 import json
 import logging
-import uuid
+import os
 from urllib import parse
 
 import msgpack
@@ -118,6 +119,41 @@ class RestAnnotations:
         channel_path = '/channels/{}/'.format(parse.quote_plus(self.__channel.name, safe=':'))
         return channel_path + 'messages/' + parse.quote_plus(serial, safe=':') + '/annotations'
 
+    async def __send_annotation(self, annotation: Annotation, params: dict | None = None):
+        """
+        Internal method to send an annotation to the API.
+
+        Args:
+            annotation: Validated Annotation object with action and message_serial set
+            params: Optional dict of query parameters
+        """
+        # RSAN1c4: Generate random ID if not provided (for idempotent publishing)
+        # Spec: base64-encode at least 9 random bytes, append ':0'
+        if not annotation.id and self.__client_options.idempotent_rest_publishing:
+            random_id = base64.b64encode(os.urandom(9)).decode('ascii') + ':0'
+            annotation = annotation._copy_with(id=random_id)
+
+        # Convert to wire format
+        request_body = annotation.as_dict(binary=self.__channel.ably.options.use_binary_protocol)
+
+        # Wrap in array as API expects array of annotations
+        request_body = [request_body]
+
+        # Encode based on protocol
+        if not self.__channel.ably.options.use_binary_protocol:
+            request_body = json.dumps(request_body, separators=(',', ':'))
+        else:
+            request_body = msgpack.packb(request_body, use_bin_type=True)
+
+        # Build path
+        path = self.__base_path_for_serial(annotation.message_serial)
+        if params:
+            params = {k: str(v).lower() if isinstance(v, bool) else v for k, v in params.items()}
+            path += '?' + parse.urlencode(params)
+
+        # Send request
+        await self.__channel.ably.http.post(path, body=request_body)
+
     async def publish(
         self,
         msg_or_serial,
@@ -140,30 +176,10 @@ class RestAnnotations:
         """
         annotation = construct_validate_annotation(msg_or_serial, annotation)
 
-        # RSAN1c4: Generate random ID if not provided (for idempotent publishing)
-        if not annotation.id and self.__client_options.idempotent_rest_publishing:
-            annotation = annotation._copy_with(id=str(uuid.uuid4()))
+        # RSAN1c1: Explicitly set action to ANNOTATION_CREATE
+        annotation = annotation._copy_with(action=AnnotationAction.ANNOTATION_CREATE)
 
-        # Convert to wire format
-        request_body = annotation.as_dict(binary=self.__channel.ably.options.use_binary_protocol)
-
-        # Wrap in array as API expects array of annotations
-        request_body = [request_body]
-
-        # Encode based on protocol
-        if not self.__channel.ably.options.use_binary_protocol:
-            request_body = json.dumps(request_body, separators=(',', ':'))
-        else:
-            request_body = msgpack.packb(request_body, use_bin_type=True)
-
-        # Build path
-        path = self.__base_path_for_serial(annotation.message_serial)
-        if params:
-            params = {k: str(v).lower() if isinstance(v, bool) else v for k, v in params.items()}
-            path += '?' + parse.urlencode(params)
-
-        # Send request
-        await self.__channel.ably.http.post(path, body=request_body)
+        await self.__send_annotation(annotation, params)
 
     async def delete(
         self,
@@ -188,11 +204,12 @@ class RestAnnotations:
         Raises:
             AblyException: If the request fails or inputs are invalid
         """
-        return await self.publish(
-            msg_or_serial,
-            annotation._copy_with(action=AnnotationAction.ANNOTATION_DELETE),
-            params,
-        )
+        annotation = construct_validate_annotation(msg_or_serial, annotation)
+
+        # RSAN2a: Explicitly set action to ANNOTATION_DELETE
+        annotation = annotation._copy_with(action=AnnotationAction.ANNOTATION_DELETE)
+
+        return await self.__send_annotation(annotation, params)
 
     async def get(self, msg_or_serial, params: dict | None = None):
         """

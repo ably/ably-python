@@ -40,30 +40,21 @@ class RealtimeAnnotations:
         self.__subscriptions = EventEmitter()
         self.__rest_annotations = RestAnnotations(channel)
 
-    async def publish(self, msg_or_serial, annotation: Annotation, params: dict | None = None):
+    async def __send_annotation(self, annotation: Annotation, params: dict | None = None):
         """
-        Publish an annotation on a message via the realtime connection.
+        Internal method to send an annotation via the realtime connection.
 
         Args:
-            msg_or_serial: Either a message serial (string) or a Message object
-            annotation: Annotation object
+            annotation: Validated Annotation object with action and message_serial set
             params: Optional dict of query parameters
-
-        Returns:
-            None
-
-        Raises:
-            AblyException: If the request fails, inputs are invalid, or channel is in unpublishable state
         """
-        annotation = construct_validate_annotation(msg_or_serial, annotation)
-
         # Check if channel and connection are in publishable state
         self.__channel._throw_if_unpublishable_state()
 
         log.info(
-            f'RealtimeAnnotations.publish(), channelName = {self.__channel.name}, '
-            f'sending annotation with messageSerial = {annotation.message_serial}, '
-            f'type = {annotation.type}'
+            f'RealtimeAnnotations: sending annotation, channelName = {self.__channel.name}, '
+            f'messageSerial = {annotation.message_serial}, '
+            f'type = {annotation.type}, action = {annotation.action}'
         )
 
         # Convert to wire format (array of annotations)
@@ -84,6 +75,28 @@ class RealtimeAnnotations:
         # Send via WebSocket
         await self.__connection_manager.send_protocol_message(protocol_message)
 
+    async def publish(self, msg_or_serial, annotation: Annotation, params: dict | None = None):
+        """
+        Publish an annotation on a message via the realtime connection.
+
+        Args:
+            msg_or_serial: Either a message serial (string) or a Message object
+            annotation: Annotation object
+            params: Optional dict of query parameters
+
+        Returns:
+            None
+
+        Raises:
+            AblyException: If the request fails, inputs are invalid, or channel is in unpublishable state
+        """
+        annotation = construct_validate_annotation(msg_or_serial, annotation)
+
+        # RSAN1c1/RTAN1a: Explicitly set action to ANNOTATION_CREATE
+        annotation = annotation._copy_with(action=AnnotationAction.ANNOTATION_CREATE)
+
+        await self.__send_annotation(annotation, params)
+
     async def delete(
         self,
         msg_or_serial,
@@ -92,9 +105,6 @@ class RealtimeAnnotations:
     ):
         """
         Delete an annotation on a message.
-
-        This is a convenience method that sets the action to 'annotation.delete'
-        and calls publish().
 
         Args:
             msg_or_serial: Either a message serial (string) or a Message object
@@ -107,11 +117,12 @@ class RealtimeAnnotations:
         Raises:
             AblyException: If the request fails or inputs are invalid
         """
-        return await self.publish(
-            msg_or_serial,
-            annotation._copy_with(action=AnnotationAction.ANNOTATION_DELETE),
-            params,
-        )
+        annotation = construct_validate_annotation(msg_or_serial, annotation)
+
+        # RSAN2a/RTAN2a: Explicitly set action to ANNOTATION_DELETE
+        annotation = annotation._copy_with(action=AnnotationAction.ANNOTATION_DELETE)
+
+        await self.__send_annotation(annotation, params)
 
     async def subscribe(self, *args):
         """
@@ -119,11 +130,11 @@ class RealtimeAnnotations:
 
         Parameters
         ----------
-        *args: type, listener
-            Subscribe type and listener
+        *args: type_or_types, listener
+            Subscribe type(s) and listener
 
-            arg1(type): str, optional
-                Subscribe to annotations of the given type
+            arg1(type_or_types): str or list[str], optional
+                Subscribe to annotations of the given type or types (RTAN4c)
 
             arg2(listener): callable
                 Subscribe to all annotations on the channel
@@ -132,8 +143,6 @@ class RealtimeAnnotations:
 
         Raises
         ------
-        AblyException
-            If unable to subscribe due to invalid channel state or missing ANNOTATION_SUBSCRIBE mode
         ValueError
             If no valid subscribe arguments are passed
         """
@@ -141,8 +150,14 @@ class RealtimeAnnotations:
         if len(args) == 0:
             raise ValueError("annotations.subscribe called without arguments")
 
-        if len(args) >= 2 and isinstance(args[0], str):
-            annotation_type = args[0]
+        annotation_types = None
+
+        # RTAN4c: Support string or list of strings as first argument
+        if len(args) >= 2 and isinstance(args[0], (str, list)):
+            if isinstance(args[0], list):
+                annotation_types = args[0]
+            else:
+                annotation_types = [args[0]]
             if not args[1]:
                 raise ValueError("annotations.subscribe called without listener")
             if not is_callable_or_coroutine(args[1]):
@@ -150,32 +165,29 @@ class RealtimeAnnotations:
             listener = args[1]
         elif is_callable_or_coroutine(args[0]):
             listener = args[0]
-            annotation_type = None
         else:
             raise ValueError('invalid subscribe arguments')
 
-        # Register subscription
-        if annotation_type is not None:
-            self.__subscriptions.on(annotation_type, listener)
-        else:
-            self.__subscriptions.on(listener)
-
+        # RTAN4d: Implicitly attach channel on subscribe
         await self.__channel.attach()
 
-        # Check if ANNOTATION_SUBSCRIBE mode is enabled
-        if self.__channel.state == ChannelState.ATTACHED:
+        # RTAN4e: Check if ANNOTATION_SUBSCRIBE mode is enabled (log warning per spec),
+        # only when server explicitly sent modes (non-empty list)
+        if self.__channel.state == ChannelState.ATTACHED and self.__channel.modes:
             if ChannelMode.ANNOTATION_SUBSCRIBE not in self.__channel.modes:
-                if annotation_type is not None:
-                    self.__subscriptions.off(annotation_type, listener)
-                else:
-                    self.__subscriptions.off(listener)
-                raise AblyException(
-                    message="You are trying to add an annotation listener, but you haven't requested the "
-                    "annotation_subscribe channel mode in ChannelOptions, so this won't do anything "
-                    "(we only deliver annotations to clients who have explicitly requested them)",
-                    code=93001,
-                    status_code=400,
+                log.warning(
+                    "You are trying to add an annotation listener, but the "
+                    "ANNOTATION_SUBSCRIBE channel mode was not included in the ATTACHED flags. "
+                    "This subscription may not receive annotations. Ensure you request the "
+                    "annotation_subscribe channel mode in ChannelOptions."
                 )
+
+        # Register subscription after successful attach
+        if annotation_types is not None:
+            for t in annotation_types:
+                self.__subscriptions.on(t, listener)
+        else:
+            self.__subscriptions.on(listener)
 
     def unsubscribe(self, *args):
         """
@@ -183,11 +195,11 @@ class RealtimeAnnotations:
 
         Parameters
         ----------
-        *args: type, listener
-            Unsubscribe type and listener
+        *args: type_or_types, listener
+            Unsubscribe type(s) and listener
 
-            arg1(type): str, optional
-                Unsubscribe from annotations of the given type
+            arg1(type_or_types): str or list[str], optional
+                Unsubscribe from annotations of the given type or types
 
             arg2(listener): callable
                 Unsubscribe from all annotations on the channel
@@ -203,10 +215,15 @@ class RealtimeAnnotations:
         # RTAN5: Support no arguments to unsubscribe all annotation listeners
         if len(args) == 0:
             self.__subscriptions.off()
-        elif len(args) >= 2 and isinstance(args[0], str):
-            annotation_type = args[0]
+        elif len(args) >= 2 and isinstance(args[0], (str, list)):
+            # RTAN5a: Support string or list of strings for type(s)
+            if isinstance(args[0], list):
+                annotation_types = args[0]
+            else:
+                annotation_types = [args[0]]
             listener = args[1]
-            self.__subscriptions.off(annotation_type, listener)
+            for t in annotation_types:
+                self.__subscriptions.off(t, listener)
         elif is_callable_or_coroutine(args[0]):
             listener = args[0]
             self.__subscriptions.off(listener)

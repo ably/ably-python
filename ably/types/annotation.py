@@ -187,8 +187,8 @@ class Annotation(EncodeDataMixin):
         timestamp = obj.get('timestamp')
         extras = obj.get('extras', None)
 
-        # Decode data if present
-        decoded_data = Annotation.decode(data, encoding, cipher, context) if data is not None else {}
+        # Decode data if present, passing data=None explicitly when absent
+        decoded_data = Annotation.decode(data, encoding, cipher, context) if data is not None else {'data': None}
 
         # Convert action from int to enum
         if action is not None:
@@ -245,10 +245,8 @@ class Annotation(EncodeDataMixin):
         """
         annotations: list[dict] = proto_msg.get('annotations')
         if annotations is not None:
-            annotation_index = 0
-            for annotation in annotations:
+            for annotation_index, annotation in enumerate(annotations):
                 Annotation.__update_empty_fields(proto_msg, annotation, annotation_index)
-                annotation_index = annotation_index + 1
 
     def __str__(self):
         return (

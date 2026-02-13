@@ -540,7 +540,7 @@ class RealtimeChannel(EventEmitter, Channel):
             f'channel = {self.name}, state = {self.state}, serial = {message.serial}'
         )
 
-        stringified_params = {k: str(v).lower() if type(v) is bool else v for k, v in params.items()} \
+        stringified_params = {k: str(v).lower() if isinstance(v, bool) else v for k, v in params.items()} \
             if params else None
 
         # Send protocol message

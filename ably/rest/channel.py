@@ -112,7 +112,7 @@ class Channel:
 
         path = self.__base_path + 'messages'
         if params:
-            params = {k: str(v).lower() if type(v) is bool else v for k, v in params.items()}
+            params = {k: str(v).lower() if isinstance(v, bool) else v for k, v in params.items()}
             path += '?' + parse.urlencode(params)
         response = await self.ably.http.post(path, body=request_body, timeout=timeout)
 
@@ -211,7 +211,7 @@ class Channel:
         # Build path with params
         path = self.__base_path + 'messages/{}'.format(parse.quote_plus(message.serial, safe=':'))
         if params:
-            params = {k: str(v).lower() if type(v) is bool else v for k, v in params.items()}
+            params = {k: str(v).lower() if isinstance(v, bool) else v for k, v in params.items()}
             path += '?' + parse.urlencode(params)
 
         # Send request
