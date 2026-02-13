@@ -9,7 +9,6 @@ from ably.types.annotation import Annotation, AnnotationAction
 from ably.types.channelmode import ChannelMode
 from ably.types.channelstate import ChannelState
 from ably.util.eventemitter import EventEmitter
-from ably.util.exceptions import AblyException
 from ably.util.helper import is_callable_or_coroutine
 
 if TYPE_CHECKING:

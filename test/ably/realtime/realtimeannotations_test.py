@@ -5,7 +5,6 @@ import string
 
 import pytest
 
-from ably import AblyException
 from ably.types.annotation import Annotation, AnnotationAction
 from ably.types.channelmode import ChannelMode
 from ably.types.channeloptions import ChannelOptions
@@ -34,7 +33,7 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         )
 
     async def test_publish_and_subscribe_annotations(self):
-        """Test publishing and subscribing to annotations"""
+        """RTAN1/RTAN4: Publish and subscribe to annotations via realtime and REST"""
         channel_options = ChannelOptions(modes=[
             ChannelMode.PUBLISH,
             ChannelMode.SUBSCRIBE,
@@ -112,7 +111,7 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         assert annotation.serial > annotation.message_serial
 
     async def test_get_all_annotations_for_a_message(self):
-        """Test retrieving all annotations with pagination"""
+        """RTAN3: Retrieve all annotations for a message"""
         channel_options = ChannelOptions(modes=[
             ChannelMode.PUBLISH,
             ChannelMode.SUBSCRIBE,
@@ -158,7 +157,7 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         assert annotations[2].serial > annotations[1].serial
 
     async def test_subscribe_by_annotation_type(self):
-        """Test subscribing to specific annotation types"""
+        """RTAN4c: Subscribe to annotations filtered by type"""
         channel_options = ChannelOptions(modes=[
             ChannelMode.PUBLISH,
             ChannelMode.SUBSCRIBE,
@@ -203,7 +202,7 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         assert annotation.name == '👍'
 
     async def test_unsubscribe_annotations(self):
-        """Test unsubscribing from annotations"""
+        """RTAN5: Unsubscribe from annotation events"""
         channel_options = ChannelOptions(modes=[
             ChannelMode.PUBLISH,
             ChannelMode.SUBSCRIBE,
@@ -254,7 +253,7 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         assert len(annotations_received) == 1
 
     async def test_delete_annotation(self):
-        """Test deleting annotations"""
+        """RTAN2: Delete an annotation via realtime"""
         channel_options = ChannelOptions(modes=[
             ChannelMode.PUBLISH,
             ChannelMode.SUBSCRIBE,
@@ -311,8 +310,13 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         assert len(annotations_received) == 2
         assert annotations_received[1].action == AnnotationAction.ANNOTATION_DELETE
 
-    async def test_subscribe_without_annotation_mode_fails(self):
-        """Test that subscribing without annotation_subscribe mode raises an error"""
+    async def test_subscribe_without_annotation_mode_warns(self, caplog):
+        """RTAN4e: Subscribing without ANNOTATION_SUBSCRIBE mode logs a warning.
+
+        Per spec, the library should log a warning indicating that the user has tried
+        to add an annotation listener without having requested the ANNOTATION_SUBSCRIBE
+        channel mode.
+        """
         # Create channel without annotation_subscribe mode
         channel_options = ChannelOptions(modes=[
             ChannelMode.PUBLISH,
@@ -327,9 +331,13 @@ class TestRealtimeAnnotations(BaseAsyncTestCase):
         async def on_annotation(annotation):
             pass
 
-        # Should raise error about missing annotation_subscribe mode
-        with pytest.raises(AblyException) as exc_info:
+        # RTAN4e: Should log a warning (not raise), and still register the listener
+        with caplog.at_level(logging.WARNING, logger='ably.realtime.annotations'):
             await channel.annotations.subscribe(on_annotation)
 
-        assert exc_info.value.status_code == 400
-        assert 'annotation_subscribe' in str(exc_info.value).lower()
+        # Verify warning was logged mentioning the missing mode
+        assert any('ANNOTATION_SUBSCRIBE' in record.message for record in caplog.records)
+
+        # Listener should still be registered (subscribe didn't fail)
+        # Unsubscribe to clean up
+        channel.annotations.unsubscribe(on_annotation)
