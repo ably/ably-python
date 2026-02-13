@@ -34,7 +34,9 @@ class Annotation(EncodeDataMixin):
                  count=None,
                  data=None,
                  encoding='',
+                 id=None,
                  client_id=None,
+                 connection_id=None,
                  timestamp=None,
                  extras=None):
         """
@@ -47,7 +49,9 @@ class Annotation(EncodeDataMixin):
             count: Count associated with the annotation
             data: Optional data payload for the annotation
             encoding: Encoding format for the data
+            id: (TAN2a) A unique identifier for this annotation
             client_id: The client ID that created this annotation
+            connection_id: The connection ID that created this annotation
             timestamp: Timestamp of the annotation
             extras: Additional metadata
         """
@@ -60,18 +64,25 @@ class Annotation(EncodeDataMixin):
         self.__action = action if action is not None else AnnotationAction.ANNOTATION_CREATE
         self.__count = count
         self.__data = data
+        self.__id = to_text(id) if id is not None else None
         self.__client_id = to_text(client_id) if client_id is not None else None
+        self.__connection_id = to_text(connection_id) if connection_id is not None else None
         self.__timestamp = timestamp
         self.__extras = extras
         self.__encoding = encoding
 
     def __eq__(self, other):
         if isinstance(other, Annotation):
-            return (self.serial == other.serial
-                    and self.message_serial == other.message_serial
+            # TAN2i: serial is the unique identifier for the annotation
+            # If both have serials, use serial for comparison
+            if self.serial is not None and other.serial is not None:
+                return self.serial == other.serial
+            # Otherwise fall back to comparing multiple fields
+            return (self.message_serial == other.message_serial
                     and self.type == other.type
                     and self.name == other.name
-                    and self.action == other.action)
+                    and self.action == other.action
+                    and self.client_id == other.client_id)
         return NotImplemented
 
     def __ne__(self, other):
@@ -121,6 +132,14 @@ class Annotation(EncodeDataMixin):
     def extras(self):
         return self.__extras
 
+    @property
+    def id(self):
+        return self.__id
+
+    @property
+    def connection_id(self):
+        return self.__connection_id
+
     def as_dict(self, binary=False):
         """
         Convert annotation to dictionary format for API communication.
@@ -134,7 +153,9 @@ class Annotation(EncodeDataMixin):
             'type': self.type,  # Annotation type (not data type)
             'name': self.name,
             'count': self.count,
+            'id': self.id or None,
             'clientId': self.client_id or None,
+            'connectionId': self.connection_id or None,
             'timestamp': self.timestamp or None,
             'extras': self.extras,
             **encode_data(self.data, self._encoding_array, binary)
@@ -160,7 +181,9 @@ class Annotation(EncodeDataMixin):
         count = obj.get('count')
         data = obj.get('data')
         encoding = obj.get('encoding', '')
+        id = obj.get('id')
         client_id = obj.get('clientId')
+        connection_id = obj.get('connectionId')
         timestamp = obj.get('timestamp')
         extras = obj.get('extras', None)
 
@@ -184,7 +207,9 @@ class Annotation(EncodeDataMixin):
             type=type_val,
             name=name,
             count=count,
+            id=id,
             client_id=client_id,
+            connection_id=connection_id,
             timestamp=timestamp,
             extras=extras,
             **decoded_data
@@ -199,6 +224,31 @@ class Annotation(EncodeDataMixin):
     def from_values(values):
         """Create an Annotation from a dict of values"""
         return Annotation(**values)
+
+    @staticmethod
+    def __update_empty_fields(proto_msg: dict, annotation: dict, annotation_index: int):
+        """Update empty annotation fields with values from protocol message"""
+        if annotation.get("id") is None or annotation.get("id") == '':
+            annotation['id'] = f"{proto_msg.get('id')}:{annotation_index}"
+        if annotation.get("connectionId") is None or annotation.get("connectionId") == '':
+            annotation['connectionId'] = proto_msg.get('connectionId')
+        if annotation.get("timestamp") is None or annotation.get("timestamp") == 0:
+            annotation['timestamp'] = proto_msg.get('timestamp')
+
+    @staticmethod
+    def update_inner_annotation_fields(proto_msg: dict):
+        """
+        Update inner annotation fields with protocol message data (RTAN4b).
+
+        Populates empty id, connectionId, and timestamp fields in annotations
+        from the protocol message values.
+        """
+        annotations: list[dict] = proto_msg.get('annotations')
+        if annotations is not None:
+            annotation_index = 0
+            for annotation in annotations:
+                Annotation.__update_empty_fields(proto_msg, annotation, annotation_index)
+                annotation_index = annotation_index + 1
 
     def __str__(self):
         return (
@@ -218,7 +268,9 @@ class Annotation(EncodeDataMixin):
                   count=_UNSET,
                   data=_UNSET,
                   encoding=_UNSET,
+                  id=_UNSET,
                   client_id=_UNSET,
+                  connection_id=_UNSET,
                   timestamp=_UNSET,
                   extras=_UNSET):
         """
@@ -236,7 +288,9 @@ class Annotation(EncodeDataMixin):
             count: Override the count (or None to clear it)
             data: Override the data payload (or None to clear it)
             encoding: Override the encoding format (or None to clear it)
+            id: Override the ID (or None to clear it)
             client_id: Override the client ID (or None to clear it)
+            connection_id: Override the connection ID (or None to clear it)
             timestamp: Override the timestamp (or None to clear it)
             extras: Override the extras metadata (or None to clear it)
 
@@ -260,7 +314,9 @@ class Annotation(EncodeDataMixin):
             count=self.__count if count is _UNSET else count,
             data=self.__data if data is _UNSET else data,
             encoding=self.__encoding if encoding is _UNSET else encoding,
+            id=self.__id if id is _UNSET else id,
             client_id=self.__client_id if client_id is _UNSET else client_id,
+            connection_id=self.__connection_id if connection_id is _UNSET else connection_id,
             timestamp=self.__timestamp if timestamp is _UNSET else timestamp,
             extras=self.__extras if extras is _UNSET else extras,
         )

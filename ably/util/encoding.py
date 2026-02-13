@@ -11,8 +11,7 @@ def encode_data(data: Any, encoding_array: list, binary: bool = False):
 
     if isinstance(data, (dict, list)):
         encoding.append('json')
-        data = json.dumps(data)
-        data = str(data)
+        data = json.dumps(data)  # json.dumps already returns str
     elif isinstance(data, str) and not binary:
         pass
     elif not binary and isinstance(data, (bytearray, bytes)):

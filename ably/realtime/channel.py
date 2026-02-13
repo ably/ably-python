@@ -758,11 +758,15 @@ class RealtimeChannel(EventEmitter, Channel):
             self.__presence.set_presence(decoded_presence, is_sync=True, sync_channel_serial=sync_channel_serial)
         elif action == ProtocolMessageAction.ANNOTATION:
             # Handle ANNOTATION messages
+            # RTAN4b: Populate annotation fields from protocol message
+            Annotation.update_inner_annotation_fields(proto_msg)
             annotation_data = proto_msg.get('annotations', [])
             try:
                 annotations = Annotation.from_encoded_array(annotation_data, cipher=self.cipher)
                 # Process annotations through the annotations handler
                 self.annotations._process_incoming(annotations)
+                # RTL15b: Update channel serial for ANNOTATION messages
+                self.__channel_serial = channel_serial
             except Exception as e:
                 log.error(f"Annotation processing error {e}. Skip annotations {annotation_data}")
         elif action == ProtocolMessageAction.ERROR:

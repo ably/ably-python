@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from urllib import parse
 
 import msgpack
@@ -13,6 +14,7 @@ from ably.types.annotation import (
     make_annotation_response_handler,
 )
 from ably.types.message import Message
+from ably.types.options import Options
 from ably.util.exceptions import AblyException
 
 log = logging.getLogger(__name__)
@@ -73,6 +75,14 @@ def construct_validate_annotation(msg_or_serial, annotation: Annotation) -> Anno
             code=40003,
         )
 
+    # RSAN1a3: Validate that annotation type is specified
+    if not annotation.type:
+        raise AblyException(
+            message='Annotation type must be specified',
+            status_code=400,
+            code=40000,
+        )
+
     return annotation._copy_with(
         message_serial=message_serial,
     )
@@ -83,6 +93,8 @@ class RestAnnotations:
     Provides REST API methods for managing annotations on messages.
     """
 
+    __client_options: Options
+
     def __init__(self, channel):
         """
         Initialize RestAnnotations.
@@ -91,6 +103,7 @@ class RestAnnotations:
             channel: The REST Channel this annotations instance belongs to
         """
         self.__channel = channel
+        self.__client_options = channel.ably.options
 
     def __base_path_for_serial(self, serial):
         """
@@ -127,6 +140,10 @@ class RestAnnotations:
         """
         annotation = construct_validate_annotation(msg_or_serial, annotation)
 
+        # RSAN1c4: Generate random ID if not provided (for idempotent publishing)
+        if not annotation.id and self.__client_options.idempotent_rest_publishing:
+            annotation = annotation._copy_with(id=str(uuid.uuid4()))
+
         # Convert to wire format
         request_body = annotation.as_dict(binary=self.__channel.ably.options.use_binary_protocol)
 
@@ -142,7 +159,7 @@ class RestAnnotations:
         # Build path
         path = self.__base_path_for_serial(annotation.message_serial)
         if params:
-            params = {k: str(v).lower() if type(v) is bool else v for k, v in params.items()}
+            params = {k: str(v).lower() if isinstance(v, bool) else v for k, v in params.items()}
             path += '?' + parse.urlencode(params)
 
         # Send request

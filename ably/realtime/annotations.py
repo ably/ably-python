@@ -193,16 +193,17 @@ class RealtimeAnnotations:
                 Unsubscribe from all annotations on the channel
 
             When no type is provided, arg1 is used as the listener.
+            When no arguments are provided, unsubscribes all annotation listeners (RTAN5).
 
         Raises
         ------
         ValueError
-            If no valid unsubscribe arguments are passed
+            If invalid unsubscribe arguments are passed
         """
+        # RTAN5: Support no arguments to unsubscribe all annotation listeners
         if len(args) == 0:
-            raise ValueError("annotations.unsubscribe called without arguments")
-
-        if len(args) >= 2 and isinstance(args[0], str):
+            self.__subscriptions.off()
+        elif len(args) >= 2 and isinstance(args[0], str):
             annotation_type = args[0]
             listener = args[1]
             self.__subscriptions.off(annotation_type, listener)
