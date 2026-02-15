@@ -98,3 +98,13 @@ def validate_message_size(encoded_messages: list, use_binary_protocol: bool, max
             400,
             40009,
         )
+
+def to_text(value):
+    if value is None:
+        return value
+    elif isinstance(value, str):
+        return value
+    elif isinstance(value, bytes):
+        return value.decode()
+    else:
+        raise TypeError(f"expected string or bytes, not {type(value)}")

@@ -13,6 +13,8 @@ class Flag(int, Enum):
     PUBLISH = 1 << 17
     SUBSCRIBE = 1 << 18
     PRESENCE_SUBSCRIBE = 1 << 19
+    ANNOTATION_PUBLISH = 1 << 21
+    ANNOTATION_SUBSCRIBE = 1 << 22
 
 
 def has_flag(message_flags: int, flag: Flag):

@@ -1,25 +1,50 @@
-import base64
-import json
 import logging
 from enum import IntEnum
 
 from ably.types.mixins import DeltaExtras, EncodeDataMixin
 from ably.types.typedbuffer import TypedBuffer
 from ably.util.crypto import CipherData
+from ably.util.encoding import encode_data
 from ably.util.exceptions import AblyException
+from ably.util.helper import to_text
 
 log = logging.getLogger(__name__)
 
 
-def to_text(value):
-    if value is None:
-        return value
-    elif isinstance(value, str):
-        return value
-    elif isinstance(value, bytes):
-        return value.decode()
-    else:
-        raise TypeError(f"expected string or bytes, not {type(value)}")
+class MessageAnnotations:
+    """
+    Contains information about annotations associated with a particular message.
+    """
+
+    def __init__(self, summary=None):
+        """
+        Args:
+            summary: A dict mapping annotation types to their aggregated values.
+                    The keys are annotation types (e.g., "reaction:distinct.v1").
+                    The values depend on the aggregation method of the annotation type.
+        """
+        # TM8a: Ensure summary exists
+        self.__summary = summary if summary is not None else {}
+
+    @property
+    def summary(self):
+        """A dict of annotation type to aggregated annotation values."""
+        return self.__summary
+
+    def as_dict(self):
+        """Convert MessageAnnotations to dictionary format."""
+        return {
+            'summary': self.summary,
+        }
+
+    @staticmethod
+    def from_dict(obj):
+        """Create MessageAnnotations from dictionary."""
+        if obj is None:
+            return MessageAnnotations()
+        return MessageAnnotations(
+            summary=obj.get('summary'),
+        )
 
 
 class MessageVersion:
@@ -122,6 +147,7 @@ class Message(EncodeDataMixin):
                  serial=None, # TM2r
                  action=None, # TM2j
                  version=None, # TM2s
+                 annotations=None, # TM2t
                  ):
 
         super().__init__(encoding)
@@ -137,6 +163,7 @@ class Message(EncodeDataMixin):
         self.__serial = serial
         self.__action = action
         self.__version = version
+        self.__annotations = annotations
 
     def __eq__(self, other):
         if isinstance(other, Message):
@@ -201,6 +228,10 @@ class Message(EncodeDataMixin):
     def action(self):
         return self.__action
 
+    @property
+    def annotations(self):
+        return self.__annotations
+
     def encrypt(self, channel_cipher):
         if isinstance(self.data, CipherData):
             return
@@ -234,38 +265,9 @@ class Message(EncodeDataMixin):
             self.__data = decrypted_data
 
     def as_dict(self, binary=False):
-        data = self.data
-        data_type = None
-        encoding = self._encoding_array[:]
-
-        if isinstance(data, (dict, list)):
-            encoding.append('json')
-            data = json.dumps(data)
-            data = str(data)
-        elif isinstance(data, str) and not binary:
-            pass
-        elif not binary and isinstance(data, (bytearray, bytes)):
-            data = base64.b64encode(data).decode('ascii')
-            encoding.append('base64')
-        elif isinstance(data, CipherData):
-            encoding.append(data.encoding_str)
-            data_type = data.type
-            if not binary:
-                data = base64.b64encode(data.buffer).decode('ascii')
-                encoding.append('base64')
-            else:
-                data = data.buffer
-        elif binary and isinstance(data, bytearray):
-            data = bytes(data)
-
-        if not (isinstance(data, (bytes, str, list, dict, bytearray)) or data is None):
-            raise AblyException("Invalid data payload", 400, 40011)
-
         request_body = {
             'name': self.name,
-            'data': data,
             'timestamp': self.timestamp or None,
-            'type': data_type or None,
             'clientId': self.client_id or None,
             'id': self.id or None,
             'connectionId': self.connection_id or None,
@@ -274,10 +276,9 @@ class Message(EncodeDataMixin):
             'version': self.version.as_dict() if self.version else None,
             'serial': self.serial,
             'action': int(self.action) if self.action is not None else None,
+            'annotations': self.annotations.as_dict() if self.annotations else None,
+            **encode_data(self.data, self._encoding_array, binary),
         }
-
-        if encoding:
-            request_body['encoding'] = '/'.join(encoding).strip('/')
 
         # None values aren't included
         request_body = {k: v for k, v in request_body.items() if v is not None}
@@ -320,6 +321,31 @@ class Message(EncodeDataMixin):
             # TM2s
             version = MessageVersion(serial=serial, timestamp=timestamp)
 
+        # Parse annotations from the wire format
+        annotations_obj = obj.get('annotations')
+        if annotations_obj is None:
+            # TM2u: Always initialize annotations with empty summary
+            annotations = MessageAnnotations()
+        else:
+            annotations = MessageAnnotations.from_dict(annotations_obj)
+
+        # Process annotation summary entries to ensure clipped fields are set
+        if annotations and annotations.summary:
+            for annotation_type, summary_entry in annotations.summary.items():
+                # TM7c1c, TM7d1c: For distinct.v1, unique.v1, multiple.v1
+                if (annotation_type.endswith(':distinct.v1') or
+                    annotation_type.endswith(':unique.v1') or
+                    annotation_type.endswith(':multiple.v1')):
+                    # These types have entries that need clipped field
+                    if isinstance(summary_entry, dict):
+                        for _entry_key, entry_value in summary_entry.items():
+                            if isinstance(entry_value, dict) and 'clipped' not in entry_value:
+                                entry_value['clipped'] = False
+                # TM7c1c: For flag.v1
+                elif annotation_type.endswith(':flag.v1'):
+                    if isinstance(summary_entry, dict) and 'clipped' not in summary_entry:
+                        summary_entry['clipped'] = False
+
         return Message(
             id=id,
             name=name,
@@ -330,6 +356,7 @@ class Message(EncodeDataMixin):
             serial=serial,
             action=action,
             version=version,
+            annotations=annotations,
             **decoded_data
         )
 
