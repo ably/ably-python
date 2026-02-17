@@ -212,7 +212,7 @@ class TestRestHttp(BaseAsyncTestCase):
         await ably.close()
 
     async def test_request_over_http2(self):
-        url = 'https://www.example.com'
+        url = 'https://www.google.com'
         respx.get(url).mock(return_value=Response(status_code=200))
 
         ably = await TestApp.get_ably_rest(endpoint=url)
