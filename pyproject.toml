@@ -1,6 +1,6 @@
 [project]
 name = "ably"
-version = "3.0.0"
+version = "3.1.0"
 description = "Python REST and Realtime client library SDK for Ably realtime messaging service"
 readme = "LONG_DESCRIPTION.rst"
 requires-python = ">=3.7"

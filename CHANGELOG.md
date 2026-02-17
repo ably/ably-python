@@ -1,5 +1,13 @@
 # Change Log
 
+## [v3.1.0](https://github.com/ably/ably-python/tree/v3.1.0)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v3.0.0...v3.1.0)
+
+### What's Changed
+
+- Added realtime and rest support for Annotations API [#667](https://github.com/ably/ably-python/pull/667)
+
 ## [v3.0.0](https://github.com/ably/ably-python/tree/v3.0.0)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v2.1.3...v3.0.0)
