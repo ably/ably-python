@@ -96,6 +96,62 @@ def test_message_version_serialization():
     assert reconstructed.description == version.description
     assert reconstructed.metadata == version.metadata
 
+# RSL15b, RTL32b, TM2i
+def test_message_extras_preserved_in_as_dict():
+    """Test that extras are included when a Message with extras is serialized.
+
+    Regression test: _send_update() in both RestChannel and RealtimeChannel
+    constructed a new Message without copying extras or annotations from the
+    user-supplied message, violating RSL15b/RTL32b which require "whatever
+    fields were in the user-supplied Message" to be sent.
+    See commits 1723f5d (REST) and 0b93c10 (Realtime).
+    """
+    extras = {'headers': {'status': 'complete'}}
+    message = Message(
+        name='test',
+        data='updated data',
+        serial='abc123',
+        action=MessageAction.MESSAGE_UPDATE,
+        extras=extras,
+    )
+
+    msg_dict = message.as_dict()
+    assert msg_dict['extras'] == extras
+    assert msg_dict['extras']['headers']['status'] == 'complete'
+
+
+# RSL15b, RTL32b, TM2i
+def test_message_extras_none_excluded_from_as_dict():
+    """Test that extras=None does not appear in as_dict output."""
+    message = Message(
+        name='test',
+        data='data',
+        serial='abc123',
+        action=MessageAction.MESSAGE_UPDATE,
+    )
+
+    msg_dict = message.as_dict()
+    assert msg_dict.get('extras') is None
+
+
+# RSL15b, RTL32b, TM2u
+def test_message_annotations_preserved_in_as_dict():
+    """Test that annotations are included when a Message with annotations is serialized."""
+    from ably.types.message import MessageAnnotations
+    annotations = MessageAnnotations(summary={'reaction:distinct.v1': {'thumbsup': 5}})
+    message = Message(
+        name='test',
+        data='data',
+        serial='abc123',
+        action=MessageAction.MESSAGE_UPDATE,
+        annotations=annotations,
+    )
+
+    msg_dict = message.as_dict()
+    assert msg_dict['annotations'] is not None
+    assert msg_dict['annotations']['summary']['reaction:distinct.v1'] == {'thumbsup': 5}
+
+
 def test_message_operation_serialization():
     """Test MessageOperation can be serialized and deserialized"""
     operation = MessageOperation(

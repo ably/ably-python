@@ -526,6 +526,8 @@ class RealtimeChannel(EventEmitter, Channel):
             serial=message.serial,
             action=action,
             version=version,
+            extras=message.extras,
+            annotations=message.annotations,
         )
 
         # Encrypt if needed
