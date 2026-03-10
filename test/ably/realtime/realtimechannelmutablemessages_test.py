@@ -263,6 +263,43 @@ class TestRealtimeChannelMutableMessages(BaseAsyncTestCase):
         assert appended_message.version.description == 'Appended to message'
         assert appended_message.serial == serial
 
+    # RTL32b, TM2i
+    async def test_update_message_preserves_extras(self):
+        """Test that extras are preserved when updating a message"""
+        channel = self.ably.channels[self.get_channel_name('mutable:update_extras')]
+
+        # Publish a message
+        result = await channel.publish('test-event', 'original data')
+        assert len(result.serials) > 0
+        serial = result.serials[0]
+
+        messages_received = []
+        update_received = WaitableEvent()
+
+        def on_message(message):
+            if message.action == MessageAction.MESSAGE_UPDATE:
+                messages_received.append(message)
+                update_received.finish()
+
+        await channel.subscribe(on_message)
+
+        # Update with extras
+        message = Message(
+            data='updated data',
+            serial=serial,
+            extras={'headers': {'status': 'complete'}},
+        )
+
+        update_result = await channel.update_message(message)
+        assert update_result is not None
+
+        await update_received.wait()
+
+        assert len(messages_received) > 0
+        received = messages_received[0]
+        assert received.extras is not None
+        assert received.extras['headers']['status'] == 'complete'
+
     async def wait_until_message_with_action_appears(self, channel, serial, action):
         message: Message | None = None
         async def check_message_action():
