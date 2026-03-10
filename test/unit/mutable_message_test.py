@@ -131,7 +131,7 @@ def test_message_extras_none_excluded_from_as_dict():
     )
 
     msg_dict = message.as_dict()
-    assert msg_dict.get('extras') is None
+    assert 'extras' not in msg_dict
 
 
 # RSL15b, RTL32b, TM2u
