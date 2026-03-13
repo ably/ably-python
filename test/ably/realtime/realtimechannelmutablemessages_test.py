@@ -236,7 +236,8 @@ class TestRealtimeChannelMutableMessages(BaseAsyncTestCase):
 
         def on_message(message):
             messages_received.append(message)
-            append_received.finish()
+            if len(messages_received) == 2:
+                append_received.finish()
 
         await channel.subscribe(on_message)
 
@@ -254,14 +255,20 @@ class TestRealtimeChannelMutableMessages(BaseAsyncTestCase):
             channel, serial, MessageAction.MESSAGE_UPDATE
         )
 
+        second_append_result = await channel.append_message(append_message, append_operation)
+
         await append_received.wait()
 
-        assert messages_received[0].data == ' appended data'
-        assert messages_received[0].action == MessageAction.MESSAGE_APPEND
+        assert messages_received[0].data == 'Initial data appended data'
+        assert messages_received[0].action == MessageAction.MESSAGE_UPDATE
         assert appended_message.data == 'Initial data appended data'
         assert appended_message.version.serial == append_result.version_serial
         assert appended_message.version.description == 'Appended to message'
         assert appended_message.serial == serial
+
+        assert messages_received[1].data == ' appended data'
+        assert messages_received[1].action == MessageAction.MESSAGE_APPEND
+        assert messages_received[1].version.serial == second_append_result.version_serial
 
     async def wait_until_message_with_action_appears(self, channel, serial, action):
         message: Message | None = None

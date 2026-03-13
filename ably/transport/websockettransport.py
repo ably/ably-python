@@ -80,7 +80,8 @@ class WebSocketTransport(EventEmitter):
     def connect(self):
         headers = HttpUtils.default_headers()
         query_params = urllib.parse.urlencode(self.params)
-        ws_url = (f'wss://{self.host}?{query_params}')
+        scheme = 'wss' if self.options.tls else 'ws'
+        ws_url = f'{scheme}://{self.host}?{query_params}'
         log.info(f'connect(): attempting to connect to {ws_url}')
         self.ws_connect_task = asyncio.create_task(self.ws_connect(ws_url, headers))
         self.ws_connect_task.add_done_callback(self.on_ws_connect_done)
@@ -124,6 +125,11 @@ class WebSocketTransport(EventEmitter):
             if not self.is_disposed:
                 await self.dispose()
                 self.connection_manager.deactivate_transport(err)
+        else:
+            # Read loop exited normally (e.g., server sent normal WS close frame)
+            if not self.is_disposed:
+                await self.dispose()
+                self.connection_manager.deactivate_transport()
 
     async def on_protocol_message(self, msg):
         self.on_activity()
@@ -284,8 +290,9 @@ class WebSocketTransport(EventEmitter):
         await self.websocket.send(raw_msg)
 
     def set_idle_timer(self, timeout: float):
-        if not self.idle_timer:
-            self.idle_timer = Timer(timeout, self.on_idle_timer_expire)
+        if self.idle_timer:
+            self.idle_timer.cancel()
+        self.idle_timer = Timer(timeout, self.on_idle_timer_expire)
 
     async def on_idle_timer_expire(self):
         self.idle_timer = None
