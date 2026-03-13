@@ -1,5 +1,13 @@
 # Change Log
 
+## [v3.1.1](https://github.com/ably/ably-python/tree/v3.1.1)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v3.1.0...v3.1.1)
+
+### What's Changed
+
+- Fixed handling of normal WebSocket close frames and improved reconnection logic [#672](https://github.com/ably/ably-python/pull/672)
+
 ## [v3.1.0](https://github.com/ably/ably-python/tree/v3.1.0)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v3.0.0...v3.1.0)
