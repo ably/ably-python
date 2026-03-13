@@ -481,7 +481,7 @@ class TestRealtimeConnection(BaseAsyncTestCase):
                 disconnected_retry_timeout=500_000,
                 suspended_retry_timeout=500_000,
                 tls=False,
-                endpoint=proxy.endpoint,
+                realtime_host=proxy.endpoint,
             )
 
             try:
