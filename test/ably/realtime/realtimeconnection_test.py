@@ -1,6 +1,14 @@
 import asyncio
 
 import pytest
+from websockets import connect as _ws_connect
+
+try:
+    # websockets 15+ preferred import
+    from websockets.asyncio.server import serve as ws_serve
+except ImportError:
+    # websockets 14 and earlier fallback
+    from websockets.server import serve as ws_serve
 
 from ably.realtime.connection import ConnectionEvent, ConnectionState
 from ably.transport.defaults import Defaults
@@ -8,6 +16,68 @@ from ably.transport.websockettransport import ProtocolMessageAction
 from ably.util.exceptions import AblyException
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
+
+
+async def _relay(src, dst):
+    try:
+        async for msg in src:
+            await dst.send(msg)
+    except Exception:
+        pass
+
+
+class WsProxy:
+    """Local WS proxy that forwards to real Ably and lets tests trigger a normal close."""
+
+    def __init__(self, target_host: str):
+        self.target_host = target_host
+        self.server = None
+        self.port: int | None = None
+        self._close_event: asyncio.Event | None = None
+
+    async def _handler(self, client_ws):
+        # Create a fresh event for this connection; signal to drop the connection cleanly
+        self._close_event = asyncio.Event()
+        path = client_ws.request.path  # e.g. "/?key=...&format=json"
+        target_url = f"wss://{self.target_host}{path}"
+        try:
+            async with _ws_connect(target_url, ping_interval=None) as server_ws:
+                c2s = asyncio.create_task(_relay(client_ws, server_ws))
+                s2c = asyncio.create_task(_relay(server_ws, client_ws))
+                close_task = asyncio.create_task(self._close_event.wait())
+                try:
+                    await asyncio.wait([c2s, s2c, close_task], return_when=asyncio.FIRST_COMPLETED)
+                finally:
+                    c2s.cancel()
+                    s2c.cancel()
+                    close_task.cancel()
+        except Exception:
+            pass
+        # After _handler returns the websockets server sends a normal close frame (1000)
+
+    async def close_active_connection(self):
+        """Trigger a normal WS close (code 1000) on the currently active client connection.
+
+        Signals the handler to exit; the websockets server framework then sends the
+        close frame automatically when the handler coroutine returns.
+        """
+        if self._close_event:
+            self._close_event.set()
+
+    @property
+    def endpoint(self) -> str:
+        """Endpoint string to pass to AblyRealtime (combine with tls=False)."""
+        return f"127.0.0.1:{self.port}"
+
+    async def __aenter__(self):
+        self.server = await ws_serve(self._handler, "127.0.0.1", 0, ping_interval=None)
+        self.port = self.server.sockets[0].getsockname()[1]
+        return self
+
+    async def __aexit__(self, *args):
+        if self.server:
+            self.server.close()
+            await self.server.wait_closed()
 
 
 class TestRealtimeConnection(BaseAsyncTestCase):
@@ -399,3 +469,37 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
 
         await ably.close()
+
+    async def test_normal_ws_close_triggers_immediate_reconnection(self):
+        """Server normal WS close (code 1000) must trigger immediate reconnection.
+
+        Regression test: ConnectionClosedOK was silently swallowed and deactivate_transport
+        was never called, leaving the client disconnected until the idle timer fired.
+        """
+        async with WsProxy(self.test_vars["host"]) as proxy:
+            ably = await TestApp.get_ably_realtime(
+                disconnected_retry_timeout=500_000,
+                suspended_retry_timeout=500_000,
+                tls=False,
+                endpoint=proxy.endpoint,
+            )
+
+            try:
+                await asyncio.wait_for(
+                    ably.connection.once_async(ConnectionState.CONNECTED), timeout=10
+                )
+
+                # Simulate server sending a normal WS close frame
+                await proxy.close_active_connection()
+
+                # Must go CONNECTING quickly — not after the 25 s idle timer
+                await asyncio.wait_for(
+                    ably.connection.once_async(ConnectionState.CONNECTING), timeout=1
+                )
+
+                # Must reconnect immediately — not after the 500 s retry timer
+                await asyncio.wait_for(
+                    ably.connection.once_async(ConnectionState.CONNECTED), timeout=10
+                )
+            finally:
+                await ably.close()
