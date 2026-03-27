@@ -21,7 +21,18 @@ uv sync --extra crypto
 uv run pytest
 ```
 
-## Release Process
+## Release Process (Claude Code)
+
+1. Ensure that all work intended for this release has landed to `main`
+2. Run `/release patch|minor|major` in Claude Code — this creates the release branch, bumps the version in all required files, and populates the [CHANGELOG](./CHANGELOG.md) with merged PRs since the last tag automatically
+3. Review the `### What's Changed` entries in [CHANGELOG.md](./CHANGELOG.md) and adjust if needed, then commit any edits
+4. Create a release PR (ensure you include an SDK Team Engineering Lead and the SDK Team Product Manager as reviewers) and gain approvals for it, then merge that to `main`
+5. Create a tag named like `v2.0.1` and push it to GitHub - e.g. `git tag v2.0.1 && git push origin v2.0.1`
+6. Create the release on GitHub including populating the release notes
+7. Go to the [Release Workflow](https://github.com/ably/ably-python/actions/workflows/release.yml) and ask [ably/team-sdk](https://github.com/orgs/ably/teams/team-sdk) member to approve publishing to the PyPI registry
+8. Update the [Ably Changelog](https://changelog.ably.com/) (via [headwayapp](https://headwayapp.co/)) with these changes
+
+## Release Process (Manual)
 
 Releases should always be made through a release pull request (PR), which needs to bump the version number and add to the [change log](CHANGELOG.md).
 
