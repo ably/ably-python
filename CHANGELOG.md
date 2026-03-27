@@ -1,5 +1,13 @@
 # Change Log
 
+## [3.1.2](https://github.com/ably/ably-python/tree/v3.1.2)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v3.1.1...v3.1.2)
+
+### What's Changed
+
+- Fixed preserving extras in message updates methods to prevent data loss [#670](https://github.com/ably/ably-python/pull/670)
+
 ## [v3.1.1](https://github.com/ably/ably-python/tree/v3.1.1)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v3.1.0...v3.1.1)
