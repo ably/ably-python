@@ -11,9 +11,12 @@ on:
     branches:
       - main
 
+permissions: {}
+
 jobs:
   check:
-
+    permissions:
+      contents: read
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
