@@ -29,14 +29,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          enable-cache: true
-
-      - uses: actions/cache@v4
-        name: Define a cache for the virtual environment based on the dependencies lock file
-        id: cache
-        with:
-          path: ./.venv
-          key: venv-${{ runner.os }}-3.12-${{ hashFiles('uv.lock') }}
+          enable-cache: false
 
       - name: Install dependencies
         run: uv sync --extra crypto --extra dev
