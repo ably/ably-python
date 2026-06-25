@@ -11,7 +11,9 @@ permissions: {}
 jobs:
   build:
     permissions:
-      contents: read
+      contents: read       # checkout
+      deployments: write   # ably/sdk-upload-action
+      id-token: write      # aws-actions/configure-aws-credentials (OIDC)
     uses: ably/features/.github/workflows/sdk-features.yml@main
     with:
       repository-name: ably-python
