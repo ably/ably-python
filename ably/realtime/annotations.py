@@ -56,6 +56,10 @@ class RealtimeAnnotations:
             f'type = {annotation.type}, action = {annotation.action}'
         )
 
+        # RSAN1c3: encrypt the data payload on an encrypted channel
+        if self.__channel.cipher:
+            annotation.encrypt(self.__channel.cipher)
+
         # Convert to wire format (array of annotations)
         wire_annotation = annotation.as_dict(binary=self.__channel.ably.options.use_binary_protocol)
 

@@ -8,6 +8,7 @@ Tests cover:
 - RSAN1c1/RSAN2a: explicit action setting in publish/delete
 - TAN3: from_encoded / from_encoded_array decoding
 - TAN2i: serial-based equality
+- RSAN1c3: encryption of the data payload on an encrypted channel
 """
 
 import base64
@@ -17,6 +18,7 @@ import pytest
 from ably.rest.annotations import construct_validate_annotation, serial_from_msg_or_serial
 from ably.types.annotation import Annotation, AnnotationAction
 from ably.types.message import Message
+from ably.util.crypto import generate_random_key, get_cipher
 from ably.util.exceptions import AblyException
 
 # --- RSAN1a3: type validation ---
@@ -317,3 +319,60 @@ def test_from_encoded_array():
     assert annotations[0].action == AnnotationAction.ANNOTATION_CREATE
     assert annotations[1].name == '👎'
     assert annotations[1].action == AnnotationAction.ANNOTATION_DELETE
+
+
+# --- encryption of the data payload ---
+
+def _cipher():
+    return get_cipher({'key': generate_random_key(256)})
+
+
+@pytest.mark.parametrize('binary', [False, True])
+@pytest.mark.parametrize('payload', [
+    'secret text',
+    {'secret': 'value'},
+    ['secret', 1],
+    bytearray(b'secret bytes'),
+])
+def test_encrypt_data_round_trips(payload, binary):
+    """encrypt() must encrypt the data payload, and from_encoded() must decrypt it"""
+    cipher = _cipher()
+    annotation = Annotation(type='reaction:distinct.v1', name='👍', data=payload)
+    annotation.encrypt(cipher)
+
+    d = annotation.as_dict(binary=binary)
+    assert 'cipher+aes-256-cbc' in d['encoding']
+    assert 'secret' not in str(d['data'])
+
+    decoded = Annotation.from_encoded(d, cipher=cipher)
+    assert decoded.data == payload
+
+
+def test_encrypt_without_data_is_a_noop():
+    """Annotations commonly carry no data, which must not error"""
+    annotation = Annotation(type='reaction:distinct.v1', name='👍')
+    annotation.encrypt(_cipher())
+    assert annotation.data is None
+    assert 'data' not in annotation.as_dict()
+
+
+def test_encrypt_is_idempotent():
+    """Already-encrypted data must not be encrypted a second time"""
+    cipher = _cipher()
+    annotation = Annotation(type='reaction:distinct.v1', data='secret text')
+    annotation.encrypt(cipher)
+    once = annotation.as_dict()['data']
+    annotation.encrypt(cipher)
+    assert annotation.as_dict()['data'] == once
+
+
+def test_from_encoded_without_cipher_leaves_residual_encoding():
+    """Decoding encrypted data with no cipher must leave the transform in `encoding`"""
+    cipher = _cipher()
+    annotation = Annotation(type='reaction:distinct.v1', data='secret text')
+    annotation.encrypt(cipher)
+    d = annotation.as_dict()
+
+    decoded = Annotation.from_encoded(d)
+    assert 'cipher+aes-256-cbc' in decoded.encoding
+    assert decoded.data != 'secret text'
