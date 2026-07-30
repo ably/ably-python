@@ -2,6 +2,8 @@ import logging
 from enum import IntEnum
 
 from ably.types.mixins import EncodeDataMixin
+from ably.types.typedbuffer import TypedBuffer
+from ably.util.crypto import CipherData
 from ably.util.encoding import encode_data
 from ably.util.helper import to_text
 
@@ -21,8 +23,6 @@ class AnnotationAction(IntEnum):
 class Annotation(EncodeDataMixin):
     """
     Represents an annotation on a message, such as a reaction or other metadata.
-
-    Annotations are not encrypted as they need to be parsed by the server for summarization.
     """
 
     def __init__(self,
@@ -140,11 +140,35 @@ class Annotation(EncodeDataMixin):
     def connection_id(self):
         return self.__connection_id
 
+    def encrypt(self, channel_cipher):
+        """
+        Encrypt the annotation's data payload in place.
+
+        Mirrors Message.encrypt(); call before as_dict() when publishing on an
+        encrypted channel.
+        """
+        # Annotations commonly carry no data at all, e.g. a reaction that is fully
+        # described by its name, so there is nothing to encrypt.
+        if self.__data is None:
+            return
+
+        if isinstance(self.__data, CipherData):
+            return
+
+        if isinstance(self.__data, str):
+            self._encoding_array.append('utf-8')
+        elif isinstance(self.__data, (dict, list)):
+            self._encoding_array.append('json')
+            self._encoding_array.append('utf-8')
+
+        typed_data = TypedBuffer.from_obj(self.__data)
+        encrypted_data = channel_cipher.encrypt(typed_data.buffer)
+        self.__data = CipherData(encrypted_data, typed_data.type,
+                                 cipher_type=channel_cipher.cipher_type)
+
     def as_dict(self, binary=False):
         """
         Convert annotation to dictionary format for API communication.
-
-        Note: Annotations are not encrypted as they need to be parsed by the server.
         """
         request_body = {
             'action': int(self.action) if self.action is not None else None,
@@ -171,7 +195,11 @@ class Annotation(EncodeDataMixin):
         """
         Create an Annotation from an encoded object received from the API.
 
-        Note: cipher parameter is accepted for consistency but annotations are not encrypted.
+        Args:
+            obj: The encoded annotation
+            cipher: The channel's cipher, used to decrypt the data payload if it
+                    was published on an encrypted channel
+            context: Optional decoding context
         """
         action = obj.get('action')
         serial = obj.get('serial')

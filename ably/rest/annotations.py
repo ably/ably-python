@@ -133,6 +133,10 @@ class RestAnnotations:
             random_id = base64.b64encode(os.urandom(9)).decode('ascii') + ':0'
             annotation = annotation._copy_with(id=random_id)
 
+        # RSAN1c3: encrypt the data payload on an encrypted channel
+        if self.__channel.cipher:
+            annotation.encrypt(self.__channel.cipher)
+
         # Convert to wire format
         request_body = annotation.as_dict(binary=self.__channel.ably.options.use_binary_protocol)
 
@@ -232,7 +236,7 @@ class RestAnnotations:
         path = self.__base_path_for_serial(message_serial) + params_str
 
         # Create annotation response handler
-        annotation_handler = make_annotation_response_handler(cipher=None)
+        annotation_handler = make_annotation_response_handler(cipher=self.__channel.cipher)
 
         # Return paginated result
         return await PaginatedResult.paginated_query(
