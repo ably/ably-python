@@ -1,0 +1,61 @@
+[project]
+name = "ably-pubsub-server"
+# Released in lockstep with ably, which this pins exactly.
+version = "3.1.2"
+description = "Ably Pub/Sub client for servers"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Ably", email = "support@ably.com" }
+]
+classifiers = [
+  "Development Status :: 6 - Mature",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "ably==3.1.2",
+]
+
+[project.optional-dependencies]
+oldcrypto = ["ably[oldcrypto]==3.1.2"]
+crypto = ["ably[crypto]==3.1.2"]
+vcdiff = ["ably[vcdiff]==3.1.2"]
+
+[project.urls]
+Homepage = "https://ably.com"
+Repository = "https://github.com/ably/ably-python"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# This distribution adds ably.pubsub.server to the ably package that ably
+# installs, so it ships that subtree and nothing else — no ably/__init__.py and
+# no ably/pubsub/__init__.py, which would collide with the core and the device
+# package respectively. ably/pubsub is a namespace directory (PEP 420) for
+# exactly that reason.
+#
+# The source lives in the shared ably/ tree at the repository root rather than
+# beside this file, because ably is a regular package: Python resolves
+# ably.pubsub only under the directory ably itself was imported from, so an
+# editable checkout can only find it there. The sdist reaches up to collect it,
+# and the wheel is then built from the sdist, where it already sits at its final
+# path — so build the sdist first, as `uv build` does by default.
+[tool.hatch.build.targets.sdist]
+ignore-vcs = true
+only-include = ["README.md", "pyproject.toml"]
+exclude = ["**/*.pyc", "**/__pycache__"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../ably/pubsub/server" = "ably/pubsub/server"
+
+[tool.hatch.build.targets.wheel]
+ignore-vcs = true
+only-include = ["ably/pubsub/server"]
+exclude = ["**/*.pyc", "**/__pycache__"]

@@ -35,28 +35,35 @@ jobs:
         run: uv sync --extra crypto --extra dev
       - name: Generate rest sync code and tests
         run: uv run unasync
+      # All three distributions build into one directory and are uploaded in a
+      # single request, so that a release is all of them or none of them. The
+      # wrappers pin the core exactly, so a partial release is an unusable one.
       - name: Build a binary wheel and a source tarball
-        run: uv build
+        run: |
+          uv build --out-dir dist
+          uv build packages/ably-pubsub-server --out-dir dist
+          uv build packages/ably-pubsub-device --out-dir dist
       - name: Store the distribution packages
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: python-package-distributions
           path: dist/
+      # The wrappers normalise to ably_pubsub_*, so ably-* selects the core alone
       - name: Check that wheel and tarball contains ably/sync/
         run: |
           # Check wheel
-          WHEEL=$(ls dist/*.whl | head -n 1)
+          WHEEL=$(ls dist/ably-*.whl | head -n 1)
           echo "Checking wheel: $WHEEL"
           if unzip -l "$WHEEL" | grep -q "ably/sync/"; then
             echo "✅ Found ably/sync/ in wheel"
           else
-            unzip -l "$WHEEL" 
+            unzip -l "$WHEEL"
             echo "❌ ably/sync/ not found in wheel"
             exit 1
           fi
-          
+
           # Check tarball
-          TARBALL=$(ls dist/*.tar.gz | head -n 1)
+          TARBALL=$(ls dist/ably-*.tar.gz | head -n 1)
           echo "Checking tarball: $TARBALL"
           if tar -tzf "$TARBALL" | grep -q "ably/sync/"; then
             echo "✅ Found ably/sync/ in tarball"
@@ -66,8 +73,29 @@ jobs:
             exit 1
           fi
 
+      - name: Check that all three distributions were built
+        run: |
+          # Publishing is a single upload, so a distribution missing here would
+          # silently ship a release that the other two cannot be installed with.
+          for NAME in ably ably_pubsub_server ably_pubsub_device; do
+            for EXT in tar.gz whl; do
+              COUNT=$(ls -1 dist/"$NAME"-*."$EXT" 2>/dev/null | wc -l)
+              if [ "$COUNT" -ne 1 ]; then
+                ls dist/
+                echo "❌ expected exactly one $NAME .$EXT, found $COUNT"
+                exit 1
+              fi
+            done
+            echo "✅ $NAME"
+          done
+
+  # ably, ably-pubsub-server and ably-pubsub-device go up in one upload. The
+  # short-lived token PyPI mints from an OIDC request carries every project that
+  # trusts the requesting configuration, so one job publishes all three — which
+  # requires each of the three projects to register this repository, workflow
+  # and environment as a trusted publisher.
   publish-to-pypi:
-    name: Publish Python distribution to PyPI
+    name: Publish Python distributions to PyPI
     if: startsWith(github.ref, 'refs/tags/v')  # only publish to PyPI on tag pushes
     needs:
       - build
@@ -91,27 +119,27 @@ jobs:
           TAG=${GITHUB_REF#refs/tags/v}
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Read VERSION_NAME from dist/
-        id: version
+      - name: Compare every distribution's version with the tag
         run: |
-          VERSION_NAME=$(basename dist/ably-*.tar.gz | sed -E 's/^ably-([^-]+)\.tar\.gz$/\1/')
-          echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
-
-      - name: Compare version with tag
-        run: |
-          if [ "$VERSION" != "$TAG" ]; then
-            echo "VERSION ($VERSION) does not match tag ($TAG)."
-            exit 1
-          fi
+          # sdist names are <normalised name>-<version>.tar.gz, and a normalised
+          # version never contains a hyphen, so the last one starts the version.
+          # Checking all three also catches a version that drifted out of lockstep.
+          for TARBALL in dist/*.tar.gz; do
+            VERSION=$(basename "$TARBALL" | sed -E 's/^.*-([^-]+)\.tar\.gz$/\1/')
+            if [ "$VERSION" != "$TAG" ]; then
+              echo "❌ $(basename "$TARBALL"): version ($VERSION) does not match tag ($TAG)."
+              exit 1
+            fi
+            echo "✅ $(basename "$TARBALL") matches tag $TAG"
+          done
         env:
-          VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.tag.outputs.tag }}
 
-      - name: Publish distribution 📦 to PyPI
+      - name: Publish distributions 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
 
   publish-to-testpypi:
-    name: Publish Python distribution to TestPyPI
+    name: Publish Python distributions to TestPyPI
     needs:
       - build
     runs-on: ubuntu-latest
@@ -129,7 +157,7 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-      - name: Publish distribution 📦 to TestPyPI
+      - name: Publish distributions 📦 to TestPyPI
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
         with:
           repository-url: https://test.pypi.org/legacy/

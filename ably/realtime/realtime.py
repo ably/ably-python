@@ -5,6 +5,7 @@ from typing import Optional
 from ably.realtime.channel import Channels
 from ably.realtime.connection import Connection, ConnectionState
 from ably.rest.rest import AblyRest
+from ably.util.deprecation import warn_constructor_deprecated
 
 log = logging.getLogger(__name__)
 
@@ -12,6 +13,10 @@ log = logging.getLogger(__name__)
 class AblyRealtime(AblyRest):
     """
     Ably Realtime Client
+
+    .. deprecated::
+        Use `ably.pubsub.server.create_realtime_client()` from the
+        `ably-pubsub-server` package.
 
     Attributes
     ----------
@@ -36,6 +41,10 @@ class AblyRealtime(AblyRest):
 
     def __init__(self, key: Optional[str] = None, loop: Optional[asyncio.AbstractEventLoop] = None, **kwargs):
         """Constructs a RealtimeClient object using an Ably API key.
+
+        .. deprecated::
+            Use `ably.pubsub.server.create_realtime_client()` from the
+            `ably-pubsub-server` package, instead.
 
         Parameters
         ----------
@@ -88,6 +97,9 @@ class AblyRealtime(AblyRest):
         ValueError
             If no authentication key is not provided
         """
+
+        warn_constructor_deprecated(AblyRealtime, 'ably.pubsub.server.create_realtime_client()',
+                                    'ably-pubsub-server')
 
         if loop is None:
             try:
