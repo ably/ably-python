@@ -248,12 +248,20 @@ def run():
         _CLASS_RENAME[class_name] = f"{class_name}Sync"
 
     _STRING_REPLACE["Auth"] = "AuthSync"
+    # The deprecation notice on AblyRestSync must name the sync factory, which
+    # lives in a submodule of the same package as the async one.
+    _STRING_REPLACE["ably.pubsub.server.create_http_client()"] = "ably.pubsub.server.sync.create_http_client()"
 
     src_dir_path = os.path.join(os.getcwd(), "ably")
     dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
+    # ably/pubsub is not part of the core: it is the source of the separate
+    # ably-pubsub-server and ably-pubsub-device distributions, and already
+    # provides its own hand-written sync entry points.
+    pubsub_dir_path = os.path.join(os.getcwd(), "ably", "pubsub")
 
     relevant_src_files = (set(find_files(src_dir_path, "*.py")) -
-                          set(find_files(dest_dir_path, "*.py")))
+                          set(find_files(dest_dir_path, "*.py")) -
+                          set(find_files(pubsub_dir_path, "*.py")))
 
     unasync_files(list(relevant_src_files), [Rule(fromdir=src_dir_path, todir=dest_dir_path)])
 

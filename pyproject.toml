@@ -83,12 +83,21 @@ include = [
 ]
 exclude = [
     "**/*.pyc",
-    "**/__pycache__"
+    "**/__pycache__",
+    # ably/pubsub is a namespace directory shipped by the ably-pubsub-server and
+    # ably-pubsub-device distributions, which live in packages/. Shipping it here
+    # too would put the same files in two distributions.
+    "/ably/pubsub"
 ]
 
 [tool.hatch.build.targets.wheel]
 ignore-vcs = true
 packages = ["ably"]
+exclude = [
+    "**/*.pyc",
+    "**/__pycache__",
+    "/ably/pubsub"
+]
 
 [tool.pytest.ini_options]
 timeout = 30
@@ -116,3 +125,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # imported but unused
+
+[tool.ruff.lint.isort]
+known-first-party = ["ably"]

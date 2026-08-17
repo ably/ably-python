@@ -10,17 +10,27 @@ from ably.rest.push import Push
 from ably.types.options import Options
 from ably.types.stats import stats_response_processor
 from ably.types.tokendetails import TokenDetails
+from ably.util.deprecation import warn_constructor_deprecated
 from ably.util.exceptions import AblyException, catch_all
 
 log = logging.getLogger(__name__)
 
 
 class AblyRest:
-    """Ably Rest Client"""
+    """Ably Rest Client
+
+    .. deprecated::
+        Use `ably.pubsub.server.create_http_client()` from the `ably-pubsub-server`
+        package instead.
+    """
 
     def __init__(self, key: Optional[str] = None, token: Optional[str] = None,
                  token_details: Optional[TokenDetails] = None, **kwargs):
         """Create an AblyRest instance.
+
+        .. deprecated::
+            Use `ably.pubsub.server.create_http_client()` from the
+            `ably-pubsub-server` package instead.
 
         :Parameters:
           **Credentials**
@@ -49,6 +59,12 @@ class AblyRest:
           - `auth_url`: Undocumented
           - `keep_alive`: use persistent connections. Defaults to True
         """
+        # A realtime client sets _is_realtime before delegating here, and warns
+        # about its own constructor, so only warn for direct AblyRest use.
+        if not getattr(self, '_is_realtime', False):
+            warn_constructor_deprecated(AblyRest, 'ably.pubsub.server.create_http_client()',
+                                        'ably-pubsub-server')
+
         if key is not None and ('key_name' in kwargs or 'key_secret' in kwargs):
             raise ValueError("key and key_name or key_secret are mutually exclusive. "
                              "Provider either a key or key_name & key_secret")
