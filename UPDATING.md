@@ -42,29 +42,61 @@ and the constructor call.
 | `from ably import X` (any name exported by `ably`) | `from ably_pubsub.server import X` |
 | `from ably.types.channeloptions import ChannelOptions` | `from ably_pubsub.server import ChannelOptions` |
 | `from ably.util.crypto import CipherParams` | `from ably_pubsub.server import CipherParams` |
-| `from ably.types.message import Message` | `from ably_pubsub.core.types.message import Message` (see below) |
 
-Every name that `ably` exported from its top level is re-exported from
-`ably_pubsub.server`, along with `TokenDetails`:
+#### Deep imports
+
+In 3.x many types could only be reached by importing the submodule they were
+defined in. In 4.0 all of them are re-exported from `ably_pubsub.server`, so the
+submodule path goes away entirely — **the flat import is the supported one**.
+Nothing under `ably_pubsub.core` is public API.
+
+| 3.x deep import | 4.0 |
+| --- | --- |
+| `from ably.types.message import Message, MessageAnnotations` | `from ably_pubsub.server import Message, MessageAnnotations` |
+| `from ably.types.presence import Presence, PresenceMessage, PresenceAction` | `from ably_pubsub.server import Presence, PresenceMessage, PresenceAction` |
+| `from ably.types.tokenrequest import TokenRequest` | `from ably_pubsub.server import TokenRequest` |
+| `from ably.types.tokendetails import TokenDetails` | `from ably_pubsub.server import TokenDetails` |
+| `from ably.types.channeldetails import ChannelDetails, ChannelStatus, ChannelOccupancy, ChannelMetrics` | `from ably_pubsub.server import ChannelDetails, ChannelStatus, ChannelOccupancy, ChannelMetrics` |
+| `from ably.types.channelstate import ChannelState, ChannelStateChange` | `from ably_pubsub.server import ChannelState, ChannelStateChange` |
+| `from ably.types.connectionstate import ConnectionState, ConnectionEvent, ConnectionStateChange` | `from ably_pubsub.server import ConnectionState, ConnectionEvent, ConnectionStateChange` |
+| `from ably.types.stats import Stats` | `from ably_pubsub.server import Stats` |
+| `from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse` | `from ably_pubsub.server import PaginatedResult, HttpPaginatedResponse` |
+| `from ably.rest.channel import Channel` | `from ably_pubsub.server import Channel` |
+| `from ably.realtime.channel import RealtimeChannel` | `from ably_pubsub.server import RealtimeChannel` |
+| `from ably.realtime.connection import Connection` | `from ably_pubsub.server import Connection` |
+| `from ably.realtime.presence import RealtimePresence` | `from ably_pubsub.server import RealtimePresence` |
+
+The full supported surface of `ably_pubsub.server`:
 
 ```
 AblyAuthException, AblyException, AblyRealtime, AblyRest, AblyVCDiffDecoder,
-Annotation, AnnotationAction, Auth, Capability, ChannelMode, ChannelOptions,
-CipherParams, DeviceDetails, IncompatibleClientIdException, MessageAction,
-MessageOperation, MessageVersion, Options, PublishResult, Push,
-PushChannelSubscription, TokenDetails, UpdateDeleteResult, VCDiffDecoder
+Annotation, AnnotationAction, Auth, Capability, Channel, ChannelDetails,
+ChannelMetrics, ChannelMode, ChannelOccupancy, ChannelOptions, ChannelState,
+ChannelStateChange, ChannelStatus, CipherParams, Connection, ConnectionEvent,
+ConnectionState, ConnectionStateChange, DeviceDetails, HttpPaginatedResponse,
+IncompatibleClientIdException, Message, MessageAction, MessageAnnotations,
+MessageOperation, MessageVersion, Options, PaginatedResult, Presence,
+PresenceAction, PresenceMessage, PublishResult, Push, PushChannelSubscription,
+RealtimeChannel, RealtimePresence, SERVER_AGENT_IDENTIFIER, Stats,
+TokenDetails, TokenRequest, UpdateDeleteResult, VCDiffDecoder,
+create_http_client, create_realtime_client
 ```
 
-`ably_pubsub.server.sync` re-exports the same set with the synchronous flavours
-(`AblyRestSync`, `AuthSync`, `PushSync`; there is no realtime client).
+`ably_pubsub.server.sync` re-exports the same set minus the realtime types, with
+the synchronous flavours under their `Sync` names: `AblyRestSync`, `AuthSync`,
+`PushSync`, `ChannelSync`, `PaginatedResultSync` and
+`HttpPaginatedResponseSync`. There is no synchronous realtime client, so
+`AblyRealtime`, `RealtimeChannel`, `RealtimePresence`, `Connection` and the
+channel/connection state types are not there.
 
-A few types that 3.x code could reach only by a deep import — `Message`,
-`PresenceMessage`, `TokenRequest` and the other submodule-only types — are not
-re-exported, and today the equivalent deep import is under `ably_pubsub.core`
-(for example `from ably_pubsub.core.types.message import Message`). That works,
-but nothing under `ably_pubsub.core` is public API: its layout and names may
-change in any release. If you depend on one of these, open an issue so it can be
-added to the supported re-export list.
+Two names you may go looking for and not find, in either version:
+
+- **`TokenParams` is not a class in this SDK.** Token params are plain
+  dictionaries, for example
+  `await auth.request_token(token_params={'ttl': 3600000, 'client_id': 'me'})`.
+- **There is no separate `ErrorInfo` type.** `AblyException` is the equivalent
+  and carries `code` and `status_code`; it is exported from
+  `ably_pubsub.server`.
 
 ### Example
 
