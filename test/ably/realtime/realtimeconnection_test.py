@@ -10,10 +10,10 @@ except ImportError:
     # websockets 14 and earlier fallback
     from websockets.server import serve as ws_serve
 
-from ably.realtime.connection import ConnectionEvent, ConnectionState
-from ably.transport.defaults import Defaults
-from ably.transport.websockettransport import ProtocolMessageAction
-from ably.util.exceptions import AblyException
+from ably_pubsub.core.realtime.connection import ConnectionEvent, ConnectionState
+from ably_pubsub.core.transport.defaults import Defaults
+from ably_pubsub.core.transport.websockettransport import ProtocolMessageAction
+from ably_pubsub.core.util.exceptions import AblyException
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 

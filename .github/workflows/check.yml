@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - main
+      - integration/v4
 
 permissions: {}
 
@@ -46,8 +47,37 @@ jobs:
           key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
 
       - name: Install dependencies
-        run: uv sync --extra crypto --extra dev
+        # The dev dependency group installs both workspace members editable,
+        # with the core's crypto and vcdiff extras.
+        run: uv sync
       - name: Generate rest sync code and tests
         run: uv run unasync
       - name: Test with pytest
         run: uv run pytest --verbose --tb=short --capture=no
+
+      # A namespace mistake would otherwise surface only after publish: an
+      # ably_pubsub/__init__.py in either wheel makes the two distributions
+      # fight over the same directory, and a core wheel without the generated
+      # sync flavour is a build that skipped unasync.
+      - name: Check the built distributions
+        run: |
+          uv build --package ably-pubsub-core --out-dir dist-check
+          uv build --package ably-pubsub-server --out-dir dist-check
+          CORE_WHEEL=$(ls dist-check/ably_pubsub_core-*.whl)
+          if ! unzip -l "$CORE_WHEEL" | grep -q "ably_pubsub/core/sync/"; then
+            unzip -l "$CORE_WHEEL"
+            echo "::error::ably_pubsub/core/sync/ not found in the core wheel"
+            exit 1
+          fi
+          for WHEEL in dist-check/*.whl; do
+            if unzip -l "$WHEEL" | grep -q "ably_pubsub/__init__.py"; then
+              echo "::error::$WHEEL ships ably_pubsub/__init__.py; the namespace must stay PEP 420"
+              exit 1
+            fi
+          done
+          CORE_TARBALL=$(ls dist-check/ably_pubsub_core-*.tar.gz)
+          if ! tar -tzf "$CORE_TARBALL" | grep -q "ably_pubsub/core/sync/"; then
+            tar -tzf "$CORE_TARBALL"
+            echo "::error::ably_pubsub/core/sync/ not found in the core sdist"
+            exit 1
+          fi

@@ -3,7 +3,9 @@ description: "Create a release branch, bump version, and update CHANGELOG. Usage
 allowed-tools: Bash, Read, Edit, Write
 ---
 
-Read the current version from `pyproject.toml` (the `version` property).
+Read the current version from `core/pyproject.toml` (the `version` property). Both
+distributions built from this repo are released in lockstep, so there is one
+version for all of the sites below and they must never diverge.
 
 The bump type is: $ARGUMENTS
 
@@ -15,12 +17,18 @@ Compute the new version by incrementing the appropriate component of the current
 Then perform these steps in order:
 
 1. Run `git checkout -b release/NEW_VERSION`
-2. Replace `OLD_VERSION` with `NEW_VERSION` in all of the following files:
-    - `pyproject.toml` — the `version` property
-    - `ably/__init__.py` — lib_version value
-      3.Run `uv sync` to update `uv.lock` file
-4. Commit all files together with message: `chore: bump version to NEW_VERSION`
-3. Fetch merged PRs since the last release tag using:
+2. Replace `OLD_VERSION` with `NEW_VERSION` in all of the following places:
+    - `core/pyproject.toml` — the `version` property
+    - `server/pyproject.toml` — the `version` property, **and** every
+      `ably-pubsub-core==OLD_VERSION` pin in `[project.dependencies]` and
+      `[project.optional-dependencies]`
+    - `core/src/ably_pubsub/core/__init__.py` — `lib_version` value
+    - `server/src/ably_pubsub/server/__init__.py` — `__version__` value
+3. Run `uv sync` to update the `uv.lock` file
+4. Run `uv run pytest test/unit/pubsub_packaging_test.py` — it asserts that
+   every one of those sites agrees
+5. Commit all files together with message: `chore: bump version to NEW_VERSION`
+6. Fetch merged PRs since the last release tag using:
    ```
    gh pr list --state merged --base main --json number,title,mergedAt --limit 200
    ```
@@ -30,23 +38,23 @@ Then perform these steps in order:
    ```
    Filter the PRs to only those merged after that tag date. Format each as:
    ```
-   - Short, one sentence summary from PR title and description [#NUMBER](https://github.com/ably/ably-java/pull/NUMBER)
+   - Short, one sentence summary from PR title and description [#NUMBER](https://github.com/ably/ably-python/pull/NUMBER)
    ```
    If the tag doesn't exist or there are no merged PRs, use a single `-` placeholder bullet instead.
 
-4. In `CHANGELOG.md`, insert the following block immediately after the `# Change Log` heading (and its trailing blank line), before the first existing `## [` version entry:
+7. In `CHANGELOG.md`, insert the following block immediately after the `# Change Log` heading (and its trailing blank line), before the first existing `## [` version entry:
 
 ```
-## [NEW_VERSION](https://github.com/ably/ably-java/tree/vNEW_VERSION)
+## [NEW_VERSION](https://github.com/ably/ably-python/tree/vNEW_VERSION)
 
-[Full Changelog](https://github.com/ably/ably-java/compare/vOLD_VERSION...vNEW_VERSION)
+[Full Changelog](https://github.com/ably/ably-python/compare/vOLD_VERSION...vNEW_VERSION)
 
 ### What's Changed
 
-BULLETS_FROM_STEP_3
+BULLETS_FROM_STEP_6
 
 ```
 
-5. Commit `CHANGELOG.md` with message: `docs: update CHANGELOG for NEW_VERSION release`
+8. Commit `CHANGELOG.md` with message: `docs: update CHANGELOG for NEW_VERSION release`
 
 After completing all steps, show the user a summary of what was done. If PRs were found, list them. If the placeholder `-` was used instead, remind them to fill in the `### What's Changed` bullet points in `CHANGELOG.md` before merging.

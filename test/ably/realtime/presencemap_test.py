@@ -8,8 +8,8 @@ from datetime import datetime
 
 import pytest
 
-from ably.realtime.presencemap import PresenceMap, _is_newer
-from ably.types.presence import PresenceAction, PresenceMessage
+from ably_pubsub.core.realtime.presencemap import PresenceMap, _is_newer
+from ably_pubsub.core.types.presence import PresenceAction, PresenceMessage
 from test.ably.utils import BaseAsyncTestCase
 
 

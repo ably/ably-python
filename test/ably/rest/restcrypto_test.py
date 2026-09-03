@@ -6,9 +6,9 @@ import os
 import pytest
 from Crypto import Random
 
-from ably import AblyException
-from ably.types.message import Message
-from ably.util.crypto import CipherParams, generate_random_key, get_cipher, get_default_params
+from ably_pubsub.core import AblyException
+from ably_pubsub.core.types.message import Message
+from ably_pubsub.core.util.crypto import CipherParams, generate_random_key, get_cipher, get_default_params
 from test.ably import utils
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, BaseTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol

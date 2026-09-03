@@ -1,3 +1,8 @@
+# TODO: this workflow still builds and publishes the single `ably` distribution
+# and does not work against the two-distribution workspace. Reworking it into a
+# lockstep release of ably-pubsub-core and ably-pubsub-server is the next PR on
+# the integration branch (plan step 15). The artifact checks it used to carry
+# have moved to check.yml, where they run on every PR.
 name: Publish Python distribution to PyPI
 
 on:
@@ -42,29 +47,6 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-      - name: Check that wheel and tarball contains ably/sync/
-        run: |
-          # Check wheel
-          WHEEL=$(ls dist/*.whl | head -n 1)
-          echo "Checking wheel: $WHEEL"
-          if unzip -l "$WHEEL" | grep -q "ably/sync/"; then
-            echo "✅ Found ably/sync/ in wheel"
-          else
-            unzip -l "$WHEEL" 
-            echo "❌ ably/sync/ not found in wheel"
-            exit 1
-          fi
-          
-          # Check tarball
-          TARBALL=$(ls dist/*.tar.gz | head -n 1)
-          echo "Checking tarball: $TARBALL"
-          if tar -tzf "$TARBALL" | grep -q "ably/sync/"; then
-            echo "✅ Found ably/sync/ in tarball"
-          else
-            tar -tzf "$TARBALL"
-            echo "❌ ably/sync/ not found in tarball"
-            exit 1
-          fi
 
   publish-to-pypi:
     name: Publish Python distribution to PyPI

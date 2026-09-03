@@ -9,10 +9,10 @@ import pytest
 import respx
 from httpx import Response
 
-from ably import AblyRest
-from ably.transport.defaults import Defaults
-from ably.types.options import Options
-from ably.util.exceptions import AblyException
+from ably_pubsub.core import AblyRest
+from ably_pubsub.core.transport.defaults import Defaults
+from ably_pubsub.core.types.options import Options
+from ably_pubsub.core.util.exceptions import AblyException
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase
 
@@ -184,7 +184,7 @@ class TestRestHttp(BaseAsyncTestCase):
 
         # Agent
         assert 'Ably-Agent' in r.request.headers
-        expr = r"^ably-python\/\d+.\d+.\d+(-beta\.\d+)? python\/\d.\d+.\d+$"
+        expr = r"^ably-pubsub-python\/\d+.\d+.\d+(-beta\.\d+)? python\/\d.\d+.\d+$"
         assert re.search(expr, r.request.headers['Ably-Agent'])
         await ably.close()
 

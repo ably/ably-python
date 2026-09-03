@@ -1,25 +1,20 @@
 import base64
 import logging
-import sys
 import time
 import uuid
 from unittest import mock
+from unittest.mock import AsyncMock
 from urllib.parse import parse_qs
 
 import pytest
 import respx
 from httpx import AsyncClient, Response
 
-import ably
-from ably import AblyAuthException, AblyRest, Auth
-from ably.types.tokendetails import TokenDetails
+import ably_pubsub.core.types.tokenrequest
+from ably_pubsub.core import AblyAuthException, AblyRest, Auth
+from ably_pubsub.core.types.tokendetails import TokenDetails
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
-
-if sys.version_info >= (3, 8):
-    from unittest.mock import AsyncMock
-else:
-    from mock import AsyncMock
 
 log = logging.getLogger(__name__)
 
@@ -198,7 +193,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
 
     async def test_authorize_create_new_token_if_expired(self):
         token = await self.ably.auth.authorize()
-        with mock.patch('ably.rest.auth.Auth.token_details_has_expired',
+        with mock.patch('ably_pubsub.core.rest.auth.Auth.token_details_has_expired',
                         return_value=True):
             new_token = await self.ably.auth.authorize()
 
@@ -212,7 +207,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
     async def test_authorize_adheres_to_request_token(self):
         token_params = {'ttl': 10, 'client_id': 'client_id'}
         auth_params = {'auth_url': 'somewhere.com', 'query_time': True}
-        with mock.patch('ably.rest.auth.Auth.request_token', new_callable=AsyncMock) as request_mock:
+        with mock.patch('ably_pubsub.core.rest.auth.Auth.request_token', new_callable=AsyncMock) as request_mock:
             await self.ably.auth.authorize(token_params, auth_params)
 
         token_called, auth_called = request_mock.call_args
@@ -251,7 +246,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         auth_options = dict(self.ably.auth.auth_options.auth_options)
         auth_options['auth_headers'] = {'a_headers': 'a_value'}
         await self.ably.auth.authorize({'ttl': 555}, auth_options)
-        with mock.patch('ably.rest.auth.Auth.request_token',
+        with mock.patch('ably_pubsub.core.rest.auth.Auth.request_token',
                         wraps=self.ably.auth.request_token) as request_mock:
             await self.ably.auth.authorize()
 
@@ -263,7 +258,7 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         auth_options = dict(self.ably.auth.auth_options.auth_options)
         auth_options['auth_headers'] = None
         await self.ably.auth.authorize({}, auth_options)
-        with mock.patch('ably.rest.auth.Auth.request_token',
+        with mock.patch('ably_pubsub.core.rest.auth.Auth.request_token',
                         wraps=self.ably.auth.request_token) as request_mock:
             await self.ably.auth.authorize()
 
@@ -283,8 +278,8 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
 
         # call authorize again with timestamp set
         timestamp = await self.ably.time()
-        with mock.patch('ably.rest.auth.TokenRequest',
-                        wraps=ably.types.tokenrequest.TokenRequest) as tr_mock:
+        with mock.patch('ably_pubsub.core.rest.auth.TokenRequest',
+                        wraps=ably_pubsub.core.types.tokenrequest.TokenRequest) as tr_mock:
             auth_options = dict(self.ably.auth.auth_options.auth_options)
             auth_options['auth_headers'] = {'a_headers': 'a_value'}
             token_2 = await self.ably.auth.authorize(
@@ -295,8 +290,8 @@ class TestAuthAuthorize(BaseAsyncTestCase, metaclass=VaryByProtocolTestsMetaclas
         assert tr_mock.call_args[1]['timestamp'] == timestamp
 
         # call authorize again with no params
-        with mock.patch('ably.rest.auth.TokenRequest',
-                        wraps=ably.types.tokenrequest.TokenRequest) as tr_mock:
+        with mock.patch('ably_pubsub.core.rest.auth.TokenRequest',
+                        wraps=ably_pubsub.core.types.tokenrequest.TokenRequest) as tr_mock:
             token_4 = await self.ably.auth.authorize()
         assert isinstance(token_4, TokenDetails)
         assert token_2 != token_4
