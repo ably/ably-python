@@ -1,7 +1,7 @@
 import pytest
 
-from ably.types.options import Options
-from ably.util.exceptions import AblyException
+from ably_pubsub.core.types.options import Options
+from ably_pubsub.core.util.exceptions import AblyException
 
 
 # REC1b1: endpoint is incompatible with deprecated options

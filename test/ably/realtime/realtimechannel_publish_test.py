@@ -2,13 +2,13 @@ import asyncio
 
 import pytest
 
-from ably.realtime.channel import ChannelState
-from ably.realtime.connection import ConnectionState
-from ably.transport.websockettransport import ProtocolMessageAction
-from ably.types.channeloptions import ChannelOptions
-from ably.types.message import Message
-from ably.util.crypto import CipherParams
-from ably.util.exceptions import AblyException, IncompatibleClientIdException
+from ably_pubsub.core.realtime.channel import ChannelState
+from ably_pubsub.core.realtime.connection import ConnectionState
+from ably_pubsub.core.transport.websockettransport import ProtocolMessageAction
+from ably_pubsub.core.types.channeloptions import ChannelOptions
+from ably_pubsub.core.types.message import Message
+from ably_pubsub.core.util.crypto import CipherParams
+from ably_pubsub.core.util.exceptions import AblyException, IncompatibleClientIdException
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, WaitableEvent, assert_waiter
 
@@ -328,7 +328,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
         new_connection_id = 'new_connection_id_12345'
 
         # Simulate server sending CONNECTED with new connectionId
-        from ably.types.connectiondetails import ConnectionDetails
+        from ably_pubsub.core.types.connectiondetails import ConnectionDetails
         new_connection_details = ConnectionDetails(
             connection_state_ttl=120000,
             max_idle_interval=15000,
@@ -365,7 +365,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
         # Simulate reconnection with SAME connectionId (transport change, not new connection)
         same_connection_id = connection_manager.connection_id
 
-        from ably.types.connectiondetails import ConnectionDetails
+        from ably_pubsub.core.types.connectiondetails import ConnectionDetails
         connection_details = ConnectionDetails(
             connection_state_ttl=120000,
             max_idle_interval=15000,
@@ -491,7 +491,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
         assert connection_manager.msg_serial == 1
 
         # Simulate resume with SAME connectionId
-        from ably.types.connectiondetails import ConnectionDetails
+        from ably_pubsub.core.types.connectiondetails import ConnectionDetails
         connection_details = ConnectionDetails(
             connection_state_ttl=120000,
             max_idle_interval=15000,
@@ -541,7 +541,7 @@ class TestRealtimeChannelPublish(BaseAsyncTestCase):
         assert connection_manager.msg_serial == 1
 
         # Simulate NEW connection (different connectionId = failed resume)
-        from ably.types.connectiondetails import ConnectionDetails
+        from ably_pubsub.core.types.connectiondetails import ConnectionDetails
         new_connection_details = ConnectionDetails(
             connection_state_ttl=120000,
             max_idle_interval=15000,

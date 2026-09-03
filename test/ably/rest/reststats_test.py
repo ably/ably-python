@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from ably.http.paginatedresult import PaginatedResult
-from ably.types.stats import Stats
-from ably.util.exceptions import AblyException
+from ably_pubsub.core.http.paginatedresult import PaginatedResult
+from ably_pubsub.core.types.stats import Stats
+from ably_pubsub.core.util.exceptions import AblyException
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
 
