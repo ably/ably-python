@@ -41,7 +41,28 @@ from ably_pubsub.core import (
     UpdateDeleteResult,
     VCDiffDecoder,
 )
+from ably_pubsub.core.http.paginatedresult import HttpPaginatedResponse, PaginatedResult
+from ably_pubsub.core.realtime.channel import RealtimeChannel
+from ably_pubsub.core.realtime.connection import Connection
+from ably_pubsub.core.realtime.presence import RealtimePresence
+from ably_pubsub.core.rest.channel import Channel
+from ably_pubsub.core.types.channeldetails import (
+    ChannelDetails,
+    ChannelMetrics,
+    ChannelOccupancy,
+    ChannelStatus,
+)
+from ably_pubsub.core.types.channelstate import ChannelState, ChannelStateChange
+from ably_pubsub.core.types.connectionstate import (
+    ConnectionEvent,
+    ConnectionState,
+    ConnectionStateChange,
+)
+from ably_pubsub.core.types.message import Message, MessageAnnotations
+from ably_pubsub.core.types.presence import Presence, PresenceAction, PresenceMessage
+from ably_pubsub.core.types.stats import Stats
 from ably_pubsub.core.types.tokendetails import TokenDetails
+from ably_pubsub.core.types.tokenrequest import TokenRequest
 
 __version__ = '4.0.0'
 
@@ -106,20 +127,42 @@ __all__ = [
     'AnnotationAction',
     'Auth',
     'Capability',
+    'Channel',
+    'ChannelDetails',
+    'ChannelMetrics',
     'ChannelMode',
+    'ChannelOccupancy',
     'ChannelOptions',
+    'ChannelState',
+    'ChannelStateChange',
+    'ChannelStatus',
     'CipherParams',
+    'Connection',
+    'ConnectionEvent',
+    'ConnectionState',
+    'ConnectionStateChange',
     'DeviceDetails',
+    'HttpPaginatedResponse',
     'IncompatibleClientIdException',
+    'Message',
     'MessageAction',
+    'MessageAnnotations',
     'MessageOperation',
     'MessageVersion',
     'Options',
+    'PaginatedResult',
+    'Presence',
+    'PresenceAction',
+    'PresenceMessage',
     'PublishResult',
     'Push',
     'PushChannelSubscription',
+    'RealtimeChannel',
+    'RealtimePresence',
     'SERVER_AGENT_IDENTIFIER',
+    'Stats',
     'TokenDetails',
+    'TokenRequest',
     'UpdateDeleteResult',
     'VCDiffDecoder',
     'create_http_client',
