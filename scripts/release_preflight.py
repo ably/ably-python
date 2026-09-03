@@ -51,6 +51,34 @@ PEP_440 = re.compile(
 )
 
 
+def require_split_layout():
+    """Refuse to run against a tree that does not have the split layout.
+
+    This script (and the release workflow that calls it) also exists on `main`,
+    because `workflow_dispatch` only offers a workflow that is present on the
+    default branch — see the plan's step 15b. `main` still has the single flat
+    `ably/` package, so a dispatch there must stop here with an explanation
+    rather than a FileNotFoundError from the first version site it reads.
+
+    On the split layout every path below exists, so this is a no-op.
+    """
+    missing = [
+        str(path.relative_to(REPO_ROOT))
+        for path in (CORE_PYPROJECT, SERVER_PYPROJECT)
+        if not path.is_file()
+    ]
+    if missing:
+        raise SystemExit(
+            'pre-flight: this workflow releases the split distributions '
+            '(ably-pubsub-core and ably-pubsub-server), but this ref still has the '
+            'single `ably` layout — no ' + ' or '.join(missing) + '. There is nothing '
+            'here to release in lockstep. Dispatch this workflow against a ref that '
+            'has the split layout (--ref integration/v4, or a pubsub-split/* branch); '
+            'releases of the legacy `ably` distribution are cut from its maintenance '
+            'branch with that branch\'s own single-distribution release.yml.'
+        )
+
+
 class Failures:
     def __init__(self):
         self.messages = []
@@ -251,6 +279,8 @@ def main(argv=None):
         help='directory holding the built distributions. Omit to check the version sites only.',
     )
     args = parser.parse_args(argv)
+
+    require_split_layout()
 
     failures = Failures()
     version = check_versions(failures, args.version)

@@ -100,6 +100,17 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
+
+      # Cheap checks that need no build: the version sites, and — first of all
+      # — that this ref actually has the split layout. This workflow file also
+      # lives on `main` (workflow_dispatch only offers workflows present on the
+      # default branch), where it is inert: dispatched there, the pre-flight
+      # stops here with an explanation instead of a confusing build error.
+      - name: 'Pre-flight: layout and version sites (before anything is built)'
+        env:
+          RELEASE_VERSION: ${{ steps.release-version.outputs.version }}
+        run: uv run python scripts/release_preflight.py --version "$RELEASE_VERSION"
+
       - name: Generate the sync flavour
         run: uv run unasync
       - name: Build both distributions into one dist/
