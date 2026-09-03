@@ -23,6 +23,9 @@ dev = [
   "importlib-metadata>=4.12,<5.0",
   "pytest-timeout>=2.1.0,<3.0.0",
   "tokenize_rt",
+  # Used by scripts/release_preflight.py to validate the built distributions'
+  # metadata before anything is uploaded.
+  "twine>=4.0,<7.0",
   "vcdiff-decoder>=0.1.0a1",
 ]
 
