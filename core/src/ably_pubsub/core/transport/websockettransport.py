@@ -78,7 +78,7 @@ class WebSocketTransport(EventEmitter):
         super().__init__()
 
     def connect(self):
-        headers = HttpUtils.default_headers()
+        headers = HttpUtils.default_headers(agents=self.options.agents)
         query_params = urllib.parse.urlencode(self.params)
         scheme = 'wss' if self.options.tls else 'ws'
         ws_url = f'{scheme}://{self.host}?{query_params}'

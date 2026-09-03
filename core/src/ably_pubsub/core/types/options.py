@@ -34,7 +34,7 @@ class Options(AuthOptions):
                  idempotent_rest_publishing=None, loop=None, auto_connect=True,
                  suspended_retry_timeout=None, connectivity_check_url=None,
                  channel_retry_timeout=Defaults.channel_retry_timeout, add_request_ids=False,
-                 vcdiff_decoder: VCDiffDecoder = None, transport_params=None, **kwargs):
+                 vcdiff_decoder: VCDiffDecoder = None, transport_params=None, agents=None, **kwargs):
 
         super().__init__(**kwargs)
 
@@ -129,6 +129,7 @@ class Options(AuthOptions):
         self.__add_request_ids = add_request_ids
         self.__vcdiff_decoder = vcdiff_decoder
         self.__transport_params = transport_params or {}
+        self.__agents = dict(agents) if agents else {}
         self.__hosts = self.__get_hosts()
 
     @property
@@ -305,6 +306,18 @@ class Options(AuthOptions):
     @property
     def transport_params(self):
         return self.__transport_params
+
+    @property
+    def agents(self):
+        """Additional entries for the ``Ably-Agent`` header, as ``{name: version}``.
+
+        A ``None`` version renders the entry as a bare flag, with no ``/version``
+        suffix. Ably's own library and runtime entries are always sent and are
+        not configurable here; this is for the packages layered on top of the
+        core -- the side-declaring entry the server package stamps, or a
+        higher-level SDK's own attribution.
+        """
+        return self.__agents
 
     def __get_hosts(self):
         """
