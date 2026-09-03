@@ -34,7 +34,19 @@ from ably_pubsub.core.sync import (
     UpdateDeleteResult,
     VCDiffDecoder,
 )
+from ably_pubsub.core.sync.http.paginatedresult import HttpPaginatedResponseSync, PaginatedResultSync
+from ably_pubsub.core.sync.rest.channel import ChannelSync
+from ably_pubsub.core.sync.types.channeldetails import (
+    ChannelDetails,
+    ChannelMetrics,
+    ChannelOccupancy,
+    ChannelStatus,
+)
+from ably_pubsub.core.sync.types.message import Message, MessageAnnotations
+from ably_pubsub.core.sync.types.presence import Presence, PresenceAction, PresenceMessage
+from ably_pubsub.core.sync.types.stats import Stats
 from ably_pubsub.core.sync.types.tokendetails import TokenDetails
+from ably_pubsub.core.sync.types.tokenrequest import TokenRequest
 from ably_pubsub.server import SERVER_AGENT_IDENTIFIER, _agents_with_side
 
 
@@ -58,20 +70,34 @@ __all__ = [
     'AnnotationAction',
     'AuthSync',
     'Capability',
+    'ChannelDetails',
+    'ChannelMetrics',
     'ChannelMode',
+    'ChannelOccupancy',
     'ChannelOptions',
+    'ChannelStatus',
+    'ChannelSync',
     'CipherParams',
     'DeviceDetails',
+    'HttpPaginatedResponseSync',
     'IncompatibleClientIdException',
+    'Message',
     'MessageAction',
+    'MessageAnnotations',
     'MessageOperation',
     'MessageVersion',
     'Options',
+    'PaginatedResultSync',
+    'Presence',
+    'PresenceAction',
+    'PresenceMessage',
     'PublishResult',
     'PushChannelSubscription',
     'PushSync',
     'SERVER_AGENT_IDENTIFIER',
+    'Stats',
     'TokenDetails',
+    'TokenRequest',
     'UpdateDeleteResult',
     'VCDiffDecoder',
     'create_http_client',

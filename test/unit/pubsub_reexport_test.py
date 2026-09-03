@@ -32,3 +32,62 @@ def test_the_server_re_exports_the_core_surface():
 
 def test_the_sync_door_re_exports_the_sync_core_surface():
     assert exported_types(ably_pubsub.core.sync) - SYNC_ONLY_BY_GENERATION <= set(server_sync.__all__)
+
+
+# 3.x users reached for these under `ably.types.*` and `ably.http.*`, which have no
+# supported 4.0 equivalent outside the internal core — so they have to be nameable
+# from the server package or they are not nameable at all. Guarding the list keeps
+# a future trim of the surface (091d) from dropping one silently.
+REACHABLE_BY_A_CONSUMER = {
+    'Channel',
+    'ChannelDetails',
+    'ChannelMetrics',
+    'ChannelOccupancy',
+    'ChannelState',
+    'ChannelStateChange',
+    'ChannelStatus',
+    'Connection',
+    'ConnectionEvent',
+    'ConnectionState',
+    'ConnectionStateChange',
+    'HttpPaginatedResponse',
+    'Message',
+    'MessageAnnotations',
+    'PaginatedResult',
+    'Presence',
+    'PresenceAction',
+    'PresenceMessage',
+    'RealtimeChannel',
+    'RealtimePresence',
+    'Stats',
+    'TokenDetails',
+    'TokenRequest',
+}
+
+# The sync flavour has no realtime client, so the realtime object and state types
+# have no counterpart there; unasync renames the rest.
+SYNC_REACHABLE_BY_A_CONSUMER = (REACHABLE_BY_A_CONSUMER - {
+    'Channel',
+    'ChannelState',
+    'ChannelStateChange',
+    'Connection',
+    'ConnectionEvent',
+    'ConnectionState',
+    'ConnectionStateChange',
+    'HttpPaginatedResponse',
+    'PaginatedResult',
+    'RealtimeChannel',
+    'RealtimePresence',
+}) | {'ChannelSync', 'HttpPaginatedResponseSync', 'PaginatedResultSync'}
+
+
+def test_the_types_a_consumer_names_are_reachable_from_the_server_package():
+    assert REACHABLE_BY_A_CONSUMER <= set(ably_pubsub.server.__all__)
+    missing = [name for name in REACHABLE_BY_A_CONSUMER if not hasattr(ably_pubsub.server, name)]
+    assert missing == []
+
+
+def test_the_types_a_consumer_names_are_reachable_from_the_sync_door():
+    assert SYNC_REACHABLE_BY_A_CONSUMER <= set(server_sync.__all__)
+    missing = [name for name in SYNC_REACHABLE_BY_A_CONSUMER if not hasattr(server_sync, name)]
+    assert missing == []
