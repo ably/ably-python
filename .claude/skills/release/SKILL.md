@@ -4,8 +4,11 @@ allowed-tools: Bash, Read, Edit, Write
 ---
 
 Read the current version from `core/pyproject.toml` (the `version` property). Both
-distributions built from this repo are released in lockstep, so there is one
-version for all of the sites below and they must never diverge.
+distributions built from this repo — `ably-pubsub-core` and `ably-pubsub-server` —
+are released in lockstep, so there is one version for all of the sites below and
+they must never diverge. One `vX.Y.Z` tag releases both distributions: the release
+workflow builds them together, refuses to upload anything unless every site agrees,
+and publishes the core before the server.
 
 The bump type is: $ARGUMENTS
 
@@ -25,10 +28,14 @@ Then perform these steps in order:
     - `core/src/ably_pubsub/core/__init__.py` — `lib_version` value
     - `server/src/ably_pubsub/server/__init__.py` — `__version__` value
 3. Run `uv sync` to update the `uv.lock` file
-4. Run `uv run pytest test/unit/pubsub_packaging_test.py` — it asserts that
-   every one of those sites agrees
-5. Commit all files together with message: `chore: bump version to NEW_VERSION`
-6. Fetch merged PRs since the last release tag using:
+4. Run `uv run python scripts/release_preflight.py --version NEW_VERSION` — the
+   same check the release workflow runs before it uploads anything, in its
+   build-free mode (no `dist/` argument), so a missed site fails here rather
+   than mid-release
+5. Run `uv run pytest test/unit/pubsub_packaging_test.py` — the packaging
+   invariants that do not depend on a build
+6. Commit all files together with message: `chore: bump version to NEW_VERSION`
+7. Fetch merged PRs since the last release tag using:
    ```
    gh pr list --state merged --base main --json number,title,mergedAt --limit 200
    ```
@@ -42,7 +49,7 @@ Then perform these steps in order:
    ```
    If the tag doesn't exist or there are no merged PRs, use a single `-` placeholder bullet instead.
 
-7. In `CHANGELOG.md`, insert the following block immediately after the `# Change Log` heading (and its trailing blank line), before the first existing `## [` version entry:
+8. In `CHANGELOG.md`, insert the following block immediately after the `# Change Log` heading (and its trailing blank line), before the first existing `## [` version entry:
 
 ```
 ## [NEW_VERSION](https://github.com/ably/ably-python/tree/vNEW_VERSION)
@@ -51,10 +58,10 @@ Then perform these steps in order:
 
 ### What's Changed
 
-BULLETS_FROM_STEP_6
+BULLETS_FROM_STEP_7
 
 ```
 
-8. Commit `CHANGELOG.md` with message: `docs: update CHANGELOG for NEW_VERSION release`
+9. Commit `CHANGELOG.md` with message: `docs: update CHANGELOG for NEW_VERSION release`
 
 After completing all steps, show the user a summary of what was done. If PRs were found, list them. If the placeholder `-` was used instead, remind them to fill in the `### What's Changed` bullet points in `CHANGELOG.md` before merging.
