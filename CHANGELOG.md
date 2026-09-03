@@ -1,5 +1,45 @@
 # Change Log
 
+## [4.0.0](https://github.com/ably/ably-python/tree/v4.0.0) (unreleased)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v3.1.2...v4.0.0)
+
+> This entry describes work in progress on the `integration/v4` branch. Nothing
+> is published under these names yet; the heading loses "(unreleased)" when
+> 4.0.0 ships.
+
+### Breaking change
+
+Version 4.0.0 applies [PDR-091b](https://ably.atlassian.net/wiki/spaces/product/pages/5362810886)
+and splits the SDK into new distributions. The `ably` package is superseded: it
+receives security and critical-bug fixes only for one year from the 4.0.0
+release date, and is then end-of-life.
+
+- **New distributions.** `ably-pubsub-server` is the public package for servers
+  and other trusted environments. It is built on `ably-pubsub-core`, an internal
+  package that must never be depended on directly; the two are versioned and
+  released in lockstep, with the server pinning the core to the exact same
+  version.
+- **New import namespace.** `ably` becomes `ably_pubsub.server` (and
+  `ably.sync` becomes `ably_pubsub.server.sync`). Both installs can coexist in
+  one environment while migrating, since the import packages differ.
+- **Factory doors replace the constructors.** `AblyRest(...)` becomes
+  `ably_pubsub.server.create_http_client(...)`, `AblyRealtime(...)` becomes
+  `ably_pubsub.server.create_realtime_client(...)`, and `AblyRestSync(...)`
+  becomes `ably_pubsub.server.sync.create_http_client(...)`. Each takes exactly
+  the arguments the constructor it replaces took.
+- **Agent identifier.** Clients now report
+  `ably-pubsub-python/4.0.0 python/<version> ably-pubsub-server`. The
+  `ably-pubsub-server` flag is what declares the server side, which is how the
+  platform exempts these connections from monthly-active-user counting. A new
+  `agents` client option lets a layered SDK add its own entries.
+- **Python floor raised.** `requires-python` is now `>=3.8`; supported versions
+  are 3.8 through 3.14.
+- **`LONG_DESCRIPTION.rst` removed.** Each distribution's PyPI page now renders
+  its own `README.md`.
+
+For detailed migration instructions, please refer to the [Upgrading Guide](UPDATING.md).
+
 ## [3.1.2](https://github.com/ably/ably-python/tree/v3.1.2)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v3.1.1...v3.1.2)

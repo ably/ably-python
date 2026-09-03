@@ -1,5 +1,163 @@
 # Upgrade / Migration Guide
 
+## Version 3.x (`ably`) to 4.0.0 (`ably-pubsub-server`)
+
+> **Status: draft.** The public API naming is still under review; the class and
+> function names in this section may change before the 4.0.0 GA release.
+
+Version 4.0.0 splits the SDK into new distributions, following
+[PDR-091b](https://ably.atlassian.net/wiki/spaces/product/pages/5362810886). The
+`ably` package is superseded: it receives security and critical-bug fixes only
+for one year from the 4.0.0 release date, and is then end-of-life.
+
+### Why
+
+Under MAU-based pricing the platform must classify every connection as
+device-side or server-side. The new packages declare which side they are on
+automatically, as part of the agent identifier they put on the wire. The old
+`ably` constructors cannot: nothing in them says where the code runs, so once
+MAU pricing is live they are rejected on MAU-enabled accounts because the
+platform cannot classify them.
+
+Python is a server-side language, so there is a single new public distribution,
+`ably-pubsub-server`, whose factory functions are the only recommended entry
+points. It is built on `ably-pubsub-core`, an internal distribution you should
+never depend on directly. The objects the factories return are the same clients
+as today — channels, presence, history, auth and error handling are unchanged.
+For most applications the migration is confined to the install line, the import,
+and the constructor call.
+
+### Mapping
+
+| 3.x (`ably`) | 4.0 (`ably-pubsub-server`) |
+| --- | --- |
+| `pip install ably` | `pip install ably-pubsub-server` |
+| `pip install ably[crypto]` | `pip install ably-pubsub-server[crypto]` |
+| `from ably import AblyRest` | `from ably_pubsub.server import create_http_client` |
+| `AblyRest(key=...)` | `create_http_client(key=...)` |
+| `from ably import AblyRealtime` | `from ably_pubsub.server import create_realtime_client` |
+| `AblyRealtime(key=...)` | `create_realtime_client(key=...)` |
+| `from ably.sync import AblyRestSync` | `from ably_pubsub.server.sync import create_http_client` |
+| `AblyRestSync(key=...)` | `create_http_client(key=...)` (from `ably_pubsub.server.sync`) |
+| `from ably import X` (any name exported by `ably`) | `from ably_pubsub.server import X` |
+| `from ably.types.channeloptions import ChannelOptions` | `from ably_pubsub.server import ChannelOptions` |
+| `from ably.util.crypto import CipherParams` | `from ably_pubsub.server import CipherParams` |
+
+#### Deep imports
+
+In 3.x many types could only be reached by importing the submodule they were
+defined in. In 4.0 all of them are re-exported from `ably_pubsub.server`, so the
+submodule path goes away entirely — **the flat import is the supported one**.
+Nothing under `ably_pubsub.core` is public API.
+
+| 3.x deep import | 4.0 |
+| --- | --- |
+| `from ably.types.message import Message, MessageAnnotations` | `from ably_pubsub.server import Message, MessageAnnotations` |
+| `from ably.types.presence import Presence, PresenceMessage, PresenceAction` | `from ably_pubsub.server import Presence, PresenceMessage, PresenceAction` |
+| `from ably.types.tokenrequest import TokenRequest` | `from ably_pubsub.server import TokenRequest` |
+| `from ably.types.tokendetails import TokenDetails` | `from ably_pubsub.server import TokenDetails` |
+| `from ably.types.channeldetails import ChannelDetails, ChannelStatus, ChannelOccupancy, ChannelMetrics` | `from ably_pubsub.server import ChannelDetails, ChannelStatus, ChannelOccupancy, ChannelMetrics` |
+| `from ably.types.channelstate import ChannelState, ChannelStateChange` | `from ably_pubsub.server import ChannelState, ChannelStateChange` |
+| `from ably.types.connectionstate import ConnectionState, ConnectionEvent, ConnectionStateChange` | `from ably_pubsub.server import ConnectionState, ConnectionEvent, ConnectionStateChange` |
+| `from ably.types.stats import Stats` | `from ably_pubsub.server import Stats` |
+| `from ably.http.paginatedresult import PaginatedResult, HttpPaginatedResponse` | `from ably_pubsub.server import PaginatedResult, HttpPaginatedResponse` |
+| `from ably.rest.channel import Channel` | `from ably_pubsub.server import Channel` |
+| `from ably.realtime.channel import RealtimeChannel` | `from ably_pubsub.server import RealtimeChannel` |
+| `from ably.realtime.connection import Connection` | `from ably_pubsub.server import Connection` |
+| `from ably.realtime.presence import RealtimePresence` | `from ably_pubsub.server import RealtimePresence` |
+
+The full supported surface of `ably_pubsub.server`:
+
+```
+AblyAuthException, AblyException, AblyRealtime, AblyRest, AblyVCDiffDecoder,
+Annotation, AnnotationAction, Auth, Capability, Channel, ChannelDetails,
+ChannelMetrics, ChannelMode, ChannelOccupancy, ChannelOptions, ChannelState,
+ChannelStateChange, ChannelStatus, CipherParams, Connection, ConnectionEvent,
+ConnectionState, ConnectionStateChange, DeviceDetails, HttpPaginatedResponse,
+IncompatibleClientIdException, Message, MessageAction, MessageAnnotations,
+MessageOperation, MessageVersion, Options, PaginatedResult, Presence,
+PresenceAction, PresenceMessage, PublishResult, Push, PushChannelSubscription,
+RealtimeChannel, RealtimePresence, SERVER_AGENT_IDENTIFIER, Stats,
+TokenDetails, TokenRequest, UpdateDeleteResult, VCDiffDecoder,
+create_http_client, create_realtime_client
+```
+
+`ably_pubsub.server.sync` re-exports the same set minus the realtime types, with
+the synchronous flavours under their `Sync` names: `AblyRestSync`, `AuthSync`,
+`PushSync`, `ChannelSync`, `PaginatedResultSync` and
+`HttpPaginatedResponseSync`. There is no synchronous realtime client, so
+`AblyRealtime`, `RealtimeChannel`, `RealtimePresence`, `Connection` and the
+channel/connection state types are not there.
+
+Two names you may go looking for and not find, in either version:
+
+- **`TokenParams` is not a class in this SDK.** Token params are plain
+  dictionaries, for example
+  `await auth.request_token(token_params={'ttl': 3600000, 'client_id': 'me'})`.
+- **There is no separate `ErrorInfo` type.** `AblyException` is the equivalent
+  and carries `code` and `status_code`; it is exported from
+  `ably_pubsub.server`.
+
+### Example
+
+```python
+# 3.x
+from ably import AblyRest
+
+client = AblyRest(key='your-api-key')
+
+# 4.0
+from ably_pubsub.server import create_http_client
+
+client = create_http_client(key='your-api-key')
+```
+
+```python
+# 3.x
+from ably import AblyRealtime
+
+client = AblyRealtime(key='your-api-key', client_id='me')
+
+# 4.0
+from ably_pubsub.server import create_realtime_client
+
+client = create_realtime_client(key='your-api-key', client_id='me')
+```
+
+```python
+# 3.x
+from ably.sync import AblyRestSync
+
+client = AblyRestSync(key='your-api-key')
+
+# 4.0
+from ably_pubsub.server.sync import create_http_client
+
+client = create_http_client(key='your-api-key')
+```
+
+The factories take exactly the keyword arguments the old constructors took:
+`create_http_client(key=None, token=None, token_details=None, **options)` and
+`create_realtime_client(key=None, loop=None, **options)`, where `**options` is
+the same client options as before. The only argument that behaves differently is
+`agents`: your entries are preserved, but the package's own `ably-pubsub-server`
+entry is always added, so the wire agent reads
+`ably-pubsub-python/4.0.0 python/3.x ably-pubsub-server`.
+
+### Packaging changes
+
+- **Python floor.** `requires-python` is now `>=3.8` (it was `>=3.7`, though 3.7
+  was already untested). Supported versions are 3.8 through 3.14.
+- **Extras.** The same extras exist under the new name:
+  `ably-pubsub-server[crypto]`, `ably-pubsub-server[vcdiff]` and
+  `ably-pubsub-server[oldcrypto]`.
+- **Two distributions.** `ably-pubsub-server` depends on `ably-pubsub-core`
+  pinned to the exact same version; the two are always released in lockstep. Do
+  not install or import `ably-pubsub-core` directly.
+- **Side-by-side install is safe.** `ably` and `ably-pubsub-server` use
+  different import packages (`ably` and `ably_pubsub`), so both can be installed
+  in one environment while you migrate.
+
 ## Version 2.x to 3.0.0
 
 The 3.0.0 version of ably-python introduces several breaking changes to improve the realtime experience and align the API with the Ably specification. These include:
