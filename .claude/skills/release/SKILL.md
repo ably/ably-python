@@ -30,16 +30,16 @@ Then perform these steps in order:
    ```
    Filter the PRs to only those merged after that tag date. Format each as:
    ```
-   - Short, one sentence summary from PR title and description [#NUMBER](https://github.com/ably/ably-java/pull/NUMBER)
+   - Short, one sentence summary from PR title and description [#NUMBER](https://github.com/ably/ably-pubsub-python/pull/NUMBER)
    ```
    If the tag doesn't exist or there are no merged PRs, use a single `-` placeholder bullet instead.
 
 4. In `CHANGELOG.md`, insert the following block immediately after the `# Change Log` heading (and its trailing blank line), before the first existing `## [` version entry:
 
 ```
-## [NEW_VERSION](https://github.com/ably/ably-java/tree/vNEW_VERSION)
+## [NEW_VERSION](https://github.com/ably/ably-pubsub-python/tree/vNEW_VERSION)
 
-[Full Changelog](https://github.com/ably/ably-java/compare/vOLD_VERSION...vNEW_VERSION)
+[Full Changelog](https://github.com/ably/ably-pubsub-python/compare/vOLD_VERSION...vNEW_VERSION)
 
 ### What's Changed
 

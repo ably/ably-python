@@ -1,6 +1,6 @@
 ![Ably Pub/Sub Python Header](images/pythonSDK-github.png)
 [![PyPI version](https://badge.fury.io/py/ably.svg)](https://pypi.org/project/ably/)
-[![License](https://img.shields.io/github/license/ably/ably-python)](https://github.com/ably/ably-python/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/ably/ably-pubsub-python)](https://github.com/ably/ably-pubsub-python/blob/main/LICENSE)
 
 
 # Ably Pub/Sub Python SDK
@@ -80,7 +80,7 @@ async with AblyRealtime('your-ably-api-key', client_id='me') as realtime_client:
 
 ## Releases
 
-The [CHANGELOG.md](https://github.com/ably/ably-python/blob/main/CHANGELOG.md) contains details of the latest releases for this SDK. You can also view all Ably releases on [changelog.ably.com](https://changelog.ably.com).
+The [CHANGELOG.md](https://github.com/ably/ably-pubsub-python/blob/main/CHANGELOG.md) contains details of the latest releases for this SDK. You can also view all Ably releases on [changelog.ably.com](https://changelog.ably.com).
 
 ---
 
@@ -92,7 +92,7 @@ Read the [CONTRIBUTING.md](./CONTRIBUTING.md) guidelines to contribute to Ably.
 
 ## Support, feedback, and troubleshooting
 
-For help or technical support, visit Ably's [support page](https://ably.com/support) or [GitHub Issues](https://github.com/ably/ably-python/issues) for community-reported bugs and discussions.
+For help or technical support, visit Ably's [support page](https://ably.com/support) or [GitHub Issues](https://github.com/ably/ably-pubsub-python/issues) for community-reported bugs and discussions.
 
 ### Full Realtime support unavailable
 
