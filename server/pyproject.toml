@@ -1,0 +1,62 @@
+[project]
+name = "ably-pubsub-server"
+version = "4.0.0"
+description = "Ably Pub/Sub SDK for Python servers — realtime messaging for trusted server environments"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Ably", email = "support@ably.com" }
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+# Exact pin: core and server are released in lockstep, and two core versions in
+# one environment would be indistinguishable on the wire.
+dependencies = [
+  "ably-pubsub-core==4.0.0",
+]
+
+[project.optional-dependencies]
+oldcrypto = ["ably-pubsub-core[oldcrypto]==4.0.0"]
+crypto = ["ably-pubsub-core[crypto]==4.0.0"]
+vcdiff = ["ably-pubsub-core[vcdiff]==4.0.0"]
+
+[project.urls]
+Homepage = "https://ably.com"
+Repository = "https://github.com/ably/ably-python"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+ignore-vcs = true
+include = [
+    "/src/ably_pubsub",
+    "/README.md",
+    "/pyproject.toml"
+]
+exclude = [
+    "**/*.pyc",
+    "**/__pycache__"
+]
+
+[tool.hatch.build.targets.wheel]
+ignore-vcs = true
+# PEP 420: `src/ably_pubsub` has no __init__.py, so this ships
+# `ably_pubsub/server/**` into the shared `ably_pubsub` namespace.
+packages = ["src/ably_pubsub"]

@@ -241,7 +241,10 @@ def run():
     _TOKEN_REPLACE["aclose"] = "close"
     _TOKEN_REPLACE["assert_waiter"] = "assert_waiter_sync"
 
-    _IMPORTS_REPLACE["ably"] = "ably_pubsub.core.sync"
+    # Matched as a substring of the dotted module path, so this must be the full
+    # `ably_pubsub.core` prefix: a bare "ably_pubsub" would also rewrite
+    # `ably_pubsub.server`, which is hand-written and never generated.
+    _IMPORTS_REPLACE["ably_pubsub.core"] = "ably_pubsub.core.sync"
 
     # here...
     for class_name in rename_classes:
@@ -249,8 +252,10 @@ def run():
 
     _STRING_REPLACE["Auth"] = "AuthSync"
 
-    src_dir_path = os.path.join(os.getcwd(), "ably")
-    dest_dir_path = os.path.join(os.getcwd(), "ably", "sync")
+    # The server distribution's sync door is hand-written, so only `core/` is a
+    # generation source.
+    src_dir_path = os.path.join(os.getcwd(), "core", "src", "ably_pubsub", "core")
+    dest_dir_path = os.path.join(src_dir_path, "sync")
 
     relevant_src_files = (set(find_files(src_dir_path, "*.py")) -
                           set(find_files(dest_dir_path, "*.py")))
@@ -269,14 +274,17 @@ def run():
     _IMPORTS_REPLACE["test.ably"] = "test.ably.sync"
 
     _STRING_REPLACE['/../assets/testAppSpec.json'] = '/../../assets/testAppSpec.json'
-    _STRING_REPLACE['ably_pubsub.core.rest.auth.Auth.request_token'] = 'ably_pubsub.core.sync.rest.auth.AuthSync.request_token'
+    _STRING_REPLACE['ably_pubsub.core.rest.auth.Auth.request_token'] = \
+        'ably_pubsub.core.sync.rest.auth.AuthSync.request_token'
     _STRING_REPLACE['ably_pubsub.core.rest.auth.TokenRequest'] = 'ably_pubsub.core.sync.rest.auth.TokenRequest'
     _STRING_REPLACE['ably_pubsub.core.rest.rest.Http.post'] = 'ably_pubsub.core.sync.rest.rest.HttpSync.post'
     _STRING_REPLACE['httpx.AsyncClient.send'] = 'httpx.Client.send'
     _STRING_REPLACE['ably_pubsub.core.util.exceptions.AblyException.raise_for_response'] = \
         'ably_pubsub.core.sync.util.exceptions.AblyException.raise_for_response'
-    _STRING_REPLACE['ably_pubsub.core.rest.rest.AblyRest.time'] = 'ably_pubsub.core.sync.rest.rest.AblyRestSync.time'
-    _STRING_REPLACE['ably_pubsub.core.rest.auth.Auth._timestamp'] = 'ably_pubsub.core.sync.rest.auth.AuthSync._timestamp'
+    _STRING_REPLACE['ably_pubsub.core.rest.rest.AblyRest.time'] = \
+        'ably_pubsub.core.sync.rest.rest.AblyRestSync.time'
+    _STRING_REPLACE['ably_pubsub.core.rest.auth.Auth._timestamp'] = \
+        'ably_pubsub.core.sync.rest.auth.AuthSync._timestamp'
 
     # round 1
     src_dir_path = os.path.join(os.getcwd(), "test", "ably")

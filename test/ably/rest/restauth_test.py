@@ -1,9 +1,9 @@
 import base64
 import logging
-import sys
 import time
 import uuid
 from unittest import mock
+from unittest.mock import AsyncMock
 from urllib.parse import parse_qs
 
 import pytest
@@ -15,11 +15,6 @@ from ably_pubsub.core import AblyAuthException, AblyRest, Auth
 from ably_pubsub.core.types.tokendetails import TokenDetails
 from test.ably.testapp import TestApp
 from test.ably.utils import BaseAsyncTestCase, VaryByProtocolTestsMetaclass, dont_vary_protocol
-
-if sys.version_info >= (3, 8):
-    from unittest.mock import AsyncMock
-else:
-    from mock import AsyncMock
 
 log = logging.getLogger(__name__)
 
