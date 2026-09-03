@@ -2,21 +2,18 @@
 
 **This is an internal implementation package. Do not depend on it directly.**
 
-`ably-pubsub-core` holds the shared implementation of Ably's Pub/Sub SDK for
-Python: the HTTP and realtime clients, channels, presence, authentication,
-encryption and the message types. It is published so that the packages
-applications *do* install can depend on one shared implementation, pinned to an
-exact version.
+`ably-pubsub-core` holds the shared implementation of [Ably](https://ably.com)'s
+Pub/Sub SDK for Python: the HTTP and realtime clients, channels, presence,
+authentication, encryption and the message types. It is published only so that
+the packages applications *do* install can share one implementation.
 
-Install the package that names the side your code runs on instead:
+Install [`ably-pubsub-server`](https://pypi.org/project/ably-pubsub-server/)
+instead — it is the public package for servers and other trusted environments,
+and it depends on this one at an exact pinned version, released in lockstep.
 
-| Where your code runs | Install | Import |
-| --- | --- | --- |
-| A server or other trusted environment | `ably-pubsub-server` | `ably_pubsub.server` |
-
-Nothing under `ably_pubsub.core` is public API. Its module layout, and the
-names within it, may change in any release — including patch releases — without
-a deprecation cycle. The supported surface is what `ably_pubsub.server`
+Nothing under `ably_pubsub.core` is public API. Its module layout, and the names
+within it, may change in any release — including patch releases — without a
+deprecation cycle. The supported surface is what `ably_pubsub.server`
 re-exports.
 
 `ably_pubsub` is a [PEP 420](https://peps.python.org/pep-0420/) namespace
