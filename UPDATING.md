@@ -1,5 +1,131 @@
 # Upgrade / Migration Guide
 
+## Version 3.x (`ably`) to 4.0.0 (`ably-pubsub-server`)
+
+> **Status: draft.** The public API naming is still under review; the class and
+> function names in this section may change before the 4.0.0 GA release.
+
+Version 4.0.0 splits the SDK into new distributions, following
+[PDR-091b](https://ably.atlassian.net/wiki/spaces/product/pages/5362810886). The
+`ably` package is superseded: it receives security and critical-bug fixes only
+for one year from the 4.0.0 release date, and is then end-of-life.
+
+### Why
+
+Under MAU-based pricing the platform must classify every connection as
+device-side or server-side. The new packages declare which side they are on
+automatically, as part of the agent identifier they put on the wire. The old
+`ably` constructors cannot: nothing in them says where the code runs, so once
+MAU pricing is live they are rejected on MAU-enabled accounts because the
+platform cannot classify them.
+
+Python is a server-side language, so there is a single new public distribution,
+`ably-pubsub-server`, whose factory functions are the only recommended entry
+points. It is built on `ably-pubsub-core`, an internal distribution you should
+never depend on directly. The objects the factories return are the same clients
+as today — channels, presence, history, auth and error handling are unchanged.
+For most applications the migration is confined to the install line, the import,
+and the constructor call.
+
+### Mapping
+
+| 3.x (`ably`) | 4.0 (`ably-pubsub-server`) |
+| --- | --- |
+| `pip install ably` | `pip install ably-pubsub-server` |
+| `pip install ably[crypto]` | `pip install ably-pubsub-server[crypto]` |
+| `from ably import AblyRest` | `from ably_pubsub.server import create_http_client` |
+| `AblyRest(key=...)` | `create_http_client(key=...)` |
+| `from ably import AblyRealtime` | `from ably_pubsub.server import create_realtime_client` |
+| `AblyRealtime(key=...)` | `create_realtime_client(key=...)` |
+| `from ably.sync import AblyRestSync` | `from ably_pubsub.server.sync import create_http_client` |
+| `AblyRestSync(key=...)` | `create_http_client(key=...)` (from `ably_pubsub.server.sync`) |
+| `from ably import X` (any name exported by `ably`) | `from ably_pubsub.server import X` |
+| `from ably.types.channeloptions import ChannelOptions` | `from ably_pubsub.server import ChannelOptions` |
+| `from ably.util.crypto import CipherParams` | `from ably_pubsub.server import CipherParams` |
+| `from ably.types.message import Message` | `from ably_pubsub.core.types.message import Message` (see below) |
+
+Every name that `ably` exported from its top level is re-exported from
+`ably_pubsub.server`, along with `TokenDetails`:
+
+```
+AblyAuthException, AblyException, AblyRealtime, AblyRest, AblyVCDiffDecoder,
+Annotation, AnnotationAction, Auth, Capability, ChannelMode, ChannelOptions,
+CipherParams, DeviceDetails, IncompatibleClientIdException, MessageAction,
+MessageOperation, MessageVersion, Options, PublishResult, Push,
+PushChannelSubscription, TokenDetails, UpdateDeleteResult, VCDiffDecoder
+```
+
+`ably_pubsub.server.sync` re-exports the same set with the synchronous flavours
+(`AblyRestSync`, `AuthSync`, `PushSync`; there is no realtime client).
+
+A few types that 3.x code could reach only by a deep import — `Message`,
+`PresenceMessage`, `TokenRequest` and the other submodule-only types — are not
+re-exported, and today the equivalent deep import is under `ably_pubsub.core`
+(for example `from ably_pubsub.core.types.message import Message`). That works,
+but nothing under `ably_pubsub.core` is public API: its layout and names may
+change in any release. If you depend on one of these, open an issue so it can be
+added to the supported re-export list.
+
+### Example
+
+```python
+# 3.x
+from ably import AblyRest
+
+client = AblyRest(key='your-api-key')
+
+# 4.0
+from ably_pubsub.server import create_http_client
+
+client = create_http_client(key='your-api-key')
+```
+
+```python
+# 3.x
+from ably import AblyRealtime
+
+client = AblyRealtime(key='your-api-key', client_id='me')
+
+# 4.0
+from ably_pubsub.server import create_realtime_client
+
+client = create_realtime_client(key='your-api-key', client_id='me')
+```
+
+```python
+# 3.x
+from ably.sync import AblyRestSync
+
+client = AblyRestSync(key='your-api-key')
+
+# 4.0
+from ably_pubsub.server.sync import create_http_client
+
+client = create_http_client(key='your-api-key')
+```
+
+The factories take exactly the keyword arguments the old constructors took:
+`create_http_client(key=None, token=None, token_details=None, **options)` and
+`create_realtime_client(key=None, loop=None, **options)`, where `**options` is
+the same client options as before. The only argument that behaves differently is
+`agents`: your entries are preserved, but the package's own `ably-pubsub-server`
+entry is always added, so the wire agent reads
+`ably-pubsub-python/4.0.0 python/3.x ably-pubsub-server`.
+
+### Packaging changes
+
+- **Python floor.** `requires-python` is now `>=3.8` (it was `>=3.7`, though 3.7
+  was already untested). Supported versions are 3.8 through 3.14.
+- **Extras.** The same extras exist under the new name:
+  `ably-pubsub-server[crypto]`, `ably-pubsub-server[vcdiff]` and
+  `ably-pubsub-server[oldcrypto]`.
+- **Two distributions.** `ably-pubsub-server` depends on `ably-pubsub-core`
+  pinned to the exact same version; the two are always released in lockstep. Do
+  not install or import `ably-pubsub-core` directly.
+- **Side-by-side install is safe.** `ably` and `ably-pubsub-server` use
+  different import packages (`ably` and `ably_pubsub`), so both can be installed
+  in one environment while you migrate.
+
 ## Version 2.x to 3.0.0
 
 The 3.0.0 version of ably-python introduces several breaking changes to improve the realtime experience and align the API with the Ably specification. These include:
