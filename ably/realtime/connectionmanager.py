@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections import deque
-from datetime import datetime
 from itertools import zip_longest
 from typing import TYPE_CHECKING
 
@@ -125,7 +125,7 @@ class ConnectionManager(EventEmitter):
         self.options = realtime.options
         self.__ably = realtime
         self.__state: ConnectionState = initial_state
-        self.__ping_future: asyncio.Future | None = None
+        self.__pending_pings: dict[str, asyncio.Future[None]] = {}
         self.__timeout_in_secs: float = self.options.realtime_request_timeout / 1000
         self.transport: WebSocketTransport | None = None
         self.__connection_details: ConnectionDetails | None = None
@@ -332,29 +332,21 @@ class ConnectionManager(EventEmitter):
             self.pending_message_queue.complete_all_messages(error)
 
     async def ping(self) -> float:
-        if self.__ping_future:
-            try:
-                response = await self.__ping_future
-            except asyncio.CancelledError:
-                raise AblyException("Ping request cancelled due to request timeout", 504, 50003) from None
-            return response
+        if self.__state not in (ConnectionState.CONNECTED, ConnectionState.CONNECTING):
+            raise AblyException("Cannot send ping request. Calling ping in invalid state", 400, 40000)
 
-        self.__ping_future = asyncio.Future()
-        if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
-            self.__ping_id = get_random_id()
-            ping_start_time = datetime.now().timestamp()
-            await self.send_protocol_message({"action": ProtocolMessageAction.HEARTBEAT,
-                                              "id": self.__ping_id})
-        else:
-            raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
+        # RTN13e: the id tells this ping's echo apart from server heartbeats and other pings
+        ping_id = get_random_id()
+        echo = self.__pending_pings[ping_id] = asyncio.get_running_loop().create_future()
+        start_time = time.monotonic()
         try:
-            await asyncio.wait_for(self.__ping_future, self.__timeout_in_secs)
+            await self.send_protocol_message({"action": ProtocolMessageAction.HEARTBEAT, "id": ping_id})
+            await asyncio.wait_for(echo, self.__timeout_in_secs)
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for ping response", 504, 50003) from None
-
-        ping_end_time = datetime.now().timestamp()
-        response_time_ms = (ping_end_time - ping_start_time) * 1000
-        return round(response_time_ms, 2)
+        finally:
+            self.__pending_pings.pop(ping_id, None)
+        return round((time.monotonic() - start_time) * 1000, 2)
 
     def on_connected(self, connection_details: ConnectionDetails, connection_id: str,
                      reason: AblyException | None = None) -> None:
@@ -458,12 +450,10 @@ class ConnectionManager(EventEmitter):
         self.__ably.channels._on_channel_message(msg)
 
     def on_heartbeat(self, id: str | None) -> None:
-        if self.__ping_future:
-            # Resolve on heartbeat from ping request.
-            if self.__ping_id == id:
-                if not self.__ping_future.cancelled():
-                    self.__ping_future.set_result(None)
-                self.__ping_future = None
+        echo = self.__pending_pings.pop(id, None)
+        # the echo can arrive while wait_for is still cancelling a timed-out ping
+        if echo is not None and not echo.done():
+            echo.set_result(None)
 
     def on_ack(
         self, serial: int, count: int, res: list[PublishResult] | None
