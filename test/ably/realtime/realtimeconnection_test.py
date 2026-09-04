@@ -127,8 +127,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.INITIALIZED
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
-        assert exception.value.code == 400
-        assert exception.value.status_code == 40000
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
 
     async def test_connection_ping_failed(self):
         ably = await TestApp.get_ably_realtime(key=self.valid_key_format)
@@ -136,8 +136,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.FAILED
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
-        assert exception.value.code == 400
-        assert exception.value.status_code == 40000
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
         await ably.close()
 
     async def test_connection_ping_closed(self):
@@ -147,8 +147,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
-        assert exception.value.code == 400
-        assert exception.value.status_code == 40000
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
 
     async def test_auto_connect(self):
         ably = await TestApp.get_ably_realtime()
@@ -212,6 +212,33 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         assert exception.value.code == 50003
         assert exception.value.status_code == 504
+
+        # one timed-out ping must not break later pings
+        ably.connection.connection_manager.send_protocol_message = original_send_protocol_message
+        response_time_ms = await asyncio.wait_for(ably.connection.ping(), timeout=5)
+        assert type(response_time_ms) is float
+        await ably.close()
+
+    async def test_ping_after_invalid_state_ping(self):
+        # a ping rejected for bad state must not break later pings
+        ably = await TestApp.get_ably_realtime(auto_connect=False)
+        with pytest.raises(AblyException) as exception:
+            await ably.connection.ping()
+        assert exception.value.code == 40000
+
+        ably.connect()
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+        response_time_ms = await asyncio.wait_for(ably.connection.ping(), timeout=5)
+        assert type(response_time_ms) is float
+        await ably.close()
+
+    async def test_concurrent_pings(self):
+        ably = await TestApp.get_ably_realtime()
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+        results = await asyncio.wait_for(
+            asyncio.gather(ably.connection.ping(), ably.connection.ping(), ably.connection.ping()), timeout=5
+        )
+        assert all(type(response_time_ms) is float for response_time_ms in results)
         await ably.close()
 
     async def test_disconnected_retry_timeout(self):
