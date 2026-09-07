@@ -150,6 +150,17 @@ class ConnectionManager(EventEmitter):
         if reason:
             self.__error_reason = reason
 
+        # A heartbeat echo cannot arrive once the connection is no longer connected,
+        # so fail pending pings now rather than letting them run to the request timeout
+        if state in (
+            ConnectionState.DISCONNECTED,
+            ConnectionState.SUSPENDED,
+            ConnectionState.CLOSING,
+            ConnectionState.CLOSED,
+            ConnectionState.FAILED,
+        ):
+            self.__fail_pending_pings(reason or ConnectionErrors[state])
+
         # RTN16d: Clear connection state when entering SUSPENDED or terminal states
         if state == ConnectionState.SUSPENDED or state in (
             ConnectionState.CLOSED,
@@ -454,6 +465,12 @@ class ConnectionManager(EventEmitter):
         # the echo can arrive while wait_for is still cancelling a timed-out ping
         if echo is not None and not echo.done():
             echo.set_result(None)
+
+    def __fail_pending_pings(self, error: AblyException) -> None:
+        pending, self.__pending_pings = self.__pending_pings, {}
+        for echo in pending.values():
+            if not echo.done():
+                echo.set_exception(error)
 
     def on_ack(
         self, serial: int, count: int, res: list[PublishResult] | None
