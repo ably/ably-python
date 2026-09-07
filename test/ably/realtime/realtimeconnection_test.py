@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 import pytest
 from websockets import connect as _ws_connect
@@ -127,8 +128,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.INITIALIZED
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
-        assert exception.value.code == 400
-        assert exception.value.status_code == 40000
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
 
     async def test_connection_ping_failed(self):
         ably = await TestApp.get_ably_realtime(key=self.valid_key_format)
@@ -136,8 +137,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         assert ably.connection.state == ConnectionState.FAILED
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
-        assert exception.value.code == 400
-        assert exception.value.status_code == 40000
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
         await ably.close()
 
     async def test_connection_ping_closed(self):
@@ -147,8 +148,8 @@ class TestRealtimeConnection(BaseAsyncTestCase):
         await ably.close()
         with pytest.raises(AblyException) as exception:
             await ably.connection.ping()
-        assert exception.value.code == 400
-        assert exception.value.status_code == 40000
+        assert exception.value.code == 40000
+        assert exception.value.status_code == 400
 
     async def test_auto_connect(self):
         ably = await TestApp.get_ably_realtime()
@@ -212,6 +213,107 @@ class TestRealtimeConnection(BaseAsyncTestCase):
 
         assert exception.value.code == 50003
         assert exception.value.status_code == 504
+
+        # one timed-out ping must not break later pings
+        ably.connection.connection_manager.send_protocol_message = original_send_protocol_message
+        response_time_ms = await asyncio.wait_for(ably.connection.ping(), timeout=5)
+        assert type(response_time_ms) is float
+        await ably.close()
+
+    async def test_ping_after_invalid_state_ping(self):
+        # a ping rejected for bad state must not break later pings
+        ably = await TestApp.get_ably_realtime(auto_connect=False)
+        with pytest.raises(AblyException) as exception:
+            await ably.connection.ping()
+        assert exception.value.code == 40000
+
+        ably.connect()
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+        response_time_ms = await asyncio.wait_for(ably.connection.ping(), timeout=5)
+        assert type(response_time_ms) is float
+        await ably.close()
+
+    async def test_ping_survives_connection_drop(self):
+        # RTN13d: a heartbeat lost with a dropped connection is sent again once the connection is
+        # back, rather than the ping failing or waiting out realtime_request_timeout
+        outage_secs = 1
+        async with WsProxy(self.test_vars["host"]) as proxy:
+            ably = await TestApp.get_ably_realtime(
+                realtime_request_timeout=20000,
+                tls=False,
+                endpoint=proxy.endpoint,
+            )
+            try:
+                await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=10)
+
+                connection_manager = ably.connection.connection_manager
+                original_send_protocol_message = connection_manager.send_protocol_message
+
+                async def drop_heartbeats(protocol_message):
+                    if protocol_message.get('action') == ProtocolMessageAction.HEARTBEAT:
+                        return
+                    await original_send_protocol_message(protocol_message)
+
+                connection_manager.send_protocol_message = drop_heartbeats
+                ping_start_time = time.monotonic()
+                ping = asyncio.ensure_future(ably.connection.ping())
+                await asyncio.sleep(outage_secs)
+                assert not ping.done()
+
+                # Simulate server sending a normal WS close frame
+                connection_manager.send_protocol_message = original_send_protocol_message
+                await proxy.close_active_connection()
+
+                response_time_ms = await asyncio.wait_for(ping, timeout=15)
+                elapsed_ms = (time.monotonic() - ping_start_time) * 1000
+                assert type(response_time_ms) is float
+                # the round trip is measured from the heartbeat that was sent on reconnection,
+                # so it excludes the time spent waiting for the connection
+                assert response_time_ms < elapsed_ms - outage_secs * 1000
+            finally:
+                await ably.close()
+
+    async def test_ping_fails_when_connection_closes(self):
+        # RTN13b: a ping cannot complete once the connection has transitioned to CLOSING
+        ably = await TestApp.get_ably_realtime(realtime_request_timeout=20000)
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+
+        connection_manager = ably.connection.connection_manager
+        original_send_protocol_message = connection_manager.send_protocol_message
+
+        async def drop_heartbeats(protocol_message):
+            if protocol_message.get('action') == ProtocolMessageAction.HEARTBEAT:
+                return
+            await original_send_protocol_message(protocol_message)
+
+        connection_manager.send_protocol_message = drop_heartbeats
+        ping = asyncio.ensure_future(ably.connection.ping())
+        await asyncio.sleep(0.5)
+        assert not ping.done()
+
+        await ably.close()
+
+        with pytest.raises(AblyException) as exception:
+            await asyncio.wait_for(ping, timeout=5)
+        assert exception.value.code == 80017
+        assert exception.value.status_code == 400
+
+    async def test_ping_while_connecting(self):
+        # RTN13d: a ping requested while connecting is done once the connection is established
+        ably = await TestApp.get_ably_realtime(auto_connect=False)
+        ably.connect()
+        assert ably.connection.state == ConnectionState.CONNECTING
+        response_time_ms = await asyncio.wait_for(ably.connection.ping(), timeout=15)
+        assert type(response_time_ms) is float
+        await ably.close()
+
+    async def test_concurrent_pings(self):
+        ably = await TestApp.get_ably_realtime()
+        await asyncio.wait_for(ably.connection.once_async(ConnectionState.CONNECTED), timeout=5)
+        results = await asyncio.wait_for(
+            asyncio.gather(ably.connection.ping(), ably.connection.ping(), ably.connection.ping()), timeout=5
+        )
+        assert all(type(response_time_ms) is float for response_time_ms in results)
         await ably.close()
 
     async def test_disconnected_retry_timeout(self):

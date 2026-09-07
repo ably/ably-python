@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections import deque
-from datetime import datetime
 from itertools import zip_longest
 from typing import TYPE_CHECKING
 
@@ -120,12 +120,29 @@ class PendingMessageQueue:
         self.messages.clear()
 
 
+class PendingPing:
+    """Represents a ping awaiting its heartbeat echo from the server"""
+
+    def __init__(self, id: str):
+        self.id = id
+        self.future: asyncio.Future[None] = asyncio.get_running_loop().create_future()
+        self.start_time: float = time.monotonic()
+
+    @property
+    def message(self) -> dict:
+        return {"action": ProtocolMessageAction.HEARTBEAT, "id": self.id}
+
+    @property
+    def response_time_ms(self) -> float:
+        return round((time.monotonic() - self.start_time) * 1000, 2)
+
+
 class ConnectionManager(EventEmitter):
     def __init__(self, realtime: AblyRealtime, initial_state):
         self.options = realtime.options
         self.__ably = realtime
         self.__state: ConnectionState = initial_state
-        self.__ping_future: asyncio.Future | None = None
+        self.__pending_pings: dict[str, PendingPing] = {}
         self.__timeout_in_secs: float = self.options.realtime_request_timeout / 1000
         self.transport: WebSocketTransport | None = None
         self.__connection_details: ConnectionDetails | None = None
@@ -149,6 +166,16 @@ class ConnectionManager(EventEmitter):
         self.__state = state
         if reason:
             self.__error_reason = reason
+
+        # RTN13b: a ping cannot complete from these states, and the echo of a heartbeat already
+        # sent will never arrive, so fail pending pings rather than leaving them to time out
+        if state in (
+            ConnectionState.SUSPENDED,
+            ConnectionState.CLOSING,
+            ConnectionState.CLOSED,
+            ConnectionState.FAILED,
+        ):
+            self.__fail_pending_pings(reason or ConnectionErrors[state])
 
         # RTN16d: Clear connection state when entering SUSPENDED or terminal states
         if state == ConnectionState.SUSPENDED or state in (
@@ -332,29 +359,43 @@ class ConnectionManager(EventEmitter):
             self.pending_message_queue.complete_all_messages(error)
 
     async def ping(self) -> float:
-        if self.__ping_future:
-            try:
-                response = await self.__ping_future
-            except asyncio.CancelledError:
-                raise AblyException("Ping request cancelled due to request timeout", 504, 50003) from None
-            return response
+        # RTN13b
+        if self.__state not in (ConnectionState.CONNECTED, ConnectionState.CONNECTING):
+            raise AblyException("Cannot send ping request. Calling ping in invalid state", 400, 40000)
 
-        self.__ping_future = asyncio.Future()
-        if self.__state in [ConnectionState.CONNECTED, ConnectionState.CONNECTING]:
-            self.__ping_id = get_random_id()
-            ping_start_time = datetime.now().timestamp()
-            await self.send_protocol_message({"action": ProtocolMessageAction.HEARTBEAT,
-                                              "id": self.__ping_id})
-        else:
-            raise AblyException("Cannot send ping request. Calling ping in invalid state", 40000, 400)
+        # RTN13e: the id tells this ping's echo apart from server heartbeats and other pings
+        pending_ping = PendingPing(get_random_id())
+        self.__pending_pings[pending_ping.id] = pending_ping
         try:
-            await asyncio.wait_for(self.__ping_future, self.__timeout_in_secs)
+            # RTN13d: while connecting, the heartbeat goes out once the connection is established
+            if self.__state == ConnectionState.CONNECTED:
+                await self.__send_heartbeat(pending_ping)
+            # RTN13c
+            await asyncio.wait_for(pending_ping.future, self.__timeout_in_secs)
         except asyncio.TimeoutError:
             raise AblyException("Timeout waiting for ping response", 504, 50003) from None
+        finally:
+            self.__pending_pings.pop(pending_ping.id, None)
+        return pending_ping.response_time_ms
 
-        ping_end_time = datetime.now().timestamp()
-        response_time_ms = (ping_end_time - ping_start_time) * 1000
-        return round(response_time_ms, 2)
+    async def __send_heartbeat(self, pending_ping: PendingPing) -> None:
+        pending_ping.start_time = time.monotonic()
+        try:
+            await self.send_protocol_message(pending_ping.message)
+        except Exception as error:
+            # the caller is waiting on the future, so the send failure is surfaced there
+            if not pending_ping.future.done():
+                pending_ping.future.set_exception(error)
+
+    def __send_pending_pings(self) -> None:
+        """RTN13d: send the heartbeat for each ping waiting on the connection
+
+        A ping registered while the connection was establishing has not sent its heartbeat yet,
+        and one whose heartbeat went out before the transport went away will never see that echo,
+        so both are (re)sent here and their round trip is measured from this point.
+        """
+        for pending_ping in list(self.__pending_pings.values()):
+            asyncio.create_task(self.__send_heartbeat(pending_ping))
 
     def on_connected(self, connection_details: ConnectionDetails, connection_id: str,
                      reason: AblyException | None = None) -> None:
@@ -458,12 +499,18 @@ class ConnectionManager(EventEmitter):
         self.__ably.channels._on_channel_message(msg)
 
     def on_heartbeat(self, id: str | None) -> None:
-        if self.__ping_future:
-            # Resolve on heartbeat from ping request.
-            if self.__ping_id == id:
-                if not self.__ping_future.cancelled():
-                    self.__ping_future.set_result(None)
-                self.__ping_future = None
+        if id is None:
+            return
+        pending_ping = self.__pending_pings.pop(id, None)
+        # the echo can arrive while wait_for is still cancelling a timed-out ping
+        if pending_ping is not None and not pending_ping.future.done():
+            pending_ping.future.set_result(None)
+
+    def __fail_pending_pings(self, error: AblyException) -> None:
+        pending, self.__pending_pings = self.__pending_pings, {}
+        for pending_ping in pending.values():
+            if not pending_ping.future.done():
+                pending_ping.future.set_exception(error)
 
     def on_ack(
         self, serial: int, count: int, res: list[PublishResult] | None
@@ -630,6 +677,7 @@ class ConnectionManager(EventEmitter):
 
         if state == ConnectionState.CONNECTED:
             self.send_queued_messages()
+            self.__send_pending_pings()
         elif state in (
             ConnectionState.CLOSING,
             ConnectionState.CLOSED,
