@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.1.3](https://github.com/ably/ably-python/tree/v3.1.3)
+
+[Full Changelog](https://github.com/ably/ably-python/compare/v3.1.2...v3.1.3)
+
+### What's Changed
+
+- Fixed `ping()` so a timed-out, rejected, or connection-dropped ping no longer leaves a stale future behind that made every later `ping()` call fail or hang [#687](https://github.com/ably/ably-python/pull/687)
+- Annotation `data` is now encrypted on publish and decrypted on REST `get()` for channels with a cipher configured, instead of being sent in plaintext [#680](https://github.com/ably/ably-python/pull/680)
+- Fixed the "unable to attach" log to report the connection state that is blocking the attach rather than the channel state [#653](https://github.com/ably/ably-python/pull/653)
+
 ## [3.1.2](https://github.com/ably/ably-python/tree/v3.1.2)
 
 [Full Changelog](https://github.com/ably/ably-python/compare/v3.1.1...v3.1.2)
