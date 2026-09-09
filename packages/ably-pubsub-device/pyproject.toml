@@ -1,0 +1,52 @@
+[project]
+name = "ably-pubsub-device"
+# Released in lockstep with ably, which this pins exactly.
+version = "3.1.2"
+description = "Ably Pub/Sub client for devices"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Ably", email = "support@ably.com" }
+]
+classifiers = [
+  "Development Status :: 6 - Mature",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "ably==3.1.2",
+]
+
+[project.optional-dependencies]
+oldcrypto = ["ably[oldcrypto]==3.1.2"]
+crypto = ["ably[crypto]==3.1.2"]
+vcdiff = ["ably[vcdiff]==3.1.2"]
+
+[project.urls]
+Homepage = "https://ably.com"
+Repository = "https://github.com/ably/ably-python"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# See the equivalent comment in packages/ably-pubsub-server/pyproject.toml for
+# why this ships only its own subtree, and why the source lives in the shared
+# ably/ tree at the repository root rather than beside this file.
+[tool.hatch.build.targets.sdist]
+ignore-vcs = true
+only-include = ["README.md", "pyproject.toml"]
+exclude = ["**/*.pyc", "**/__pycache__"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../ably/pubsub/device" = "ably/pubsub/device"
+
+[tool.hatch.build.targets.wheel]
+ignore-vcs = true
+only-include = ["ably/pubsub/device"]
+exclude = ["**/*.pyc", "**/__pycache__"]

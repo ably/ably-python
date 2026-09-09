@@ -51,3 +51,10 @@ jobs:
         run: uv run unasync
       - name: Test with pytest
         run: uv run pytest --verbose --tb=short --capture=no
+      # Packaging metadata for the wrapper distributions is otherwise only
+      # exercised at release time, where a mistake is expensive.
+      - name: Check that every distribution builds
+        run: |
+          uv build --out-dir dist
+          uv build packages/ably-pubsub-server --out-dir dist
+          uv build packages/ably-pubsub-device --out-dir dist

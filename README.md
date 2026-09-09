@@ -45,11 +45,17 @@ The following platforms are supported:
 
 ## Installation
 
-To get started with your project, install the package:
+Install the package for the side your application runs on. Each pulls in `ably` and adds an entry point under `ably.pubsub` naming that side:
 
 ```sh
-pip install ably
+# Trusted server environments — publishing, token issuing, backend subscribers
+pip install ably-pubsub-server   # provides ably.pubsub.server
+
+# End-user devices — desktop apps, CLIs, IoT and embedded clients
+pip install ably-pubsub-device   # provides ably.pubsub.device
 ```
+
+Installing `ably` on its own also still works, and remains fully supported. It is the shared core both build on, and the clients they return are its clients unchanged.
 
 > [!NOTE]
 Install [Python](https://www.python.org/downloads/) version 3.8 or greater.
@@ -59,8 +65,10 @@ Install [Python](https://www.python.org/downloads/) version 3.8 or greater.
 The following code connects to Ably's realtime messaging service, subscribes to a channel to receive messages, and publishes a test message to that same channel.
 
 ```python
+from ably.pubsub.device import create_client
+
 # Initialize Ably Realtime client
-async with AblyRealtime('your-ably-api-key', client_id='me') as realtime_client:
+async with create_client('your-ably-api-key', client_id='me') as realtime_client:
     # Wait for connection to be established
     await realtime_client.connection.once_async('connected')
     print('Connected to Ably')
@@ -77,6 +85,21 @@ async with AblyRealtime('your-ably-api-key', client_id='me') as realtime_client:
     # Publish a test message to the channel
     await channel.publish('test-event', 'hello world')
 ```
+
+On a server, use `ably.pubsub.server.create_realtime_client()` for the same client over a persistent connection, or `ably.pubsub.server.create_http_client()` when publish, history, presence reads, stats and token issuing over HTTP are enough. A synchronous HTTP client is available from `ably.pubsub.server.sync`.
+
+### Migrating from the AblyRest and AblyRealtime constructors
+
+Constructing `ably.AblyRest` or `ably.AblyRealtime` directly still works and is not scheduled for removal, but it emits a `DeprecationWarning` pointing at the factory for your side:
+
+| Before | After |
+|--------|-------|
+| `ably.AblyRealtime(...)` on a device | `ably.pubsub.device.create_client(...)` |
+| `ably.AblyRealtime(...)` on a server | `ably.pubsub.server.create_realtime_client(...)` |
+| `ably.AblyRest(...)` | `ably.pubsub.server.create_http_client(...)` |
+| `ably.sync.AblyRestSync(...)` | `ably.pubsub.server.sync.create_http_client(...)` |
+
+The factories take the same arguments as the constructors they replace and behave identically to them, so migrating is a change of entry point only.
 
 ## Releases
 
