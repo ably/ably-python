@@ -1,7 +1,57 @@
-name: Publish Python distribution to PyPI
+# Releases ably-pubsub-core and ably-pubsub-server to PyPI in lockstep.
+#
+# LOCKSTEP. This repository builds two distributions and they are always
+# released together at one version: ably-pubsub-server pins
+# `ably-pubsub-core==<that version>` exactly, so a server release without its
+# core is uninstallable and a core release without its server is invisible.
+#
+# PRE-FLIGHT. Everything that can be checked is checked before the first
+# upload, by scripts/release_preflight.py — the same script check.yml's
+# release-dry-run job runs on every pull request. It verifies the release
+# version against every version site (both pyproject `version` fields, the
+# core's `lib_version`, the server's `__version__`) and the server's exact core
+# pins, that dist/ holds exactly one wheel and one sdist per distribution, that
+# the core artifacts carry the generated `ably_pubsub/core/sync/` flavour, that
+# neither wheel ships `ably_pubsub/__init__.py` (the namespace must stay PEP
+# 420) or any file the other wheel also ships, and that `twine check` passes.
+#
+# CORE BEFORE SERVER. The two publish steps are ordered, so the server is never
+# visible on the index before the core version it pins.
+#
+# PARTIAL RELEASES ARE RE-RUNNABLE, NOT IMPOSSIBLE. PyPI has no cross-project
+# transaction: two projects means two uploads, and the second can fail after
+# the first succeeded. Both steps therefore set `skip-existing: true`, so
+# re-running this workflow at the same version skips whatever already landed
+# and completes the release. Never bump the version to work around a partial
+# release — re-run it.
+#
+# TRUSTED PUBLISHING. Both projects must have a trusted publisher configured on
+# pypi.org (and on test.pypi.org) bound to this repository, this workflow file
+# (`release.yml`) and the `pypi` / `testpypi` environment respectively — plan
+# step 16, done immediately after the repo rename so the binding is made once
+# against the new name. PyPI's OIDC token covers every project that trusts the
+# requesting configuration, so one job's `id-token: write` publishes both.
+# The `pypi` environment's required-reviewer rule is the human approval gate.
+#
+# TRIGGERS. A `v<version>` tag push releases to PyPI. A manual dispatch always
+# goes to TestPyPI and only reaches PyPI when `publish` is set — which is how
+# prereleases are cut from a branch (`gh workflow run release.yml --ref
+# <branch> -f version=4.0.0rc1 -f publish=true`). `workflow_dispatch` only
+# works for workflow files present on the default branch.
+name: Publish Python distributions to PyPI
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. 4.0.0 or 4.0.0rc1 — must equal every version site and the server''s core pin'
+        required: true
+        type: string
+      publish:
+        description: 'Also publish to PyPI (not just TestPyPI)'
+        required: false
+        default: false
+        type: boolean
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+*'
@@ -10,16 +60,33 @@ permissions: {}
 
 jobs:
   build:
-    name: Build distribution 📦
+    name: Build distributions 📦
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.release-version.outputs.version }}
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           submodules: 'recursive'
           persist-credentials: false
+
+      - name: Determine the release version
+        id: release-version
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${VERSION_INPUT}" ]; then
+            RELEASE_VERSION="${VERSION_INPUT}"
+          else
+            RELEASE_VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "Releasing ${RELEASE_VERSION}"
+          echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Set up Python 3.12
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         id: setup-python
@@ -32,93 +99,48 @@ jobs:
           enable-cache: false
 
       - name: Install dependencies
-        run: uv sync --extra crypto --extra dev
-      - name: Generate rest sync code and tests
+        run: uv sync
+
+      # Cheap checks that need no build: the version sites, and — first of all
+      # — that this ref actually has the split layout. This workflow file also
+      # lives on `main` (workflow_dispatch only offers workflows present on the
+      # default branch), where it is inert: dispatched there, the pre-flight
+      # stops here with an explanation instead of a confusing build error.
+      - name: 'Pre-flight: layout and version sites (before anything is built)'
+        env:
+          RELEASE_VERSION: ${{ steps.release-version.outputs.version }}
+        run: uv run python scripts/release_preflight.py --version "$RELEASE_VERSION"
+
+      - name: Generate the sync flavour
         run: uv run unasync
-      - name: Build a binary wheel and a source tarball
-        run: uv build
+      - name: Build both distributions into one dist/
+        run: |
+          set -euo pipefail
+          uv build --package ably-pubsub-core --out-dir dist
+          uv build --package ably-pubsub-server --out-dir dist
+
+      # Nothing below this point is reversible, so this is the last chance to
+      # refuse the release. Same script as check.yml's release-dry-run job.
+      - name: 'Pre-flight: nothing is uploaded unless everything agrees'
+        env:
+          RELEASE_VERSION: ${{ steps.release-version.outputs.version }}
+        run: uv run python scripts/release_preflight.py --version "$RELEASE_VERSION" dist/
+
       - name: Store the distribution packages
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: python-package-distributions
           path: dist/
-      - name: Check that wheel and tarball contains ably/sync/
-        run: |
-          # Check wheel
-          WHEEL=$(ls dist/*.whl | head -n 1)
-          echo "Checking wheel: $WHEEL"
-          if unzip -l "$WHEEL" | grep -q "ably/sync/"; then
-            echo "✅ Found ably/sync/ in wheel"
-          else
-            unzip -l "$WHEEL" 
-            echo "❌ ably/sync/ not found in wheel"
-            exit 1
-          fi
-          
-          # Check tarball
-          TARBALL=$(ls dist/*.tar.gz | head -n 1)
-          echo "Checking tarball: $TARBALL"
-          if tar -tzf "$TARBALL" | grep -q "ably/sync/"; then
-            echo "✅ Found ably/sync/ in tarball"
-          else
-            tar -tzf "$TARBALL"
-            echo "❌ ably/sync/ not found in tarball"
-            exit 1
-          fi
-
-  publish-to-pypi:
-    name: Publish Python distribution to PyPI
-    if: startsWith(github.ref, 'refs/tags/v')  # only publish to PyPI on tag pushes
-    needs:
-      - build
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/ably
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-
-    steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: python-package-distributions
-          path: dist/
-
-      - name: Extract tag
-        id: tag
-        run: |
-          TAG=${GITHUB_REF#refs/tags/v}
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Read VERSION_NAME from dist/
-        id: version
-        run: |
-          VERSION_NAME=$(basename dist/ably-*.tar.gz | sed -E 's/^ably-([^-]+)\.tar\.gz$/\1/')
-          echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
-
-      - name: Compare version with tag
-        run: |
-          if [ "$VERSION" != "$TAG" ]; then
-            echo "VERSION ($VERSION) does not match tag ($TAG)."
-            exit 1
-          fi
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          TAG: ${{ steps.tag.outputs.tag }}
-
-      - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
 
   publish-to-testpypi:
-    name: Publish Python distribution to TestPyPI
+    name: Publish distributions 📦 to TestPyPI
     needs:
       - build
     runs-on: ubuntu-latest
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/ably
+      url: https://test.pypi.org/p/ably-pubsub-server
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -129,7 +151,69 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-      - name: Publish distribution 📦 to TestPyPI
+
+      # pypa/gh-action-pypi-publish uploads a whole directory, so the two
+      # projects are split into two directories to be uploaded in order.
+      - name: Split the dists by project
+        run: |
+          set -euo pipefail
+          mkdir -p dist-core dist-server
+          mv dist/ably_pubsub_core-* dist-core/
+          mv dist/ably_pubsub_server-* dist-server/
+
+      - name: Publish ably-pubsub-core 📦 to TestPyPI
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
         with:
+          packages-dir: dist-core/
           repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+      - name: Publish ably-pubsub-server 📦 to TestPyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        with:
+          packages-dir: dist-server/
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  publish-to-pypi:
+    name: Publish distributions 📦 to PyPI
+    # Tag pushes release; a manual dispatch has to opt in explicitly.
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
+    # Deliberately not `needs: publish-to-testpypi`: TestPyPI is a staging
+    # signal, not a gate — an outage there must not block a real release.
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/ably-pubsub-server
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Split the dists by project
+        run: |
+          set -euo pipefail
+          mkdir -p dist-core dist-server
+          mv dist/ably_pubsub_core-* dist-core/
+          mv dist/ably_pubsub_server-* dist-server/
+
+      # Core first: the server pins this exact version, so it must never be the
+      # one that is visible on the index alone.
+      - name: Publish ably-pubsub-core 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        with:
+          packages-dir: dist-core/
+          skip-existing: true
+
+      - name: Publish ably-pubsub-server 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        with:
+          packages-dir: dist-server/
+          skip-existing: true
