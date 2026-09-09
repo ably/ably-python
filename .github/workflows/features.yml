@@ -16,5 +16,5 @@ jobs:
       id-token: write      # aws-actions/configure-aws-credentials (OIDC)
     uses: ably/features/.github/workflows/sdk-features.yml@main
     with:
-      repository-name: ably-python
+      repository-name: ably-pubsub-python
     secrets: inherit

@@ -63,7 +63,7 @@ unasync = "ably.scripts.unasync:run"
 
 [project.urls]
 Homepage = "https://ably.com"
-Repository = "https://github.com/ably/ably-python"
+Repository = "https://github.com/ably/ably-pubsub-python"
 
 [build-system]
 requires = ["hatchling"]
