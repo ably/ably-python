@@ -1,0 +1,59 @@
+# This workflow builds the documentation and creates an artifact
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  docs:
+    runs-on: ubuntu-22.04
+    permissions:
+      deployments: write
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        id: setup-python
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/cache@v4
+        name: Define a cache for the virtual environment based on the dependencies lock file
+        id: cache
+        with:
+          path: ./.venv
+          key: venv-${{ runner.os }}-3.12-${{ hashFiles('uv.lock') }}
+
+      - name: Install dependencies
+        run: uv sync --extra docs
+
+      - name: Build documentation
+        run: uv run mkdocs build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-west-2
+          role-to-assume: arn:aws:iam::${{ secrets.ABLY_AWS_ACCOUNT_ID_SDK }}:role/ably-sdk-builds-ably-python
+          role-session-name: "${{ github.run_id }}-${{ github.run_number }}"
+
+      - name: Upload Documentation
+        uses: ably/sdk-upload-action@v2
+        with:
+          sourcePath: site/
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          artifactName: docs
